@@ -85,6 +85,7 @@
   {"talent":"shockwave","rank":1,"spell":46968}
 ]},
 {"name":"PaladinProtection","class":2,"race":11,"spec":"protection_paladin","items":[{"slot":15,"id":40345},{"slot":16,"id":40400}],"auras":[31801,25780,48942],"steps": [
+  {"talent":"divinity","rank":5,"spell":63650},
   {"talent":"divineStrength","rank":5,"spell":20266},
   {"talent":"anticipation","rank":5,"spell":20100},
   {"talent":"improvedRighteousFury","rank":3,"spell":20470},
@@ -105,11 +106,10 @@
   {"talent":"shieldOfTheTemplar","rank":3,"spell":53711},
   {"talent":"judgementsOfTheJust","rank":2,"spell":53696},
   {"talent":"sealsOfThePure","rank":5,"spell":20332},
-  {"talent":"deflection","rank":5,"spell":20064},
-  {"talent":"benediction","rank":5,"spell":20105}
+  {"talent":"deflection","rank":5,"spell":20064}
 ]},
 {"name":"PaladinRetribution","class":2,"race":11,"spec":"retribution_paladin","items":[{"slot":15,"id":40384}],"auras":[31801,54043],"steps": [
-  {"talent":"deflection","rank":5,"spell":20064},
+  {"talent":"benediction","rank":5,"spell":20105},
   {"talent":"improvedJudgements","rank":2,"spell":25957},
   {"talent":"heartOfTheCrusader","rank":3,"spell":20337},
   {"talent":"vindication","rank":2,"spell":26016},

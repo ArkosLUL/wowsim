@@ -20,19 +20,17 @@ func (dk *Deathknight) registerIceboundFortitudeSpell() {
 		ActionID: actionID,
 		Duration: time.Second*12 + time.Second*2*time.Duration(float64(dk.Talents.GuileOfGorefiend)) + dk.scourgebornePlateIFDurationBonus(),
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			// spell_dk_icebound_fortitude: 30% plus a whole 0.15% per point of full defense skill over 400,
-			// skill bonuses included, and at least 40% with the glyph
 			skill := core.MaxSkill(core.CharacterLevel) + aura.Unit.DefenseSkill()
-			reductionPct := 30 + int32(float64(max(0, skill-400))*0.15)
-			if hasGlyph {
-				reductionPct = max(reductionPct, 40)
-			}
-			dmgTakenMult = 1 - float64(reductionPct)/100
+			dmgTakenMult = iceboundFortitudeMultiplier(iceboundFortitudeReduction(skill, hasGlyph))
 			aura.Unit.PseudoStats.DamageTakenMultiplier *= dmgTakenMult
 		},
 
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
-			dk.IceboundFortitudeAura.Unit.PseudoStats.DamageTakenMultiplier /= dmgTakenMult
+			if dmgTakenMult == iceboundFortitudeNoDamage {
+				aura.Unit.PseudoStats.DamageTakenMultiplier *= iceboundFortitudeNoDamageUndo
+			} else {
+				aura.Unit.PseudoStats.DamageTakenMultiplier /= dmgTakenMult
+			}
 		},
 	})
 
@@ -65,4 +63,30 @@ func (dk *Deathknight) registerIceboundFortitudeSpell() {
 			Type:  core.CooldownTypeSurvival,
 		})
 	}
+}
+
+// At 100% or more, aura 87's AddPct takes Unit::GetTotalAuraMultiplier to 0 or below, and MeleeDamageBonusTaken and
+// SpellDamageBonusTaken clamp the hit at 0. 2^-64 truncates every hit to 0 too, and unlike 0 it scales back out
+// exactly, whatever else changed DamageTakenMultiplier in between.
+const (
+	iceboundFortitudeNoDamage     = 0x1p-64
+	iceboundFortitudeNoDamageUndo = 0x1p64
+)
+
+// iceboundFortitudeReduction is spell_dk_icebound_fortitude's amount, as a positive percent: 30 plus a whole 0.15 per
+// point of full defense skill over 400, skill bonuses included, at least 40 with the glyph. Nothing caps it, so it
+// reaches 100 at 467 over 400.
+func iceboundFortitudeReduction(skill int32, hasGlyph bool) int32 {
+	reduction := 30 + int32(float64(max(0, skill-400))*0.15)
+	if hasGlyph {
+		reduction = max(reduction, 40)
+	}
+	return reduction
+}
+
+func iceboundFortitudeMultiplier(reduction int32) float64 {
+	if reduction >= 100 {
+		return iceboundFortitudeNoDamage
+	}
+	return 1 - float64(reduction)/100
 }

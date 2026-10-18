@@ -81,7 +81,10 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 
 			if isMH {
 				dk.threatOfThassarianProc(sim, result, dk.RuneStrikeOh)
-				dk.RuneStrikeAura.Deactivate(sim)
+				// 56817's charge only goes on a hit or crit (spell_proc's default hit mask), so a miss keeps the window
+				if result.Landed() {
+					dk.RuneStrikeAura.Deactivate(sim)
+				}
 				dk.RuneStrikeQueued = false
 			}
 		},
@@ -114,10 +117,11 @@ func (dk *Deathknight) registerRuneStrikeSpell() {
 	dk.RuneStrike = dk.newRuneStrikeSpell(true)
 	dk.RuneStrikeOh = dk.newRuneStrikeSpell(false)
 
+	// 56817, which 56815 needs as its caster aura: 10 s, one charge
 	dk.RuneStrikeAura = dk.RegisterAura(core.Aura{
 		Label:    "Rune Strike",
 		ActionID: RuneStrikeActionID,
-		Duration: 6 * time.Second,
+		Duration: 10 * time.Second,
 	})
 
 	// 56816 procs 56817 on the DK, a positive spell with no school: its level, 67, goes to his enemies as threat
