@@ -981,8 +981,8 @@ dps_results: {
 dps_results: {
  key: "TestFury-Talents-SwordSpecialization-Average"
  value: {
-  dps: 4422.80011
-  tps: 3646.96069
+  dps: 4448.62231
+  tps: 3663.57799
  }
 }
 ability_results: {
@@ -1472,31 +1472,31 @@ ability_results: {
   entries: {
    key: "player|action|{OtherID: 3, Tag: 1}"
    value: {
-    casts: 55.256
-    hits: 45.352
-    crit_pct: 60.61364
-    amount_per_hit: 2086.95837
-    amount: 94647.736
+    casts: 45.6805
+    hits: 37.493
+    crit_pct: 60.64732
+    amount_per_hit: 2084.64448
+    amount: 78159.5755
    }
   }
   entries: {
    key: "player|action|{OtherID: 3, Tag: 2}"
    value: {
-    casts: 126.0675
-    hits: 121.1805
-    crit_pct: 51.91471
-    amount_per_hit: 1286.06889
-    amount: 155846.4715
+    casts: 124.0225
+    hits: 120.184
+    crit_pct: 51.77769
+    amount_per_hit: 1286.0624
+    amount: 154564.1235
    }
   }
   entries: {
    key: "player|action|{SpellID: 12281}"
    value: {
-    casts: 6.842
-    hits: 5.637
-    crit_pct: 60.47543
-    amount_per_hit: 2094.00914
-    amount: 11803.9295
+    casts: 18.743
+    hits: 18.702
+    crit_pct: 50.2326
+    amount_per_hit: 2015.52682
+    amount: 37694.3825
    }
   }
   entries: {
@@ -1508,29 +1508,29 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 12867}"
    value: {
-    casts: 219.567
-    hits: 219.567
-    amount_per_hit: 843.21436
-    amount: 185142.047
+    casts: 219.905
+    hits: 219.905
+    amount_per_hit: 837.27241
+    amount: 184120.3895
    }
   }
   entries: {
    key: "player|action|{SpellID: 1680, Tag: 1}"
    value: {
-    hits: 25.6115
-    crit_pct: 49.82918
-    amount_per_hit: 1660.84044
-    amount: 42536.615
+    hits: 26.922
+    crit_pct: 50.4253
+    amount_per_hit: 1664.17749
+    amount: 44802.9865
    }
   }
   entries: {
    key: "player|action|{SpellID: 1680}"
    value: {
-    casts: 25.6115
-    hits: 25.6115
-    crit_pct: 50.94001
-    amount_per_hit: 2659.55696
-    amount: 68115.243
+    casts: 26.922
+    hits: 26.922
+    crit_pct: 50.45688
+    amount_per_hit: 2644.35601
+    amount: 71191.3525
    }
   }
   entries: {
@@ -1542,35 +1542,35 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 18499}"
    value: {
-    casts: 15.0055
+    casts: 15.001
    }
   }
   entries: {
    key: "player|action|{SpellID: 23881}"
    value: {
-    casts: 55.462
-    hits: 55.462
-    crit_pct: 51.73632
-    amount_per_hit: 4770.8334
-    amount: 264599.962
+    casts: 57.2485
+    hits: 57.2485
+    crit_pct: 51.28693
+    amount_per_hit: 4749.78997
+    amount: 271918.351
    }
   }
   entries: {
    key: "player|action|{SpellID: 2457}"
    value: {
-    casts: 4.973
+    casts: 4.2155
    }
   }
   entries: {
    key: "player|action|{SpellID: 2458}"
    value: {
-    casts: 4.954
+    casts: 4.206
    }
   }
   entries: {
    key: "player|action|{SpellID: 2687}"
    value: {
-    casts: 7.7445
+    casts: 7.458
    }
   }
   entries: {
@@ -1582,69 +1582,69 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 47450, Tag: 1}"
    value: {
-    casts: 134.0795
+    casts: 120.85
    }
   }
   entries: {
    key: "player|action|{SpellID: 47450}"
    value: {
-    casts: 83.179
-    hits: 83.179
-    crit_pct: 52.16461
-    amount_per_hit: 3096.71949
-    amount: 257582.0305
+    casts: 78.9435
+    hits: 78.9435
+    crit_pct: 52.39317
+    amount_per_hit: 3096.7282
+    amount: 244466.5625
    }
   }
   entries: {
    key: "player|action|{SpellID: 47465}"
    value: {
-    casts: 1.5955
-    hits: 1.5955
-    amount_per_hit: 4859.79442
-    amount: 7753.802
+    casts: 1.3515
+    hits: 1.3515
+    amount_per_hit: 4832.14428
+    amount: 6530.643
    }
   }
   entries: {
    key: "player|action|{SpellID: 47471}"
    value: {
-    casts: 3.7625
-    hits: 3.7625
-    crit_pct: 50.08638
-    amount_per_hit: 4161.99947
-    amount: 15659.523
+    casts: 2.898
+    hits: 2.898
+    crit_pct: 49.41339
+    amount_per_hit: 4136.57177
+    amount: 11987.785
    }
   }
   entries: {
    key: "player|action|{SpellID: 47475}"
    value: {
-    casts: 75.7665
-    hits: 75.7665
+    casts: 78.013
+    hits: 78.013
    }
   }
   entries: {
    key: "player|action|{SpellID: 50783}"
    value: {
-    casts: 75.7665
-    hits: 75.7665
-    crit_pct: 50.098
-    amount_per_hit: 2817.88828
-    amount: 213501.532
+    casts: 78.013
+    hits: 78.013
+    crit_pct: 50.14228
+    amount_per_hit: 2818.71455
+    amount: 219896.378
    }
   }
   entries: {
    key: "player|action|{SpellID: 54758}"
    value: {
-    casts: 5.102
+    casts: 5.0955
    }
   }
   entries: {
    key: "player|action|{SpellID: 57755}"
    value: {
-    casts: 0.3145
-    hits: 0.3145
-    crit_pct: 47.53577
-    amount_per_hit: 4651.77107
-    amount: 1462.982
+    casts: 0.2795
+    hits: 0.2795
+    crit_pct: 46.15385
+    amount_per_hit: 4597.13059
+    amount: 1284.898
    }
   }
   entries: {
@@ -1652,61 +1652,61 @@ ability_results: {
    value: {
     casts: 1
     hits: 1
-    crit_pct: 47
-    amount_per_hit: 6870.5325
-    amount: 6870.5325
+    crit_pct: 48.4
+    amount_per_hit: 6946.5005
+    amount: 6946.5005
    }
   }
   entries: {
    key: "player|action|{SpellID: 7384}"
    value: {
-    casts: 0.3265
-    hits: 0.3265
-    crit_pct: 96.93721
-    amount_per_hit: 2977.88361
-    amount: 972.279
+    casts: 0.2255
+    hits: 0.2255
+    crit_pct: 96.2306
+    amount_per_hit: 2957.80488
+    amount: 666.985
    }
   }
   entries: {
    key: "player|aura|{ItemID: 40211}"
    value: {
-    uptime_s: 29.50009
+    uptime_s: 29.49982
    }
   }
   entries: {
    key: "player|aura|{SpellID: 12292}"
    value: {
-    uptime_s: 88.49513
+    uptime_s: 88.49486
    }
   }
   entries: {
    key: "player|aura|{SpellID: 12974}"
    value: {
-    uptime_s: 294.69559
+    uptime_s: 294.79921
    }
   }
   entries: {
    key: "player|aura|{SpellID: 16190, Tag: -1}"
    value: {
-    uptime_s: 11.99819
+    uptime_s: 11.99815
    }
   }
   entries: {
    key: "player|aura|{SpellID: 1719}"
    value: {
-    uptime_s: 3.84794
+    uptime_s: 4.11378
    }
   }
   entries: {
    key: "player|aura|{SpellID: 2457}"
    value: {
-    uptime_s: 7.55604
+    uptime_s: 6.51945
    }
   }
   entries: {
    key: "player|aura|{SpellID: 2458}"
    value: {
-    uptime_s: 292.36756
+    uptime_s: 293.40416
    }
   }
   entries: {
@@ -1718,7 +1718,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 33697}"
    value: {
-    uptime_s: 44.99789
+    uptime_s: 44.99889
    }
   }
   entries: {
@@ -1736,7 +1736,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 47450}"
    value: {
-    uptime_s: 279.35828
+    uptime_s: 285.18979
    }
   }
   entries: {
@@ -1754,7 +1754,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 54758}"
    value: {
-    uptime_s: 60.0874
+    uptime_s: 60.07162
    }
   }
   entries: {
@@ -1772,31 +1772,31 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 59620, Tag: 1}"
    value: {
-    uptime_s: 137.17154
+    uptime_s: 138.61684
    }
   }
   entries: {
    key: "player|aura|{SpellID: 59620, Tag: 2}"
    value: {
-    uptime_s: 65.789
+    uptime_s: 65.39743
    }
   }
   entries: {
    key: "player|aura|{SpellID: 60229}"
    value: {
-    uptime_s: 104.94262
+    uptime_s: 104.93259
    }
   }
   entries: {
    key: "player|aura|{SpellID: 60437}"
    value: {
-    uptime_s: 63.55088
+    uptime_s: 63.59709
    }
   }
   entries: {
    key: "player|aura|{SpellID: 68051}"
    value: {
-    uptime_s: 31.68351
+    uptime_s: 27.154
    }
   }
   entries: {
@@ -1808,7 +1808,7 @@ ability_results: {
   entries: {
    key: "target0|aura|{SpellID: 12867}"
    value: {
-    uptime_s: 297.63631
+    uptime_s: 297.70612
    }
   }
   entries: {
@@ -1868,7 +1868,7 @@ ability_results: {
   entries: {
    key: "target0|aura|{SpellID: 47465}"
    value: {
-    uptime_s: 33.50458
+    uptime_s: 28.38275
    }
   }
   entries: {
@@ -1922,7 +1922,7 @@ ability_results: {
   entries: {
    key: "target0|aura|{SpellID: 64382}"
    value: {
-    uptime_s: 9.99464
+    uptime_s: 9.99462
    }
   }
   entries: {
