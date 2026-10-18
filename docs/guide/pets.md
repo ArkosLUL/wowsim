@@ -80,10 +80,12 @@ The files: [sim architecture](sim-architecture.md#classes-items-encounters).
   525). How a reach moves a missile: [spell data and timing](spell-data-and-timing.md#server-data).
 - The Imp and the Water Elemental cast from their follow spot (`Pet.FollowSpotDistance`): their reach plus
   `PET_FOLLOW_DIST` 2 off the owner's left, him facing the target; PetAI's chase leaves a caster there while
-  the target is in range. The Gargoyle casts from its summon spot, 3 yd off the DK's front left
-  (`gargoyleSpotDistance`), the Rune Weapon from the DK's.
-- A melee pet's missiles wait the 5 yd floor: its chase stops at both reaches, so on the server they fly at
-  most the target's reach, and a pet's scale (a hunter pet's family) changes nothing there.
+  the target is in range. The Gargoyle casts from its summon spot, 3 yd off the DK's front left, its straight
+  drop from 15 yd up nudged 0.2 yd along his facing (`PointMovementGenerator::DoInitialize`;
+  `gargoyleSpotDistance`): 27.76 yd from a target 30 yd off the DK. The Rune Weapon casts from the DK's spot.
+- A hunter pet's spits fly from the target's reach plus the pet's unscaled 1.5 (`standAtReachOf`): PetAI's path
+  to the spot behind mostly comes back incomplete, so it walks to `GetNearPoint2D`'s ring point, both reaches
+  out. It keeps that spot under Bloodlust.
 - Not modelled: the Rune Weapon's run-in from 2 yd in front of the target; a timed Water Elemental summoned
   while something attacks the mage casting from its spawn spot; a caster pet moving when its owner stands
   past its spell's range.
@@ -138,9 +140,15 @@ Fire Elemental lives and Mirror Image summons, `pets_casts.jsonl`, against both 
   fresh roll of his own swing on his table, floored half, dealt by the weapon with no procs
   (`RuneWeaponPet.swingCopies`; `registerDrwOwnerSwing`, never dealt). Rune Strike copies as a strike. It's
   uncontrollable (SummonProperties 208), so no Bloodlust.
-  - A spell copy (`castCopy`) takes the DK's damage percents as they stand, halved: his school ones on magic,
-    only the halving on physical, as a strike rolls his own main hand with his percents inside
-    (`DrwWeaponDamage`), normalized for Blood, Heart, Death and Plague Strike, not Rune Strike.
+  - A spell copies only off a landed hit (49028's default hit mask), once for each target it lands on, at that
+    target (`OnSpellHitDealt`, `copyOf`), Heart Strike's chain hit too. Never an area spell: `CheckProc` takes
+    one only when its target is the DK, so Pestilence and Blood Boil aren't copied.
+  - A strike copy rolls his own main hand with his percents inside (`DrwWeaponDamage`), normalized for Blood,
+    Heart, Death and Plague Strike, not Rune Strike, and takes his Rage of Rivendare or Tundra Stalker
+    (`RoRTSBonus`): his `MeleeDamageBonusDone` scales the whole hit.
+  - A magic copy (Icy Touch, Death Coil, the diseases) takes none of his percents, only spell mods and the
+    weapon's own percents halved (`castCopy`, `setCopyMultipliers`): `Unit::SpellDamageBonusDone`'s entry-27893
+    branch passes TotalMod one argument early. Its AP part takes his Impurity (`getImpurityBonus`).
   - After each spell copy the DK's reach is 0.01 until his scale next changes (`Unit.SetCombatReach`), so his
     missiles fly the whole distance (Death Coil).
   - It makes no threat: `UNIT_FLAG_NON_ATTACKABLE` keeps its threat ref on the target offline, and 49028's

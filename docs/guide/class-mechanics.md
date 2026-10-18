@@ -60,7 +60,12 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 - **Improved Unholy Presence** scales the rune cooldown after the grace cut, in whole ms.
 - **Death Coil** and **Rune Strike** are refundable ([miss cost](#miss-cost)). Sudden Doom's Death Coil pays
   nothing.
-- **Icebound Fortitude:** 30 + int32((full defense skill − 400) × 0.15) percent, at least 40 with the glyph.
+- **Rune Strike**'s window (56817, `RuneStrikeAura`) lasts 10 s with one charge, which only a landed main-hand
+  strike takes (spell_proc's default hit mask): a miss keeps the window.
+- **Icebound Fortitude:** 30 + int32((full defense skill − 400) × 0.15) percent, at least 40 with the glyph,
+  uncapped. From 467 over 400 it's 100% or more and every hit is 0: aura 87's `AddPct` takes the taken
+  multiplier to 0 or below, and `MeleeDamageBonusTaken` and `SpellDamageBonusTaken` clamp at 0. The sim scales
+  `DamageTakenMultiplier` by 2^-64 and back by 2^64 at expiry, exact whatever else changed it meanwhile.
 - **Rune of the Stoneskin Gargoyle** (3847) is +25 defense skill, not rating.
 
 ## Warrior

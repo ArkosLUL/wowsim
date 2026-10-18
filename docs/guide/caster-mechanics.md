@@ -63,9 +63,9 @@ pets and guardians in [pets](pets.md).
   raid member and pet.
 - **Improved Healing Wave** takes 0.1 s a point off Healing Wave.
 - **Chain Heal** picks every jump before its first heal lands (`chainHealJumps`; `Spell::SearchChainTargets`):
-  the enabled unit with a health bar, not yet healed by the chain, with the largest whole health deficit over 0,
-  a tie to the first in raid order. Nobody hurt ends the chain, so a full raid takes one heal a cast. With no
-  positions, everyone is in range and sight.
+  the enabled, [living](damage-and-healing.md#healing) unit with a health bar, not yet healed by the chain,
+  with the largest whole health deficit over 0, a tie to the first in raid order. Nobody hurt ends the chain,
+  so a full raid takes one heal a cast. With no positions, everyone is in range and sight.
 - **Improved Water Shield** rolls on a heal's crit at 33/66/100% × 60% for Lesser Healing Wave, 30% for Chain
   Heal, 100% otherwise (`impWaterShieldChance`; `spell_sha_imp_water_shield`), and gives mana only with Water
   Shield up, using no orb.
@@ -127,7 +127,9 @@ pets and guardians in [pets](pets.md).
 
 - **Penance:** Mental Agility's mask leaves it out. Its damage tick takes 0.1905 of spell power, and Searing
   Light and Twin Disciplines multiply, as the heal's four talents do. 53007 and its channel can't miss; each tick
-  rolls its own hit.
+  rolls its own hit. A damage tick is a 53000 bolt at 40 yd/s: rolled at the tick, dealt after its flight
+  (`sim/priest/penance.go`; a KeepSim allowance on 53007's speed). The heal's 52985 flies too, but the sim has no
+  distance to the healed unit, so it lands at once.
 - **Circle of Healing**, **Prayer of Healing** and **Prayer of Mending**'s bounce skip a pet that isn't out:
   their search finds only units in the world.
 - **Silent Resolve** cuts holy and arcane threat ([threat](threat.md)), so not Mind Blast's.

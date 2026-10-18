@@ -61,22 +61,26 @@ rounding, caps and crit damage. Everything else the server does differently is i
 
 - **Whole heals:** a heal is whole after the caster's multiplier, the target's and the crit, one dealt outside
   a spell through `GainHealing`.
-- **Healing done percents** (aura 136: Focused Power, Blessed Resilience, Purification, Avenging Wrath;
-  `Unit.AddHealingDonePct`) reach a hot at each tick, after its whole amount: `int32(float32(amount) × the
-  caster's float32 AddPct chain at that tick)` (`sim/core/healing_done.go`; `HandlePeriodicHealAurasTick`).
-  Every unit-aura hot takes them, an item's too, so it snapshots its amount without them
-  (`Dot.SnapshotHotMultiplier`); Ghoul Frenzy (`OBS_MOD_HEALTH`) doesn't.
+- A heal's target search skips a unit at 0 health (`SpellInfo::CheckTarget`); in the sim only Chain Heal's
+  jumps and Althor's Abacus check it.
+- **Healing done percents** (aura 136: Focused Power, Blessed Resilience, Purification, Avenging Wrath,
+  Divinity; `Unit.AddHealingDonePct`) reach a hot at each tick, after its whole amount:
+  `int32(float32(amount) × the caster's float32 AddPct chain at that tick)` (`sim/core/healing_done.go`;
+  `HandlePeriodicHealAurasTick`). Every unit-aura hot takes them, an item's too, so it snapshots its amount
+  without them (`Dot.SnapshotHotMultiplier`); Ghoul Frenzy (`OBS_MOD_HEALTH`) doesn't.
   - A class's direct heal carries its talents in its own multiplier, so Avenging Wrath's reaches hots only. A
     direct heal with no damage class (an item's) takes none (`SpellHealingBonusDone` returns early).
-  - Earth Shield's charge takes Purification once, in 49284's healing bonus, before the glyph and Improved
-    Shields; 379 ignores caster modifiers.
+  - Earth Shield's charge is whole at each step (`spell_sha_earth_shield`; `sim/shaman/heals.go`): 49284's
+    healing bonus with Purification in float32, truncated, then the glyph's 20% of it, then Improved Shields'
+    percent of what the bonuses added over the base, each truncated. 379 ignores caster modifiers.
   - The priest T10 2-piece's 70772 ticks `int32(Flash Heal × 33%) / 3` three times
     (`spell_pri_t10_heal_2p_bonus`; `blessedHealingTick`), then takes only aura 136 and the target's healing
     taken.
 - **Healing taken** percents (aura 118) don't stack: only the highest bonus and the lowest penalty count,
-  multiplied (`Unit.AddHealingTakenPct`). Strength of Wrynn is healing done, which multiplies; a heal with no
-  damage class, or one that ignores caster modifiers (`SpellFlagIgnoreAttackerModifiers`:
-  `Unit::SpellPctHealingModsDone` returns 1), takes none of that, only `Unit.HealingTakenPctMultiplier`.
+  multiplied (`Unit.AddHealingTakenPct`), so Divinity's 1% a point adds nothing under three points of Improved
+  Devotion Aura (6%). Strength of Wrynn is healing done, which multiplies; a heal with no damage class, or one
+  that ignores caster modifiers (`SpellFlagIgnoreAttackerModifiers`: `Unit::SpellPctHealingModsDone` returns 1),
+  takes none of that, only `Unit.HealingTakenPctMultiplier`.
 - **Flat healing taken** (`BonusHealingTaken`: Talisman of Troll Divinity) is a term of its own:
   `int32(taken × coefficient)` for each target and tick, added after the caster's percent and ahead of the
   target's (`Unit::SpellHealingBonusTaken`; `flatHealingTaken`). `Spell.HealingPower` is the caster's alone.
@@ -97,5 +101,8 @@ rounding, caps and crit damage. Everything else the server does differently is i
   sim's heals only Ancestral Awakening (52752) has one; Earth Shield's 49284 does, but heals as 379.
 - **Heals off another heal:** Empowered Renew's 63544 is 5% a rank of every Renew tick as the target takes it
   (`Dot.TickHealingTaken`: flat term and percents), then takes the healing done talents and its own taken terms
-  again (`sim/priest/renew.go`). Ancestral Awakening is `int32(crit × 30 / 100)` and ignores caster modifiers,
-  Purification included (`sim/shaman/heals.go`).
+  again (`sim/priest/renew.go`). Glyph of Prayer of Healing's 56161 ticks `int32(heal × 20%) / 2` off the
+  Prayer of Healing heal on that target, crit and healing taken in, none off a heal of 0; its class mask is 0,
+  so each tick takes only aura 136 and the target's taken terms again (`sim/priest/prayer_of_healing.go`).
+  Ancestral Awakening is `int32(crit × 30 / 100)` and ignores caster modifiers, Purification included
+  (`sim/shaman/heals.go`).
