@@ -107,8 +107,8 @@ func plainBoss() *proto.Target {
 }
 
 // standardize returns a copy of the captured settings under the standard scenario: the same buffs,
-// debuffs and boss for every build, a fight of the given length. Talents, glyphs, spec options,
-// flasks and food stay as the page had them.
+// debuffs and boss for every build, a fight of the given length, with the Playerbot switch on. Talents,
+// glyphs, spec options and the rotation stay as the page had them.
 func standardize(captured *proto.IndividualSimSettings, fightSeconds float64) *proto.IndividualSimSettings {
 	out := googleProto.Clone(captured).(*proto.IndividualSimSettings)
 	out.Player.Buffs = individualBuffs()
@@ -117,7 +117,7 @@ func standardize(captured *proto.IndividualSimSettings, fightSeconds float64) *p
 	out.Debuffs = debuffs()
 	out.Tanks = nil
 	out.TargetDummies = 0
-	fixPotions(out.Player)
+	out.Player.Playerbot = true
 
 	out.Encounter = &proto.Encounter{
 		Duration:             fightSeconds,
@@ -130,22 +130,4 @@ func standardize(captured *proto.IndividualSimSettings, fightSeconds float64) *p
 		ServerSettings:       captured.GetEncounter().GetServerSettings(),
 	}
 	return out
-}
-
-// A build without a pre-pot drinks its main potion first. Warriors' Indestructible Potion is a
-// tanking potion, so Potion of Speed stands in.
-func fixPotions(player *proto.Player) {
-	if player.Consumes == nil {
-		return
-	}
-	c := player.Consumes
-	if c.DefaultPotion == proto.Potions_IndestructiblePotion {
-		c.DefaultPotion = proto.Potions_PotionOfSpeed
-	}
-	if c.PrepopPotion == proto.Potions_IndestructiblePotion {
-		c.PrepopPotion = proto.Potions_PotionOfSpeed
-	}
-	if c.PrepopPotion == proto.Potions_UnknownPotion {
-		c.PrepopPotion = c.DefaultPotion
-	}
 }

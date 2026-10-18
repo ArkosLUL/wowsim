@@ -38,8 +38,10 @@ talents and glyphs come from the app's own registered preset, never hand-typed),
 all 11 professions (the pool builder gates profession-locked items, enchants and gems on the
 player's own professions, so a real 2-profession character would hide options a raider with any
 profession could get gear for), and party Heroic Presence (a Draenei in every party, whatever racial
-traits the pick ends up with). Other buffs, debuffs, consumes, sources and the racial search stay the
-spec's own defaults; a tank's boss and survival/threat slider are the tab's own per-phase defaults.
+traits the pick ends up with). The Playerbot switch is on
+([playerbot rules](../../docs/guide/playerbot-rules.md)). Other buffs, debuffs, consumes, sources and
+the racial search stay the spec's own defaults; a tank's boss and survival/threat slider are the
+tab's own per-phase defaults.
 
 A build can also set:
 - `filters`: gear picker filters laid over the page's, which the optimizer's pool goes through too.
@@ -86,8 +88,8 @@ installs `window.__pg`:
 
 `gen.py` exports the page's default settings once per build (after clicking the tree's talent
 preset and any pet preset), then for each phase sets `player.race`, `player.professions`,
-`partyBuffs.heroicPresence`, the build's `filters` and `player.equipment.items` (the phase's seed) in
-that JSON and reimports it, so the other buffs, debuffs, consumes and encounter settings always come
+`partyBuffs.heroicPresence`, the build's `filters`, `player.playerbot` and `player.equipment.items`
+(the phase's seed) in that JSON and reimports it, so the other buffs, debuffs, consumes and encounter settings always come
 from the page's own defaults, untouched. It reads the optimizer's result the same way the tab's own
 "Export JSON" button would.
 

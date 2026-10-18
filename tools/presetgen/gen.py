@@ -315,6 +315,8 @@ class Driver:
 
     def apply_settings(self, settings, seed_items):
         settings['player']['equipment'] = {'items': seed_items}
+        # presets, stat weights and the rankings are for raiders the bots play
+        settings['player']['playerbot'] = True
         tmp = self.out / 'settings.tmp.json'
         tmp.write_text(json.dumps(settings), encoding='utf-8')
         self.browser.cdp('load', '__pgSettings', str(tmp), timeout=30)

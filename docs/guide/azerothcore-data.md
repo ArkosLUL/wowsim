@@ -126,6 +126,6 @@ layouts come from [ac] `src/server/shared/DataStores/DBCStructure.h` and `DBCfmt
   carries both as `raceId` and `swapRaceId`, printed "nightelf as draenei".
 - **mod-playerbots** (`acore_playerbots`): a character is a bot when `playerbots_db_store` holds rows for it
   (its saved strategies: `co`, `nc`, `dead`) or its account is typed 1 in `playerbots_account_type` (random
-  bots). A bot takes flask, elixirs and food from `AiPlayerbot.WorldBuffMatrix` (live: the
-  `AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX` override in `[ac]/configurationOverrides/Playerbot.env`) only with the
-  `worldbuff` strategy, and a potion from its bags only with `potions`.
+  bots). A bot takes flask, elixirs and food from the world-buff matrix
+  ([playerbot rules](playerbot-rules.md#the-bot-flask-and-food-table)) only with the `worldbuff` strategy,
+  and a potion from its bags only with `potions`.

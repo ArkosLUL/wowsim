@@ -115,6 +115,18 @@ export const InFrontOfTarget = {
 	},
 };
 
+export const Playerbot = {
+	type: 'boolean' as const,
+	label: 'Playerbot',
+	labelTooltip:
+		"Sims the character as mod-playerbots plays it: the bots' flask and food, one Potion of Speed or Wild Magic 5 s into the fight for a DPS spec and none for a tank or healer, no explosives, conjured items, pet food or Focus Magic crit back, and no pre-pull actions but stances, presences, Aspect of the Dragonhawk, Horn of Winter and Bone Shield.",
+	changedEvent: (player: Player<any>) => player.miscOptionsChangeEmitter,
+	getValue: (player: Player<any>) => player.getPlayerbot(),
+	setValue: (eventID: EventID, player: Player<any>, newValue: boolean) => {
+		player.setPlayerbot(eventID, newValue);
+	},
+};
+
 export const DistanceFromTarget = {
 	type: 'number' as const,
 	label: 'Distance From Target',

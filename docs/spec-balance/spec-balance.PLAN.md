@@ -5,8 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a landed; P0b next. The user put P0b before wave Z15 (core and class items) and the BiS chain, and the
-wave-loop orchestrator was asked to hold both until P0b is on master (2026-10-18).
+Status: P0a and P0b landed; next FU-1 and FU-2, then P1. Wave Z15 and the BiS chain, held for P0b, may go.
 
 ## Context
 
@@ -27,7 +26,7 @@ which models the server exactly (ADR 0001).
   talents, `BMDefaultOptions` in `ui/hunter/presets.ts`; the user's real BM runs a Worm and does less).
 - Server buffs cap at A: a buffed build stays < 95% in every counted cell; a cell already ≥ 95% before the buff
   may not rise beyond ±0.3%. Design target 86–94%, as margin for gear changes.
-- Rotation, talent, glyph and spec-option fixes are exempt from the cap and may change the top build.
+- Rotation, talent, glyph, spec-option and bot consumable fixes are exempt from the cap and may change the top build.
 - When nothing fits both limits, report the closest result; don't force it.
 
 **Playerbot rules: one switch, used by every tool**
@@ -112,8 +111,7 @@ chain will move these):
 | Marksmanship | 75.6 (P2) | 91.1 (P4) | | Affliction | 83.2 (P5) | 92.9 (P1) |
 
 Known setup bugs, fixed in P1: all three warlock builds carry Affliction's spec options (Demonology sims with a
-Felhunter and Grand Spellstone, `ui/warlock/sim.ts`); Arcane uses Fire's consumes (`ui/mage/sim.ts`); Feral's
-only Berserk is a prepull action (its priority entry is `const false`).
+Felhunter and Grand Spellstone, `ui/warlock/sim.ts`); Arcane uses Fire's consumes (`ui/mage/sim.ts`).
 
 ## Rules that bind every phase
 
@@ -178,14 +176,28 @@ All measurements with the switch on. For each below-B build, worst gap first:
 2. Fix the known setup bugs (above). Review the default talent preset, glyphs and spec options.
 3. Fix clear mistakes in `ui/<dir>/apls/*.apl.json`, presets, `sim.ts` defaults or APL value code. A change must
    win at P1 and P5 gear (apldbg before/after).
-4. Goldens a default APL feeds: promote suite by suite (`docs/guide/testing.md`), never `make update-tests`.
-5. Write `docs/spec-balance/spec-balance.INVESTIGATION.md`: per build, what was wrong, the fix, the delta per phase.
+4. Bot consumables: with the switch on, sim each build's flask (Endless Rage, Frost Wyrm, Pure Mojo, battle +
+   guardian elixir pairs), food and potion (Speed, Wild Magic) candidates. A pick that beats the bot's beyond noise
+   becomes a proposal: flask and food as its row in `Playerbot.env`'s `AC_PLAYERBOTS_WORLD_BUFF_MATRIX` (config
+   change: ask; DPS rows only; rerun `gen_server_defaults`), a per-spec potion as a [bots] `PlayerbotFactory` change
+   on `Custom` plus the sim's potion rule.
+5. Goldens a default APL feeds: promote suite by suite (`docs/guide/testing.md`), never `make update-tests`.
+6. Write `docs/spec-balance/spec-balance.INVESTIGATION.md`: per build, what was wrong, the fix, the delta per phase.
 
 Baseline (once P1 and the BiS chain are both on master): rebuild the dev sim container from [bal] (:3334), capture
 (~50 min), runner (~5 min), merge; `balance_check.py`; record the table in the PLAN and the remaining gap per build
-in the INVESTIGATION.
+in the INVESTIGATION. The rankings page footer then says the ranking follows playerbot rules.
 
 Phase loop per [sim] `docs/guide/workflow.md`: implement + verify in a subagent, fresh reviewer, land.
+
+## Follow-ups (after P0b)
+
+- **FU-1:** `tools/uitest/tests/header.spec.ts` "sim title menu links every sim page" fails on master: `new URL(href)`
+  throws on the menu's relative `/wotlk/rankings/` link. Fix the test or the link, whichever is wrong.
+- **FU-2:** `ReadWorldBuffMatrix` (`tools/database/azerothcore/roster.go`) knows only the old
+  `AiPlayerbot.WorldBuffMatrix` / `AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX` keys, so on the live `Playerbot.env` it parses
+  the whole file and logs lines outside the matrix. Read `AC_PLAYERBOTS_WORLD_BUFF_MATRIX` /
+  `Playerbots.WorldBuffMatrix` as `gen_server_defaults` does, and never log other values.
 
 ## P2: Live bot DPS test ([simval] e2e; any time after P0a)
 

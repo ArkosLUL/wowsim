@@ -245,6 +245,7 @@ export class Player<SpecType extends Spec> {
 	private reactionTime: number = 0;
 	private channelClipDelay: number = 0;
 	private inFrontOfTarget: boolean = false;
+	private playerbot = false;
 	private distanceFromTarget: number = 0;
 	private nibelungAverageCasts: number = 11;
 	private nibelungAverageCastsSet: boolean = false;
@@ -943,6 +944,18 @@ export class Player<SpecType extends Spec> {
 		this.inFrontOfTargetChangeEmitter.emit(eventID);
 	}
 
+	getPlayerbot(): boolean {
+		return this.playerbot;
+	}
+
+	setPlayerbot(eventID: EventID, newPlayerbot: boolean) {
+		if (newPlayerbot == this.playerbot)
+			return;
+
+		this.playerbot = newPlayerbot;
+		this.miscOptionsChangeEmitter.emit(eventID);
+	}
+
 	getDistanceFromTarget(): number {
 		return this.distanceFromTarget;
 	}
@@ -1258,6 +1271,7 @@ export class Player<SpecType extends Spec> {
 				healingModel: this.getHealingModel(),
 				nibelungAverageCasts: this.getNibelungAverageCasts(),
 				nibelungAverageCastsSet: this.nibelungAverageCastsSet,
+				playerbot: this.getPlayerbot(),
 			});
 			player = withSpecProto(this.spec, player, this.getSpecOptions());
 		}
@@ -1314,6 +1328,7 @@ export class Player<SpecType extends Spec> {
 				this.setChannelClipDelay(eventID, proto.channelClipDelayMs);
 				this.setInFrontOfTarget(eventID, proto.inFrontOfTarget);
 				this.setDistanceFromTarget(eventID, proto.distanceFromTarget);
+				this.setPlayerbot(eventID, proto.playerbot);
 				this.setNibelungAverageCastsSet(eventID, proto.nibelungAverageCastsSet);
 				if (this.nibelungAverageCastsSet) {
 					this.setNibelungAverageCasts(eventID, proto.nibelungAverageCasts);
@@ -1338,6 +1353,7 @@ export class Player<SpecType extends Spec> {
 			this.setItemSwapGear(eventID, new ItemSwapGear({}));
 			this.setReactionTime(eventID, 200);
 			this.setInFrontOfTarget(eventID, isTankSpec(this.spec));
+			this.setPlayerbot(eventID, false);
 			this.setHealingModel(eventID, HealingModel.create({
 				burstWindow: isTankSpec(this.spec) ? 6 : 0,
 			}));

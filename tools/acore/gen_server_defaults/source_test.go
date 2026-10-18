@@ -72,6 +72,10 @@ func TestCodeDefaultsMatchServerSource(t *testing.T) {
 		}
 	}
 
+	if got := sourceDefault(t, readAC(t, playerbotsConfigSrc), worldBuffMatrixKey); got != `""` {
+		t.Errorf("%s defaults to %s in the server, the generator assumes none", worldBuffMatrixKey, got)
+	}
+
 	reforging := readAC(t, reforgingSrc)
 	for _, key := range []string{reforgeEnableKey, reforgeStatsKey, reforgePercentageKey} {
 		sourceDefault(t, reforging, key)
@@ -99,6 +103,7 @@ func TestGeneratedFilesMatchLiveConfig(t *testing.T) {
 	for rel, render := range map[string]func() ([]byte, error){
 		"sim/core/server_defaults_auto_gen.go":          func() ([]byte, error) { return renderGo(settings, f, limits) },
 		"ui/core/constants/server_defaults_auto_gen.ts": func() ([]byte, error) { return renderTS(settings, limits) },
+		"sim/core/playerbot_world_buffs_auto_gen.go":    func() ([]byte, error) { return liveWorldBuffs(acDir) },
 	} {
 		want, err := render()
 		if err != nil {

@@ -39,6 +39,8 @@ the cross-effort ties:
   `bis_presets.json`. Playerbots' `apps/simweights/generate_weights.py` reads its `weights.json` and
   maps or skips every `BUILDS` key (an unknown one fails the run), so a change to the `gen.py` API, the
   `BUILDS` keys or that layout needs the other side updated.
+- **Playerbot switch:** presetgen, statweights' capture and the rankings all turn it on
+  ([playerbot rules](playerbot-rules.md)), so a change to it moves the BiS presets, stat weights and rankings.
 - **DPS rankings:** `tools/rankings` runs statweights' `capture.py`, imports its `merge.py` and presetgen's
   `gen.py`, and reads the `p*_bis*` presets and `bis_presets.json`, so a change to those needs it updated.
 - **Shared files:** bis-optimizer edits `proto/api.proto`, `sim/core/database.go`, `sim/web/main.go`,

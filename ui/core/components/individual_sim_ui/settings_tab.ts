@@ -18,6 +18,7 @@ import { relevantStatOptions } from '../inputs/stat_options';
 import { ItemSwapPicker } from '../item_swap_picker';
 import { MultiIconPicker } from '../multi_icon_picker';
 import { NumberPicker } from '../number_picker';
+import * as OtherInputs from '../other_inputs';
 import { SavedDataManager } from '../saved_data_manager';
 import { SERVER_SETTINGS_TOOLTIP, ServerSettingsPicker } from '../server_settings_picker';
 import { SimTab } from '../sim_tab';
@@ -141,6 +142,8 @@ export class SettingsTab extends SimTab {
 		if (this.simUI.individualConfig.playerInputs?.inputs.length) {
 			this.configureInputSection(contentBlock.bodyElement, this.simUI.individualConfig.playerInputs);
 		}
+
+		this.configureInputSection(contentBlock.bodyElement, { inputs: [OtherInputs.Playerbot] });
 
 		const professionGroup = Input.newGroupContainer();
 		professionGroup.classList.add('professions-picker');

@@ -50,6 +50,7 @@ Before starting, read every doc whose trigger matches the task.
 | [pets](docs/guide/pets.md) | changing a pet's or guardian's stats, timers, AI, or the buffs and casts that reach it |
 | [threat](docs/guide/threat.md) | changing threat, energizes or heals, or a spell's threat data |
 | [tank-modeling](docs/guide/tank-modeling.md) | changing the optimizer's tank boss, healing model, survival score, or any run's hit, expertise or haste caps |
+| [playerbot-rules](docs/guide/playerbot-rules.md) | changing what the Playerbot switch does, or a tool that turns it on |
 | [spell-data-and-timing](docs/guide/spell-data-and-timing.md) | declaring a spell's server data; update, aura, swing, cast or GCD timing |
 | [missiles](docs/guide/missiles.md) | changing a missile's flight or landing, or a unit's or target's combat reach |
 | [azerothcore-server](docs/guide/azerothcore-server.md) | touching the live server, its containers, config, modules or characters |

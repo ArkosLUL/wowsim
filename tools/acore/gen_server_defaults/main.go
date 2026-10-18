@@ -1,5 +1,6 @@
-// gen_server_defaults generates the live server's value for every proto.ServerSettings field, from
-// an AzerothCore checkout's conf.dist files and the env overrides the live containers run with.
+// gen_server_defaults generates the live server's value for every proto.ServerSettings field, and the
+// playerbots' flask and food per spec, from an AzerothCore checkout's conf.dist files and the env
+// overrides the live containers run with.
 //
 //	tools/acore/dock.sh run ./tools/acore/gen_server_defaults
 package main
@@ -38,7 +39,8 @@ var installedConfFiles = []string{
 }
 
 // Only the override files holding keys read here, in docker-compose.override.yml's env_file order.
-// The others hold unrelated settings and credentials, so they're never opened.
+// The others hold unrelated settings and credentials, so they're never opened, except Playerbot.env
+// for its world-buff matrix alone.
 var envFiles = []string{
 	"configurationOverrides/ServerPerformance.env",
 	"configurationOverrides/SpellTweaks.env",
@@ -49,6 +51,7 @@ func main() {
 	acDir := flag.String("ac", "/ac", "AzerothCore checkout the live server runs")
 	goOut := flag.String("goOut", "sim/core/server_defaults_auto_gen.go", "generated Go file")
 	tsOut := flag.String("tsOut", "ui/core/constants/server_defaults_auto_gen.ts", "generated TypeScript file")
+	botOut := flag.String("botOut", "sim/core/playerbot_world_buffs_auto_gen.go", "generated bot flask and food table")
 	flag.Parse()
 
 	settings, f, limits, err := liveSettings(*acDir)
@@ -63,7 +66,11 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	for path, content := range map[string][]byte{*goOut: goSrc, *tsOut: tsSrc} {
+	botSrc, err := liveWorldBuffs(*acDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+	for path, content := range map[string][]byte{*goOut: goSrc, *tsOut: tsSrc, *botOut: botSrc} {
 		if err := os.WriteFile(path, content, 0o644); err != nil {
 			log.Fatal(err)
 		}

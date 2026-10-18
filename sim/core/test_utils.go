@@ -4,7 +4,10 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
+	"strconv"
 	"testing"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -274,4 +277,15 @@ func GetGearSet(dir string, file string) GearSetCombo {
 	}
 
 	return GearSetCombo{Label: file, GearSet: EquipmentSpecFromJsonString(string(data))}
+}
+
+// CastTimes reads a debug log (SimOptions.Debug) for when each cast of id started, to the log's 10 ms.
+func CastTimes(logs string, id ActionID) []time.Duration {
+	var times []time.Duration
+	pattern := regexp.MustCompile(`(?m)^\[(-?[0-9.]+)\] .* Casting ` + regexp.QuoteMeta(id.String()) + ` \(`)
+	for _, m := range pattern.FindAllStringSubmatch(logs, -1) {
+		seconds, _ := strconv.ParseFloat(m[1], 64)
+		times = append(times, time.Duration(seconds*float64(time.Second)).Round(10*time.Millisecond))
+	}
+	return times
 }
