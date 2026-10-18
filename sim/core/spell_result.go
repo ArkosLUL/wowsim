@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"math"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
@@ -666,13 +667,30 @@ func (spell *Spell) WaitTravelTime(sim *Simulation, callback func(*Simulation)) 
 	if callback == nil {
 		panic("WaitTravelTime: callback must not be nil")
 	}
-	sim.startLanding(sim.CurrentTime+spell.TravelTime(), spell.Unit, callback, nil, nil)
+	sim.startLanding(spell.landsAt(sim), spell.Unit, callback, nil, nil)
 }
 
 // DealDamageAfterTravel is WaitTravelTime with a landing that only deals result, minus the closure's
 // allocation.
 func (spell *Spell) DealDamageAfterTravel(sim *Simulation, result *SpellResult) {
-	sim.startLanding(sim.CurrentTime+spell.TravelTime(), spell.Unit, nil, spell, result)
+	sim.startLanding(spell.landsAt(sim), spell.Unit, nil, spell, result)
+}
+
+// landsAt is when a missile launched now lands. A player's SpellEvent records the tick it starts the flight on
+// and lands on his first tick at or after that plus the flight (SpellEvent::Execute). It starts on the tick the
+// session casts it, or a hardcast lands, in. Cast later in his update or off a landing (Auto Shot, a proc, a
+// tick), its event goes in a ms past a clock that already moved, so it starts on his next tick.
+func (spell *Spell) landsAt(sim *Simulation) time.Duration {
+	flight := spell.TravelTime()
+	unit := spell.Unit
+	if flight == 0 || unit.Type != PlayerUnit || sim.worldTickInterval <= 0 || unit.castLanded.fromOthers[spell] {
+		return sim.CurrentTime + flight
+	}
+	start := sim.NextWorldTick(sim.CurrentTime)
+	if sim.updating != nil || sim.eventPass && sim.landingCast != spell {
+		start = sim.NextWorldTick(start + 1)
+	}
+	return sim.NextWorldTick(start + flight)
 }
 
 // Returns the combined attacker modifiers.

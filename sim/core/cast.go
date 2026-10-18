@@ -250,6 +250,10 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 	// built once per spell, since a closure made per hardcast allocates on every cast
 	onComplete := func(resetsSwing bool) func(*Simulation, *Unit) {
 		return func(sim *Simulation, target *Unit) {
+			// lands in its SpellEvent: its own missile starts now, anything it sets off on the next tick
+			outerPass, outerCast := sim.eventPass, sim.landingCast
+			sim.eventPass, sim.landingCast = true, spell
+
 			if sim.Log != nil && !spell.Flags.Matches(SpellFlagNoLogs) {
 				spell.Unit.Log(sim, "Completed cast %s", spell.ActionID)
 			}
@@ -272,6 +276,7 @@ func (spell *Spell) makeCastFunc(config CastConfig) CastSuccessFunc {
 
 			spell.Unit.AutoAttacks.resumeMelee(sim)
 			spell.Unit.AutoAttacks.releaseCastHold(sim)
+			sim.eventPass, sim.landingCast = outerPass, outerCast
 		}
 	}
 	completeCast := onComplete(false)
