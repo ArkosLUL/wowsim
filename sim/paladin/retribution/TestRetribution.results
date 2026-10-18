@@ -78,8 +78,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-AshtongueTalismanofZeal-32489"
  value: {
-  dps: 7020.38683
-  tps: 5121.53009
+  dps: 7020.47067
+  tps: 5121.58877
   dtps: 8.911
  }
 }
@@ -338,7 +338,7 @@ dps_results: {
  key: "TestRetribution-AllItems-EphemeralSnowflake-50260"
  value: {
   dps: 7061.18433
-  tps: 5152.28983
+  tps: 5152.29383
   dtps: 8.911
  }
 }
@@ -593,8 +593,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-LightbringerBattlegear"
  value: {
-  dps: 5125.66933
-  tps: 3782.05737
+  dps: 5125.72767
+  tps: 3782.0982
   dtps: 8.42633
  }
 }
@@ -793,8 +793,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-Shadowmourne-49623"
  value: {
-  dps: 8634.298
-  tps: 6251.34923
+  dps: 8634.29567
+  tps: 6251.3476
   dtps: 8.911
  }
 }
@@ -946,7 +946,7 @@ dps_results: {
  key: "TestRetribution-AllItems-TinyAbominationinaJar-50706"
  value: {
   dps: 7721.8475
-  tps: 5624.56104
+  tps: 5624.66842
   dtps: 8.911
  }
 }
@@ -1009,8 +1009,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-Turalyon'sPlate"
  value: {
-  dps: 6019.40833
-  tps: 4408.38156
+  dps: 6019.3785
+  tps: 4408.36068
   dtps: 8.2535
  }
 }
@@ -1049,8 +1049,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Average-Default"
  value: {
-  dps: 7267.39346
-  tps: 5293.3854
+  dps: 7267.33677
+  tps: 5293.34569
   dtps: 12.4053
  }
 }
@@ -1065,8 +1065,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-BloodElf-p1-Retribution Paladin SOC-default-FullBuffs-LongSingleTarget"
  value: {
-  dps: 5787.79783
-  tps: 4158.58949
+  dps: 5787.78767
+  tps: 4158.58237
   dtps: 10.69433
  }
 }
@@ -1088,8 +1088,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-BloodElf-p1-Retribution Paladin SOC-default-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3100.102
-  tps: 2270.11341
+  dps: 3100.09817
+  tps: 2270.11072
  }
 }
 dps_results: {
@@ -1126,8 +1126,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-BloodElf-p1-Retribution Paladin SOR-default-NoBuffs-LongMultiTarget"
  value: {
-  dps: 9849.6075
-  tps: 6995.29323
+  dps: 9848.76333
+  tps: 6994.70232
  }
 }
 dps_results: {
@@ -1245,8 +1245,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-Draenei-p1-Retribution Paladin SOC-default-FullBuffs-LongSingleTarget"
  value: {
-  dps: 5803.537
-  tps: 4167.21412
+  dps: 5803.52667
+  tps: 4167.20689
   dtps: 10.69433
  }
 }
@@ -1261,15 +1261,15 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-Draenei-p1-Retribution Paladin SOC-default-NoBuffs-LongMultiTarget"
  value: {
-  dps: 10894.65917
-  tps: 7725.16296
+  dps: 10894.19067
+  tps: 7724.83501
  }
 }
 dps_results: {
  key: "TestRetribution-Settings-Draenei-p1-Retribution Paladin SOC-default-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3080.10033
-  tps: 2253.8606
+  dps: 3079.70583
+  tps: 2253.58445
  }
 }
 dps_results: {
@@ -1425,8 +1425,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-Dwarf-p1-Retribution Paladin SOC-default-FullBuffs-LongSingleTarget"
  value: {
-  dps: 5794.88567
-  tps: 4161.06469
+  dps: 5794.8755
+  tps: 4161.05757
   dtps: 10.69433
  }
 }
@@ -1605,8 +1605,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-Human-p1-Retribution Paladin SOC-default-FullBuffs-LongSingleTarget"
  value: {
-  dps: 5791.31133
-  tps: 4158.56265
+  dps: 5791.30067
+  tps: 4158.55519
   dtps: 10.69433
  }
 }
@@ -1621,15 +1621,15 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-Settings-Human-p1-Retribution Paladin SOC-default-NoBuffs-LongMultiTarget"
  value: {
-  dps: 10810.70683
-  tps: 7666.26467
+  dps: 10810.23833
+  tps: 7665.93672
  }
 }
 dps_results: {
  key: "TestRetribution-Settings-Human-p1-Retribution Paladin SOC-default-NoBuffs-LongSingleTarget"
  value: {
-  dps: 3076.025
-  tps: 2251.02419
+  dps: 3075.6305
+  tps: 2250.74804
  }
 }
 dps_results: {
@@ -1777,8 +1777,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 6859.49333
-  tps: 4995.75284
+  dps: 6859.61767
+  tps: 4995.83987
   dtps: 8.911
  }
 }
@@ -1803,8 +1803,8 @@ ability_results: {
     casts: 129.519
     hits: 127.972
     crit_pct: 50.00117
-    amount_per_hit: 3244.00243
-    amount: 415141.4795
+    amount_per_hit: 3244.00444
+    amount: 415141.7365
    }
   }
   entries: {
@@ -1825,8 +1825,8 @@ ability_results: {
    value: {
     hits: 99.454
     crit_pct: 49.39872
-    amount_per_hit: 2402.4594
-    amount: 238934.197
+    amount_per_hit: 2402.4616
+    amount: 238934.4155
    }
   }
   entries: {
@@ -1857,8 +1857,8 @@ ability_results: {
     casts: 68.7775
     hits: 67.9425
     crit_pct: 49.4293
-    amount_per_hit: 3152.99023
-    amount: 214222.0385
+    amount_per_hit: 3152.99146
+    amount: 214222.122
    }
   }
   entries: {
@@ -1867,8 +1867,8 @@ ability_results: {
     casts: 221.145
     hits: 221.145
     crit_pct: 49.5763
-    amount_per_hit: 1890.57246
-    amount: 418090.6475
+    amount_per_hit: 1890.57244
+    amount: 418090.6415
    }
   }
   entries: {
@@ -1887,8 +1887,8 @@ ability_results: {
     casts: 9.2725
     hits: 9.2725
     crit_pct: 99.51469
-    amount_per_hit: 7301.24783
-    amount: 67700.8205
+    amount_per_hit: 7299.38264
+    amount: 67683.5255
    }
   }
   entries: {
@@ -1906,8 +1906,8 @@ ability_results: {
     casts: 26.5465
     hits: 26.2425
     crit_pct: 49.36077
-    amount_per_hit: 4400.2037
-    amount: 115472.3455
+    amount_per_hit: 4400.19459
+    amount: 115472.1065
    }
   }
   entries: {
@@ -1945,8 +1945,8 @@ ability_results: {
    value: {
     hits: 103.9625
     crit_pct: 49.61597
-    amount_per_hit: 1850.26916
-    amount: 192358.6075
+    amount_per_hit: 1850.26813
+    amount: 192358.5005
    }
   }
   entries: {
@@ -2060,13 +2060,13 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 59620, Tag: 1}"
    value: {
-    uptime_s: 158.12194
+    uptime_s: 158.11895
    }
   }
   entries: {
    key: "player|aura|{SpellID: 60229}"
    value: {
-    uptime_s: 105.04809
+    uptime_s: 105.04717
    }
   }
   entries: {

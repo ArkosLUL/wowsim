@@ -182,15 +182,15 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-DarkmoonCard:Death-42990"
  value: {
-  dps: 2122.66917
-  tps: 6689.88056
+  dps: 2122.42733
+  tps: 6689.37912
  }
 }
 dps_results: {
  key: "TestBloodTank-AllItems-DarkmoonCard:Greatness-44255"
  value: {
-  dps: 2110.95883
-  tps: 6757.91152
+  dps: 2111.0175
+  tps: 6758.2965
  }
 }
 dps_results: {
@@ -217,8 +217,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-Death'sChoice-47464"
  value: {
-  dps: 2234.461
-  tps: 7163.1885
+  dps: 2234.37767
+  tps: 7163.01571
  }
 }
 dps_results: {
@@ -638,8 +638,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-Scourgelord'sPlate"
  value: {
-  dps: 2299.9595
-  tps: 7966.18516
+  dps: 2299.94583
+  tps: 7966.15682
  }
 }
 dps_results: {
@@ -750,8 +750,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-SparkofLife-37657"
  value: {
-  dps: 2067.07517
-  tps: 6532.0854
+  dps: 2066.53783
+  tps: 6530.97124
  }
 }
 dps_results: {
@@ -918,8 +918,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-Average-Default"
  value: {
-  dps: 2344.78503
-  tps: 8191.77248
+  dps: 2344.78471
+  tps: 8191.7713
   dtps: 253.33343
  }
 }
@@ -1042,8 +1042,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-Talents-UnholyPresence-Average"
  value: {
-  dps: 2503.89281
-  tps: 2357.99068
+  dps: 2503.94569
+  tps: 2358.02558
   dtps: 319.69749
  }
 }
@@ -1261,8 +1261,8 @@ ability_results: {
     casts: 53.1965
     hits: 51.1585
     crit_pct: 23.77806
-    amount_per_hit: 3745.29974
-    amount: 191603.9165
+    amount_per_hit: 3745.29782
+    amount: 191603.8185
    }
   }
   entries: {
@@ -1352,7 +1352,7 @@ ability_results: {
   entries: {
    key: "player|aura|{SpellID: 50449}"
    value: {
-    uptime_s: 597.39811
+    uptime_s: 597.39789
    }
   }
   entries: {
@@ -2117,8 +2117,8 @@ ability_results: {
     casts: 19.069
     hits: 19.069
     crit_pct: 18.08957
-    amount_per_hit: 2081.19086
-    amount: 39686.2285
+    amount_per_hit: 2080.78195
+    amount: 39678.431
    }
   }
   entries: {
@@ -2146,8 +2146,8 @@ ability_results: {
     casts: 69.783
     hits: 67.845
     crit_pct: 17.94089
-    amount_per_hit: 1132.23449
-    amount: 76816.449
+    amount_per_hit: 1132.34325
+    amount: 76823.828
    }
   }
   entries: {
@@ -2192,10 +2192,10 @@ ability_results: {
   entries: {
    key: "player|action|{SpellID: 50536}"
    value: {
-    casts: 18.879
-    hits: 18.879
-    amount_per_hit: 212.30621
-    amount: 4008.129
+    casts: 18.874
+    hits: 18.874
+    amount_per_hit: 212.78833
+    amount: 4016.167
    }
   }
   entries: {
@@ -2212,8 +2212,8 @@ ability_results: {
    value: {
     casts: 54.052
     hits: 52.5515
-    amount_per_hit: 144.11278
-    amount: 7573.3425
+    amount_per_hit: 144.10832
+    amount: 7573.1085
    }
   }
   entries: {
@@ -2222,8 +2222,8 @@ ability_results: {
     casts: 13.9835
     hits: 127.263
     crit_pct: 23.81328
-    amount_per_hit: 762.94779
-    amount: 97095.0245
+    amount_per_hit: 762.98873
+    amount: 97100.2345
    }
   }
   entries: {
@@ -2231,8 +2231,8 @@ ability_results: {
    value: {
     casts: 67.845
     hits: 112.6175
-    amount_per_hit: 606.66787
-    amount: 68321.4185
+    amount_per_hit: 606.6974
+    amount: 68324.7445
    }
   }
   entries: {
@@ -2452,7 +2452,7 @@ ability_results: {
   entries: {
    key: "target0|aura|{SpellID: 50536}"
    value: {
-    uptime_s: 167.78849
+    uptime_s: 167.69754
    }
   }
   entries: {
