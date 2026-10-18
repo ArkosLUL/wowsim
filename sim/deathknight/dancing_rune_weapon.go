@@ -30,6 +30,16 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 			if !result.Landed() || !dk.RuneWeapon.IsEnabled() {
 				return
 			}
+			// CheckProc wants the target alive after the hit. A health fight ends once the targets' summed health
+			// is gone, so that blow is the kill.
+			if enc := &sim.Encounter; enc.EndFightAtHealth > 0 && enc.DamageTaken >= enc.EndFightAtHealth {
+				return
+			}
+			// copied too, but the weapon's interrupt does nothing the sim follows, only HandleProc's reach
+			if spell == dk.MindFreezeSpell {
+				dk.SetCombatReach(drwReach)
+				return
+			}
 			if copied := dk.RuneWeapon.copyOf(spell); copied != nil {
 				dk.RuneWeapon.castCopy(sim, copied, result.Target)
 				return
@@ -86,14 +96,16 @@ const drwReach = 0.01
 type RuneWeaponPet struct {
 	*core.Pet
 
-	dkOwner            *Deathknight
-	ownerTablesApplied bool
+	dkOwner *Deathknight
+	// the DK's DONE_VERSUS per target, already in the weapon's attack tables
+	ownerVersus []float64
 	// its own damage percents, as they stand at reset
 	ownDamageDealt       float64
 	ownSchoolDamageDealt [stats.SchoolLen]float64
 
 	IcyTouch     *core.Spell
 	PlagueStrike *core.Spell
+	Obliterate   *core.Spell
 
 	DeathStrike *core.Spell
 	DeathCoil   *core.Spell
@@ -191,6 +203,7 @@ func (runeWeapon *RuneWeaponPet) Initialize() {
 	runeWeapon.dkOwner.registerDrwHeartStrikeSpell()
 	runeWeapon.dkOwner.registerDrwDeathCoilSpell()
 	runeWeapon.dkOwner.registerDrwRuneStrikeSpell()
+	runeWeapon.dkOwner.registerDrwObliterateSpell()
 
 	// No threat at all: the target can't attack it (UNIT_FLAG_NON_ATTACKABLE), so its threat ref stays offline and
 	// ThreatManager::AddThreat adds nothing. HandleApply's redirect to the DK never runs, as SpellInfoCorrections
@@ -212,7 +225,8 @@ func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, normalized bool) fl
 }
 
 // copyOf is the weapon's spell for a spell of the DK's that spell_dk_dancing_rune_weapon copies, nil for any other.
-// Never an area spell (Pestilence, Blood Boil): CheckProc only takes one whose target is the DK himself.
+// CheckProc takes any spell from his spellbook that isn't positive or a summon. Never an area spell (Pestilence,
+// Blood Boil): it only takes one whose target is the DK himself.
 func (runeWeapon *RuneWeaponPet) copyOf(spell *core.Spell) *core.Spell {
 	dk := runeWeapon.dkOwner
 	switch spell {
@@ -220,6 +234,9 @@ func (runeWeapon *RuneWeaponPet) copyOf(spell *core.Spell) *core.Spell {
 		return runeWeapon.IcyTouch
 	case dk.PlagueStrike:
 		return runeWeapon.PlagueStrike
+	// the main hand's: Threat of Thassarian's off-hand strike isn't in his spellbook
+	case dk.Obliterate:
+		return runeWeapon.Obliterate
 	case dk.DeathStrike:
 		return runeWeapon.DeathStrike
 	case dk.BloodStrike:
@@ -237,18 +254,62 @@ func (runeWeapon *RuneWeaponPet) copyOf(spell *core.Spell) *core.Spell {
 
 // castCopy is the weapon's copy of one of the DK's spells, which leaves his reach at drwReach.
 func (runeWeapon *RuneWeaponPet) castCopy(sim *core.Simulation, spell *core.Spell, target *core.Unit) {
-	runeWeapon.setCopyMultipliers()
+	runeWeapon.setCopyMultipliers(target)
 	spell.Cast(sim, target)
 	runeWeapon.dkOwner.SetCombatReach(drwReach)
 }
 
 // setCopyMultipliers halves the weapon's own percents. A strike gets the DK's physical ones through his weapon roll
-// (DrwWeaponDamage). A magic hit gets none of his: Unit::SpellDamageBonusDone's branch for entry 27893 passes TotalMod
-// and stack one argument early, so his call gets a TotalMod of 1 and never reads SpellPctDamageModsDone.
-func (runeWeapon *RuneWeaponPet) setCopyMultipliers() {
+// (DrwWeaponDamage) and his DONE_VERSUS through the weapon's attack table. A magic hit gets none of his:
+// Unit::SpellDamageBonusDone's branch for entry 27893 passes TotalMod and stack one argument early, so his call gets a
+// TotalMod of 1 and never reads SpellPctDamageModsDone, DONE_VERSUS included.
+func (runeWeapon *RuneWeaponPet) setCopyMultipliers(target *core.Unit) {
 	ps := &runeWeapon.PseudoStats
 	ps.DamageDealtMultiplier = runeWeapon.ownDamageDealt * 0.5
 	ps.SchoolDamageDealtMultiplier = runeWeapon.ownSchoolDamageDealt
+	// per target, so it comes off each magic school here; a Plague Strike copy's Blood Plague goes out in the same cast
+	for school := stats.SchoolIndexPhysical + 1; school < stats.SchoolLen; school++ {
+		ps.SchoolDamageDealtMultiplier[school] /= runeWeapon.ownerVersus[target.UnitIndex]
+	}
+}
+
+// registerDrwObliterateSpell is the weapon's Obliterate. Spell::EffectWeaponDmg reads the caster's own auras, the
+// weapon's: it counts and takes off the weapon's diseases, with no Annihilation to keep them and no T8 4-piece on the
+// count. The DK's spell mods and his MeleeDamageBonusDone (Rage of Rivendare, Merciless Combat) still reach it.
+func (dk *Deathknight) registerDrwObliterateSpell() {
+	dk.RuneWeapon.Obliterate = dk.RuneWeapon.RegisterSpell(core.SpellConfig{
+		ActionID:    ObliterateActionID.WithTag(1),
+		SpellSchool: core.SpellSchoolPhysical,
+		ProcMask:    core.ProcMaskMeleeMHSpecial,
+		Flags:       core.SpellFlagMeleeMetrics | core.SpellFlagIncludeTargetBonusDamage,
+
+		BonusCritRating: (dk.rimeCritBonus() + dk.subversionCritBonus() + dk.annihilationCritBonus() +
+			dk.scourgeborneBattlegearCritBonus()) * core.CritRatingPerCritChance,
+		DamageMultiplier: dk.scourgelordsBattlegearDamageBonus(ScourgelordBonusSpellOB),
+		CritMultiplier:   dk.drwBonusCritMultiplier(dk.Talents.GuileOfGorefiend),
+		ThreatMultiplier: 1,
+
+		Direct: core.SpellEffect{Effect: 0, Min: 584, Max: 584, WeaponPct: 0.8},
+		Mods: []core.SpellMod{
+			{Op: core.SpellModEffect1, Flat: dk.sigilOfAwarenessBonus()},
+			{Op: core.SpellModEffect2, Flat: core.TernaryInt32(dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfObliterate), 20, 0)},
+		},
+
+		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct)
+			baseDamage = core.ApplyPct(baseDamage, 1+dk.drwCountActiveDiseases(target)*0.125)
+			// both are DoneTotalMod, so they scale the flat creature-type bonus too
+			baseDamage = (baseDamage + dk.drwVersusAttackPowerBonus(spell, true)) * dk.RoRTSBonus(target) * dk.mercilessCombatBonus(sim)
+
+			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
+			// the effect runs on any hit that isn't avoided, a block too
+			if !result.Outcome.Matches(core.OutcomeMiss | core.OutcomeDodge | core.OutcomeParry) {
+				dk.RuneWeapon.FrostFeverSpell.Dot(target).Deactivate(sim)
+				dk.RuneWeapon.BloodPlagueSpell.Dot(target).Deactivate(sim)
+			}
+			spell.DealDamage(sim, result)
+		},
+	})
 }
 
 // drwVersusAttackPowerBonus is the creature-type attack power on a rune weapon hit: Unit::MeleeDamageBonusDone
@@ -320,12 +381,14 @@ func (runeWeapon *RuneWeaponPet) GetPet() *core.Pet {
 }
 
 func (runeWeapon *RuneWeaponPet) Reset(_ *core.Simulation) {
-	// its bonus done is the owner's, so the owner's per-target multipliers (DONE_VERSUS, like Troll Beast
-	// Slaying) count on every hit. Attack tables outlive a reset, and the owner sets its own on its first.
-	if !runeWeapon.ownerTablesApplied {
-		runeWeapon.ownerTablesApplied = true
+	// its strikes go through the owner's MeleeDamageBonusDone, so his per-target multipliers (DONE_VERSUS, like
+	// Troll Beast Slaying) count on them. setCopyMultipliers takes them off its magic hits.
+	// Attack tables outlive a reset, and the owner sets his own on his first.
+	if runeWeapon.ownerVersus == nil {
+		runeWeapon.ownerVersus = make([]float64, len(runeWeapon.AttackTables))
 		for i, at := range runeWeapon.AttackTables {
-			at.DamageDealtMultiplier *= runeWeapon.dkOwner.AttackTables[i].DamageDealtMultiplier
+			runeWeapon.ownerVersus[i] = runeWeapon.dkOwner.AttackTables[i].DamageDealtMultiplier
+			at.DamageDealtMultiplier *= runeWeapon.ownerVersus[i]
 		}
 	}
 	runeWeapon.ownDamageDealt = runeWeapon.PseudoStats.DamageDealtMultiplier

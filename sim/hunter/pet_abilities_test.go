@@ -152,9 +152,10 @@ func TestPetSpecialsNeverLandOnAnImmuneTarget(t *testing.T) {
 	}
 }
 
-// spitTravel fights a minute with the pet against a target of that reach, 0 for the boss dummy's 2.5, and gives the
-// flight of its spit's first landing.
-func spitTravel(t *testing.T, petType proto.Hunter_Options_PetType, spellID int32, reach float64) time.Duration {
+// spitTravel fights a minute with the pet against a target of that reach, 0 for the boss dummy's 2.5, the pet's scale
+// raised by scaleBonus all along, and gives the flight of its spit's first landing and how far from the target's
+// centre the pet stood then.
+func spitTravel(t *testing.T, petType proto.Hunter_Options_PetType, spellID int32, reach, scaleBonus float64) (time.Duration, float64) {
 	t.Helper()
 	options := googleProto.Clone(PlayerOptionsBasic.Hunter.Options).(*proto.Hunter_Options)
 	options.PetType = petType
@@ -176,17 +177,18 @@ func spitTravel(t *testing.T, petType proto.Hunter_Options_PetType, spellID int3
 		Encounter:  encounter,
 		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
 	})
-	travel := time.Duration(-1)
+	travel, spot := time.Duration(-1), 0.0
 	pet := sim.Raid.Parties[0].Players[0].(*Hunter).pet
 	pet.RegisterAura(core.Aura{
 		Label:    "spit test log",
 		Duration: core.NeverExpires,
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Activate(sim)
+			pet.AddScaleBonus(scaleBonus)
 		},
 		OnSpellHitDealt: func(_ *core.Aura, _ *core.Simulation, spell *core.Spell, _ *core.SpellResult) {
 			if spell.ActionID.SpellID == spellID && travel < 0 {
-				travel = spell.TravelTime()
+				travel, spot = spell.TravelTime(), pet.DistanceFromTarget
 			}
 		},
 	})
@@ -198,30 +200,68 @@ func spitTravel(t *testing.T, petType proto.Hunter_Options_PetType, spellID int3
 	if travel < 0 {
 		t.Fatalf("spell %d never landed against a reach of %v", spellID, reach)
 	}
-	return travel
+	return travel, spot
 }
 
-// The pet stops both reaches out from the target's centre, and a spit flies from there less the pet's 1.5, 5 yd at
-// least (Spell::AddUnitTarget): the boss dummy's 2.5 leaves the floor, a reach of 10 leaves 10.
+// The pet stops both reaches out from the target's centre, its own 1.5 times its family's scale (1.2 for a serpent),
+// and a spit flies from there less that reach, 5 yd at least (Spell::AddUnitTarget): the boss dummy's 2.5 leaves the
+// floor, a reach of 10 leaves 10. A 30% scale aura like Bloodlust's adds to the family's scale
+// (Unit::RecalculateObjectScale), so the reach grows by 0.45 whatever the family, and from the same spot a spit
+// against a reach of 10 flies 9.55.
 func TestSpitsFlyFromTheTargetsReach(t *testing.T) {
 	for _, spit := range []struct {
 		name    string
 		pet     proto.Hunter_Options_PetType
 		spellID int32
 		speed   float64
+		reach   float64
 	}{
-		{"Acid Spit", proto.Hunter_Options_Worm, 55754, 24},
-		{"Poison Spit", proto.Hunter_Options_Serpent, 55557, 40},
+		{"Acid Spit", proto.Hunter_Options_Worm, 55754, 24, 1.5},
+		{"Poison Spit", proto.Hunter_Options_Serpent, 55557, 40, 1.2},
 	} {
 		for _, reach := range []float64{0, 10} {
-			yards := 5.0
+			yards, centre := 5.0, core.BossDummyCombatReach
 			if reach > 0 {
-				yards = reach
+				yards, centre = reach, reach
 			}
 			want := time.Duration(math.Floor(yards/spit.speed*1000)) * time.Millisecond
-			if got := spitTravel(t, spit.pet, spit.spellID, reach); got != want {
+			got, spot := spitTravel(t, spit.pet, spit.spellID, reach, 0)
+			if got != want {
 				t.Errorf("%s against a reach of %v flies %v, want %v", spit.name, reach, got, want)
 			}
+			if math.Abs(spot-centre-spit.reach) > 1e-6 {
+				t.Errorf("%s against a reach of %v goes from %v yd off the centre, want %v", spit.name, reach, spot,
+					centre+spit.reach)
+			}
+		}
+		want := time.Duration(math.Floor(9.55/spit.speed*1000)) * time.Millisecond
+		if got, _ := spitTravel(t, spit.pet, spit.spellID, 10, 0.3); got != want {
+			t.Errorf("%s against a reach of 10 with 30%% more scale flies %v, want %v", spit.name, got, want)
+		}
+	}
+}
+
+// Pet::GetNativeObjectScale: a level 80 pet takes its family's maxScale, or 1 for the families it pins there, and
+// Creature::SetObjectScale gives a pet 1.5 times that.
+func TestHunterPetReachIsItsFamilysScale(t *testing.T) {
+	for petType := range PetConfigs {
+		if _, ok := hunterPetScales[petType]; !ok {
+			t.Errorf("no scale for the %v", petType)
+		}
+	}
+	for _, c := range []struct {
+		pet   proto.Hunter_Options_PetType
+		reach float64
+	}{
+		{proto.Hunter_Options_Crocolisk, 0.9},
+		{proto.Hunter_Options_Serpent, 1.2},
+		{proto.Hunter_Options_Worm, 1.5},
+		{proto.Hunter_Options_Cat, 1.65},
+		// maxScale 0.5, pinned to 1
+		{proto.Hunter_Options_CoreHound, 1.5},
+	} {
+		if got := hunterPetReach(c.pet); math.Abs(got-c.reach) > 1e-6 {
+			t.Errorf("the %v's reach is %v, want %v", c.pet, got, c.reach)
 		}
 	}
 }

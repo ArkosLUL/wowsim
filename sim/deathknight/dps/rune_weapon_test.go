@@ -187,7 +187,13 @@ func TestRuneWeaponFollowsTheKnightsAttackPower(t *testing.T) {
 // runeWeaponSim is a blood DK with no rotation, 30 yd from the target, at the pull.
 func runeWeaponSim(t *testing.T) (*core.Simulation, *DpsDeathknight) {
 	t.Helper()
-	player := parityPlayer(BloodTalents, "p3_blood", noRotation)
+	return runeWeaponSimWith(t, BloodTalents)
+}
+
+// runeWeaponSimWith is runeWeaponSim with those talents.
+func runeWeaponSimWith(t *testing.T, talents string) (*core.Simulation, *DpsDeathknight) {
+	t.Helper()
+	player := parityPlayer(talents, "p3_blood", noRotation)
 	player.DistanceFromTarget = 30
 	sim := core.NewSim(&proto.RaidSimRequest{
 		Raid:       core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, nil),
@@ -280,21 +286,46 @@ func TestRuneWeaponCopiesTakeNoneOfTheKnightsPercents(t *testing.T) {
 }
 
 // runeWeaponCopies counts, by the weapon's spell, the DK's hits it copies that landed and that didn't while it was
-// out, and the weapon's casts of each. landedAoE counts his Pestilences and Blood Boils that landed then, others
-// what else the weapon cast.
+// out, and the weapon's casts of each. landedAoE counts his Pestilences and Blood Boils that landed then, afterKill
+// his landed hits from the one that ended a health fight on, others what else the weapon cast.
 type runeWeaponCopies struct {
 	landed, missed, copies map[*core.Spell]int
-	landedAoE              int
+	landedAoE, afterKill   int
 	others                 []string
 }
 
-// countRuneWeaponCopies fights that many targets on the rotation and counts what the weapon copied.
-func countRuneWeaponCopies(t *testing.T, apl string, targets int, seed int64) runeWeaponCopies {
-	t.Helper()
+// castSpell is an APL action casting the DK's spell of that id and tag.
+func castSpell(id, tag int) string {
+	return `{"action": {"castSpell": {"spellId": {"spellId": ` + strconv.Itoa(id) + `, "tag": ` + strconv.Itoa(tag) + `}}}}`
+}
+
+// runeWeaponRotation is an APL of those actions, in that priority.
+func runeWeaponRotation(actions ...string) string {
+	return `{"type": "TypeAPL", "priorityList": [` + strings.Join(actions, ", ") + `]}`
+}
+
+// Each casts the weapon, then its strikes and Death Coil. Obliterate goes ahead of Icy Touch and Plague Strike, which
+// would take its runes first.
+var (
+	runeWeaponStrikes = runeWeaponRotation(castSpell(49028, 0), castSpell(49909, 0), castSpell(49921, 1),
+		castSpell(49924, 1), castSpell(55262, 1), castSpell(49895, 0))
+	runeWeaponObliterates = runeWeaponRotation(castSpell(49028, 0), castSpell(51425, 1), castSpell(49909, 0),
+		castSpell(49921, 1), castSpell(55262, 1), castSpell(49895, 0))
+)
+
+// runeWeaponEncounter is that many default targets, each its own copy.
+func runeWeaponEncounter(targets int) *proto.Encounter {
 	encounter := core.MakeSingleTargetEncounter(0)
+	encounter.Targets = nil
 	for len(encounter.Targets) < targets {
-		encounter.Targets = append(encounter.Targets, googleProto.Clone(encounter.Targets[0]).(*proto.Target))
+		encounter.Targets = append(encounter.Targets, googleProto.Clone(core.NewDefaultTarget()).(*proto.Target))
 	}
+	return encounter
+}
+
+// countRuneWeaponCopies fights the encounter on the rotation and counts what the weapon copied.
+func countRuneWeaponCopies(t *testing.T, apl string, encounter *proto.Encounter, seed int64) runeWeaponCopies {
+	t.Helper()
 	player := parityPlayer(BloodTalents, "p3_blood", apl)
 	// in front, the targets parry his strikes
 	player.InFrontOfTarget = true
@@ -308,6 +339,7 @@ func countRuneWeaponCopies(t *testing.T, apl string, targets int, seed int64) ru
 	copyOf := map[*core.Spell]*core.Spell{
 		dk.IcyTouch:          weapon.IcyTouch,
 		dk.PlagueStrike:      weapon.PlagueStrike,
+		dk.Obliterate:        weapon.Obliterate,
 		dk.DeathStrike:       weapon.DeathStrike,
 		dk.BloodStrike:       weapon.BloodStrike,
 		dk.HeartStrike:       weapon.HeartStrike,
@@ -323,12 +355,14 @@ func countRuneWeaponCopies(t *testing.T, apl string, targets int, seed int64) ru
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Activate(sim)
 		},
-		OnSpellHitDealt: func(_ *core.Aura, _ *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+		OnSpellHitDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if !weapon.IsEnabled() || !drw.IsActive() {
 				return
 			}
 			if copied, ok := copyOf[spell]; ok {
-				if result.Landed() {
+				if enc := &sim.Encounter; result.Landed() && enc.EndFightAtHealth > 0 && enc.DamageTaken >= enc.EndFightAtHealth {
+					c.afterKill++
+				} else if result.Landed() {
 					c.landed[copied]++
 				} else {
 					c.missed[copied]++
@@ -372,46 +406,74 @@ func countRuneWeaponCopies(t *testing.T, apl string, targets int, seed int64) ru
 // was dodged. Pestilence and Blood Boil are area spells, which CheckProc only takes off a hit on the DK himself, so
 // it never copies them.
 func TestRuneWeaponCopiesEachLandedHit(t *testing.T) {
-	cast := func(id, tag int) string {
-		return `{"action": {"castSpell": {"spellId": {"spellId": ` + strconv.Itoa(id) + `, "tag": ` + strconv.Itoa(tag) + `}}}}`
-	}
-	apl := func(casts ...string) string {
-		return `{"type": "TypeAPL", "priorityList": [` + strings.Join(casts, ", ") + `]}`
-	}
-	strikes := apl(cast(49028, 0), cast(49909, 0), cast(49921, 1), cast(49924, 1), cast(55262, 1), cast(49895, 0))
-	areas := apl(cast(49028, 0), cast(49909, 0), cast(49921, 1), cast(50842, 0), cast(49941, 0), cast(49930, 1))
+	areas := runeWeaponRotation(castSpell(49028, 0), castSpell(49909, 0), castSpell(49921, 1), castSpell(50842, 0),
+		castSpell(49941, 0), castSpell(49930, 1))
 
-	missed, landed, landedAoE := 0, 0, 0
+	missed, landed, landedAoE, obliterated := 0, 0, 0, 0
 	for seed := int64(1); seed <= 3; seed++ {
-		for _, rotation := range []string{strikes, areas} {
-			c := countRuneWeaponCopies(t, rotation, 2, seed)
-			for spell := range c.copies {
-				if _, ok := c.landed[spell]; !ok {
-					c.landed[spell] = 0
-				}
-			}
+		for _, rotation := range []string{runeWeaponStrikes, areas, runeWeaponObliterates} {
+			c := checkRuneWeaponCopies(t, rotation, runeWeaponEncounter(2), seed)
 			for spell, n := range c.landed {
-				if c.copies[spell] != n {
-					t.Errorf("seed %d: the weapon cast %s %d times for %d landed hits of the DK's", seed, spell.ActionID,
-						c.copies[spell], n)
-				}
 				landed += n
+				if spell.ActionID.SpellID == 51425 {
+					obliterated += n
+				}
 			}
 			for _, n := range c.missed {
 				missed += n
 			}
 			landedAoE += c.landedAoE
-			if len(c.others) > 0 {
-				t.Errorf("seed %d: the weapon cast %v too", seed, c.others)
-			}
 		}
 	}
-	t.Logf("%d landed hits copied, %d missed ones not, %d area spells not", landed, missed, landedAoE)
+	t.Logf("%d landed hits copied, %d of them Obliterates, %d missed ones not, %d area spells not", landed, obliterated,
+		missed, landedAoE)
 	if missed == 0 {
 		t.Error("none of the DK's hits missed with the weapon out, so nothing shows a miss isn't copied")
 	}
 	if landedAoE == 0 {
 		t.Error("no Pestilence or Blood Boil of the DK's landed with the weapon out")
+	}
+	if obliterated == 0 {
+		t.Error("no Obliterate of the DK's landed with the weapon out")
+	}
+}
+
+// checkRuneWeaponCopies is countRuneWeaponCopies, failing each of the weapon's spells it cast other than once for
+// each landed hit of the DK's it copies.
+func checkRuneWeaponCopies(t *testing.T, apl string, encounter *proto.Encounter, seed int64) runeWeaponCopies {
+	t.Helper()
+	c := countRuneWeaponCopies(t, apl, encounter, seed)
+	for spell := range c.copies {
+		if _, ok := c.landed[spell]; !ok {
+			c.landed[spell] = 0
+		}
+	}
+	for spell, n := range c.landed {
+		if c.copies[spell] != n {
+			t.Errorf("seed %d: the weapon cast %s %d times for %d landed hits of the DK's", seed, spell.ActionID,
+				c.copies[spell], n)
+		}
+	}
+	if len(c.others) > 0 {
+		t.Errorf("seed %d: the weapon cast %v too", seed, c.others)
+	}
+	return c
+}
+
+// CheckProc wants the target alive after the hit, so the hit that ends a health fight isn't copied, nor any after it
+// on that tick.
+func TestRuneWeaponSkipsTheKillingBlow(t *testing.T) {
+	kills := 0
+	for seed := int64(1); seed <= 10; seed++ {
+		encounter := runeWeaponEncounter(1)
+		encounter.UseHealth = true
+		// dead well inside the weapon's 12 s
+		encounter.Targets[0].Stats[stats.Health] = 40000
+		kills += checkRuneWeaponCopies(t, runeWeaponStrikes, encounter, seed).afterKill
+	}
+	t.Logf("%d landed hits of the DK's on or after a kill", kills)
+	if kills == 0 {
+		t.Error("no strike of the DK's ended a fight with the weapon out")
 	}
 }
 
@@ -463,5 +525,134 @@ func TestDancingRuneWeaponLandsOnTheKnight(t *testing.T) {
 	}
 	if len(landed) != 1 || landed[0] != &dk.Unit {
 		t.Errorf("landed on %d units, want the DK alone", len(landed))
+	}
+}
+
+// Troll Beast Slaying is DONE_VERSUS. The weapon's strikes and white hits go through the DK's MeleeDamageBonusDone and
+// take it; its magic hits go through his SpellDamageBonusDone with a TotalMod of 1, which never reads it.
+func TestRuneWeaponMagicCopiesTakeNoVersusBonus(t *testing.T) {
+	dealt := func(mobType proto.MobType) map[core.ActionID]float64 {
+		damage := map[core.ActionID]float64{}
+		for _, rotation := range []string{runeWeaponStrikes, runeWeaponObliterates} {
+			encounter := runeWeaponEncounter(1)
+			encounter.Targets[0].MobType = mobType
+			player := parityPlayer(BloodTalents, "p3_blood", rotation)
+			player.Race = proto.Race_RaceTroll
+			sim := core.NewSim(&proto.RaidSimRequest{
+				Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
+				Encounter:  encounter,
+				SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 1},
+			})
+			sim.Reset()
+			sim.PrePull()
+			for !sim.Step() {
+			}
+			for _, spell := range sim.Raid.Parties[0].Players[0].(*DpsDeathknight).RuneWeapon.Spellbook {
+				for _, m := range spell.SpellMetrics {
+					damage[spell.ActionID] += m.TotalDamage
+				}
+			}
+			sim.Cleanup()
+		}
+		return damage
+	}
+	// the same rolls either way: the bonus moves no outcome
+	beast, demon := dealt(proto.MobType_MobTypeBeast), dealt(proto.MobType_MobTypeDemon)
+	magic := map[int32]bool{49909: true, 47632: true, 55095: true, 55078: true}
+	var seen []string
+	for id, d := range demon {
+		if d == 0 {
+			continue
+		}
+		want, slack := 1.05, 0.002
+		if magic[id.SpellID] {
+			want, slack = 1, 1e-9
+		}
+		seen = append(seen, id.String())
+		if got := beast[id] / d; math.Abs(got-want) > slack {
+			t.Errorf("the weapon's %s dealt %v to a beast and %v to a demon, %.4f times, want %v", id, beast[id], d, got, want)
+		}
+	}
+	t.Logf("compared %v", seen)
+	// Icy Touch, Death Coil, both diseases, Plague Strike, Obliterate, Heart Strike and the white swing
+	if len(seen) < 8 {
+		t.Errorf("the weapon dealt damage with only %v", seen)
+	}
+}
+
+// Spell::EffectWeaponDmg reads the caster's own auras, the weapon's: its Obliterate gets 12.5% for each of the weapon's
+// diseases on the target, nothing for the DK's, and takes the weapon's off whenever it isn't avoided.
+func TestRuneWeaponObliterateTakesItsOwnDiseases(t *testing.T) {
+	sim, dk := runeWeaponSim(t)
+	target := sim.GetTargetUnit(0)
+	w := dk.RuneWeapon
+	w.EnableWithTimeout(sim, w, time.Hour)
+	dk.FrostFeverSpell.Dot(target).Apply(sim)
+	dk.BloodPlagueSpell.Dot(target).Apply(sim)
+	diseases := []*core.Dot{w.FrostFeverSpell.Dot(target), w.BloodPlagueSpell.Dot(target)}
+
+	var hits [2][]float64
+	avoided := 0
+	m := &w.Obliterate.SpellMetrics[target.UnitIndex]
+	for i := range 1000 {
+		withDiseases := i%2 == 0
+		for _, dot := range diseases {
+			if withDiseases {
+				dot.Apply(sim)
+			} else {
+				dot.Deactivate(sim)
+			}
+		}
+		before := *m
+		w.Obliterate.Cast(sim, target)
+		missed := m.Misses+m.Dodges+m.Parries > before.Misses+before.Dodges+before.Parries
+		if missed {
+			avoided++
+		}
+		for _, dot := range diseases {
+			if withDiseases && dot.IsActive() != missed {
+				t.Fatalf("cast %d: the weapon's %s is up %v after an Obliterate avoided %v", i, dot.Spell.ActionID,
+					dot.IsActive(), missed)
+			}
+		}
+		if m.Hits > before.Hits {
+			hits[i%2] = append(hits[i%2], m.TotalDamage-before.TotalDamage)
+		}
+	}
+	mean := func(xs []float64) float64 {
+		sum := 0.0
+		for _, x := range xs {
+			sum += x
+		}
+		return sum / float64(len(xs))
+	}
+	t.Logf("%d and %d plain hits, %d avoided", len(hits[0]), len(hits[1]), avoided)
+	if got := mean(hits[0]) / mean(hits[1]); math.Abs(got-1.25) > 0.02 {
+		t.Errorf("with the weapon's two diseases its Obliterate hit %.4f times as hard as with only the DK's, want 1.25", got)
+	}
+}
+
+// CheckProc takes Mind Freeze too: it's in the DK's spellbook and isn't area, positive or a summon. The weapon's does
+// nothing the sim follows, but HandleProc still leaves his reach at 0.01, so his next Death Coil flies 1249 ms.
+func TestRuneWeaponCopiesMindFreeze(t *testing.T) {
+	// the sim only has Mind Freeze with Endless Winter's two points
+	sim, dk := runeWeaponSimWith(t, talentsWith(BloodTalents, 1, 11, '2'))
+	target := sim.GetTargetUnit(0)
+	if dk.MindFreezeSpell == nil {
+		t.Fatal("no Mind Freeze")
+	}
+	if !dk.DancingRuneWeapon.Cast(sim, target) {
+		t.Fatal("no Dancing Rune Weapon")
+	}
+	for until := sim.CurrentTime + 2*time.Second; sim.CurrentTime < until && !sim.Step(); {
+	}
+	if got := dk.DeathCoilDamage.TravelTime(); got != 1187*time.Millisecond {
+		t.Fatalf("the DK's Death Coil flies %v before the Mind Freeze, want 1187 ms", got)
+	}
+	if !dk.MindFreezeSpell.Cast(sim, target) {
+		t.Fatal("no Mind Freeze cast")
+	}
+	if got := dk.DeathCoilDamage.TravelTime(); got != 1249*time.Millisecond {
+		t.Errorf("the DK's Death Coil flies %v after a copied Mind Freeze, want 1249 ms", got)
 	}
 }
