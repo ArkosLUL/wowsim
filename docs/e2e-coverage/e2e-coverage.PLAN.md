@@ -5444,6 +5444,37 @@ Stage live (`tmp/ec-pet-fix9-live.md`), [ac] `62fb09c68`, worldserver at 60–78
   `prayer_of_mending.go`'s jump and the other target picks found; their tests and rows.
 - **Goldens:** TestBloodTank (Rune Strike); none for the rest; report each.
 
+#### As built
+
+Code stage (notes in `tmp/ec-class-fix10.md`), against [ac] at 62fb09c68. Verdicts, all fixed:
+- Rune Strike's queue: `ReplaceMHSwing` clears `RuneStrikeQueued` at the swing. A castable strike replaces the swing;
+  with 56817 gone (CheckCast reads it before the power) the swing is lost, a no-op spell (`RuneStrikeActionID` tag
+  3, no server data, metrics or logs); short of runic power it goes white. `TankDeathknight.Reset` clears the queue
+  too: `Unit::AttackStop` interrupts the melee spell when combat ends, where the base carried it into the next
+  iteration. `TestRuneStrikeQueueAtTheSwing`, `TestRuneStrikeQueueClearsOnReset`.
+- Heart Strike: the knight's branch takes `RoRTSBonus` and `WeaponBonusForDonePct` like Blood Strike, its chain hit
+  too. `TestHeartStrikeTakesRageOfRivendare`.
+- The weapon's diseases: `DrwFrostFever` and `DrwBloodPlague` carry the `FrostFever` and `BloodPlague` tags, which
+  only `RoRTSBonus` (unchanged) reads. The weapon's own ticks take neither talent (its `SpellDamageBonusDone` branch
+  hands TotalMod 1). `TestRageOfRivendareCountsTheRuneWeaponsDiseases`.
+- Prayer of Mending's jump (`prayerOfMendingJump`): the living, enabled unit missing the most whole health, not the
+  holder; a unit with no health bar counts as alive and full. A tie goes to the first in raid order (the server's
+  grid order is unknown), so with no one hurt the pick is the base's. `TestPrayerOfMendingJumpsToTheMostHealthMissing`.
+- Other target picks: Circle of Healing skips the dead and, past its 5 or 6 targets, stable-sorts by
+  `HealthPctOrderPred` (`circleOfHealingTargets`; it took the first n in raid order); Prayer of Healing's party and
+  Healing Stream Totem's tick (58761, party area) skip the dead. `TestCircleOfHealingHealsTheMostHurt`,
+  `TestPrayerOfHealingSkipsTheDead`, `TestHealingStreamTotemSkipsTheDead`. Chain Heal and the Abacus were done in
+  Z13; the other heals take an explicit or proc target.
+- Review: health above max (the sim doesn't cap it when max health drops; the server does) counts as full in the
+  jump and the Circle of Healing sort, where the jump's missing health underflowed. A case in each test.
+- Goldens: TestBloodTank only. The queue reset alone: BloodAggro dps -0.009%, tps -0.014%, about 0.1 more queue casts
+  a fight in the others. The swing rule on top moves only FrostPresence-Average (dps and tps -0.000%, a lost swing
+  now and then). Heart Strike, the tags and the heal picks move nothing.
+- Follow-ups: the queue's press needs 20 runic power (`Spell::prepare`'s CheckCast; `rune_strike.go`); Ancestral
+  Awakening heals the crit's target, where its script takes the living raid member lowest in health percent; Tundra
+  Stalker ranks 2 and 3 don't cover Blood Plague; the raid debuff Frost Fever gives no Tundra Stalker; Healing Stream
+  Totem skips party pets; a heal on a dead explicit target, and the APL multidot and multishield picks, go through.
+
 ### EC-TOOLS5 (Z15; golden-neutral; stages: code)
 
 - The Combat Reach picker (`combatReachPicker`, `ui/core/components/encounter_picker.ts`) sits in the target's

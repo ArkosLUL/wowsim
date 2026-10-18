@@ -39,14 +39,36 @@ func NewTankDeathknight(character *core.Character, options *proto.Player) *TankD
 
 	tankDk.Inputs.UnholyFrenzyTarget = dkOptions.Options.UnholyFrenzyTarget
 
+	// what's left of a swing whose queued Rune Strike fails for anything but runic power
+	lostSwing := tankDk.RegisterSpell(core.SpellConfig{
+		ActionID:     deathknight.RuneStrikeActionID.WithTag(3),
+		Flags:        core.SpellFlagNoServerData | core.SpellFlagNoMetrics | core.SpellFlagNoLogs | core.SpellFlagNoOnCastComplete,
+		ApplyEffects: func(_ *core.Simulation, _ *core.Unit, _ *core.Spell) {},
+	})
+
 	tankDk.EnableAutoAttacks(tankDk, core.AutoAttackOptions{
 		MainHand:       tankDk.WeaponFromMainHand(tankDk.DefaultMeleeCritMultiplier()),
 		OffHand:        tankDk.WeaponFromOffHand(tankDk.DefaultMeleeCritMultiplier()),
 		AutoSwingMelee: true,
+		// Unit::AttackerStateUpdate: the queued strike goes through CheckCast at the swing and is finished if
+		// that fails. Out of runic power the white swing still goes, but with 56817 gone the swing is lost.
 		ReplaceMHSwing: func(sim *core.Simulation, mhSwingSpell *core.Spell) *core.Spell {
-			if tankDk.RuneStrikeQueued && tankDk.RuneStrike.CanCast(sim, nil) {
+			if !tankDk.RuneStrikeQueued {
+				return mhSwingSpell
+			}
+			tankDk.RuneStrikeQueued = false
+			switch {
+			case tankDk.RuneStrike.CanCast(sim, nil):
 				return tankDk.RuneStrike
-			} else {
+			case !tankDk.RuneStrikeAura.IsActive():
+				if sim.Log != nil {
+					tankDk.Log(sim, "Rune Strike fails at the swing without its window, the swing is lost")
+				}
+				return lostSwing
+			default:
+				if sim.Log != nil {
+					tankDk.Log(sim, "Rune Strike fails at the swing without the runic power, the swing goes white")
+				}
 				return mhSwingSpell
 			}
 		},
@@ -75,4 +97,5 @@ func (dk *TankDeathknight) Reset(sim *core.Simulation) {
 
 	dk.Presence = deathknight.UnsetPresence
 	dk.Deathknight.PseudoStats.Stunned = false
+	dk.RuneStrikeQueued = false
 }

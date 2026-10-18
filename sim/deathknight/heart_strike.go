@@ -57,6 +57,9 @@ func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.
 			if isDrw {
 				// Rage of Rivendare and Tundra Stalker scale the flat bonus too
 				baseDamage = (baseDamage + dk.drwVersusAttackPowerBonus(spell, true)) * dk.RoRTSBonus(target)
+			} else {
+				baseDamage *= dk.RoRTSBonus(target)
+				baseDamage += spell.WeaponBonusForDonePct(target, dk.RoRTSBonus(target))
 			}
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

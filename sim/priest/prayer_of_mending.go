@@ -33,20 +33,7 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 			return
 		}
 
-		// Find ally with lowest % HP and is not the current mending target.
-		var newTarget *core.Unit
-		for _, raidUnit := range priest.Env.Raid.AllUnits {
-			// a pet that isn't out can't be picked
-			if raidUnit == target || !raidUnit.IsEnabled() {
-				continue
-			}
-
-			if newTarget == nil || (raidUnit.HasHealthBar() && newTarget.HasHealthBar() && raidUnit.CurrentHealthPercent() < newTarget.CurrentHealthPercent()) {
-				newTarget = raidUnit
-			}
-		}
-
-		if newTarget != nil {
+		if newTarget := prayerOfMendingJump(priest.Env.Raid.AllUnits, target); newTarget != nil {
 			pomAuras[newTarget.UnitIndex].Activate(sim)
 			// the jump is 41635, magic class like the first cast's 48111, though 48113 has none
 			priest.PrayerOfMending.LandOn(sim, newTarget)
@@ -125,4 +112,34 @@ func (priest *Priest) makePrayerOfMendingAura(target *core.Unit) *core.Aura {
 			}
 		},
 	})
+}
+
+// prayerOfMendingJump is Acore::MostHPMissingGroupInRange: the living raid member or pet missing the most health,
+// other than the holder. No positions in the sim, so everyone's in range. The server breaks a tie by grid order,
+// which the sim doesn't have, so the first in raid order wins.
+func prayerOfMendingJump(units []*core.Unit, holder *core.Unit) *core.Unit {
+	var next *core.Unit
+	var mostMissing uint32
+	for _, unit := range units {
+		// a pet that isn't out can't be picked
+		if unit == holder || !unit.IsEnabled() {
+			continue
+		}
+		// a unit with no health bar never takes damage
+		var missing uint32
+		if unit.HasHealthBar() {
+			cur, most := unit.CurrentHealth(), unit.MaxHealth()
+			if cur <= 0 {
+				continue
+			}
+			// health can sit above max after max health drops, where the server caps it
+			if cur < most {
+				missing = uint32(most) - uint32(cur)
+			}
+		}
+		if next == nil || missing > mostMissing {
+			next, mostMissing = unit, missing
+		}
+	}
+	return next
 }

@@ -263,6 +263,8 @@ func (dk *Deathknight) registerDrwFrostFever() {
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "DrwFrostFever",
+				// Tundra Stalker counts anyone's Frost Fever
+				Tag: "FrostFever",
 			},
 			NumberOfTicks: 5 + dk.Talents.Epidemic,
 			TickLength:    time.Second * 3,
@@ -307,6 +309,8 @@ func (dk *Deathknight) registerDrwBloodPlague() {
 		Dot: core.DotConfig{
 			Aura: core.Aura{
 				Label: "DrwBloodPlague",
+				// Rage of Rivendare counts anyone's Blood Plague
+				Tag: "BloodPlague",
 			},
 			NumberOfTicks: 5 + dk.Talents.Epidemic,
 			TickLength:    time.Second * 3,

@@ -50,8 +50,8 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 
 			for _, partyAgent := range party.PlayersAndPets {
 				partyTarget := &partyAgent.GetCharacter().Unit
-				// a pet that's away isn't in the world to be healed
-				if !partyTarget.IsEnabled() {
+				// a pet that's away isn't in the world to be healed, and SpellInfo::CheckTarget keeps the dead out
+				if !partyTarget.IsEnabled() || (partyTarget.HasHealthBar() && partyTarget.CurrentHealth() <= 0) {
 					continue
 				}
 				baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.HealingPower(partyTarget))
