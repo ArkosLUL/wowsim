@@ -67,13 +67,17 @@ func TestSpellModRecords(t *testing.T) {
 }
 
 // replayUncut is replaySpellMods without sweepRecut's paths, whose lines sit at the old step numbers. A listed
-// path that replays clean fails.
+// path with lines in this sweep that replays clean fails; one the sweep never probed has nothing to replay.
 func replayUncut(t *testing.T, paths []talentPath, steps map[int32]spellModStep, lines map[spellModKey]spellModLine,
 	drops []spellModDrop) spellModReport {
 
 	t.Helper()
 	dropsOf := func(keep func(path string) bool) []spellModDrop {
 		return slices.DeleteFunc(slices.Clone(drops), func(d spellModDrop) bool { return !keep(d.path) })
+	}
+	recorded := map[string]bool{}
+	for key := range lines {
+		recorded[key.path] = true
 	}
 	var rest []talentPath
 	for _, path := range paths {
@@ -82,7 +86,7 @@ func replayUncut(t *testing.T, paths []talentPath, steps map[int32]spellModStep,
 			continue
 		}
 		own := replaySpellMods([]talentPath{path}, steps, lines, dropsOf(func(p string) bool { return p == path.Name }))
-		if len(own.errors) == 0 {
+		if len(own.errors) == 0 && recorded[path.Name] {
 			t.Errorf("%s: its lines replay clean, so take it off sweepRecut", path.Name)
 		}
 		t.Logf("%s: left out until its rerun, %d of its checks don't fit the recut steps", path.Name, len(own.errors))

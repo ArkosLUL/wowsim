@@ -68,10 +68,12 @@ const (
 )
 
 // gargoyleSpotDistance is how far from the DK's target the gargoyle casts: 49206 puts it 3 yd off his front left
-// (TARGET_DEST_CASTER_FRONT_LEFT), him facing the target, and AttackStartCaster's 40 yd chase leaves it there.
+// (TARGET_DEST_CASTER_FRONT_LEFT) and 15 yd up (spell_dk_summon_gargoyle), him facing the target.
+// PointMovementGenerator::DoInitialize moves its straight drop 0.2 yd along that facing, and AttackStartCaster's
+// 40 yd chase leaves it there.
 func gargoyleSpotDistance(dkDistance float64) float64 {
-	const summonYards = 3
-	along, aside := summonYards*math.Cos(math.Pi/4), summonYards*math.Sin(math.Pi/4)
+	const summonYards, dropNudge = 3, 0.2
+	along, aside := summonYards*math.Cos(math.Pi/4)+dropNudge, summonYards*math.Sin(math.Pi/4)
 	return math.Hypot(dkDistance-along, aside)
 }
 

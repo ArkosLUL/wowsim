@@ -134,12 +134,8 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecDeathknight, {
 		const numTargets = player.sim.encounter.targets.length;
 		switch (talentTree) {
 			case 0: 
-				if (player.getSpecOptions().drwPestiApply || numTargets > 1) {
-					if (numTargets > 5) {
-						return Presets.BLOOD_PESTI_AOE_ROTATION_PRESET_DEFAULT.rotation.rotation!;
-					} else {
-						return Presets.BLOOD_DPS_ROTATION_PRESET_DEFAULT.rotation.rotation!;
-					}
+				if (numTargets > 5) {
+					return Presets.BLOOD_PESTI_AOE_ROTATION_PRESET_DEFAULT.rotation.rotation!;
 				} else {
 					return Presets.BLOOD_DPS_ROTATION_PRESET_DEFAULT.rotation.rotation!;
 				}
@@ -186,7 +182,6 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecDeathknight, {
 			DeathKnightInputs.SelfUnholyFrenzy,
 			DeathKnightInputs.StartingRunicPower,
 			DeathKnightInputs.PetUptime,
-			DeathKnightInputs.DrwPestiApply,
 			DeathKnightInputs.UseAMSInput,
 			DeathKnightInputs.AvgAMSSuccessRateInput,
 			DeathKnightInputs.AvgAMSHitInput,

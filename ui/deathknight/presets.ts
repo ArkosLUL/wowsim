@@ -201,21 +201,18 @@ export const DefaultUnholyOptions = DeathKnightOptions.create({
 	startingRunicPower: 0,
 	petUptime: 1,
 	unholyFrenzyTarget: UnitReference.create(),
-	drwPestiApply: true,
 });
 
 export const DefaultFrostOptions = DeathKnightOptions.create({
 	startingRunicPower: 0,
 	petUptime: 1,
 	unholyFrenzyTarget: UnitReference.create(),
-	drwPestiApply: true,
 });
 
 export const DefaultBloodOptions = DeathKnightOptions.create({
 	startingRunicPower: 0,
 	petUptime: 1,
 	unholyFrenzyTarget: UnitReference.create(),
-	drwPestiApply: true,
 });
 
 export const OtherDefaults = {

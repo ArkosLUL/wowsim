@@ -1,10 +1,6 @@
 import { Spec } from '../core/proto/common.js';
 import { UnitReference, UnitReference_Type as UnitType } from '../core/proto/common.js';
 
-import {
-	DeathknightMajorGlyph,
-} from '../core/proto/deathknight.js';
-
 import * as InputHelpers from '../core/components/input_helpers.js';
 import { Player } from '../core/player';
 import { EventID, TypedEvent } from '../core/typed_event';
@@ -44,14 +40,6 @@ export const PetUptime = InputHelpers.makeSpecOptionsNumberInput<Spec.SpecDeathk
 	labelTooltip: 'Percent of the fight duration for which your ghoul will be on target.',
 	percent: true,
 	showWhen: (player: Player<Spec.SpecDeathknight>) => player.getTalents().masterOfGhouls,
-});
-
-export const DrwPestiApply = InputHelpers.makeSpecOptionsBooleanInput<Spec.SpecDeathknight>({
-	fieldName: 'drwPestiApply',
-	label: 'DRW Pestilence Add',
-	labelTooltip: 'There is currently an interaction with DRW and pestilence where you can use pestilence to force DRW to apply diseases if they are already applied by the DK. It only works with Glyph of Disease and if there is an off target. This toggle forces the sim to assume there is an off target.',
-	showWhen: (player: Player<Spec.SpecDeathknight>) => player.getTalentTree() == 0 && (player.getGlyphs().major1 == DeathknightMajorGlyph.GlyphOfDisease || player.getGlyphs().major2 == DeathknightMajorGlyph.GlyphOfDisease || player.getGlyphs().major3 == DeathknightMajorGlyph.GlyphOfDisease),
-	changeEmitter: (player: Player<Spec.SpecDeathknight>) => TypedEvent.onAny([player.specOptionsChangeEmitter, player.rotationChangeEmitter, player.talentsChangeEmitter]),
 });
 
 export const UseAMSInput = InputHelpers.makeSpecOptionsBooleanInput<Spec.SpecDeathknight>({

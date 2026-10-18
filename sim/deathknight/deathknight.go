@@ -20,7 +20,6 @@ type DeathknightInputs struct {
 
 	StartingRunicPower float64
 	PetUptime          float64
-	DrwPestiApply      bool
 
 	// Rotation Vars
 	UseAMS            bool

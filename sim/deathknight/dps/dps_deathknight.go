@@ -34,7 +34,6 @@ func NewDpsDeathknight(character *core.Character, player *proto.Player) *DpsDeat
 		Deathknight: deathknight.NewDeathknight(character, deathknight.DeathknightInputs{
 			StartingRunicPower: dk.Options.StartingRunicPower,
 			PetUptime:          dk.Options.PetUptime,
-			DrwPestiApply:      dk.Options.DrwPestiApply,
 			IsDps:              true,
 
 			UseAMS:            dk.Options.UseAms,

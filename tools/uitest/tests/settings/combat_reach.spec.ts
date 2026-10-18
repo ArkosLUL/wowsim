@@ -4,7 +4,7 @@ import { RaidSimRequest } from '../../../../ui/core/proto/api';
 import { openSimTab } from '../lib/page';
 import { checkbox, numberInput, openSpec, reloadSim, setNumber } from './helpers';
 
-// the mage's Mirror Image is what reads the reach
+// a mage's Mirror Image reads the reach
 const SPEC = 'mage';
 const ITERATIONS = 50;
 

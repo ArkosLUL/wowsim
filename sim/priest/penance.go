@@ -68,6 +68,9 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 		ThreatMultiplier: 1,
 		ThreatSpellID:    tickSpellID,
 		NoThreatBonus:    true,
+		// each damage tick is a 53000 the channel casts at its target, a missile at 40 yd a second. The heal's
+		// 52985 flies too, but the sim has no distance to the unit it heals
+		MissileSpeed: core.TernaryFloat64(isHeal, 0, 40),
 
 		Dot: core.Ternary(!isHeal, core.DotConfig{
 			Aura: core.Aura{
@@ -82,9 +85,12 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseDamage := dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.SpellPower())
-				result := dot.Spell.CalcAndDealPeriodicDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
-				tickThreat.Hit(result)
-				tickThreat.Done(sim)
+				result := dot.Spell.CalcPeriodicDamage(sim, target, baseDamage, dot.Spell.OutcomeMagicHitAndCrit)
+				dot.Spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+					dot.Spell.DealPeriodicDamage(sim, result)
+					tickThreat.Hit(result)
+					tickThreat.Done(sim)
+				})
 			},
 		}, core.DotConfig{}),
 		Hot: core.Ternary(isHeal, core.DotConfig{

@@ -4954,6 +4954,11 @@ Code stage (notes `tmp/ec-core-fix10.md`; base `d61bbed61`, [ac] `62fb09c68`, of
 - Glyph of Prayer of Healing (fixed): bp from the heal's result on that target, none off a 0 heal; 56161's class
   mask 0, so multiplier 1 and aura 136 at the tick. `TestPrayerOfHealingGlyphHotComesOffTheHeal`.
 - Pet missile lead (confirmed, not done): a pet updates on the map update only and its AI casts after its event pass.
+- Same tick (cross-review, fixed): m_Events keys a hardcast at the tick before + 1 ms, a landing at go + flight, so a
+  player's hardcast due on a landing's tick completes first (`landingAction.land` runs `landDueCast`). Landings among
+  themselves still go in launch order, not go + flight.
+- Penance (cross-review, fixed): a damage tick lands after its 53000 bolt's flight (40 yd/s); the heal's 52985 still
+  lands at once (no distance to the healed unit).
 - Test `missile_landing_test.go`.
 
 Goldens (never promoted): Earth Shield and the glyph none. The landing moves 25 suites; Average-Default Fire +0.136%,
@@ -5027,8 +5032,9 @@ up to 1450% CPU; the worldserver restarted from outside at 12:46, not a crash). 
   pet's spells start off autocast (`Pet::addSpell`), so the e2e orders it like the Imp's.
 - Gargoyle: casts from 27.76 yd, not the sim's 27.96: `spell_dk_summon_gargoyle` raises it 15 yd and its straight
   drop is nudged 0.2 yd along the knight's facing (`PointMovementGenerator::DoInitialize`), about 10 ms of flight.
-  `gargoyleSpotDistance` (`summon_gargoyle.go`) isn't this item's, so it's a contract change request; golden-neutral
-  (a melee knight's Gargoyle Strike flies the 5 yd floor).
+  The cross-review put it in `gargoyleSpotDistance` (1312 ms); golden-neutral (a melee knight's Gargoyle Strike flies
+  the 5 yd floor). It also took out `drw_pesti_apply`'s input and uses; proto field 6 stays, deprecated, so saved
+  settings and fixtures that set it still parse.
 - Death Coil: reach 1.5 then 0.01, flights 1186–1200 then 1249–1284 ms (sim 1187, 1249). The weapon's copies fly
   1252–1381 ms from 30.02 yd; its first comes up near the dummy and flies to the knight (first copy from 14–16 yd).
 - Hunter pet stop (fixed): 11 of 14 approaches stop at R + r = 11.50, 2 at R, 1 gives the chase up. A pet drops an
@@ -5085,7 +5091,7 @@ Code stage (notes and the live plan in `tmp/ec-class-fix9-code.md`), against [ac
   (466, 467 and 480 over 400).
 - `replayUncut` (`spellmods_test.go`) failed a recut path with no lines in the sweep (the paladin paths in the
   cost-aura sweep). A guard (only a path with lines must not replay clean) passed the code stage; review reverted
-  it as outside the owned paths, and it's a contract change request. Harmless while `sweepRecut` is empty.
+  it as outside the owned paths; the cross-review applied it.
 - Goldens: TestBloodTank only. The 10 s window alone moves dps by +0.001 to +0.18% (BloodAggro); with the miss rule
   dps -0.29% (GenericBoss) to +0.82% (BloodAggro), tps -0.47% to +1.40%: about 1.2 more Rune Strikes, as many fewer
   white swings, and slightly fewer Death Coils.

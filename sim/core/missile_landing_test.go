@@ -88,6 +88,43 @@ func TestPlayerMissileLandsOnHisWorldTick(t *testing.T) {
 	}
 }
 
+// m_Events keys a player's hardcast at the tick before + 1 ms and a landing at its go + flight, so a hardcast
+// completing on a tick goes ahead of a landing due on it, even one launched before the cast began.
+func TestHardcastCompletesAheadOfALandingOnItsTick(t *testing.T) {
+	const flight = 825 * time.Millisecond
+	var missile, hardcast *Spell
+	var order []string
+	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+		a.DistanceFromTarget = 18
+		missile = &Spell{Unit: &a.Unit, MissileSpeed: 20}
+		config := castConfig(testSpellNoServerData, ms(500))
+		config.ApplyEffects = func(sim *Simulation, _ *Unit, _ *Spell) {
+			order = append(order, "hardcast at "+sim.CurrentTime.String())
+		}
+		hardcast = a.RegisterSpell(config)
+	})
+	sim.PrePull()
+
+	launch := sim.NextWorldTick(ms(1000))
+	lands := sim.NextWorldTick(launch + flight)
+	at(sim, launch, func(sim *Simulation) {
+		missile.WaitTravelTime(sim, func(sim *Simulation) {
+			order = append(order, "landing at "+sim.CurrentTime.String())
+		})
+	})
+	at(sim, lands-ms(500), func(sim *Simulation) {
+		if !hardcast.Cast(sim, a.CurrentTarget) {
+			t.Fatal("the hardcast failed")
+		}
+	})
+	runUntil(sim, lands+ms(100))
+
+	want := []string{"hardcast at " + lands.String(), "landing at " + lands.String()}
+	if len(order) != len(want) || order[0] != want[0] || order[1] != want[1] {
+		t.Errorf("went %v, want %v", order, want)
+	}
+}
+
 // With exact timing, and for anyone but a player, a missile lands its flight after the launch.
 func TestMissileLandsAfterItsFlightOffTheWorldTick(t *testing.T) {
 	const flight = 825 * time.Millisecond
