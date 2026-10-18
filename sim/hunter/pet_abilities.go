@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -598,13 +599,53 @@ func (hp *HunterPet) newPoisonSpit() *core.Spell {
 	})
 }
 
-// a hunter pet's reach before any scale aura: it stops at the pull and keeps that spot under Bloodlust
-const hunterPetReach = 1.5
+// hunterPetScales is Pet::GetNativeObjectScale for a pet of level 60 or more: its family's maxScale in
+// CreatureFamily.dbc, or 1 for the families the function pins there.
+var hunterPetScales = map[proto.Hunter_Options_PetType]float32{
+	proto.Hunter_Options_Bat:         0.63,
+	proto.Hunter_Options_Bear:        1,
+	proto.Hunter_Options_BirdOfPrey:  0.8,
+	proto.Hunter_Options_Boar:        1,
+	proto.Hunter_Options_CarrionBird: 0.9,
+	proto.Hunter_Options_Cat:         1.1,
+	proto.Hunter_Options_Chimaera:    1,
+	proto.Hunter_Options_CoreHound:   1,
+	proto.Hunter_Options_Crab:        1,
+	proto.Hunter_Options_Crocolisk:   0.6,
+	proto.Hunter_Options_Devilsaur:   1,
+	proto.Hunter_Options_Dragonhawk:  0.65,
+	proto.Hunter_Options_Gorilla:     1,
+	proto.Hunter_Options_Hyena:       0.9,
+	proto.Hunter_Options_Moth:        0.65,
+	proto.Hunter_Options_NetherRay:   1,
+	proto.Hunter_Options_Raptor:      0.8,
+	proto.Hunter_Options_Ravager:     0.9,
+	proto.Hunter_Options_Rhino:       1,
+	proto.Hunter_Options_Scorpid:     1,
+	proto.Hunter_Options_Serpent:     0.8,
+	proto.Hunter_Options_Silithid:    1,
+	proto.Hunter_Options_Spider:      1,
+	proto.Hunter_Options_SpiritBeast: 1.1,
+	proto.Hunter_Options_SporeBat:    0.9,
+	proto.Hunter_Options_Tallstrider: 0.8,
+	proto.Hunter_Options_Turtle:      1,
+	proto.Hunter_Options_WarpStalker: 1,
+	proto.Hunter_Options_Wasp:        1,
+	proto.Hunter_Options_WindSerpent: 1,
+	proto.Hunter_Options_Wolf:        1,
+	proto.Hunter_Options_Worm:        1,
+}
+
+// hunterPetReach is a pet's reach before any scale aura, DEFAULT_COMBAT_REACH times its family's scale
+// (Creature::SetObjectScale). It stops at the pull and keeps that spot under Bloodlust.
+func hunterPetReach(petType proto.Hunter_Options_PetType) float64 {
+	return 1.5 * float64(hunterPetScales[petType])
+}
 
 // standAtReachOf stands the pet where its chase mostly stops: PetAI's path to a spot at the target's reach comes back
 // incomplete, so DispatchSplineToPosition falls back to GetNearPoint2D's ring point, both reaches out from the centre.
 func (hp *HunterPet) standAtReachOf(target *core.Unit) {
-	hp.DistanceFromTarget = target.EnemyCombatReach + hunterPetReach
+	hp.DistanceFromTarget = target.EnemyCombatReach + hunterPetReach(hp.hunterOwner.Options.PetType)
 }
 
 func (hp *HunterPet) newRake() *core.Spell {

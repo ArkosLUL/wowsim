@@ -199,7 +199,8 @@ func TestRuneWeaponCreatureTypeAttackPower(t *testing.T) {
 	}
 }
 
-// A troll's Beast Slaying (DONE_VERSUS) is in the DK's bonus done, so it counts on the rune weapon's hits too.
+// A troll's Beast Slaying (DONE_VERSUS) is in the DK's melee bonus done, so it counts on the rune weapon's strikes and
+// white hits too.
 func TestRuneWeaponBeastSlaying(t *testing.T) {
 	player := parityPlayer(BloodTalents, "p3_blood", runeWeaponAPL)
 	player.Race = proto.Race_RaceTroll

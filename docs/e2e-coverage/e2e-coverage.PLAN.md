@@ -5380,6 +5380,50 @@ eight. Goldens as in the code stage; simval 1114 of 1114, the replays pass, and 
   `e2e/petfix9_test.go`; their tests and rows.
 - **Goldens:** TestBlood and TestBloodTank if a copy moves; none for the reach; report each.
 
+#### As built
+
+Stage code, re-measured on `36e678932` against [ac] `62fb09c68` and the live DB (SELECT); notes and the live plan in
+`tmp/ec-pet-fix9-code.md`. Verdicts:
+- Killing blow (fixed). Damage is dealt before the hit's procs (`Spell.cpp`, `Unit::AttackerStateUpdate`), so
+  `CheckProc`'s `IsAlive` drops the kill: `OnSpellHitDealt` copies nothing once a health fight's `DamageTaken` reaches
+  `EndFightAtHealth`. The sim has no per-target death, so in a multi-target health fight only the last blow counts.
+- Spellbook copies. Obliterate (fixed): the main hand's is copied to a new weapon Obliterate in
+  `dancing_rune_weapon.go`. `Spell::EffectWeaponDmg` reads the weapon's own auras: 12.5% per weapon disease, no T8
+  4-piece, and no Annihilation, so it takes the weapon's diseases off on any hit not missed, dodged or parried (launch
+  effects run only on `SPELL_MISS_NONE`). The DK's spell mods, Rage of Rivendare and Merciless Combat still reach it.
+  Mind Freeze (fixed): copied with no modelled effect, but `HandleProc` leaves the DK's reach at 0.01. Mark of Blood
+  isn't (the sim's deals no hit, and core keeps one mark per target); Strangulate and Chains of Ice aren't in the sim.
+- Magic copies' DONE_VERSUS (fixed): `Reset` keeps the DK's per-target multiplier (`ownerVersus`) in the weapon's attack
+  tables for strikes and white hits; `setCopyMultipliers(target)` divides it off every magic school, so a Plague Strike
+  copy's Blood Plague skips it too.
+- Hunter pet reach (fixed): `hunterPetReach(petType)` is 1.5 times `hunterPetScales`, `Pet::GetNativeObjectScale` from
+  level 60 (`CreatureFamily.dbc` maxScale, 1 for the 11 families it pins; `creaturefamily_dbc` empty): crocolisk 0.9,
+  serpent 1.2, cat 1.65. The pet's `ScaleBonus` starts at scale − 1, as `Unit::RecalculateObjectScale` adds scale
+  auras to the native scale. No flight moves: a spit flies its stop less its current reach, R − 1.5 × the aura bonus
+  for every family.
+
+Tests: `TestRuneWeaponSkipsTheKillingBlow`, `TestRuneWeaponMagicCopiesTakeNoVersusBonus`,
+`TestRuneWeaponObliterateTakesItsOwnDiseases`, `TestRuneWeaponCopiesMindFreeze`, an Obliterate rotation in
+`TestRuneWeaponCopiesEachLandedHit`; `TestHunterPetReachIsItsFamilysScale`, the stop spot and a 30% scale case in
+`TestSpitsFlyFromTheTargetsReach`. No drop or allowance entry is this item's.
+
+e2e (vetted, run in stage live), `e2e/petfix9_test.go`: `TestPetfix9HunterPetReach`, a Mangal Crocolisk (28002, 0.9)
+and an Emperor Cobra (28011, 1.2, Poison Spit 250 ms from its stop) against Bluff Behemoth 24894.
+
+Goldens (`dock.sh delta`): none, 37 of 37 unchanged. Killing blow: no health fight; Obliterate and Mind Freeze: no
+suite casts them with the weapon; versus: orc and human against demons; reach: flights cancel.
+
+Stage live (`tmp/ec-pet-fix9-live.md`), [ac] `62fb09c68`, worldserver at 60–78% CPU (playerbots): three runs of
+`TestPetfix9HunterPetReach`, the last two passing. No sim change.
+- Reach (confirmed): `UNIT_FIELD_COMBATREACH` 0.900 and 1.200 on every try. Each stop lands exactly at R + r or at R,
+  never between and never after a closer pass: crocolisk 7 of 9 at 10.90, serpent 2 of 7 at 11.20 (5 at R). With
+  EC-PET-FIX8's worm, 20 of 30 at R + r, so `standAtReachOf` keeps it; what picks R is open.
+- Poison Spit deals no direct hit, so the e2e now ends its flight at the aura going on the behemoth
+  (`SMSG_AURA_UPDATE`, sent at the behemoth's next update): 294–346 ms from R (floor((d − r) / 40) gives 220) and
+  388–426 ms from R + r (249), inside the window.
+- Poison Spit ticks 5 times, not the sim's 4: `SPELL_ATTR5_EXTRA_INITIAL_PERIOD` (`AuraEffect::CalculatePeriodic`)
+  ticks on apply. Outside this item's paths; a follow-up.
+
 ### EC-CLASS-FIX10 (Z14; changes goldens; stages: code)
 
 - Rune Strike's queue: in `Unit::AttackerStateUpdate`, a queued next-swing spell that fails `CheckCast` at the swing

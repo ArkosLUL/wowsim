@@ -42,6 +42,8 @@ func (hunter *Hunter) NewHunterPet() *HunterPet {
 	hp.SummonedAsPet = true
 	// spell_hun_generic_scaling's HandlePeriodic
 	hp.ScalingPeriod = 2 * time.Second
+	// Unit::RecalculateObjectScale adds the scale auras to the family's scale, so it goes in as an offset from 1
+	hp.PseudoStats.ScaleBonus = float64(hunterPetScales[hunter.Options.PetType]) - 1
 
 	// mod-spell-tweaks' 425790: immune to direct haste and slows, Bloodlust included; its own melee
 	// swing speed tracks the owner's ranged speed instead (hunters carry their haste there).
