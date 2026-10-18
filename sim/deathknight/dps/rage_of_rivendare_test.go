@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
-	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 // Every rank of Rage of Rivendare and Tundra Stalker has Heart Strike in its class mask, so the knight's own strike
@@ -68,21 +67,4 @@ func TestRageOfRivendareCountsTheRuneWeaponsDiseases(t *testing.T) {
 			}
 		})
 	}
-}
-
-// runeWeaponSimWith is runeWeaponSim with other talents.
-func runeWeaponSimWith(t *testing.T, talents string) (*core.Simulation, *DpsDeathknight) {
-	t.Helper()
-	player := parityPlayer(talents, "p3_blood", noRotation)
-	player.DistanceFromTarget = 30
-	sim := core.NewSim(&proto.RaidSimRequest{
-		Raid:       core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, nil),
-		Encounter:  core.MakeSingleTargetEncounter(0),
-		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 1},
-	})
-	sim.Reset()
-	sim.PrePull()
-	for sim.CurrentTime < 0 && !sim.Step() {
-	}
-	return sim, sim.Raid.Parties[0].Players[0].(*DpsDeathknight)
 }
