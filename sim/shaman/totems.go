@@ -79,6 +79,10 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 		// the totem's periodic trigger casts 58761, whose value the script heals for
 		Tick: core.SpellEffect{Effect: 0, FromSpellID: 58761, Min: 25, Max: 25},
 		OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
+			// 58761's party search goes through SpellInfo::CheckTarget, which keeps the dead out
+			if target.HasHealthBar() && target.CurrentHealth() <= 0 {
+				return
+			}
 			hsHeal.Cast(sim, target)
 		},
 	}
