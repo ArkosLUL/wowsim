@@ -74,6 +74,16 @@ import P4BisUnholyGear from './gear_sets/p4_bis_unholy.gear.json';
 export const P4_BIS_UNHOLY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_unholy, P4BisUnholyGear, { talentTree: 2 });
 import P5BisUnholyGear from './gear_sets/p5_bis_unholy.gear.json';
 export const P5_BIS_UNHOLY_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_unholy, P5BisUnholyGear, { talentTree: 2 });
+import P1BisUnholy2hGear from './gear_sets/p1_bis_unholy_2h.gear.json';
+export const P1_BIS_UNHOLY_2H_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p1_bis_unholy_2h, P1BisUnholy2hGear, { talentTree: 2 });
+import P2BisUnholy2hGear from './gear_sets/p2_bis_unholy_2h.gear.json';
+export const P2_BIS_UNHOLY_2H_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p2_bis_unholy_2h, P2BisUnholy2hGear, { talentTree: 2 });
+import P3BisUnholy2hGear from './gear_sets/p3_bis_unholy_2h.gear.json';
+export const P3_BIS_UNHOLY_2H_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p3_bis_unholy_2h, P3BisUnholy2hGear, { talentTree: 2 });
+import P4BisUnholy2hGear from './gear_sets/p4_bis_unholy_2h.gear.json';
+export const P4_BIS_UNHOLY_2H_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p4_bis_unholy_2h, P4BisUnholy2hGear, { talentTree: 2 });
+import P5BisUnholy2hGear from './gear_sets/p5_bis_unholy_2h.gear.json';
+export const P5_BIS_UNHOLY_2H_PRESET = PresetUtils.makeBisPresetGear(BisPresets.p5_bis_unholy_2h, P5BisUnholy2hGear, { talentTree: 2 });
 
 import BloodDPSApl from './apls/blood_dps.apl.json';
 export const BLOOD_DPS_ROTATION_PRESET_DEFAULT = PresetUtils.makePresetAPLRotation('Blood DPS', BloodDPSApl, { talentTree: 0 });

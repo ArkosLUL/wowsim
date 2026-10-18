@@ -239,6 +239,11 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecDeathknight, {
 			Presets.P3_BIS_UNHOLY_PRESET,
 			Presets.P4_BIS_UNHOLY_PRESET,
 			Presets.P5_BIS_UNHOLY_PRESET,
+			Presets.P1_BIS_UNHOLY_2H_PRESET,
+			Presets.P2_BIS_UNHOLY_2H_PRESET,
+			Presets.P3_BIS_UNHOLY_2H_PRESET,
+			Presets.P4_BIS_UNHOLY_2H_PRESET,
+			Presets.P5_BIS_UNHOLY_2H_PRESET,
 		],
 	},
 

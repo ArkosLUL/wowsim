@@ -20,8 +20,8 @@ python tools/presetgen/gen.py run --out "$SCRATCH/check" --effort Normal --build
 ```
 
 - `--builds`: comma-separated build keys from `BUILDS` in `gen.py` (`dk_blood`, `hunter_mm`, ...), or
-  `all` (default). One build is one talent tree: a tree with several named gear presets today (Frost
-  DK, Fire Mage, ...) gets its own key; a spec with one tree today is the spec's own key.
+  `all` (default, 30 builds). One build is one talent tree: a tree with several named gear presets
+  today (Frost DK, Fire Mage, ...) gets its own key; a spec with one tree today is the spec's own key.
 - `--phases`: e.g. `1-5` or `1,5` (default `1-5`). Phase 1 seeds from the tree's Classic P1 gear file
   (`BUILDS`' seed, so it stays in the repo); a later phase from the previous phase's pick at the same
   effort in `summary.jsonl`, else from that phase's gear file.
@@ -35,10 +35,17 @@ python tools/presetgen/gen.py run --out "$SCRATCH/check" --effort Normal --build
 Each build starts from a fresh page: cleared `localStorage`, a reload, the tree's talent preset (so
 talents and glyphs come from the app's own registered preset, never hand-typed), an Alliance race
 (the spec's default race if that's already Alliance, else the first Alliance race the class allows),
-and all 11 professions (the pool builder gates profession-locked items, enchants and gems on the
+all 11 professions (the pool builder gates profession-locked items, enchants and gems on the
 player's own professions, so a real 2-profession character would hide options a raider with any
-profession could get gear for). Buffs, debuffs, consumes, sources and the racial search stay the
+profession could get gear for), and party Heroic Presence (a Draenei in every party, whatever racial
+traits the pick ends up with). Other buffs, debuffs, consumes, sources and the racial search stay the
 spec's own defaults; a tank's boss and survival/threat slider are the tab's own per-phase defaults.
+
+A build can also set:
+- `filters`: gear picker filters laid over the page's, which the optimizer's pool goes through too.
+  Unholy 2H turns off one-handers, so its main hand pool holds only two-handers and its off hand none.
+- `pet_talents`: a hunter pet talent preset to click for the current pet. BM clicks "Beast Mastery",
+  since the page's default pet talents aren't BM's.
 
 ## Output
 
@@ -70,17 +77,19 @@ installs `window.__pg`:
 
 | Helper | Does |
 |---|---|
-| `clickPreset(tabId, name)` | clicks a named preset chip on the Talents or Gear tab |
+| `clickPreset(tabId, name)` | clicks a named preset chip in the Talents or Gear tab's right panel (the hunter's pet presets on the left reuse names like "Beast Mastery") |
+| `clickPetPreset(name)` | clicks a named pet talent preset for the current pet's family |
 | `exportSettings()` / `importSettings(json)` | the header's JSON export/import modal, for the full `IndividualSimSettings` in one round trip |
 | `setupOptimizer(phase, effort)` | sets the optimizer tab's content phase and effort selects |
 | `runOptimizer(timeoutMs)` | clicks Optimize and waits for it to settle |
 | `exportResult(phase)` | clicks the result's Export JSON button and returns the download |
 
 `gen.py` exports the page's default settings once per build (after clicking the tree's talent
-preset), then for each phase sets `player.race`, `player.professions` and `player.equipment.items`
-(the phase's seed) in that JSON and reimports it, so buffs, debuffs, consumes and encounter settings
-always come from the page's own defaults, untouched. It reads the optimizer's result the same way the
-tab's own "Export JSON" button would.
+preset and any pet preset), then for each phase sets `player.race`, `player.professions`,
+`partyBuffs.heroicPresence`, the build's `filters` and `player.equipment.items` (the phase's seed) in
+that JSON and reimports it, so the other buffs, debuffs, consumes and encounter settings always come
+from the page's own defaults, untouched. It reads the optimizer's result the same way the tab's own
+"Export JSON" button would.
 
 Both modals' Bootstrap-animated close sometimes never finishes on a scripted click (`hide.bs.modal`
 not settling), so `page.js` drops the modal DOM directly instead of waiting on it.
@@ -93,7 +102,7 @@ until the new one settles, so `runOptimizer` reads completion off the Cancel but
 
 At Quick, one phase runs 20-50 s wall time for most specs against a lightly loaded dev server, up to
 ~200 s for a tank (rarely longer: one Quick tank phase took 74 s at a 144 s budget and needed a
-resumed run at a larger `--quick-timeout`). A full pass over all 28 builds' 5 phases took about
+resumed run at a larger `--quick-timeout`). A full pass over 28 builds' 5 phases took about
 80 min. A `Normal` phase runs 45-115 s for a DPS spec and 90-335 s for a tank (Blood DK the slowest),
 so a full `Normal` pass should take about 4-5 h.
 

@@ -264,6 +264,11 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHunter, {
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
+			Presets.P1_BIS_BM_PRESET,
+			Presets.P2_BIS_BM_PRESET,
+			Presets.P3_BIS_BM_PRESET,
+			Presets.P4_BIS_BM_PRESET,
+			Presets.P5_BIS_BM_PRESET,
 			Presets.P1_BIS_MM_PRESET,
 			Presets.P2_BIS_MM_PRESET,
 			Presets.P3_BIS_MM_PRESET,
