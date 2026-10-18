@@ -1,9 +1,9 @@
 """Drives the individual sim's BiS Optimizer tab in headless Chrome to generate the phase 1-5 gear
 presets for BIS-presets (bis-optimizer.PLAN.md), one spec/tree "build" at a time.
 
-Each build: fresh page state, its tree's talent preset, an Alliance race, all 11 professions, and the
-tree's current P1 gear preset as the phase 1 seed. Each later phase seeds from the previous phase's
-pick. Writes ui/<spec>/gear_sets/p{N}_bis[_<tree>].gear.json, its entry in that directory's
+Each build: fresh page state, its tree's talent preset, an Alliance race, all 11 professions, party
+Heroic Presence, and the tree's current P1 gear preset as the phase 1 seed. Each later phase seeds
+from the previous phase's pick. Writes ui/<spec>/gear_sets/p{N}_bis[_<tree>].gear.json, its entry in that directory's
 bis_presets.json (the preset's label and tooltip data), and a summary line per (build, phase) to
 --out/summary.jsonl, resumable: a (build, phase, effort) already in the summary is skipped.
 
@@ -34,7 +34,10 @@ ALL_PROFESSIONS = [
 
 # talents: the talent preset's name on the Talents tab. seed: the P1 seed, a file in ui/<dir>/gear_sets.
 # tree: the gear file's suffix, None for a single-tree spec. name: the preset chip's label after "P<N> ".
-Build = namedtuple('Build', 'key dir label talents seed tree name tank race')
+# filters: gear picker filters laid over the page's, which the optimizer's pool goes through too.
+# pet_talents: the hunter pet talent preset to click, else the page's default pet talents.
+Build = namedtuple('Build', 'key dir label talents seed tree name tank race filters pet_talents',
+                   defaults=(None, None))
 BUILDS = [
     Build('dk_blood', 'deathknight', 'DK Blood', 'Blood DPS', 'p1_blood.gear.json', 'blood', 'Blood', False, 'RaceDraenei'),
     Build('dk_frost', 'deathknight', 'DK Frost', 'Frost BL', 'p1_frost.gear.json', 'frost', 'Frost', False, 'RaceDraenei'),
@@ -64,6 +67,10 @@ BUILDS = [
     Build('protection_warrior', 'protection_warrior', 'Protection Warrior', 'Standard', 'p1_balanced.gear.json', None, 'Protection', True, 'RaceDraenei'),
     Build('shadow_priest', 'shadow_priest', 'Shadow Priest', 'Standard', 'p1.gear.json', None, 'Shadow', False, 'RaceDraenei'),
     Build('smite_priest', 'smite_priest', 'Smite Priest', 'Standard', 'p1.gear.json', None, 'Smite', False, 'RaceDraenei'),
+    Build('hunter_bm', 'hunter', 'Hunter BM', 'Beast Mastery', 'p1_mm.gear.json', 'bm', 'BM', False, 'RaceDraenei',
+          pet_talents='Beast Mastery'),
+    Build('dk_unholy_2h', 'deathknight', 'DK Unholy 2H', 'Unholy 2H', 'p1_uh_2h.gear.json', 'unholy_2h', 'Unholy 2H', False, 'RaceDraenei',
+          filters={'oneHandedWeapons': False}),
 ]
 BUILDS_BY_KEY = {b.key: b for b in BUILDS}
 
@@ -293,11 +300,17 @@ class Driver:
             raise CdpError(f'{build.label}: page.js did not install')
         b.eval("__pg.until(() => __pg.ready())", timeout=30)
         b.eval(f"__pg.clickPreset('talents-tab', {json.dumps(build.talents)})", timeout=30)
+        if build.pet_talents:
+            b.eval(f"__pg.clickPetPreset({json.dumps(build.pet_talents)})", timeout=30)
         settings = b.eval('__pg.exportSettings()', timeout=30)
         if not isinstance(settings, dict):
             raise CdpError(f'{build.label}: exportSettings did not return JSON: {str(settings)[:300]}')
         settings['player']['race'] = build.race
         settings['player']['professions'] = list(ALL_PROFESSIONS)
+        # a Draenei in every party, whatever racial traits the pick ends up with
+        settings.setdefault('partyBuffs', {})['heroicPresence'] = True
+        if build.filters:
+            settings.setdefault('settings', {}).setdefault('filters', {}).update(build.filters)
         return settings
 
     def apply_settings(self, settings, seed_items):

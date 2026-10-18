@@ -24,12 +24,12 @@ python tools/statweights/merge.py --out tmp/statweights
 ```
 
 - All three take `--out` (required), `--builds` (comma-separated keys of `BUILDS` in presetgen's
-  `gen.py`, default all 28, tanks included) and `--phases` (default `1-5`, or e.g. `1,5`).
+  `gen.py`, default all 30, tanks included) and `--phases` (default `1-5`, or e.g. `1,5`).
 - `capture.py` also takes `--base` (the sim server, default `http://localhost:3333`) and `--port`
   (Chrome's debugging port, default 9361). A Chrome already on the port is reused, so pick one no
   other run holds.
 - The runner also takes `--iterations` (default 10000) and `--seed` (default 424242).
-- All 28 builds' 5 phases: capture about 45 min, the runner 40 to 75 min on 16 cores, depending on
+- 28 builds' 5 phases: capture about 45 min, the runner 40 to 75 min on 16 cores, depending on
   what else is running. Run both in the background and `tail` `capture.log` and `run.log`.
 - Another seed without recapturing: copy `settings/` into a new work directory and run there. Seed
   independent runs at least `--iterations` apart ([testing](../../docs/guide/testing.md#go)).
@@ -65,8 +65,8 @@ In `--out`:
   `TypeAuto` without the APL the page resolves (it sims Fire Mage at 0 DPS). UI defaults live only
   in TS, so there is no browser-free path.
   - Each build's page opens as presetgen opens it: cleared storage, the tree's talent preset, an
-    Alliance race, all professions. Buffs, debuffs, consumes, encounter and rotation stay the page's
-    defaults.
+    Alliance race, all professions, party Heroic Presence, the build's pet talent preset. Other buffs,
+    debuffs, consumes, encounter and rotation stay the page's defaults.
   - Per phase, capture imports the gear from `ui/<dir>/gear_sets/p<N>_bis[_<tree>].gear.json` and
     the racial traits from that directory's `bis_presets.json`. It saves the last `computeStats`
     request the page posts to its worker, once none has followed for 2 s.

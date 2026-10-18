@@ -76,11 +76,24 @@
 		return 'ok';
 	};
 
-	// clicks a named preset chip on the Talents or Gear tab (SavedDataManager's '.saved-data-set-name')
+	// clicks a named preset chip on the Talents or Gear tab (SavedDataManager's '.saved-data-set-name').
+	// Only the tab's right panel: the hunter's pet talent presets on the left reuse names like "Beast Mastery".
 	pg.clickPreset = async (tabId, name) => {
 		pg.tab(tabId);
 		const link = await pg.until(() =>
-			[...document.querySelectorAll(`#${tabId} .saved-data-set-name`)].find(a => a.textContent.trim() === name),
+			[...document.querySelectorAll(`#${tabId} .tab-panel-right .saved-data-set-name`)].find(a => a.textContent.trim() === name),
+		);
+		link.click();
+		await pg.sleep(200);
+		return 'ok';
+	};
+
+	// clicks a named hunter pet talent preset, in the picker for the current pet's family
+	pg.clickPetPreset = async name => {
+		const picker = await pg.until(() => document.querySelector('#talents-tab .hunter-pet-talents-picker'));
+		const family = ['cunning', 'ferocity', 'tenacity'].find(f => picker.classList.contains(f));
+		const link = await pg.until(() =>
+			[...picker.querySelectorAll(`.hunter-pet-talents-${family} .saved-data-set-name`)].find(a => a.textContent.trim() === name),
 		);
 		link.click();
 		await pg.sleep(200);

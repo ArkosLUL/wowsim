@@ -20,6 +20,7 @@ gets its own `<effort>-<id>` branch and worktree off `integration` ([int]).
 | ui-tests (loop) | Playwright regression tests for the sim UI, and the bugs they find | loop | [docs/ui-tests/](../ui-tests/) | `tools/uitest/`; per wave, the UI paths its PLAN assigns |
 | bis-tooltip-addon | Serve the BiS optimizer's results to an in-game tooltip addon through a server module | `bis-tooltip-addon`; [sim] | [docs/bis-tooltip-addon/](../bis-tooltip-addon/) | `tools/database/acbis/`, `tools/database/azerothcore/bisdata*.go`, `[ac]/modules/mod-bis-tooltip` (own repo), the BisTooltipAC addon (own repo) |
 | stat-weights | Wide-step stat slopes per build and phase at the BiS presets, for the playerbots' stat weights | `stat-weights`; [sim] | [statweights README](../../tools/statweights/README.md) | `tools/statweights/` |
+| dps-rankings | DPS tier list page: every DPS build's DPS per content phase in one standard scenario | `dps-rankings`; `wowsimwotlk-rankings` | [docs/dps-rankings/](../dps-rankings/) | `tools/rankings/`, `ui/rankings/`, `ui/scss/sims/rankings/`, `assets/rankings/`, `tools/uitest/tests/rankings/` |
 | dev-guide | This guide's structure | `master` | `docs/dev-guide/` | `CLAUDE.md`, `CONTEXT.md`, `docs/guide/`, `docs/adr/`. Every effort adds content |
 
 ## Dependencies
@@ -34,8 +35,9 @@ the cross-effort ties:
 - **BiS tooltip:** `acbis` reads acraid's roster JSON v1 and the optimizer's `OptimizerResult` and
   `OptimizerBatchExport`, so a change to either format needs `acbis` updated.
 - **Stat weights:** `tools/statweights` imports presetgen's `gen.py` and reads the `p*_bis*` presets and
-  `bis_presets.json`. Playerbots' `apps/simweights/generate_weights.py` reads its `weights.json`, so a
-  change to the `gen.py` API or that layout needs the other side updated.
+  `bis_presets.json`. Playerbots' `apps/simweights/generate_weights.py` reads its `weights.json` and
+  maps or skips every `BUILDS` key (an unknown one fails the run), so a change to the `gen.py` API, the
+  `BUILDS` keys or that layout needs the other side updated.
 - **Shared files:** bis-optimizer edits `proto/api.proto`, `sim/core/database.go`, `sim/web/main.go`,
   `sim/wasm/main.go`, `ui/worker/*`, `ui/core/worker_pool.ts`, `ui/core/sim.ts`, `gear_picker.tsx`,
   `player.ts`, `individual_sim_ui.ts`, `gear_tab.ts` and `saved_data_manager.ts`.
