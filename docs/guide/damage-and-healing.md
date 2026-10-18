@@ -61,8 +61,14 @@ rounding, caps and crit damage. Everything else the server does differently is i
 
 - **Whole heals:** a heal is whole after the caster's multiplier, the target's and the crit, one dealt outside
   a spell through `GainHealing`.
-- A heal's target search skips a unit at 0 health (`SpellInfo::CheckTarget`); in the sim only Chain Heal's
-  jumps and Althor's Abacus check it.
+- A heal's target search skips a unit at 0 health (`SpellInfo::CheckTarget`): Chain Heal's jumps
+  ([caster mechanics](caster-mechanics.md#shaman)), Althor's Abacus, Prayer of Healing's party, Healing Stream
+  Totem's tick (58761) and the picks below. A unit without a health bar counts as alive and full, and so does
+  health above max, which the sim doesn't cap when max health drops, where the server does.
+  - Prayer of Mending's jump (`prayerOfMendingJump`; `Acore::MostHPMissingGroupInRange`) takes the unit missing
+    the most whole health, not the holder, a tie to the first in raid order.
+  - Circle of Healing, past its 5 or 6 targets, keeps the lowest health percents (`circleOfHealingTargets`;
+    `HealthPctOrderPred`), a stable sort, so a tie keeps raid order.
 - **Healing done percents** (aura 136: Focused Power, Blessed Resilience, Purification, Avenging Wrath,
   Divinity; `Unit.AddHealingDonePct`) reach a hot at each tick, after its whole amount:
   `int32(float32(amount) × the caster's float32 AddPct chain at that tick)` (`sim/core/healing_done.go`;
@@ -72,7 +78,9 @@ rounding, caps and crit damage. Everything else the server does differently is i
     direct heal with no damage class (an item's) takes none (`SpellHealingBonusDone` returns early).
   - Earth Shield's charge is whole at each step (`spell_sha_earth_shield`; `sim/shaman/heals.go`): 49284's
     healing bonus with Purification in float32, truncated, then the glyph's 20% of it, then Improved Shields'
-    percent of what the bonuses added over the base, each truncated. 379 ignores caster modifiers.
+    percent of what the bonuses added over the base, each truncated. 379 ignores caster modifiers but crits off
+    the shaman, its original caster; Tidal Mastery's crit reaches it only at ranks 4 and 5, whose
+    class mask lists it.
   - The priest T10 2-piece's 70772 ticks `int32(Flash Heal × 33%) / 3` three times
     (`spell_pri_t10_heal_2p_bonus`; `blessedHealingTick`), then takes only aura 136 and the target's healing
     taken.

@@ -48,12 +48,12 @@ and every test's run line.
   - `TestEcCore6WorldTick`: the world ticks' lengths off `.server info`
     ([update timing](spell-data-and-timing.md#update-timing)).
   - `TestEcCore6MissileReach`: a caster's distance from the fight dummy and its combat reach
-    ([missiles](spell-data-and-timing.md#server-data)).
+    ([missiles](missiles.md#flight-and-reach)).
   - `TestEcClass6…`: the rage and energy a miss takes ([miss cost](class-mechanics.md#miss-cost)), a summon's
     casts and unsummon by world update (`.simval trace`), the spelldump's `critCapable`.
   - `TestEcCore8…`: the healing taken terms on another bot and on a pet, Ancestral Awakening
     ([healing](damage-and-healing.md#healing)), a missile's flight under Bloodlust
-    ([missiles](spell-data-and-timing.md#server-data)).
+    ([missiles](missiles.md#flight-and-reach)).
   - `TestEcTools3…`: a creature's swing against a tick on one update, and the execute phase's start, against
     mobs that swing back ([update timing](spell-data-and-timing.md#update-timing)).
 

@@ -1,8 +1,9 @@
 # Tank modeling
 
-What the BiS optimizer's tank runs fight and how they score (`ui/core/optimizer/pool_builder.ts`,
-`sim/encounters/optimizer_tank_boss.go`, `sim/optimizer/{objective,caps,api}.go`). The tank suites' goldens use
-the melee-only `GenericBossTarget` instead, with Patchwerk's numbers.
+What the BiS optimizer's tank runs fight and how they score, and every run's stat caps
+(`ui/core/optimizer/pool_builder.ts`, `sim/encounters/optimizer_tank_boss.go`,
+`sim/optimizer/{objective,caps,api}.go`). The tank suites' goldens use the melee-only `GenericBossTarget`
+instead, with Patchwerk's numbers.
 
 ## The boss
 
@@ -169,7 +170,19 @@ resolves as the page builds a request) and no raid buffs, so that tank only auto
 Requests and exports hold the roster: they go under the gitignored `tmp/`, which the container can read,
 and are deleted afterwards, never committed.
 
-## Hit floor
+## Stat caps
+
+Unless `disable_stat_caps` is set ("Respect hit, expertise and haste caps" unticked), `dpsCapFloors`
+(`caps.go`) sets the caps before the pool compiles, each bisected on the sheet so talents, racials and the run's
+buffs count: melee get hit and expertise floors, hunters a hit floor and a haste ceiling, casters a spell hit
+floor and a haste ceiling, tanks the hit floor below.
+
+- The haste ceiling is the rating at which a caster's GCD reaches its 1 s floor, or a hunter's Steady Shot casts
+  in 1 s. It's a hard rule, a floor's mirror (`RuleCeiling`): verify, the gem check and neighborhood adoptions
+  keep it, and a seed over it is broken. Haste past it can still pay (a caster whose casts stay above 1 s), so
+  the search's penalty alone doesn't hold it.
+- Where nothing meets every cap, `closestToCaps` keeps the loadout missing them by the least rating, each cap
+  relaxed only back to what the settings set themselves, and the run warns.
 
 A tank run's only cap floor is melee hit (`capRoleTank` in `caps.go`): enough to bring `PhysicalMissChance` to
 0, bisected on the sheet so talents and racials count, 262 rating bare. No expertise floor. It stays there by

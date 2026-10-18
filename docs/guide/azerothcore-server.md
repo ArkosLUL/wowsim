@@ -12,6 +12,9 @@ The live server: where it runs, how to reach it, what's installed. For table and
   - SQL changes only go in `data/sql/updates/pending_db_*`
   - plans go in `.agents/plans/`
   - credit upstream authors
+- Auditing an upstream merge into [ac]: `git log --no-merges <old>..<merge>` misses what the merge commit itself
+  adds, such as `data/sql/updates/pending_db_world/` files. Diff the merge against its second parent
+  (`git diff <merge>^2 <merge>`) or list those files too.
 - Containers, from [ac]'s docker compose:
 
   | Container | Details |

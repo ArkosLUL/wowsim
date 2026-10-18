@@ -77,15 +77,19 @@ The files: [sim architecture](sim-architecture.md#classes-items-encounters).
 
 - A summon's reach is `Unit.BaseCombatReach` (0 means 1.5, a pet's) × its scale: a guardian's is its
   model's `creature_model_info.CombatReach`, a 0 there loaded as 1.5 (the timed Water Elemental's 0.85, model
-  525). How a reach moves a missile: [spell data and timing](spell-data-and-timing.md#server-data).
+  525). How a reach moves a missile: [missiles](missiles.md#flight-and-reach).
 - The Imp and the Water Elemental cast from their follow spot (`Pet.FollowSpotDistance`): their reach plus
   `PET_FOLLOW_DIST` 2 off the owner's left, him facing the target; PetAI's chase leaves a caster there while
   the target is in range. The Gargoyle casts from its summon spot, 3 yd off the DK's front left, its straight
   drop from 15 yd up nudged 0.2 yd along his facing (`PointMovementGenerator::DoInitialize`;
   `gargoyleSpotDistance`): 27.76 yd from a target 30 yd off the DK. The Rune Weapon casts from the DK's spot.
-- A hunter pet's spits fly from the target's reach plus the pet's unscaled 1.5 (`standAtReachOf`): PetAI's path
-  to the spot behind mostly comes back incomplete, so it walks to `GetNearPoint2D`'s ring point, both reaches
-  out. It keeps that spot under Bloodlust.
+- A hunter pet's reach is 1.5 × its family's scale (`hunterPetReach`; `Pet::GetNativeObjectScale` from level
+  60: CreatureFamily.dbc's maxScale, 1 for the families it pins), so its `ScaleBonus` starts at that scale − 1
+  and a scale aura adds to it: a crocolisk's 0.9, a serpent's 1.2.
+- A hunter pet stops at the target's reach plus its own before any scale aura (`standAtReachOf`), and keeps that
+  spot under Bloodlust: PetAI's path to the spot behind mostly comes back incomplete, so it walks to
+  `GetNearPoint2D`'s ring point, both reaches out. Live, about a third of stops land at the target's reach
+  alone instead, when the first path works; the sim keeps the ring point.
 - Not modelled: the Rune Weapon's run-in from 2 yd in front of the target; a timed Water Elemental summoned
   while something attacks the mage casting from its spawn spot; a caster pet moving when its owner stands
   past its spell's range.
@@ -119,7 +123,7 @@ Fire Elemental lives and Mirror Image summons, `pets_casts.jsonl`, against both 
   - The corpse goes at the first update 30 s in and takes a Frostbolt in the air with it.
   - An image comes up beside its mage and casts from where it stands (`MirrorImage.closeIn`). Its ranges add
     both reaches: its own 1.5, every mage race's models' (`mirrorImageReach`), and the
-    [target's](spell-data-and-timing.md#server-data). The yards below are at the boss dummy's 2.5; another
+    [target's](missiles.md#flight-and-reach). The yards below are at the boss dummy's 2.5; another
     target reach moves each by the difference (`targetReachOver`).
     - Fire Blast from 24 yd (20 + reaches) on fails at its start (`Spell::CheckRange`), and its event is put
       back anyway.
@@ -142,14 +146,25 @@ Fire Elemental lives and Mirror Image summons, `pets_casts.jsonl`, against both 
   uncontrollable (SummonProperties 208), so no Bloodlust.
   - A spell copies only off a landed hit (49028's default hit mask), once for each target it lands on, at that
     target (`OnSpellHitDealt`, `copyOf`), Heart Strike's chain hit too. Never an area spell: `CheckProc` takes
-    one only when its target is the DK, so Pestilence and Blood Boil aren't copied.
+    one only when its target is the DK, so Pestilence and Blood Boil aren't copied. Never a killing blow:
+    `CheckProc` wants the target alive after the hit, and with no per-target death in the sim that's the blow
+    ending a health fight.
+  - Mind Freeze copies with nothing modelled but the reach below. It rolls spell hit (47528 is magic class), so a
+    miss isn't copied.
+  - Obliterate copies as the weapon's own (`registerDrwObliterateSpell`). `Spell::EffectWeaponDmg` reads the
+    weapon's auras: 12.5% a weapon disease, no T8 4-piece, and the diseases taken off on a hit not missed, dodged
+    or parried, with no Annihilation to keep them, before his Rage of Rivendare and Tundra Stalker read the
+    target. His spell mods and Merciless Combat reach it. The same lookup leaves the Death Strike copy without
+    Glyph of Death Strike, the Blood and Heart Strike copies without the T8 4-piece, and Plague Strike's without
+    its glyph.
   - A strike copy rolls his own main hand with his percents inside (`DrwWeaponDamage`), normalized for Blood,
     Heart, Death and Plague Strike, not Rune Strike, and takes his Rage of Rivendare or Tundra Stalker
     (`RoRTSBonus`): his `MeleeDamageBonusDone` scales the whole hit.
-  - A magic copy (Icy Touch, Death Coil, the diseases) takes none of his percents, only spell mods and the
-    weapon's own percents halved (`castCopy`, `setCopyMultipliers`): `Unit::SpellDamageBonusDone`'s entry-27893
+  - A magic copy (Icy Touch, Death Coil, the diseases) takes none of his percents, DONE_VERSUS included
+    (`ownerVersus`, divided off each magic school per target), only spell mods and the weapon's own percents
+    halved (`castCopy`, `setCopyMultipliers`): `Unit::SpellDamageBonusDone`'s entry-27893
     branch passes TotalMod one argument early. Its AP part takes his Impurity (`getImpurityBonus`).
-  - After each spell copy the DK's reach is 0.01 until his scale next changes (`Unit.SetCombatReach`), so his
+  - After each spell copy, Mind Freeze's too, the DK's reach is 0.01 until his scale next changes (`Unit.SetCombatReach`), so his
     missiles fly the whole distance (Death Coil).
   - It makes no threat: `UNIT_FLAG_NON_ATTACKABLE` keeps its threat ref on the target offline, and 49028's
     redirect to the DK never runs (`SpellInfoCorrections` zeroes the effect it hooks). Its spells have

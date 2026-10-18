@@ -52,6 +52,8 @@ pets and guardians in [pets](pets.md).
 - **Force of Nature** casts 33831, inside Clearcasting's mask.
 - **Nature's Swiftness** makes instant what its aura's class mask covers (`Spell.AffectedByAuraEffect`): heals and
   Rebirth, not Starfire.
+- **Elune's Wrath** (64823, the Balance T8 4-piece) makes Starfire instant and goes with the Starfire it made
+  instant, not one already casting as it came up (`PROC_ATTR_REQ_SPELLMOD`; `sim/druid/insect_swarm.go`).
 - **Survival Instincts** is [bonus health](class-mechanics.md#bonus-health).
 - The Feral Tank's automatic rotation is its default APL, whose `autocastOtherCooldowns` casts Survival
   Instincts, Frenzied Regeneration and Barkskin.
@@ -104,6 +106,10 @@ pets and guardians in [pets](pets.md).
 - **Master of Elements** refunds 10% a point of the truncated base cost on any fire or frost crit, whatever the cast
   paid; **Burnout** burns apart. Each at most once per 8 ms (spell_proc -29074, -44449), so a crit on several targets
   refunds once.
+- **Combustion** (`spell_mage_combustion`): each landed fire hit queues a stack for the mage's next tick, a 1 ms
+  event (`sim.QueueSpellEvent`), dropped if Combustion has gone, so a cast's hits roll without each other's
+  stacks and a hardcast completing on that tick goes first. Only a crit takes a charge, at once. Stacks cap at
+  28682's 10.
 - **Blizzard**'s tick (42938) is a proc: only `CAN_PROC_FROM_PROCS` auras take it.
 - **Pyroblast's DoT** with Empowered Fire:
   - Its ticks crit whatever the switches (aura 286 on the talent is `spell_dbc` data), at the cast's crit
@@ -127,11 +133,13 @@ pets and guardians in [pets](pets.md).
 
 - **Penance:** Mental Agility's mask leaves it out. Its damage tick takes 0.1905 of spell power, and Searing
   Light and Twin Disciplines multiply, as the heal's four talents do. 53007 and its channel can't miss; each tick
-  rolls its own hit. A damage tick is a 53000 bolt at 40 yd/s: rolled at the tick, dealt after its flight
-  (`sim/priest/penance.go`; a KeepSim allowance on 53007's speed). The heal's 52985 flies too, but the sim has no
-  distance to the healed unit, so it lands at once.
-- **Circle of Healing**, **Prayer of Healing** and **Prayer of Mending**'s bounce skip a pet that isn't out:
-  their search finds only units in the world.
+  rolls its own hit.
+  - 53007 is a channel with no duration: it casts from its `SpellEvent` on the press's world tick, and the
+    script's channel (53003, or 52988 at a friend) from its own on the next, firing the first bolt
+    (`penanceChannelStart`, `sim.QueueSpellEvent`).
+  - Each bolt, 53000 or the heal's 52985, is a missile at 40 yd/s, rolled at the tick and dealt after its
+    flight (`sim/priest/penance.go`; a KeepSim allowance on 53007's speed), a heal's to a friend or the priest
+    as [missiles](missiles.md#flight-and-reach) give it.
 - **Silent Resolve** cuts holy and arcane threat ([threat](threat.md)), so not Mind Blast's.
 - **Improved Devouring Plague**'s burst comes off the applied aura (`Aura::HandleAuraSpecificMods`), so a
   resisted cast has none. It counts the dot's `GetTotalTicks`: 8 on a new dot without `ShadowDotHaste`. A

@@ -45,6 +45,17 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 - **Blood Tap** readies a rune only for a blood-slot death rune on cooldown, or with both plain blood runes down;
   a death rune talent takes over the tapped slot.
 - **Dirge** covers Obliterate.
+- **Obliterate** takes the diseases at its launch, which only a hit not missed, dodged or parried gets
+  (`Spell::EffectWeaponDmg`; `obliterateOutcome`): unless Annihilation keeps them, it takes every disease of his,
+  Crypt Fever or Ebon Plague too (`takeDiseases`), and only then do Rage of Rivendare and Tundra Stalker read the
+  target. The disease count comes before. Rime procs only off a landed hit. The Threat of Thassarian off-hand
+  strike goes after the main hand's launch, counts what's left and rolls its own Annihilation.
+- **Heart Strike** takes Rage of Rivendare and Tundra Stalker (`RoRTSBonus`) like Blood Strike, its chain hit
+  too. Both talents count the Rune Weapon's diseases, as the server takes any caster's: `DrwFrostFever` and
+  `DrwBloodPlague` carry the `FrostFever` and `BloodPlague` tags.
+- **Threat of Thassarian**'s off-hand Plague Strike is always 66216 (fixed bonus 62):
+  `spell_dk_threat_of_thassarian` looks its rank up from 66216, which `spell_ranks` doesn't chain (the off-hand
+  chain starts at 59133). The other off-hand strikes find their rank.
 - **Blood Presence**'s heal (63611: 4%, Improved Blood Presence 2% a point in the other presences) comes from
   swings, own casts, dot ticks, `NOT_A_PROC` triggered spells and an on-use item's damage, which
   `Player::CastItemUseSpell` casts untriggered (`onUseItemDamage`: the explosives, Pyro Rocket, Gnomish
@@ -62,6 +73,10 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   nothing.
 - **Rune Strike**'s window (56817, `RuneStrikeAura`) lasts 10 s with one charge, which only a landed main-hand
   strike takes (spell_proc's default hit mask): a miss keeps the window.
+  - The press needs the window and 20 runic power (`Spell::prepare`'s CheckCast) and queues the strike for the
+    next main-hand swing, which clears the queue (`runeStrikeAtSwing`): a castable strike replaces the swing;
+    with the window gone the swing is lost, as CheckCast reads the aura before the power; short of runic power
+    it goes white. Combat's end clears it too (`Unit::AttackStop`; `TankDeathknight.Reset`).
 - **Icebound Fortitude:** 30 + int32((full defense skill − 400) × 0.15) percent, at least 40 with the glyph,
   uncapped. From 467 over 400 it's 100% or more and every hit is 0: aura 87's `AddPct` takes the taken
   multiplier to 0 or below, and `MeleeDamageBonusTaken` and `SpellDamageBonusTaken` clamp at 0. The sim scales

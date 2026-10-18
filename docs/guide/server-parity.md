@@ -111,6 +111,10 @@ class by simval.
   overshoot less 250 ms, at most 2250; death runes go first to a base type owed, then blood, unholy, frost. A
   refundable spell missing its main target gives no runic power, puts its runes on a 1.5 s cooldown with death
   runes kept, and takes a runic power cost's [miss cost](class-mechanics.md#miss-cost).
+- **Exclusive auras** of equal amount in a single-aura category (`keepsEqualAura`, `sim/core/exclusive_effect.go`;
+  `Unit::IsHighestExclusiveAuraEffect`): of two spells' the longer full duration stays, a permanent one longest;
+  the new one wins a tie, and always against its own spell. Time left doesn't count. The server reads the new
+  spell's DBC duration, the sim its configured one, so a glyph or combo points changing it can differ.
 - **Power Infusion and Arcane Power** share group 1123 with no common aura type: the one cast last removes the
   other.
 - **Armor debuffs:** Sunder ×5 (debuff 58567, not ability 47467) and Expose Armor don't stack. Faerie

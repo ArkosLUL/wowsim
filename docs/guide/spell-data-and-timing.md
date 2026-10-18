@@ -1,7 +1,7 @@
 # Spell data and timing
 
-How the sim applies the server's spell data and update timing. The rest of where the server differs is in
-[server parity](server-parity.md).
+How the sim applies the server's spell data and update timing. A missile's flight and landing are in
+[missiles](missiles.md), the rest of where the server differs in [server parity](server-parity.md).
 
 ## Server data
 
@@ -24,8 +24,9 @@ spell is only as right as its id.
   - A pet's or guardian's spell takes its owner's spell mods (auras 107/108) where the class mask matches
     (`Unit::GetSpellModOwner`), charged ones too except on a guardian's cast time. The owner's other auras
     don't reach it, e.g. school crit (71) or a meta gem's crit damage (163).
-  - A physical strike's fixed bonus takes its hand's TOTAL_PCT, 0.5 in the off hand; other schools don't
-    (`Spell::EffectWeaponDmg`). The sim's helpers: `sim/core/weapon_strike.go` and
+  - A physical strike's fixed bonus takes its hand's TOTAL_PCT, 0.5 in the off hand, where a death knight's,
+    flat mods included, is doubled first: the DBC already halves Threat of Thassarian's (`offHandStrikeFixed`).
+    Other schools take neither (`Spell::EffectWeaponDmg`). The sim's helpers: `sim/core/weapon_strike.go` and
     `sim/{deathknight,rogue,warrior}/weapon_strikes.go`.
   - Damage a script hands over (`CastCustomSpell`) is dealt exactly, with no roll.
   - Below its MaxLevel, a spell's spell power part scales by (SpellLevel + 6) / level, at most 1
@@ -39,20 +40,6 @@ spell is only as right as its id.
   only triggers the real one (totems, Faerie Fire (Feral), Typhoon). The wrapper's
   flags are not the damage's, so those entries keep the sim's values until the class's P7 item moves
   the damage to the real id. When a suite moves for a spell you didn't touch, look here first.
-- Missiles roll hit, crit and damage at launch (`Spell::DoAllEffectOnLaunchTarget`) and deal it on landing, in
-  whole ms. The flight is the distance less the caster's reach, at least 5 yd (`Spell::AddUnitTarget`;
-  `Spell.TravelTime`): `GetDistance` takes off the caster's object size only, never the target's. The reach
-  is 1.5 for a player, a pet's or guardian's [its own](pets.md#reach-and-position), times the scale
-  (`Unit.combatReach()`, `PseudoStats.ScaleBonus`): Bloodlust and Heroism carry `SPELL_AURA_MOD_SCALE` 30%, so
-  under them a player's is 1.95, and a speed 24 missile at 18 yd flies 668 ms, not 687. A script writing the
-  reach holds until the scale next changes (`Unit.SetCombatReach`). The sim waits it out only where the
-  closure calls `spell.WaitTravelTime`, or `spell.DealDamageAfterTravel` for a landing that only deals the
-  result, over `DistanceFromTarget`: 0 for a pet that doesn't cast from a spot of its own, so its missiles wait
-  the 5 yd floor.
-- A target's combat reach is `Target.combat_reach` (`proto/common.proto`; "Combat Reach" in the advanced
-  target picker), unset the boss dummy's 2.5 (model 27510, `core.BossDummyCombatReach`), read as
-  `Unit.EnemyCombatReach`. Ranges add both reaches (`Spell::GetMinMaxRange`); only Mirror Image's ranges
-  ([pets](pets.md#guardian-ais)) and a hunter pet's spot ([pets](pets.md#reach-and-position)) read it.
 
 ## Update timing
 
@@ -100,15 +87,6 @@ exact, which is what unit tests want. Outside the fight every update takes the m
   so the fire mages' goldens move with both settings.
 - Swings, Auto Shot and hardcast landings land on the caster's next tick. A swing restarts its timer from the
   tick it landed on, losing the overshoot: up to a world tick for a player, a map update for a pet.
-- A player's missile lands on his first world tick at or after its flight's start plus the flight
-  (`Spell.landsAt`; the server re-plans its `SpellEvent`). The flight starts on the first world tick at or after
-  the launch, or the one after when launched in his own update (`sim.updating`: Auto Shot, a dot tick) or a
-  caster event (`sim.eventPass`: a landing, a `DelayedPeriodicApplier` action, a hardcast's completion bar its
-  own missile). A non-player's, a totem spell's (`CastFromAnotherUnit`), and any on exact timing land at launch
-  plus the flight.
-- A player's hardcast due on a landing's tick completes first (`landingAction.land` runs `landDueCast`):
-  `m_Events` keys it at the tick before + 1 ms, the landing at go + flight. Landings among themselves go in
-  launch order, not go + flight.
 - Auras and dots tick and expire on the grid of what counts them down: the unit they sit on, a channel's
   caster, or the map update for an area dot from a dynamic object, totem or trap (effects 27, 28, 105).
 - An aura expires at its own time (`Simulation.Step`), ahead of anything queued for then but what
@@ -122,7 +100,7 @@ exact, which is what unit tests want. Outside the fight every update takes the m
 - A creature's own update runs its due hardcast landing, then the auras on it, then its AI's instant cast and
   its swing (`Creature::Update`): the landing still finds an aura running out on that update
   (`Unit.landDueCast`), and the cast or swing comes behind the ticks due with it (`target_ai.go`,
-  `WeaponAttack.swing`). Its missiles in flight keep their queue order.
+  `WeaponAttack.swing`). Its landings keep their queue order against those auras.
 - A periodic action with `PeriodicActionOptions.Owner` is one of that unit's periodic ticks: on its first
   update after each period, the remainder carried, ahead of a player's expiries, and an aura it puts on counts
   from that update (Prey on the Weak's check).
@@ -141,6 +119,10 @@ exact, which is what unit tests want. Outside the fight every update takes the m
     `Unit.DurationThroughLastTick`.
 - A dot stops at max duration / amplitude ticks (`AuraEffect::Update`, `GetTotalTicks`; `Dot.TotalTicks`), its
   next tick owed until a refresh: `Dot.Rollover`, `Refresh` and `Activate` restart the count.
+  - With `SPELL_ATTR5_EXTRA_INITIAL_PERIOD` a new aura ticks as it goes on, one tick more in all; a refresh
+    doesn't. `core.Dot` doesn't read the attribute: each such spell ticks on apply itself (`Dot.TickOnce`, or
+    `TickImmediately` for Killing Spree's periodic action): Bladestorm, Death and Decay, Explosive Shot,
+    Penance, Poison Spit.
   - A dot arms its last tick action again once nothing queued can run it (`Dot.spareTick`), even under its own
     running tick, so a tick tells it was re-armed by `tickArmings`, never by `tickAction == pa`.
   - Lengthen a running aura with `Aura.AddDuration`, a script's `SetDuration(GetDuration() + extra)`: the time
@@ -162,6 +144,8 @@ exact, which is what unit tests want. Outside the fight every update takes the m
   - Any other hit reads the current clock, as a hardcast's landing does: a missile's (a Hot Streak
     Pyroblast) or one off a tick, a swing or an aura's end (Living Bomb's explosion). Ignite tells them apart
     with `SpellResult.DealtWithItsCast`.
+- An extra attack (Hand of Justice, Sword Specialization) is a plain swing: it never takes a queued melee spell
+  such as Heroic Strike or Rune Strike (`Unit::AttackerStateUpdate`'s `extra`).
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - At the pull, and when auto attacks restart (breaking stealth), a ready off hand starts half the main hand's
