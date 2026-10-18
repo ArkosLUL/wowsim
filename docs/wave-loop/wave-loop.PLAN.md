@@ -181,17 +181,17 @@ chain waits for Z12.
 
 ## Current wave
 
-- Wave: BIS-GEM-SIM (bis-optimizer PLAN), landed. Base `6007155a8`; runs `wf_b5a7b2c1-34d` (code stage and review)
-  and `wf_06535cc2-e43` (review of the picks-stage fixes), args `.wave-loop\waveGEM-build.py`; picks and fixes ran as
-  plain agents; notes and reports `.wave-loop\bis-gem-sim-tmp`, `gem-run1`, `gem-run2`. `86968b184` regenerated the
-  server defaults (`DungeonScale.env` raised raid boss health 1.2 to 1.3; no golden moves). `int-check.sh` runs
-  tests with `-timeout 40m`. Next (the user's call, 2026-10-17): the BiS chain (Deferred, below; the old pass in `.wave-loop\bis-chain\bis` is dropped, it reruns
-  fresh), then Z13 (Z12's follow-ups, specs in the e2e-coverage PLAN).
-  Z12 base `9a5d8fb6a`, runs `wf_661e4362-520` (code stages) and `wf_ce509f13-550` (the live stages one at a time,
-  then their reviews; the specs want an idle host). Live stages stay short: the user finds hours of recordings not
-  worth it (2026-10-16).
-  The server runs mod-sim-validation's C++ as `86f62a3` (image 2026-10-13 20:46 local); `command` lacks the
-  `simval trace` help row (the DB import didn't run; the command works).
+- Wave: Z13 (e2e-coverage PLAN; the user's call, 2026-10-18: before the BiS chain), running. Base `d61bbed61`
+  (master's docs commit fast-forwarded in); run `wf_6395e35a-086` (offline stages in parallel, live stages one at a
+  time, then reviews), transcript `~\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-…\subagents\workflows\wf_6395e35a-086`;
+  args `.wave-loop\waveZ13-build.py`, rules `waveZ13-shared.md`; worktrees
+  `wowsimwotlk-wi-ec-{core-fix10,pet-fix8,class-fix9,tools4}`. Next: the BiS chain (Deferred, below; reruns fresh).
+  BIS-GEM-SIM landed (`a4d680625`; notes `.wave-loop\bis-gem-sim-tmp`); `86968b184` set raid boss health 1.3.
+  Z12 base `9a5d8fb6a`, runs `wf_661e4362-520` and `wf_ce509f13-550`. Live stages stay short: the user finds hours
+  of recordings not worth it (2026-10-16).
+  The server runs [ac] `62fb09c68`: upstream merged, 338 commits over `3d89793c7` (image 2026-10-17 23:41 local, DB
+  import ran, `simval trace` row present). Committed records predate it; a later item audits the merge's
+  sim-relevant changes and recaptures the spelldump. No wholesale `gen_serverdata` until then.
   Z12's reports: `.wave-loop\z12-run1\*.json`, `z12-run2\*.json` and `xreview.md`; item notes
   `.wave-loop\{ec-core-fix9,ec-pet-fix7,ec-class-fix8,bis-tank-health}-tmp`. Briefs to copy: `waveZ12-build.py`
   (run1|run2), `waveZ12-run2.js` (the sequential live run), `waveZ12-xreview-brief.md`, `waveZ12-picks-brief.md`,
@@ -201,7 +201,7 @@ chain waits for Z12.
   Another session's `wotlk-bisdata` container can load most cores: `sim/optimizer` then passes Go's 10-minute test
   timeout in `int-check.sh`; rerun it alone with `-timeout 40m`.
   Proto numbers taken: `ServerSettings` 9, `Target` 24, `UnitMetrics` 22, `OptimizerMetrics` 7.
-  Server: [ac] `3d89793c7`, mod-spell-tweaks `9bf5c75`; the module's HEAD `771b8e8`.
+  Server: mod-spell-tweaks `9bf5c75`; mod-sim-validation C++ `86f62a3`, HEAD `771b8e8`.
   Prod runs Z6's `e5a289570`, without Z7 to Z12; `wowsims-wotlk:rollback-x` is X's `25cb9dddc`. A sim page left
   open across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto
   mode refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
