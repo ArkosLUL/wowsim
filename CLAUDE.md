@@ -22,9 +22,9 @@ Paths used across the docs:
   owned paths ([workstreams](docs/guide/workstreams.md)). Sessions run concurrently: check
   `git branch --show-current` right before committing.
 - Phase loop, run from this session as orchestrator: a subagent implements and verifies, a fresh one
-  reviews, fixes and re-verifies, all uncommitted; then stop. Only on the user's "commit and merge", which
-  never skips the review: commit on the effort branch, then `git merge --ff-only` into `master`. Push only
-  when asked ([workflow](docs/guide/workflow.md)). Loop-driven efforts follow the
+  reviews, fixes and re-verifies; then land it without waiting for the user: commit on the effort branch
+  and in any sibling repo the phase changed, then `git merge --ff-only` into `master`. Never skip the
+  review; push only when asked ([workflow](docs/guide/workflow.md)). Loop-driven efforts follow the
   [wave-loop RUNBOOK](docs/wave-loop/wave-loop.RUNBOOK.md) instead.
 - Verification tooling that proves useful (harnesses, e2e, cross-checks) moves out of scratch, next to the
   code it tests, with a run command in its README.
