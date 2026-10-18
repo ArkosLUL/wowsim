@@ -803,6 +803,10 @@ func init() {
 						// the sim keeps no health for a target dummy
 						pct := 1.0
 						if unit.HasHealthBar() && unit.MaxHealth() > 0 {
+							// SpellInfo::CheckTarget keeps the dead out of the search
+							if unit.CurrentHealth() <= 0 {
+								continue
+							}
 							pct = unit.CurrentHealthPercent()
 						}
 						if pct < lowest {
@@ -811,6 +815,9 @@ func init() {
 						} else if pct == lowest {
 							eligibleUnits = append(eligibleUnits, unit)
 						}
+					}
+					if len(eligibleUnits) == 0 {
+						return
 					}
 					randIndex := int(math.Floor(sim.RandomFloat("Althor's Abacus") * float64(len(eligibleUnits))))
 					healTarget := eligibleUnits[randIndex]

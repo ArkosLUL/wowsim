@@ -4990,6 +4990,42 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix7-tmp\`.
   paladin paths' records; their drops, `sweepRecut` entries and rows.
 - **Goldens:** TestBloodTank (Rune Strike); none for Divinity, the dead units or Icebound Fortitude; report each.
 
+#### As built
+
+Code stage (notes and the live plan in `tmp/ec-class-fix9-code.md`), against [ac] at 62fb09c68. Verdicts, all fixed:
+- Rune Strike: `RuneStrikeAura` lasts 10 s. 56817's `spell_proc` row (phase hit, hit mask 0) takes its charge only on
+  the default done hit mask (normal, crit, absorb), so a missed strike keeps the window: the main-hand strike ends it
+  only when it lands. `TestRuneStrikeWindow`.
+- Divinity: `AddHealingTakenPct` and `AddHealingDonePct` of the talent's points (auras 118, 136). Taken percents don't
+  stack, so Improved Devotion Aura's 6% beats its 5%. Lay on Hands takes it through `SpellHealingBonusTaken`;
+  9c1bbfafe only changes Beacon of Light's copy. `TestDivinity`. `implemented_talents.json` and `talent_paths.json`
+  updated: PaladinProtection gains it at step 1 and loses benediction, which opens PaladinRetribution in place of
+  deflection; both in `sweepRecut`.
+- Dead units: Chain Heal's jumps and the Abacus skip a unit at 0 health (`SpellInfo::CheckTarget`); the Abacus heals
+  no one when no unit qualifies. `TestChainHealSkipsTheDead`, `TestAbacusSkipsTheDead`.
+- Icebound Fortitude: at -100% or below, aura 87's `AddPct` takes the taken multiplier to 0 or less and
+  `MeleeDamageBonusTaken` and `SpellDamageBonusTaken` clamp the hit at 0. Past 100% the sim scales
+  `DamageTakenMultiplier` by 2^-64, which truncates every hit to 0 at the same step, and the expiry multiplies by 2^64,
+  exact whatever else changed it; under 100% it keeps the multiply and divide. `TestIceboundFortitudeAtFullReduction`
+  (466, 467 and 480 over 400).
+- `replayUncut` (`spellmods_test.go`) failed a recut path with no lines in the sweep (the paladin paths in the
+  cost-aura sweep). A guard (only a path with lines must not replay clean) passed the code stage; review reverted
+  it as outside the owned paths, and it's a contract change request. Harmless while `sweepRecut` is empty.
+- Goldens: TestBloodTank only. The 10 s window alone moves dps by +0.001 to +0.18% (BloodAggro); with the miss rule
+  dps -0.29% (GenericBoss) to +0.82% (BloodAggro), tps -0.47% to +1.40%: about 1.2 more Rune Strikes, as many fewer
+  white swings, and slightly fewer Death Coils.
+- Follow-up: since 7dd02b23c a bonus health aura doesn't raise a dead player's health; `GainBonusHealth` still does.
+
+Live stage (`tmp/ec-class-fix9-live.md`), worldserver 62fb09c68, 7 min of server time: `TestSimvalTalentSweep` and
+`TestSimvalSpellModSweep` reran PaladinProtection and PaladinRetribution; the cost-aura sweep has no paladin talent.
+Their `talents.jsonl` and `spellmods.jsonl` lines are replaced, `sweepRecut` is empty again, and PaladinRetribution
+improvedLayOnHands' `droppedSweep` entry and fixture README row are gone. Every paladin step agrees or moves no field,
+as the sim expected (Divinity and improvedLayOnHands move none); no spell-mod check disagrees on either path.
+
+Review: the Rune Strike miss rule, Divinity (Lay on Hands and 66235 take the taken percent, not the done one), the
+dead-unit checks and the Icebound Fortitude clamp re-checked against [ac]; no code change beyond the `replayUncut`
+revert.
+
 ### EC-TOOLS4 (Z13, moved from Z12; golden-neutral; stages: code, live)
 
 - `docs/wave-loop/int-check.sh` takes gofmt's and eslint's files from `git diff BASE HEAD` only, so an uncommitted

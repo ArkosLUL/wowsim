@@ -29,7 +29,6 @@ var droppedSweep = []sweepDrop{
 	{"PriestDiscipline", "holySpecialization", "holy spell crit %"},
 	{"RogueCombat", "maceSpecialization", "armor penetration %"},
 	{"DeathknightBlood", "bloodGorged", "armor penetration %"},
-	{"PaladinRetribution", "improvedLayOnHands", ""},
 }
 
 // sweepRerecord are paths whose items, auras or talent ranks changed after talentsFixture was recorded. Until a rerun

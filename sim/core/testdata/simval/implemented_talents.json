@@ -195,6 +195,7 @@
   {"class":"paladin","tree":"Holy","fieldName":"sealsOfThePure","row":0,"maxPoints":5,"rankSpells":[20224,20225,20330,20331,20332]},
   {"class":"paladin","tree":"Holy","fieldName":"divineIntellect","row":1,"maxPoints":5,"rankSpells":[20257,20258,20259,20260,20261]},
   {"class":"paladin","tree":"Holy","fieldName":"improvedLayOnHands","row":2,"maxPoints":2,"rankSpells":[20234,20235]},
+  {"class":"paladin","tree":"Protection","fieldName":"divinity","row":0,"maxPoints":5,"rankSpells":[63646,63647,63648,63649,63650]},
   {"class":"paladin","tree":"Protection","fieldName":"divineStrength","row":0,"maxPoints":5,"rankSpells":[20262,20263,20264,20265,20266]},
   {"class":"paladin","tree":"Protection","fieldName":"anticipation","row":1,"maxPoints":5,"rankSpells":[20096,20097,20098,20099,20100]},
   {"class":"paladin","tree":"Protection","fieldName":"improvedRighteousFury","row":2,"maxPoints":3,"rankSpells":[20468,20469,20470]},
