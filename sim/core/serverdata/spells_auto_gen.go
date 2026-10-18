@@ -8954,7 +8954,7 @@ var spells = []Spell{
 	// Cosmic Smash
 	{
 		ID: 64596, SchoolMask: 4, Flags: FlagTargetsArea,
-		Attributes: [8]uint32{0, 0x80, 0x4, 0x100, 0x2000}, AttributesCu: 0x3100,
+		Attributes: [8]uint32{0, 0x80, 0x4, 0x100, 0x2000}, AttributesCu: 0x3300,
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 53624, DieSides: 2751, DamageMultiplier: 1},
@@ -9402,6 +9402,17 @@ var spells = []Spell{
 			{Effect: 129, Aura: 226, AmplitudeMs: 1000, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, MiscValue: 25171},
 		},
 	},
+	// Plague Strike (Rank 1)
+	{
+		ID: 66216, Family: 15, FamilyFlags: [3]uint32{0x1}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x240010, 0x8000000, 0, 0x1040000}, AttributesCu: 0x3100,
+		GCDMs: 1500, GCDCategory: 133,
+		PowerType: 5, RuneCostID: 1845,
+		Effects: [3]Effect{
+			{Effect: 121, BasePoints: 61, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 31, BasePoints: 49, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Rune Strike (Rank 1)
 	{
 		ID: 66217, Family: 15, FamilyFlags: [3]uint32{0, 0x20000000}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
@@ -9537,17 +9548,6 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: 381, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 31, BasePoints: 39, DieSides: 1, DamageMultiplier: 1},
-		},
-	},
-	// Plague Strike (Rank 6)
-	{
-		ID: 66992, Family: 15, FamilyFlags: [3]uint32{0x1}, SchoolMask: 1, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
-		Attributes: [8]uint32{0x240010, 0x8000000, 0, 0x1040000}, AttributesCu: 0x3100,
-		GCDMs: 1500, GCDCategory: 133,
-		PowerType: 5, RuneCostID: 2308,
-		Effects: [3]Effect{
-			{Effect: 121, BasePoints: 188, DieSides: 1, DamageMultiplier: 1},
-			{Effect: 31, BasePoints: 49, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Unholy Might
@@ -9967,7 +9967,7 @@ var spells = []Spell{
 	// Frost Breath
 	{
 		ID: 69649, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagTargetsArea,
-		Attributes: [8]uint32{0x40010, 0x88}, AttributesCu: 0x7100,
+		Attributes: [8]uint32{0x40010, 0x88}, AttributesCu: 0x7300,
 		CastMs: 1500, BaseCastMs: 1500, DurationMs: 90000, MaxDurationMs: 90000, StackAmount: 6,
 		ProcChance: 101,
 		Effects: [3]Effect{
@@ -10901,7 +10901,7 @@ var spells = []Spell{
 	// Frost Breath
 	{
 		ID: 73061, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagTargetsArea,
-		Attributes: [8]uint32{0x40010, 0x88}, AttributesCu: 0x3100,
+		Attributes: [8]uint32{0x40010, 0x88}, AttributesCu: 0x3300,
 		CastMs: 1500, BaseCastMs: 1500, DurationMs: 10000, MaxDurationMs: 10000, StackAmount: 6,
 		ProcChance: 101,
 		Effects: [3]Effect{

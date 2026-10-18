@@ -130,7 +130,8 @@ func (ee *ExclusiveEffect) Activate(sim *Simulation) bool {
 		return true
 	}
 
-	if ee.Category.SingleAura && ee.Category.activeEffect != nil && ee.Category.activeEffect != ee && (ee.Category.activeEffect.Priority > ee.Priority || (ee.Priority == ee.Category.activeEffect.Priority && ee.Category.activeEffect.Aura.RemainingDuration(sim) > ee.Aura.Duration)) {
+	if active := ee.Category.activeEffect; ee.Category.SingleAura && active != nil && active != ee &&
+		(active.Priority > ee.Priority || ee.Priority == active.Priority && keepsEqualAura(active.Aura, ee.Aura)) {
 		return false
 	}
 
@@ -147,6 +148,15 @@ func (ee *ExclusiveEffect) Activate(sim *Simulation) bool {
 
 	return true
 }
+
+// keepsEqualAura is Unit::IsHighestExclusiveAuraEffect on an equal amount: of two spells the one with the
+// longer full duration stays, a permanent one longest, and the new one wins a tie, as it does against its
+// own spell. The remaining time doesn't count.
+func keepsEqualAura(active, incoming *Aura) bool {
+	sameSpell := active.ActionID.SpellID != 0 && active.ActionID.SpellID == incoming.ActionID.SpellID
+	return !sameSpell && active.Duration > incoming.Duration
+}
+
 func (ee *ExclusiveEffect) Deactivate(sim *Simulation) {
 	if !ee.isEnabled {
 		return

@@ -5212,6 +5212,84 @@ container; notes in `tmp/ec-tools4-live.md`): each test that `3d0c771` touched p
   `sim/core/serverdata/`; their drops and rows.
 - **Goldens:** whatever the fixes and the regeneration move; full suite; report each.
 
+#### As built
+
+Stage capture, on `36e678932` against the live server at [ac] `62fb09c68`; notes in `tmp/ec-upstream-capture.md`.
+- Spelldump (recaptured; judged by the next stage). One full pass (families 3,4,5,6,7,8,9,10,11,15,17 plus `spellids
+  -all`'s 5021 ids, over the committed capture) left nothing missing but 26545 and 53258. Still 10843 spells; 129
+  lines moved:
+  - `attributesCu` 0x200 is `CU_IGNORE_BINARY` now, not `CU_CHARGE` (b065ee7c9): 118 charge-type spells lose it;
+    Frost Breath 69649 and 73061 (`2026_10_03_14`) and Cosmic Smash 64596 gain it. Cosmic Smash's comes from
+    `pending_db_world/rev_1792236502330304300.sql`, which only the merge commit itself adds, so the `--no-merges`
+    listing misses it.
+  - Beacon of Light 53652 to 53654 drop `ATTR6_IGNORE_HEALTH_MODIFIERS`; 53653 becomes magic (9c1bbfafe).
+  - `PROC_ATTR_REQ_SPELLMOD` on 22008, 54741 and 64823 (`2026_10_01_02`).
+  - Remorseless 14143 and 14149: Spell.dbc's proc entry (its `spell_proc` row deleted) and the script
+    (`2026_10_03_13`, b8a3a172b).
+  - Frost Fever 55095 stays non-binary. Six ids outside both the id list and the families keep their committed
+    lines: 11350, 11351, 50689, 65861, 67485, 69734.
+- gen_serverdata: no DB disagreement. Moved: `AttributesMask: 0x8` on Firestarter 54741 and Elune's Wrath 64823;
+  `AttributesCu` +0x200 on 64596, 69649 and 73061. No `Flags`, bonus, threat or enchant row moved.
+
+Stage regen (offline; notes in `tmp/ec-upstream-regen.md`):
+- Firestarter 54741's `PROC_ATTR_REQ_SPELLMOD` (`2026_10_01_02`, 59cadeeac): already matches. It comes only from the
+  mage's own instants, so never mid-Flamestrike, and a Flamestrike begun under it takes its mods. Only Presence of
+  Mind plus Clearcasting ahead of it would leave the charge (`Player::ApplySpellMod` skips a mod once the value is
+  0); no build has all three.
+- Elune's Wrath 64823's (same SQL): fixed. The old rule (`CastTime < 10 s - remaining`) broke on the aura's world
+  tick countdown and rounded expiry: an instant Starfire right after the buff came up left it, and the next one was
+  instant too. Now `OnCastComplete` drops it on a Starfire with `CurCast.CastTime == 0`
+  (`sim/druid/insect_swarm.go`); `TestElunesWrathGoesWithTheStarfireItMadeInstant` fails on the old rule.
+- `CU_IGNORE_BINARY` on Cosmic Smash 64596 and Frost Breath 69649, 73061: no `Flags` change, binary false in both
+  captures; the sim reads no 0x200 bit.
+- Frost Fever 55095 (b065ee7c9): stays non-binary. Its `SPELL_ATTR3_ALWAYS_HIT` skips the whole binary block, so the
+  removed exemption was dead code; the sim's row (`FlagAlwaysHit`) matches.
+- The 118 cleared `CU_CHARGE` bits: the server never read the attribute, and none is in the generated set.
+- Goldens: none. One full run over the regeneration and the fix, all pass; `dock.sh delta` 37 of 37 unchanged.
+
+Stage audit (offline; verdict per commit and SQL file, goldens and live plan in `tmp/ec-upstream-audit.md`):
+- Listed: the 52 commits, and 7 spell SQL files (6 `db_world` plus the merge commit's own pending one). No
+  `creature_template` change touches the dummies. The merge commit also drops the fork's hardcoded binary
+  exemptions from `SpellMgr.cpp`, which is why Cosmic Smash was non-binary before it.
+- ef96a8f3b (Threat of Thassarian): fixed. `offHandStrikeFixed` (`sim/deathknight/weapon_strikes.go`) doubles a
+  physical off-hand strike's fixed bonus, flat mods included, before the hand's TOTAL_PCT: 66974, 66979, 66953,
+  66992. Frost Strike is frost; Rune Strike's and Blood-Caked Strike's are 0. `TestThreatOfThassarianOffHandFixedBonus`.
+- de4bdb5a0: fixed. `keepsEqualAura` (`sim/core/exclusive_effect.go`): of two spells' equal auras the longer full
+  duration stays, a permanent one longest; the new one wins a tie or its own spell. Remaining time no longer
+  counts. The server takes the new spell's DBC duration, the sim its configured one.
+  `TestSingleAuraExclusiveTieTakesFullDuration`.
+- 188500000, bb48eefd7 (Combustion): fixed. Each landed hit's stack waits for the mage's next tick
+  (`NextWorldTick(now + 1 ms) - 1 ns`) and is dropped if Combustion has gone; a crit still takes its charge at
+  once. A cast's hits roll without each other's stacks. A hardcast completing on that tick goes first on the
+  server, last in the sim. `TestCombustionStacksComeOnTheNextTick`.
+- Already matches: 0056e0f16 (pets join on the owner's opening cast, guardians target on their own), 24df41b02
+  (traps still go through the hunter as original caster). Remorseless Attacks (`2026_10_03_13`, b8a3a172b): out of
+  scope, it procs on a kill. The rest are out of the sim's scope.
+- Goldens (one full run; the moved suites rerun without the tie fix are identical):
+  - ToT: TestFrost +2.350% and TestFrostUH +2.180% Average-Default, every row +1.1 to +3.1%; off-hand
+    Obliterate per hit +24%, Blood Strike +14%, Plague Strike +8%.
+  - Combustion: TestFire -0.014% (largest -0.307%), TestFrostFire +0.000% (largest -0.057%).
+  - Tie rule: none. 33 of 37 suites unchanged.
+- The pre-merge DeathknightFrostUH log fails off-hand Obliterate's hit mean (log 1576, sim 2047, z -4.36):
+  dropped with a fixtures README row until the live stage re-records DeathknightFrost and DeathknightFrostUH.
+- Follow-up: the module's `.simval damage` copy of `EffectWeaponDmg` (`SimValidationCommands.cpp`) lacks the
+  off-hand doubling; no record probes an off-hand strike.
+
+Stage live (notes in `tmp/ec-upstream-live.md`; about 6 min of server time, run loaded by another session):
+- Re-recorded DeathknightFrost and DeathknightFrostUH (`TestSimvalFight`, 2026-10-18, rev 62fb09c68) and replaced
+  both logs; the 66974 hit mean drop and its README row are gone. Off-hand Obliterate and Blood Strike means went
+  from z -1.4 to -4.4 on the old logs to within ±1.1.
+- Found and fixed: the off-hand Plague Strike is always 66216 (fixed bonus 62), not 66992 (189).
+  `spell_dk_threat_of_thassarian` asks `GetSpellWithRank(66216, rank)`, but `spell_ranks` chains the off-hand ranks
+  from 59133, so 66216 has no higher rank. Predates the merge. `plague_strike.go` declares 66216; regenerated
+  (66216's row in, 66992's out). Its means went from z -2.9 to within ±1.2.
+- Goldens of that fix: TestFrost -0.004%, TestFrostUH -0.003% Average-Default; off-hand Plague Strike per hit -10%.
+  Totals with the audit's: TestFrost +2.346%, TestFrostUH +2.176%, TestFire -0.014%, TestFrostFire +0.000%; 33 of
+  37 unchanged.
+
+Review: Combustion's stacks cap at 28682's `stackAmount` 10, not 20 (`sim/mage/talents.go`); deferred stacks make a
+big AoE reach it. Goldens: none.
+
 ### EC-CORE-FIX11 (Z14; changes goldens, full suite; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.

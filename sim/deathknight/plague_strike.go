@@ -59,9 +59,10 @@ func (dk *Deathknight) newPlagueStrikeSpell(isMH bool) *core.Spell {
 	if !isMH { // only MH has cost & gcd
 		conf.RuneCost = core.RuneCostOptions{}
 		conf.Cast = core.CastConfig{}
-		// Threat of Thassarian's off-hand strike
-		conf.Direct = core.SpellEffect{Effect: 0, FromSpellID: 66992, Min: 189, Max: 189, WeaponPct: 0.5}
-		conf.ThreatSpellID = 66992
+		// Threat of Thassarian's off-hand strike, always rank 1's 66216: the script looks up the rank from 66216,
+		// but spell_ranks starts the off-hand chain at 59133, so there's no higher rank to find
+		conf.Direct = core.SpellEffect{Effect: 0, FromSpellID: 66216, Min: 62, Max: 62, WeaponPct: 0.5}
+		conf.ThreatSpellID = 66216
 	} else {
 		conf.Flags |= core.SpellFlagAPL
 		conf.Direct = plagueStrikeEffect

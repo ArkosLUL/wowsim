@@ -30,8 +30,10 @@ func (druid *Druid) registerInsectSwarmSpell() {
 			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 				druid.Starfire.CastTimeMultiplier += 1
 			},
-			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				if druid.Starfire.IsEqual(spell) && (druid.Starfire.CurCast.CastTime < (10*time.Second - aura.RemainingDuration(sim))) {
+			// PROC_ATTR_REQ_SPELLMOD: only the Starfire it made instant takes the charge, not one
+			// already casting when it came up
+			OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
+				if druid.Starfire.IsEqual(spell) && spell.CurCast.CastTime == 0 {
 					aura.Deactivate(sim)
 				}
 			},
