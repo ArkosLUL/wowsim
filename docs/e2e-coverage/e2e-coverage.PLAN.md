@@ -58,7 +58,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z12 | EC-CORE-FIX9 (G, FS, live) · EC-PET-FIX7 (G, live) · EC-CLASS-FIX8 (G) | Z11's follow-ups and the tank fixes; the fourth place is bis-optimizer's BIS-TANK-HEALTH (the user's call, 2026-10-15) |
 | Z13 | EC-CORE-FIX10 (G, FS) · EC-PET-FIX8 (G, live) · EC-CLASS-FIX9 (G, live) · EC-TOOLS4 (live) | Z12's follow-ups; EC-TOOLS4 moved from Z12 |
 | Z14 | EC-UPSTREAM (G, FS, live) · EC-CORE-FIX11 (G, FS, live) · EC-PET-FIX9 (G, live) · EC-CLASS-FIX10 (G) | The server's upstream merge, then Z13's follow-ups |
-| Z15 | EC-TOOLS5 | Z13's UI follow-up; Z14 is full |
+| Z15 | EC-CORE-FIX12 (G) · EC-PET-FIX10 (live) · EC-CLASS-FIX11 (G, live) · EC-TOOLS5 (C++, live) | Z14's follow-ups, and Z13's UI one |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -108,9 +108,14 @@ would do; the Rune Weapon's run-in from 2 yd in front of the target, a timed Wat
 is attacked casting from its spawn spot, a caster pet moving when its owner stands past its spell's range, and pet
 follow spots under Bloodlust's scale (a few ms), none modelled.
 
-From Z13: a hunter pet's chase path coming back incomplete (11 of 14 stops at R + its reach, unexplained:
-`PathGenerator` on the fight floor) and the chase given up (1 of 14, `pathFailed`: `SetCannotReachTarget`,
-`AttackStop`; the e2e logs `PETFIX8_GAVE_UP`), unmodelled.
+From Z14: a friendly unit's distance from the priest taken as the gap of both units' distances from the target
+(no other placing, no input sets it; only the flight at a known distance is confirmed live); a creature instant
+through `makeCastFunc` from another unit's update or event starting its missile on the next update (no missile
+spell takes that path); the exclusive-aura tie taking the new aura's configured duration where the server takes
+its DBC maximum (differs only under a glyph or combo points; no golden pair has one); killing blows in multi-target
+health fights (no per-target death: only the fight's last blow skips the weapon's copy); Strangulate and Chains of
+Ice, which the Rune Weapon copies, not in the sim; `docs/azerothcore-parity/audit/procs_audit.csv`'s stale 54741 and
+64823 rows (no `PROC_ATTR_REQ_SPELLMOD`; rerun `tools/acore/spellaudit`).
 
 ## Work items
 
@@ -5165,7 +5170,7 @@ container; notes in `tmp/ec-tools4-live.md`): each test that `3d0c771` touched p
   reads 67 Auto Shot hits.
 - Nothing re-taken: every committed fixture stays. Orphan bots: none.
 
-### EC-UPSTREAM (Z14; changes goldens, full suite; stages: audit, live)
+### EC-UPSTREAM (Z14, done; changes goldens, full suite; stages: audit, live)
 
 - The live server moved from [ac] `3d89793c7` to `62fb09c68`, an upstream AzerothCore merge of 338 commits whose DB
   import ran (world DB updates through `2026_10_14_04`); every committed record, spelldump line and fight log predates
@@ -5184,15 +5189,15 @@ container; notes in `tmp/ec-tools4-live.md`): each test that `3d0c771` touched p
   changes, and the sim has no Beacon heal; EC-CLASS-FIX9); 7dd02b23c (no health change on a dead player: the sim's
   bar runs on past 0 and the cross-review kept `GainBonusHealth`).
 - 0056e0f16 moves `OwnerAttacked` from `Unit::Attack` to each player melee `AttackerStateUpdate`, so a melee owner's
-  pet joins on his first swing, not when he starts attacking (casts still join through
-  `HandleCastSpellOpcode`). EC-PET-FIX8 read it for the stop spots only; when the sim's pets start is unread.
-- ef96a8f3b (`Spell::EffectWeaponDmg`): a death knight's off-hand spell doubles `fixed_bonus` before the off hand's
-  half, since the DBC already halves Threat of Thassarian's base. EC-PET-FIX8 noted it, unread against the sim's
-  off-hand strikes (`frost_strike.go`'s 66962, `obliterate.go`, `blood_strike.go`, `death_strike.go`,
+  pet joins on his first swing, not when he starts attacking (casts still join, through `Spell::_cast`).
+  EC-PET-FIX8 read it for the stop spots only; when the sim's pets start is unread.
+- ef96a8f3b (`Spell::EffectWeaponDmg`): a death knight's physical off-hand spell doubles `fixed_bonus` before the
+  off hand's half, since the DBC already halves Threat of Thassarian's base. EC-PET-FIX8 noted it, unread against the
+  sim's off-hand strikes (`frost_strike.go`'s 66962, `obliterate.go`, `blood_strike.go`, `death_strike.go`,
   `plague_strike.go`, `rune_strike.go`'s 66217). Moves the dual-wield Frost and Unholy suites if they differ.
 - b065ee7c9 (`SPELL_ATTR0_CU_IGNORE_BINARY`): `SpellMgr::LoadSpellInfoCustomAttributes` drops two hardcoded binary
   exemptions: Sindragosa's breaths, which get the new attribute in `2026_10_03_14`, and Frost Fever 55095, which
-  doesn't, so it turns binary if its effects qualify. EC-PET-FIX8 noted it, unread.
+  stays non-binary: its `SPELL_ATTR3_ALWAYS_HIT` skips the whole binary check. EC-PET-FIX8 noted it, unread.
 - de4bdb5a0 (`Unit::IsHighestExclusiveAuraEffect`): of two equal auras of different spells in an exclusive highest
   group, the longer one now stays. Unread against `sim/core/exclusive_effect.go`'s tie rule (remaining duration
   against the new aura's duration).
@@ -5293,7 +5298,7 @@ big AoE reach it. Goldens: none.
 Cross-review: the stack is now a `sim.QueueSpellEvent` keyed like the hardcast's SpellEvent, so a hardcast completing
 on its tick goes first, as on the server (`TestCombustionStackComesAfterAHardcastOnItsTick`).
 
-### EC-CORE-FIX11 (Z14; changes goldens, full suite; stages: code, live)
+### EC-CORE-FIX11 (Z14, done; changes goldens, full suite; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 
@@ -5304,13 +5309,14 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
   extend it with `NextServerTick`. Confirmed from the source (`ec-core-fix10-tmp/ec-core-fix10.md`); EC-PET-FIX8's
   live creature flights land 20 to 190 ms past the sim's. The order against a creature aura on the same update stays
   the backlog's lead. Size unknown; moves the pet and totem suites.
-- Landings due on one tick run by go + flight on the server (`m_Events` keys), by launch order in the sim. Needs a
-  third sort key in the pending queue (`pendingEntry`, `AddPendingAction`, `sim/core/sim.go`). Confirmed from the
-  source (cross-review); size unknown.
+- Landings due on one tick run by go + flight on the server (`m_Events` keys), by launch order in the sim. A third
+  sort key in the pending queue (`pendingEntry`, `AddPendingAction`, `sim/core/sim.go`) won't do: it would also move
+  landings ahead of other units' actions at the same time. Confirmed from the source (cross-review); size unknown.
 - Penance's heal ticks (47750, 52983, 52984, 52985) fly at 40 yd/s like the damage ones but land at once in the sim
-  (`sim/priest/penance.go`), which has no distance to the healed unit. And the first bolt goes about two ticks after
-  the press: 53007 is a channel with no duration, so its cast waits for its `SpellEvent`, and the script's 53003
-  waits one more; the sim's first tick goes on the press. From the source (cross-review); size unknown.
+  (`sim/priest/penance.go`), which has no distance to the healed unit. And the first bolt goes one world tick after
+  the press's: 53007, a channel with no duration, casts from its `SpellEvent` on the press's tick, and the script's
+  53003 waits for its own on the next; the sim's first tick goes on the press. From the source (cross-review); size
+  unknown.
 - Earth Shield's heal 379 can crit (`critCapable` in the spelldump; Spell.cpp rolls it with the original caster, the
   shaman); the sim's charge heal has `TicksCanCrit` false (`sim/shaman/heals.go`). A lead from the source;
   golden-neutral, no suite casts it.
@@ -5365,7 +5371,7 @@ Cross-review: the optimizer test passes, the haste ceiling now a hard rule
 ([BIS-caps](../bis-optimizer/bis-optimizer.PLAN.md#bis-caps-wave-l-done)). `Spell.CalcAndDealPeriodicHealing`, left
 unused, is gone.
 
-### EC-PET-FIX9 (Z14; changes goldens; stages: code, live)
+### EC-PET-FIX9 (Z14, done; changes goldens; stages: code, live)
 
 - The Rune Weapon copies a killing blow: `spell_dk_dancing_rune_weapon::CheckProc` (`spell_dk.cpp`) needs the target
   alive after the hit; the weapon aura's `OnSpellHitDealt` (`sim/deathknight/dancing_rune_weapon.go`) copies any
@@ -5378,8 +5384,8 @@ unused, is gone.
   `SpellPctDamageModsDone`, so none (EC-PET-FIX8's finding). Only a troll against beasts or a versus set
   (`item_sets.go`) differs. Confirmed from the source; size unknown.
 - A hunter pet's reach is `hunterPetReach` 1.5 (`sim/hunter/pet_abilities.go`) for every family; the server's is
-  the family's model scale, and `standAtReachOf` stands the pet at R + that reach. A lead; golden-neutral (no preset
-  sets a reach).
+  1.5 times the family's native scale (`Pet::GetNativeObjectScale`), and `standAtReachOf` stands the pet at R + that
+  reach. A lead; golden-neutral (no preset sets a reach).
 - Live: a hunter pet of a second family against Bluff Behemoth 24894 (reach 10), in `TestPetfix8HunterPetStopSpot`'s
   way: its stop spot gives its reach.
 - **Owns:** the weapon aura's `OnSpellHitDealt`, `copyOf` and `RuneWeaponPet.Reset` in
@@ -5441,7 +5447,7 @@ Cross-review, all fixed:
   attribute (Bladestorm, Death and Decay, Killing Spree, Explosive Shot, Penance) already tick on apply, so
   `core.Dot` doesn't read it.
 
-### EC-CLASS-FIX10 (Z14; changes goldens; stages: code)
+### EC-CLASS-FIX10 (Z14, done; changes goldens; stages: code)
 
 - Rune Strike's queue: in `Unit::AttackerStateUpdate`, a queued next-swing spell that fails `CheckCast` at the swing
   loses the swing and is finished, clearing the queue; on `SPELL_FAILED_NO_POWER` the swing goes normally and the
@@ -5497,13 +5503,105 @@ Code stage (notes in `tmp/ec-class-fix10.md`), against [ac] at 62fb09c68. Verdic
   Stalker ranks 2 and 3 don't cover Blood Plague; the raid debuff Frost Fever gives no Tundra Stalker; Healing Stream
   Totem skips party pets; a heal on a dead explicit target, and the APL multidot and multishield picks, go through.
 
-### EC-TOOLS5 (Z15; golden-neutral; stages: code)
+### EC-CORE-FIX12 (Z15; changes goldens; stages: code)
+
+Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
+
+- Extra attacks swing at once in the sim (Hand of Justice in `sim/common/tbc/melee_trinkets.go`,
+  `registerSwordSpecialization` in `sim/warrior/talents.go`). On the server `Spell::EffectAddExtraAttacks` only adds
+  them to `extraAttacksTargets`; the attacker's next `Unit::Update` swings them (`HandleProcExtraAttackFor`; Hand of
+  Justice's only with the victim in melee range) while `_lastExtraAttackSpell` is set. Confirmed from the source. A
+  lead (Z14's cross-review): a non-extra swing of either hand in between clears `_lastExtraAttackSpell`
+  (`Unit::AttackerStateUpdate`); read whether that loses them or leaves them for the next proc. Size unknown
+  (TestFury's SwordSpecialization row, Hand of Justice rows).
+- Ancestral Awakening heals the crit's own target (`AncestralAwakening.Cast`, three sites in `sim/shaman/heals.go`);
+  `spell_sha_ancestral_awakening_proc::FilterTargets` (`spell_shaman.cpp`) takes the living raid member lowest in
+  health percent (`TARGET_UNIT_CASTER_AREA_RAID`, `HealthPctOrderPred`). Confirmed from the source (EC-CLASS-FIX10);
+  size unknown, likely TestRestoration's HealingGrace case.
+- A heal on a dead explicit target goes through, and so do helpful spells' APL multidot and multishield picks
+  (`sim/core/apl_actions_casting.go`), where `Spell::CheckCast` refuses a dead target. From the source
+  (EC-CLASS-FIX10); golden-neutral while no healer's raid can die.
+- A pet's landing due with its own melee swing: `Simulation.landingAheadOfSwings` (`sim/core/sim.go`) puts only a
+  player's landing first, so the pet swings first, where `Creature::Update` runs `Unit::Update`'s event pass before
+  `UpdateAI`'s melee. A lead from the source (EC-CORE-FIX11), unmeasured; size unknown.
+- Penance's 53007 takes its mana cost and cooldown at the press in the sim (`sim/priest/penance.go`); the server, when
+  53007 casts from its `SpellEvent` on the tick the press is handled (live, 1.4 to 10.3 ms after the press:
+  `ec-core-fix11-tmp/ec-core-fix11-live.md`). Confirmed from the source and live; size unknown, under a world tick a
+  press (TestDisc).
+- **Owns:** the extra-attack procs and their queue (`melee_trinkets.go`, `registerSwordSpecialization`, a hook in
+  `sim/core/`); Ancestral Awakening's target in `heals.go`; the dead-target check on helpful casts and
+  `apl_actions_casting.go`'s picks; `landingAheadOfSwings`; the press in `penance.go`; in inline hunks; their tests
+  and rows.
+- **Goldens:** TestFury and the Hand of Justice suites (extra attacks), TestRestoration (Ancestral Awakening),
+  TestDisc (Penance); none for the dead targets or, likely, the pet swing; report each.
+
+### EC-PET-FIX10 (Z15; golden-neutral; stages: code, live)
+
+Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
+
+- Mark of Blood: `spell_dk_dancing_rune_weapon::CheckProc` copies 49005, so the weapon puts its own mark on the
+  target. The sim's (`sim/deathknight/mark_of_blood.go`) deals no hit, so the weapon aura's `OnSpellHitDealt` never
+  sees it, and `core.MarkOfBloodAura` (`sim/core/debuffs.go`) is one aura a target: copying it needs a landing hook
+  and a mark per caster. Confirmed from the source (EC-PET-FIX9); golden-neutral (no APL casts it).
+- Heals reaching pets: Prayer of Mending's jump (`prayerOfMendingJump` over `Raid.AllUnits`) and Prayer of Healing's
+  party (`PlayersAndPets`) take enabled guardians such as Shadowfiend, where `Acore::MostHPMissingGroupInRange` takes
+  only players and `IsPet` pets and `TARGET_CHECK_PARTY` drops guardians the player doesn't control; Healing Stream
+  Totem's tick (`registerHealingStreamTotemSpell`, `sim/shaman/totems.go`) goes to `Party.Players` only, where 58761's
+  `CASTER_AREA_PARTY` takes party pets too. The sim's `Pet.isGuardian` isn't the server's `IsPet` (the Water
+  Elemental): map each summon first. Confirmed from the source (EC-CLASS-FIX10's review); size unknown (a guardian
+  never wins the jump while a second player lives).
+- A hunter pet's stop under a target reach R past 5 is exactly R + its reach r (`DispatchSplineToPosition`'s ring
+  point after an unusable first path) or exactly R (the angled `GetNearPoint` path), never between: 20 of 30 at R + r
+  (crocolisk 7/9, serpent 2/7, Z13's worm 11/14), the choice seeming to stick within a run; the worm's chase gave up
+  once (`pathFailed`: `SetCannotReachTarget`, `AttackStop`; the e2e logs `PETFIX8_GAVE_UP`). Read why
+  `PathGenerator`'s first path comes back INCOMPLETE or NOPATH on the fight floor, and model the rule, if one comes
+  out, in `standAtReachOf` (`sim/hunter/pet_abilities.go`, now R + r). A lead; logs
+  `ec-pet-fix9-tmp/ec-pet-fix9-run{1,2,3}.log`; golden-neutral (no preset sets a reach past 5).
+- Live: only if the stop gets a rule, a few approaches in `TestPetfix9HunterPetReach`'s way.
+- **Owns:** Mark of Blood's copy (`dancing_rune_weapon.go`, `mark_of_blood.go`, `MarkOfBloodAura`); the pet checks
+  in `prayerOfMendingJump`, Prayer of Healing's party and Healing Stream Totem's tick; `standAtReachOf`; in inline
+  hunks; the module's `e2e/petfix10_test.go`; their tests and rows.
+- **Goldens:** none expected; report any.
+
+### EC-CLASS-FIX11 (Z15; changes goldens; stages: code, live)
+
+- Threat of Thassarian's off-hand strike lands before the main hand's damage: `threatOfThassarianProc`
+  (`sim/deathknight/talents_frost.go`) casts it inside the strike's `ApplyEffects`, ahead of its `DealDamage`
+  (`blood_strike.go`, `death_strike.go`, `frost_strike.go`, `obliterate.go`, `plague_strike.go`, `rune_strike.go`),
+  where `spell_dk_threat_of_thassarian::HandleProc` (`spell_dk.cpp`) casts it as a hit-phase proc after the main
+  hand's. From the source (Z14's cross-review); size unknown (TestFrost, TestFrostUH).
+- Tundra Stalker ranks 2 and 3 (50127, 50128): their aura 112 (7277) class mask's `flags[1]` 0x2C030126 and
+  0x2C130126 lacks Blood Plague's 0x02000000, so their bonus skips its ticks; Blood Plague's `OnSnapshot`
+  (`sim/deathknight/diseases.go`) multiplies `RoRTSBonus` at every rank. Confirmed from the spelldump;
+  golden-neutral unless a preset takes 2 or 3 points.
+- The raid debuff Frost Fever (`core.FrostFeverAura`, label "FrostFever", 55095, untagged) stands in for another
+  knight's, which Tundra Stalker counts (`HasAura(55095)`, any caster); `applyTundaStalker`'s `RoRTSBonus` reads only
+  the `FrostFever` tag. Confirmed in the code (EC-CLASS-FIX10); size unknown.
+- Live: Elune's Wrath 64823 (`sim/druid/insect_swarm.go`, Z14's fix: the charge goes with the instant Starfire it
+  made) under Nightsong's 4 pieces, which no golden or fight setup wears: one short e2e.
+- **Owns:** `threatOfThassarianProc` and the strikes' calls to it; `applyTundaStalker` and Blood Plague's snapshot
+  in `diseases.go`; in inline hunks; the module's `e2e/ecclass11_test.go`; their tests and rows.
+- **Goldens:** TestFrost and TestFrostUH (the off-hand order); none for Tundra Stalker's ranks or the raid Frost
+  Fever unless a suite takes them; report each.
+
+### EC-TOOLS5 (Z15; golden-neutral; C++; stages: code, C++ and e2e, live)
 
 - The Combat Reach picker (`combatReachPicker`, `ui/core/components/encounter_picker.ts`) sits in the target's
   `threat-metrics` section, hidden unless Show Threat/Tank Options is on, though the mage's Mirror Image and now
   hunter pets (`standAtReachOf`) read the reach. Move it out of that section, and update
   `tools/uitest/tests/settings/combat_reach.spec.ts`, which ticks the option first. Needs a dev server build.
-- **Owns:** the picker in `encounter_picker.ts`; `combat_reach.spec.ts`.
+- `.simval damage`'s copy of `EffectWeaponDmg` (`modules/mod-sim-validation/src/SimValidationCommands.cpp`) lacks
+  ef96a8f3b's doubling: in its `if (physical && fixedBonus)` branch, double a `SPELLFAMILY_DEATHKNIGHT` spell's
+  `fixedBonus` on `OFF_ATTACK` first. No record probes an off-hand strike: add one (66974) in `e2e/damage_test.go`'s
+  way. Confirmed in the code (EC-UPSTREAM).
+- `spellmods.jsonl` and `spellmod_spells.json` (`sim/core/testdata/simval/`) still probe 66992, never compared (no
+  off-hand strike has an alias in `spellModSimSpells`, `tools/simval/spellmods.go`); the sim's off-hand Plague Strike
+  is 66216. Rerunning `tools/acore/spellmods` swaps them but adds rows the sim named since its last run (Lay on
+  Hands' cooldown, Judgement of Light's cost, Prayer of Mending 48111, Divine Aegis 47753), each failing
+  `TestSpellModRecords` until probed. From Z14's cross-review.
+- Live: `TestSimvalSpellModSweep` on the steps the rerun adds; after the rebuild, the off-hand strike's record.
+- **Owns:** the picker in `encounter_picker.ts`; `combat_reach.spec.ts`; `.simval damage`'s weapon-damage copy;
+  the off-hand record and its fixture rows; the spell-mod fixture files and their re-swept lines.
 - **Goldens:** none.
 
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)
