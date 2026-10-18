@@ -57,6 +57,8 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z11 | EC-CORE-FIX8 (G, FS, live) · EC-PET-FIX6 (G, live) · EC-CLASS-FIX7 (G, live) · EC-TOOLS3 (C++, live) | Z10's follow-ups; EC-PET-FIX6 moved from Z10 |
 | Z12 | EC-CORE-FIX9 (G, FS, live) · EC-PET-FIX7 (G, live) · EC-CLASS-FIX8 (G) | Z11's follow-ups and the tank fixes; the fourth place is bis-optimizer's BIS-TANK-HEALTH (the user's call, 2026-10-15) |
 | Z13 | EC-CORE-FIX10 (G, FS) · EC-PET-FIX8 (G, live) · EC-CLASS-FIX9 (G, live) · EC-TOOLS4 (live) | Z12's follow-ups; EC-TOOLS4 moved from Z12 |
+| Z14 | EC-UPSTREAM (G, FS, live) · EC-CORE-FIX11 (G, FS, live) · EC-PET-FIX9 (G, live) · EC-CLASS-FIX10 (G) | The server's upstream merge, then Z13's follow-ups |
+| Z15 | EC-TOOLS5 | Z13's UI follow-up; Z14 is full |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -73,8 +75,7 @@ pin their requests (the BiS chain's `opt_*` regeneration takes the perf ones).
 
 From Z5, not in Z7: Mana Burn, which Silent Resolve's spell mod covers and the sim lacks; `.simval threat`
 doesn't record `POWER_DRAIN`'s gain (Dark Pact), and the replay can't compare the tick threat of 71883 and
-57669; Heart Strike takes no Rage of Rivendare or Tundra Stalker (no level 80 build holds both);
-`spell_dru_rip` adding Rip's AP share after the done percents (a lead); the raid's Replenishment buff never
+57669; `spell_dru_rip` adding Rip's AP share after the done percents (a lead); the raid's Replenishment buff never
 restarts the tick timer.
 
 From Z9: PaladinRetribution's Replenishment check passes at the top of the sim's range (log 1128, sim 1068 to
@@ -106,6 +107,10 @@ unit for `Unit.EnemyCombatReach` and `combatReach()`; 56817's zero-gain runic po
 would do; the Rune Weapon's run-in from 2 yd in front of the target, a timed Water Elemental summoned while the mage
 is attacked casting from its spawn spot, a caster pet moving when its owner stands past its spell's range, and pet
 follow spots under Bloodlust's scale (a few ms), none modelled.
+
+From Z13: a hunter pet's chase path coming back incomplete (11 of 14 stops at R + its reach, unexplained:
+`PathGenerator` on the fight floor) and the chase given up (1 of 14, `pathFailed`: `SetCannotReachTarget`,
+`AttackStop`; the e2e logs `PETFIX8_GAVE_UP`), unmodelled.
 
 ## Work items
 
@@ -4467,7 +4472,7 @@ restart). All three match the sim; no sim change, no golden.
   so nothing was added anywhere), now named; the warrior is stripped and learns Two-Handed Axes (197) before
   Bryntroll; `/Whirlwind` also checks the Drain Life count against `1 - (1 - p)^n` a Whirlwind plus white swings.
   Cross-review: every other `.additem <entry> <count>` (ecclass3, ecclass5, fight, strikes, the hunter's recorded run)
-  had the same fault and goes through `runner.addItem`, which names the bot.
+  goes through `runner.addItem`, which names the bot; none misfired, as no count is an item entry (EC-TOOLS4).
 
 ### EC-TOOLS3 (Z11, done; golden-neutral, no C++; stages: code, live, spawn spots)
 
@@ -4916,7 +4921,7 @@ Cross-review fixes:
 - Judgement of Light's heals go on one row per attacker (`healthBar.judgementOfLightMetrics`), not one per judged
   target. `TestJudgementOfLightHealsOnOneRow`.
 
-### EC-CORE-FIX10 (Z13; changes goldens, full suite; stages: code)
+### EC-CORE-FIX10 (Z13, done; changes goldens, full suite; stages: code)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 
@@ -4966,7 +4971,7 @@ FrostFire +0.132% (Ignite, Pyroblast's dot), MM +0.042%, the rest within 0.025% 
 4.50: a few swings over 2000 iterations). Elemental's weights: Intellect -0.9%, SpellCrit +0.5% (300-iteration
 noise). The other rows past 0.5% are 20-iteration rows (Balance to +2.0%). The 12 without a player missile don't move.
 
-### EC-PET-FIX8 (Z13; changes goldens; stages: code, live)
+### EC-PET-FIX8 (Z13, done; changes goldens; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix7-tmp\`.
 
@@ -4978,14 +4983,14 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix7-tmp\`.
   Blood Strike copy multiplies `dk.RoRTSBonus` (`blood_strike.go`), though the server's copies go through the
   knight's `MeleeDamageBonusDone`, which carries both. A lead; size unknown (TestBlood).
 - A melee hunter pet's spits under a target reach R: PetAI chases with `ChaseRange(0, 0)` at an angle behind, so
-  `GetNearPoint` stands the pet at R, and the 400 ms `PositionOkay` recheck can stop it up to its own reach further
-  out; Acid Spit and Poison Spit then fly between R - 1.5 and R. The sim's pet has no distance, so they fly the 5 yd
-  floor (`Spell.TravelTime`), right for R up to 5 (the dummy's 2.5); past it, read `Unit.EnemyCombatReach`
-  (`sim/hunter/pet_abilities.go`). From the source (Z12's cross-review); no preset sets a reach.
+  `GetNearPoint` aims the pet at R, but live it mostly stops at R + its own reach (an incomplete path); Acid Spit
+  and Poison Spit then fly about R. The sim's pet has no distance, so they fly the 5 yd floor (`Spell.TravelTime`),
+  right for R up to 5 (the dummy's 2.5); past it, read `Unit.EnemyCombatReach` (`sim/hunter/pet_abilities.go`).
+  From the source (Z12's cross-review); no preset sets a reach.
 - Live: an e2e of the Imp's, Water Elemental's and Gargoyle's cast spots and the knight's Death Coil flight after a
   copy, all from the source so far (sim at 30 yd: Firebolt and Waterbolt 312 to 1793 ms, the timed Waterbolt 1830,
-  Gargoyle Strike 250 to 1322, Death Coil 1187 to 1249); a hunter pet's stop spot against a mob whose reach passes
-  5 yd.
+  Gargoyle Strike 250 to 1322 (the server's spot proved 0.2 yd nearer: 1312), Death Coil 1187 to 1249); a hunter
+  pet's stop spot against a mob whose reach passes 5 yd.
 - **Owns:** `sim/deathknight/dancing_rune_weapon.go` and the weapon's spells in the knight's files, in inline hunks;
   the spits' distance in `sim/hunter/pet_abilities.go`; the module's `e2e/petfix8_test.go`; their drops and rows.
 - **Goldens:** TestBlood and TestBloodTank (the copies); none for the spits; report each.
@@ -5044,7 +5049,7 @@ up to 1450% CPU; the worldserver restarted from outside at 12:46, not a crash). 
   `.pet create` learns the worm's own level (79 or 80), so the e2e teaches rank 6 with `.pet learn`; the behemoth
   steps in once hit, so each spit is timed off both units' places at its go. Hunter suites unchanged.
 
-### EC-CLASS-FIX9 (Z13; changes goldens; stages: code, live)
+### EC-CLASS-FIX9 (Z13, done; changes goldens; stages: code, live)
 
 - Rune Strike's window: 56815 needs `CasterAuraSpell` 56817 (Spell.dbc, read in Z12's cross-review), 10 s with one
   charge (`sim/core/serverdata/spells_auto_gen.go`); the sim's `RuneStrikeAura` lasts 6 s
@@ -5107,17 +5112,17 @@ Review: the Rune Strike miss rule, Divinity (Lay on Hands and 66235 take the tak
 dead-unit checks and the Icebound Fortitude clamp re-checked against [ac]; no code change beyond the `replayUncut`
 revert.
 
-### EC-TOOLS4 (Z13, moved from Z12; golden-neutral; stages: code, live)
+### EC-TOOLS4 (Z13, done, moved from Z12; golden-neutral; stages: code, live)
 
 - `docs/wave-loop/int-check.sh` takes gofmt's and eslint's files from `git diff BASE HEAD` only, so an uncommitted
   fix (a review's, the cross-review's) is never checked: add the changed files from `git status`. Confirmed; the
   Z11 cross-review ran both by hand.
-- `.additem <entry> <count>` read the entry as a character guid where one exists, giving the item to that
-  character; module `3d0c771` names the bot (`runner.addItem`), but which runs went without their item is unread, a
-  lead. SELECT the `characters` guids among the entries those sites gave: Corpse Dust 37201 (`ecclass5_test.go`),
-  Soul Shard 6265 and Infernal Stone 5565 (`strikes_test.go`), the golden setups' items (`ecclass3_test.go`), the
-  fights' ammo (`fightAmmo`), the hunter recorded run's ranged fallback, quiver and ammo. A record or recording
-  taken without its item is re-taken.
+- `.additem <entry> <count>` read the entry as a character guid where one exists and the count is an item entry
+  too, giving the item to that character; module `3d0c771` names the bot (`runner.addItem`), but which runs went
+  without their item is unread, a lead. SELECT the `characters` guids among the entries those sites gave: Corpse
+  Dust 37201 (`ecclass5_test.go`), Soul Shard 6265 and Infernal Stone 5565 (`strikes_test.go`), the golden setups'
+  items (`ecclass3_test.go`), the fights' ammo (`fightAmmo`), the hunter recorded run's ranged fallback, quiver and
+  ammo. A record or recording taken without its item is re-taken.
 - No `tools/uitest` test covers the advanced target settings' Combat Reach (`combatReachPicker`,
   `ui/core/components/encounter_picker.ts`; 0 means the dummy's 2.5): add one that sets it and checks the request's
   `Target.combat_reach`. Needs a dev server build.
@@ -5159,6 +5164,131 @@ container; notes in `tmp/ec-tools4-live.md`): each test that `3d0c771` touched p
 - `TestRecordedRunHunter` at 120 s: the `.setup.txt` lists quiver 44448 and ammo 52021, and `simval chronicle`
   reads 67 Auto Shot hits.
 - Nothing re-taken: every committed fixture stays. Orphan bots: none.
+
+### EC-UPSTREAM (Z14; changes goldens, full suite; stages: audit, live)
+
+- The live server moved from [ac] `3d89793c7` to `62fb09c68`, an upstream AzerothCore merge of 338 commits whose DB
+  import ran (world DB updates through `2026_10_14_04`); every committed record, spelldump line and fight log predates
+  it. List the merge's changes to what the sim models: `git -C G:/DevStuff/GitHub/azerothcore-wotlk-pb log
+  --no-merges 3d89793c7..62fb09c68 -- src/server/game src/server/scripts/Spells` (52 commits), and the
+  `data/sql/updates/db_world` files that touch `spell_proc`, `spell_dbc`, `spell_custom_attr`, `spell_bonus_data`,
+  `spell_ranks` or the dummies' `creature_template` rows (none touches `spell_bonus_data`, `spell_ranks` or the
+  module's dummies 999000 to 999008). Fix each in the sim or name the follow-up; the seeds below say which a Z13 item
+  already read.
+- Spelldump: recapture it live (`TestSpelldumpCapture`, [spellids README](../../tools/acore/spellids/README.md)) and
+  regenerate `sim/core/serverdata` with `tools/acore/gen_serverdata`. The last full regeneration is `837f53c95`;
+  `39821c5a1`, `c1bba88b8` and `f75c3a14a` added rows since without one. Each flag or row the regeneration moves is
+  a finding, e.g. Frost Fever 55095's `binary` (false in the committed dump; see b065ee7c9).
+- Read by a Z13 item, nothing left: 0a6c81f05 (the Ebon Gargoyle keeps its summon height; a lone guardian lands on
+  its dest, the sim's spot; EC-PET-FIX8); 9c1bbfafe (Beacon of Light's target healing bonuses: only Beacon's copy
+  changes, and the sim has no Beacon heal; EC-CLASS-FIX9); 7dd02b23c (no health change on a dead player: the sim's
+  bar runs on past 0 and the cross-review kept `GainBonusHealth`).
+- 0056e0f16 moves `OwnerAttacked` from `Unit::Attack` to each player melee `AttackerStateUpdate`, so a melee owner's
+  pet joins on his first swing, not when he starts attacking (casts still join through
+  `HandleCastSpellOpcode`). EC-PET-FIX8 read it for the stop spots only; when the sim's pets start is unread.
+- ef96a8f3b (`Spell::EffectWeaponDmg`): a death knight's off-hand spell doubles `fixed_bonus` before the off hand's
+  half, since the DBC already halves Threat of Thassarian's base. EC-PET-FIX8 noted it, unread against the sim's
+  off-hand strikes (`frost_strike.go`'s 66962, `obliterate.go`, `blood_strike.go`, `death_strike.go`,
+  `plague_strike.go`, `rune_strike.go`'s 66217). Moves the dual-wield Frost and Unholy suites if they differ.
+- b065ee7c9 (`SPELL_ATTR0_CU_IGNORE_BINARY`): `SpellMgr::LoadSpellInfoCustomAttributes` drops two hardcoded binary
+  exemptions: Sindragosa's breaths, which get the new attribute in `2026_10_03_14`, and Frost Fever 55095, which
+  doesn't, so it turns binary if its effects qualify. EC-PET-FIX8 noted it, unread.
+- de4bdb5a0 (`Unit::IsHighestExclusiveAuraEffect`): of two equal auras of different spells in an exclusive highest
+  group, the longer one now stays. Unread against `sim/core/exclusive_effect.go`'s tie rule (remaining duration
+  against the new aura's duration).
+- 188500000 and bb48eefd7 (`spell_mage_combustion`): every hit queues a stack 1 ms later (the next update), dropped
+  if Combustion has gone; only a crit takes a charge. The sim stacks at once, on any landed hit
+  (`registerCombustionCD`, `sim/mage/talents.go`). Unread.
+- `2026_10_01_02` sets `PROC_ATTR_REQ_SPELLMOD` on Elune's Wrath 64823 and Firestarter 54741: each goes only when
+  it made the cast instant or free. The sim's are in `sim/druid/insect_swarm.go` and `applyFireStarter`
+  (`sim/mage/talents.go`). `2026_10_03_13` and b8a3a172b give Remorseless Attacks (-14143) a script so Mutilate's
+  two hits both take it, but the sim doesn't model the talent (nothing in `sim/rogue`). Unread.
+- Other merge commits that may reach the sim, unread: c1544e400 (Swiftmend takes spell mods) and a32130a43 (Druid
+  T8 4P off an unmodified Rejuvenation tick), likely moot as the sim has no Rejuvenation; f0900b0a9 (followers
+  off their owner's speed); 5c87f702f and 081e3b1ad (immunities); d6d426993 (Charge pathing).
+- Live: the spelldump capture, then the replays (`./tools/simval`, `TestFightReplays`) and only the live checks a
+  fix reaches, each short.
+- **Owns:** whatever the audit fixes outside the other Z14 items' paths; `assets/db_inputs/acore/spelldump.jsonl`;
+  `sim/core/serverdata/`; their drops and rows.
+- **Goldens:** whatever the fixes and the regeneration move; full suite; report each.
+
+### EC-CORE-FIX11 (Z14; changes goldens, full suite; stages: code, live)
+
+Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
+
+- A pet's missile lands on its first map update at or after go + flight, and a pet AI's instant starts its flight a
+  map update later: `Map::Update` updates creatures and pets on the map update only (`UpdateNonPlayerObjects`), and
+  `Creature::Update` runs `Unit::Update`'s event pass before the AI. Totem missiles (`CastFromAnotherUnit`, Searing
+  Totem's 58702) are off the grid too. `Spell.landsAt` (`sim/core/spell_result.go`) applies the rule to players only;
+  extend it with `NextServerTick`. Confirmed from the source (`ec-core-fix10-tmp/ec-core-fix10.md`); EC-PET-FIX8's
+  live creature flights land 20 to 190 ms past the sim's. The order against a creature aura on the same update stays
+  the backlog's lead. Size unknown; moves the pet and totem suites.
+- Landings due on one tick run by go + flight on the server (`m_Events` keys), by launch order in the sim. Needs a
+  third sort key in the pending queue (`pendingEntry`, `AddPendingAction`, `sim/core/sim.go`). Confirmed from the
+  source (cross-review); size unknown.
+- Penance's heal ticks (47750, 52983, 52984, 52985) fly at 40 yd/s like the damage ones but land at once in the sim
+  (`sim/priest/penance.go`), which has no distance to the healed unit. And the first bolt goes about two ticks after
+  the press: 53007 is a channel with no duration, so its cast waits for its `SpellEvent`, and the script's 53003
+  waits one more; the sim's first tick goes on the press. From the source (cross-review); size unknown.
+- Earth Shield's heal 379 can crit (`critCapable` in the spelldump; Spell.cpp rolls it with the original caster, the
+  shaman); the sim's charge heal has `TicksCanCrit` false (`sim/shaman/heals.go`). A lead from the source;
+  golden-neutral, no suite casts it.
+- Live: one e2e of a Penance's first bolt against the press and a heal tick's flight to an ally at range.
+- **Owns:** `sim/core/`'s landings and pending queue (`spell_result.go`, `sim.go`); `sim/priest/penance.go`; Earth
+  Shield's heal in `sim/shaman/heals.go`, an inline hunk; the module's `e2e/corefix11_test.go`; their tests and rows.
+- **Goldens:** every suite with a pet or totem missile, and those with landings on one tick; none for Earth Shield;
+  report each.
+
+### EC-PET-FIX9 (Z14; changes goldens; stages: code, live)
+
+- The Rune Weapon copies a killing blow: `spell_dk_dancing_rune_weapon::CheckProc` (`spell_dk.cpp`) needs the target
+  alive after the hit; the weapon aura's `OnSpellHitDealt` (`sim/deathknight/dancing_rune_weapon.go`) copies any
+  landed hit. The same CheckProc copies any spell in the knight's spellbook that isn't area, positive or a summon
+  (Obliterate, Mind Freeze, Strangulate, Chains of Ice, Mark of Blood; Scourge Strike and Frost Strike can't go with
+  the weapon), none of which the weapon has. Confirmed from the source; only health fights reach the first, and no
+  suite casts the others under the weapon.
+- The weapon's magic copies take the knight's `DONE_VERSUS` multipliers (`RuneWeaponPet.Reset` multiplies in his
+  attack tables' `DamageDealtMultiplier`); the server's 27893 branch of `Unit::SpellDamageBonusDone` skips
+  `SpellPctDamageModsDone`, so none (EC-PET-FIX8's finding). Only a troll against beasts or a versus set
+  (`item_sets.go`) differs. Confirmed from the source; size unknown.
+- A hunter pet's reach is `hunterPetReach` 1.5 (`sim/hunter/pet_abilities.go`) for every family; the server's is
+  the family's model scale, and `standAtReachOf` stands the pet at R + that reach. A lead; golden-neutral (no preset
+  sets a reach).
+- Live: a hunter pet of a second family against Bluff Behemoth 24894 (reach 10), in `TestPetfix8HunterPetStopSpot`'s
+  way: its stop spot gives its reach.
+- **Owns:** the weapon aura's `OnSpellHitDealt`, `copyOf` and `RuneWeaponPet.Reset` in
+  `sim/deathknight/dancing_rune_weapon.go`; the pet reach in `sim/hunter/pet_abilities.go`; the module's
+  `e2e/petfix9_test.go`; their tests and rows.
+- **Goldens:** TestBlood and TestBloodTank if a copy moves; none for the reach; report each.
+
+### EC-CLASS-FIX10 (Z14; changes goldens; stages: code)
+
+- Rune Strike's queue: in `Unit::AttackerStateUpdate`, a queued next-swing spell that fails `CheckCast` at the swing
+  loses the swing and is finished, clearing the queue; on `SPELL_FAILED_NO_POWER` the swing goes normally and the
+  queue still clears. The sim's `ReplaceMHSwing` (`sim/deathknight/tank/tank_deathknight.go`) swings normally and
+  keeps `RuneStrikeQueued` either way. Confirmed from the source; size unknown (TestBloodTank).
+- Rage of Rivendare and Tundra Stalker: the knight's own Heart Strike takes neither (only `heart_strike.go`'s weapon
+  branch multiplies `RoRTSBonus`), though every rank's class mask covers it; and `RoRTSBonus`
+  (`talents_frost.go`, `talents_unholy.go`) reads only the knight's `FrostFever` and `BloodPlague` tags, where the
+  server takes any caster's, the weapon's `DrwFrostFever` and `DrwBloodPlague` (`diseases.go`, untagged) included.
+  Confirmed from the source and the code; golden-neutral (no suite knight with the weapon takes either talent).
+- Heals that pick a target take a unit at 0 health: Prayer of Mending's jump (`sim/priest/prayer_of_mending.go`)
+  picks the lowest health percent, where the server's `Acore::MostHPMissingGroupInRange` takes the living group
+  member missing the most health. Audit the other heals' target picks against `SpellInfo::CheckTarget`'s dead-unit
+  rule. Confirmed in the code and the source; golden-neutral while no healer's raid can die.
+- **Owns:** `ReplaceMHSwing` in `tank_deathknight.go`; Heart Strike's own branch in `heart_strike.go`; `RoRTSBonus`
+  in `talents_frost.go` and `talents_unholy.go`, and the weapon diseases' tags in `diseases.go`, in inline hunks;
+  `prayer_of_mending.go`'s jump and the other target picks found; their tests and rows.
+- **Goldens:** TestBloodTank (Rune Strike); none for the rest; report each.
+
+### EC-TOOLS5 (Z15; golden-neutral; stages: code)
+
+- The Combat Reach picker (`combatReachPicker`, `ui/core/components/encounter_picker.ts`) sits in the target's
+  `threat-metrics` section, hidden unless Show Threat/Tank Options is on, though the mage's Mirror Image and now
+  hunter pets (`standAtReachOf`) read the reach. Move it out of that section, and update
+  `tools/uitest/tests/settings/combat_reach.spec.ts`, which ticks the option first. Needs a dev server build.
+- **Owns:** the picker in `encounter_picker.ts`; `combat_reach.spec.ts`.
+- **Goldens:** none.
 
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)
 
