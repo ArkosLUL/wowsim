@@ -667,30 +667,79 @@ func (spell *Spell) WaitTravelTime(sim *Simulation, callback func(*Simulation)) 
 	if callback == nil {
 		panic("WaitTravelTime: callback must not be nil")
 	}
-	sim.startLanding(spell.landsAt(sim), spell.Unit, callback, nil, nil)
+	spell.startFlight(sim, spell.TravelTime(), callback, nil)
 }
 
 // DealDamageAfterTravel is WaitTravelTime with a landing that only deals result, minus the closure's
 // allocation.
 func (spell *Spell) DealDamageAfterTravel(sim *Simulation, result *SpellResult) {
-	sim.startLanding(spell.landsAt(sim), spell.Unit, nil, spell, result)
+	spell.startFlight(sim, spell.TravelTime(), nil, result)
 }
 
-// landsAt is when a missile launched now lands. A player's SpellEvent records the tick it starts the flight on
-// and lands on his first tick at or after that plus the flight (SpellEvent::Execute). It starts on the tick the
-// session casts it, or a hardcast lands, in. Cast later in his update or off a landing (Auto Shot, a proc, a
-// tick), its event goes in a ms past a clock that already moved, so it starts on his next tick.
-func (spell *Spell) landsAt(sim *Simulation) time.Duration {
-	flight := spell.TravelTime()
+// WaitTravelTimeTo is WaitTravelTime for a missile at any unit, a friendly one too.
+func (spell *Spell) WaitTravelTimeTo(sim *Simulation, target *Unit, callback func(*Simulation)) {
+	if callback == nil {
+		panic("WaitTravelTimeTo: callback must not be nil")
+	}
+	spell.startFlight(sim, spell.TravelTimeTo(target), callback, nil)
+}
+
+// TravelTimeTo is the missile's flight to the unit. None to its own caster (Spell::AddUnitTarget), though it
+// still waits for its SpellEvent like any missile. The sim only knows where a unit stands by its distance from
+// the target, so it takes a friendly unit to stand on the same line from it.
+func (spell *Spell) TravelTimeTo(target *Unit) time.Duration {
+	switch {
+	case spell.MissileSpeed == 0 || target == spell.Unit:
+		return 0
+	case target.Type == EnemyUnit:
+		return spell.TravelTime()
+	}
+	distance := max(math.Abs(spell.Unit.DistanceFromTarget-target.DistanceFromTarget)-spell.Unit.combatReach(), 5)
+	return time.Duration(math.Floor(distance/spell.MissileSpeed*1000)) * time.Millisecond
+}
+
+func (spell *Spell) startFlight(sim *Simulation, flight time.Duration, onLand func(*Simulation), result *SpellResult) {
+	at, key := spell.landsAt(sim, flight)
+	ownEvent := !spell.Unit.castLanded.fromOthers[spell]
+	if onLand != nil {
+		sim.startLanding(at, key, spell.Unit, ownEvent, onLand, nil, nil)
+		return
+	}
+	sim.startLanding(at, key, spell.Unit, ownEvent, nil, spell, result)
+}
+
+// landsAt is when a missile launched now lands, and its m_Events key, go + flight. SpellEvent::Execute records
+// the update the flight starts on and lands it on the caster's first update at or after go + flight: a world
+// tick for a player, the map update for anyone else.
+func (spell *Spell) landsAt(sim *Simulation, flight time.Duration) (at, key time.Duration) {
 	unit := spell.Unit
-	if flight == 0 || unit.Type != PlayerUnit || sim.worldTickInterval <= 0 || unit.castLanded.fromOthers[spell] {
-		return sim.CurrentTime + flight
+	switch {
+	case spell.MissileSpeed == 0:
+		return sim.CurrentTime + flight, sim.CurrentTime + flight
+	case unit.castLanded.fromOthers[spell]:
+		// the totem's own hardcast, which lands on its map update
+		start := sim.NextServerTick(sim.CurrentTime)
+		return sim.NextServerTick(start + flight), start + flight
+	case !sim.onUpdateGrid(unit):
+		return sim.CurrentTime + flight, sim.CurrentTime + flight
 	}
-	start := sim.NextWorldTick(sim.CurrentTime)
-	if sim.updating != nil || sim.eventPass && sim.landingCast != spell {
-		start = sim.NextWorldTick(start + 1)
+	start := sim.nextUpdate(unit, sim.CurrentTime)
+	if spell.startsOnNextUpdate(sim) {
+		start = sim.nextUpdate(unit, start+1)
 	}
-	return sim.NextWorldTick(start + flight)
+	return sim.nextUpdate(unit, start+flight), start + flight
+}
+
+// startsOnNextUpdate is whether a missile launched now starts its flight on the caster's next update. Launched in
+// its own update or event pass (Auto Shot, a proc, a tick, a creature AI's instant), its SpellEvent goes in a ms
+// past a clock that already moved. A hardcast's own missile and one the session or an earlier unit casts don't.
+func (spell *Spell) startsOnNextUpdate(sim *Simulation) bool {
+	unit := spell.Unit
+	if unit.Type == PlayerUnit {
+		// creatures update after every player (Map::Update)
+		return sim.updating != nil || sim.eventPass != nil && sim.landingCast != spell
+	}
+	return sim.updating == unit || sim.eventPass == unit && sim.landingCast != spell
 }
 
 // Returns the combined attacker modifiers.

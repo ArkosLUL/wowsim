@@ -93,7 +93,7 @@ func (dpa *DelayedPeriodicApplier) queue(sim *Simulation, target *Unit, delay ti
 		// one of the caster's events, so a missile it casts starts on his next tick
 		OnAction: func(sim *Simulation) {
 			outerPass, outerCast := sim.eventPass, sim.landingCast
-			sim.eventPass, sim.landingCast = true, nil
+			sim.eventPass, sim.landingCast = dpa.caster, nil
 			onApply(sim)
 			sim.eventPass, sim.landingCast = outerPass, outerCast
 		},

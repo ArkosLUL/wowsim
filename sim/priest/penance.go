@@ -68,9 +68,8 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 		ThreatMultiplier: 1,
 		ThreatSpellID:    tickSpellID,
 		NoThreatBonus:    true,
-		// each damage tick is a 53000 the channel casts at its target, a missile at 40 yd a second. The heal's
-		// 52985 flies too, but the sim has no distance to the unit it heals
-		MissileSpeed: core.TernaryFloat64(isHeal, 0, 40),
+		// each tick is a 53000 or 52985 the channel casts at its target, a missile at 40 yd a second
+		MissileSpeed: 40,
 
 		Dot: core.Ternary(!isHeal, core.DotConfig{
 			Aura: core.Aura{
@@ -104,28 +103,51 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				baseHealing := sim.RollWhole(1484, 1676, "Damage Roll") + core.PowerBonus(0.5362, dot.Spell.HealingPower(target))
-				dot.Spell.CalcAndDealPeriodicHealing(sim, target, baseHealing, dot.Spell.OutcomeHealingCrit)
-				tickThreat.Done(sim)
+				// EffectHeal works the heal out at the launch, crit included, and it lands after the flight
+				result := dot.Spell.CalcHealing(sim, target, baseHealing, dot.Spell.OutcomeHealingCrit)
+				dot.Spell.WaitTravelTimeTo(sim, target, func(sim *core.Simulation) {
+					dot.Spell.DealHealing(sim, result)
+					tickThreat.Done(sim)
+				})
 			},
 		}, core.DotConfig{}),
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			if isHeal {
 				spell.SpellMetrics[target.UnitIndex].Hits--
-				hot := spell.Hot(target)
-				hot.Apply(sim)
-				// Do immediate tick
-				hot.TickOnce(sim)
-			} else {
+			}
+			// 53007 is a channel with no duration, so its cast waits for its SpellEvent on the press's tick,
+			// and the channel its script casts (53003, or 52988 at a friend) for its own on the tick after.
+			// The first tick goes off as the channel starts (SPELL_ATTR5_EXTRA_INITIAL_PERIOD).
+			channel := func(sim *core.Simulation) {
+				if isHeal {
+					hot := spell.Hot(target)
+					hot.Apply(sim)
+					hot.TickOnce(sim)
+					return
+				}
 				// 53007 and the channel it starts aren't magic class, so they can't miss and proc nothing a
 				// harmful magic spell does (Illustration of the Dragon Soul). Each tick rolls its own hit.
 				dot := spell.Dot(target)
 				dot.Apply(sim)
-				// Do immediate tick
 				dot.TickOnce(sim)
+			}
+			if at := penanceChannelStart(sim); at > sim.CurrentTime {
+				sim.QueueSpellEvent(&priest.Unit, at, channel)
+			} else {
+				channel(sim)
 			}
 		},
 	})
 	tickThreat = spell.NewThreatTick(tickSpellID)
 	return spell
+}
+
+// penanceChannelStart is the world tick after the one a press now is handled on, or now with exact timing.
+func penanceChannelStart(sim *core.Simulation) time.Duration {
+	pressed := sim.NextWorldTick(sim.CurrentTime)
+	if next := sim.NextWorldTick(pressed + 1); next != pressed+1 {
+		return next
+	}
+	return sim.CurrentTime
 }

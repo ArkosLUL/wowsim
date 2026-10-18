@@ -8,7 +8,7 @@ import (
 )
 
 func newMissileTestSpell() *Spell {
-	return &Spell{Unit: &Unit{Type: PetUnit, DistanceFromTarget: 21.5}, MissileSpeed: 20} // 20 yd past the 1.5 yd reach: lands after 1 s
+	return &Spell{Unit: &Unit{Type: PetUnit, DistanceFromTarget: 21.5}, MissileSpeed: 20} // 20 yd past the 1.5 yd reach: a 1 s flight
 }
 
 // Landings keep the queue's order: after what's already due at that time and priority, before what's
@@ -21,17 +21,21 @@ func TestWaitTravelTimeReusesLandings(t *testing.T) {
 		return func(sim *Simulation) { ran = append(ran, fmt.Sprintf("%s@%s", label, sim.CurrentTime)) }
 	}
 
-	StartDelayedAction(sim, DelayedActionOptions{DoAt: time.Second, OnAction: note("before")})
+	lands, _ := spell.landsAt(sim, spell.TravelTime())
+	var chained time.Duration
+	StartDelayedAction(sim, DelayedActionOptions{DoAt: lands, OnAction: note("before")})
 	spell.WaitTravelTime(sim, note("a"))
 	spell.WaitTravelTime(sim, func(sim *Simulation) {
 		note("b")(sim)
+		chained, _ = spell.landsAt(sim, spell.TravelTime())
 		spell.WaitTravelTime(sim, note("chained"))
 	})
-	StartDelayedAction(sim, DelayedActionOptions{DoAt: time.Second, OnAction: note("after")})
+	StartDelayedAction(sim, DelayedActionOptions{DoAt: lands, OnAction: note("after")})
 	for !sim.Step() {
 	}
 
-	want := []string{"before@1s", "a@1s", "b@1s", "after@1s", "chained@2s"}
+	at := func(label string, t time.Duration) string { return fmt.Sprintf("%s@%s", label, t) }
+	want := []string{at("before", lands), at("a", lands), at("b", lands), at("after", lands), at("chained", chained)}
 	if !slices.Equal(ran, want) {
 		t.Errorf("ran %v, want %v", ran, want)
 	}
@@ -50,7 +54,7 @@ func TestDealDamageAfterTravel(t *testing.T) {
 	dealt := func() float64 { return spell.SpellMetrics[target.UnitIndex].TotalDamage }
 
 	var before, after float64 = -1, -1
-	landsAt := spell.landsAt(sim)
+	landsAt, _ := spell.landsAt(sim, spell.TravelTime())
 	spell.WaitTravelTime(sim, func(*Simulation) { before = dealt() })
 	spell.DealDamageAfterTravel(sim, spell.CalcDamage(sim, target, 100, spell.OutcomeAlwaysHit))
 	spell.WaitTravelTime(sim, func(sim *Simulation) {

@@ -5239,6 +5239,47 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 - **Goldens:** every suite with a pet or totem missile, and those with landings on one tick; none for Earth Shield;
   report each.
 
+#### As built
+
+Code stage (notes and the live plan in `tmp/ec-core-fix11-code.md`; base `36e678932`, [ac] `62fb09c68`, offline).
+Verdicts, all fixed; no drop, allowance or README row existed:
+- Pet and totem missiles: `Spell.landsAt` lands every unit's missile on its own grid, a creature's on the map update.
+  The flight starts on the caster's next update when launched in its own update or event pass (AI instant, its own
+  landing; `sim.eventPass` is now that unit), else on the update at or after now (its hardcast's own missile, or a
+  copy off a player's landing). Searing Totem's 58702 is the totem's 2.2 s hardcast: it starts on the map update and
+  lands outside the shaman's player events. A creature's hardcast due on its landing's update completes first.
+- One update's landings by go + flight: the first of a caster's landings due now runs its others with a smaller key
+  first (`landingAction.land`, `dueLandingAhead`; ties in launch order). Not a third queue key: that would also move
+  landings ahead of other units' actions at the same time and priority.
+- Penance: 53007 (no duration) casts from its SpellEvent on the press's tick, and the script's 53003 or 52988 from its
+  own on the next, starting the channel and its first tick (`sim.QueueSpellEvent`); each bolt starts the tick after it
+  fires. The heal's 52985 flies at 40 yd/s too (`WaitTravelTimeTo`, `TravelTimeTo`): none to the caster, though it
+  lands a tick on (speed > 0 is always delayed); to a friend, the gap between both units' distances from the target
+  less the reach, at least 5 yd, the sim placing units only by that distance.
+- Earth Shield: 379 crits off the shaman (original caster), +50%; Tidal Mastery adds to it only at ranks 4 and 5, whose
+  class mask lists it.
+
+Tests: `missile_landing_test.go` (creature, totem, same-update order, creature hardcast first; the exact-timing case
+kept), `TestDamagePenanceStartsTheTickAfterThePress`, `TestHealPenanceTicksFly`, `TestEarthShieldChargeCanCrit`.
+
+e2e (vetted, run in stage live), `e2e/corefix11_test.go`: `TestCorefix11Penance`, presses at the dummy, an ally 22 yd
+off and the priest himself.
+
+Goldens (never promoted), 10 suites: Frost, Fire, FrostFire, Arcane (Mirror Image, Water Elemental), Destruction
+(Imp), Unholy (Gargoyle, Unholy Blight), Blood (Rune Weapon's Death Coil), BloodTank (one Talents row, Unholy Blight),
+Elemental (Searing Totem), all within 0.01% on Average-Default; Disc hps -0.215% (rows -0.98 to +0.26%, 20 iterations:
+Penance heals land later). Earth Shield none. `sim/optimizer`'s `TestCasterHasteCeilingStopsTheSearch` now lands 10
+rating over its soft haste ceiling (base 6 under).
+
+Live stage (notes `tmp/ec-core-fix11-live.md`; [ac] `62fb09c68`): two runs of `TestCorefix11Penance`, about 3 min of
+server time, loaded only by the server's own bots. Every server number matches the sim, so nothing to fix:
+- The channel's and first bolt's go come one world tick after 53007's (median 10.3 ms, never in its burst).
+- Each bolt lands 8 to 28 ms past go + flight (medians 10 to 16): 125 ms to the dummy 4 yd off, 548 ms to the ally
+  23.42 yd off, none to the priest.
+
+The e2e now times a press's first bolt hit or miss; a missed one made it time the second, failing at four misses of
+eight. Goldens as in the code stage; simval 1114 of 1114, the replays pass, and the optimizer test stays red.
+
 ### EC-PET-FIX9 (Z14; changes goldens; stages: code, live)
 
 - The Rune Weapon copies a killing blow: `spell_dk_dancing_rune_weapon::CheckProc` (`spell_dk.cpp`) needs the target
