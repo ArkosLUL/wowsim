@@ -1,0 +1,451 @@
+@import '../../core/sim_ui';
+
+// S to D: one hue, lightness stepping down, so the order reads without the letters.
+$tier-colors: (
+	'S': #efb146,
+	'A': #d19520,
+	'B': #b47900,
+	'C': #975e00,
+	'D': #7b4400,
+);
+$tier-ink: (
+	'S': $body-bg,
+	'A': $body-bg,
+	'B': $body-bg,
+	'C': white,
+	'D': white,
+);
+$muted-ink: rgba(255, 255, 255, 0.7);
+$surface: rgb(var(--theme-background-color));
+$hairline: rgba(255, 255, 255, 0.12);
+$bar-height: 14px;
+
+body {
+	background-color: $body-bg;
+	color: white;
+}
+
+.rankings-root {
+	@include theme-color($brand, 0.93, '/wotlk/assets/img/wotlk.jpg');
+	// rem, since the root font grows on big screens and the phase tabs grow with it
+	max-width: 86rem;
+	margin: 0 auto;
+	padding: 0 var(--container-padding) $gap-width;
+}
+
+.rankings-header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	column-gap: $gap-width;
+	padding: $gap-width 0 map-get($spacers, 3);
+
+	.rankings-home {
+		color: white;
+		text-decoration: none;
+
+		h1.sim-link-title {
+			margin: 0;
+			color: $brand;
+		}
+	}
+
+	.rankings-intro {
+		flex: 1 1 20rem;
+		margin: 0;
+		color: $muted-ink;
+	}
+}
+
+.rankings-phases {
+	flex-wrap: nowrap;
+	overflow-x: auto;
+	border-bottom: 1px solid $border-color;
+	scrollbar-width: none;
+
+	.nav-link {
+		position: relative;
+		border: 0;
+		margin-bottom: 0;
+		padding: map-get($spacers, 2) map-get($spacers, 3);
+		background: none;
+		color: $muted-ink;
+		font-weight: bold;
+		white-space: nowrap;
+
+		&:hover {
+			color: white;
+		}
+
+		&.active {
+			background: none;
+			color: white;
+
+			&::after {
+				content: '';
+				position: absolute;
+				left: 0;
+				right: 0;
+				bottom: 0;
+				height: 2px;
+				background: $brand;
+			}
+		}
+	}
+}
+
+.rankings-filters {
+	display: flex;
+	flex-wrap: wrap;
+	gap: map-get($spacers, 2) $gap-width;
+	padding: map-get($spacers, 3) 0;
+
+	.rankings-filter {
+		display: flex;
+		align-items: center;
+		gap: map-get($spacers, 2);
+	}
+
+	.rankings-filter-label {
+		color: $muted-ink;
+		font-weight: bold;
+	}
+
+	.btn {
+		white-space: nowrap;
+	}
+}
+
+.rankings-heading {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: 0 map-get($spacers, 3);
+	margin: map-get($spacers, 2) 0 map-get($spacers, 3);
+	font-size: 1.25rem;
+
+	.rankings-heading-fight {
+		color: $muted-ink;
+		font-size: 1rem;
+		font-weight: normal;
+	}
+}
+
+.rankings-message {
+	color: $muted-ink;
+	padding: $gap-width 0;
+}
+
+.rankings-tier {
+	display: grid;
+	grid-template-columns: 3.5rem minmax(0, 1fr);
+	column-gap: map-get($spacers, 3);
+	padding: map-get($spacers, 2) 0;
+	border-top: 1px solid $hairline;
+
+	@each $letter, $color in $tier-colors {
+		&[data-tier='#{$letter}'] .rankings-tier-badge {
+			background: $color;
+			color: map-get($tier-ink, $letter);
+		}
+	}
+}
+
+.rankings-tier-badge {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	align-self: start;
+	min-height: 3.5rem;
+	border-radius: 4px;
+
+	.rankings-tier-letter {
+		font-size: 1.75rem;
+		font-weight: bold;
+		line-height: 1;
+	}
+
+	.rankings-tier-range {
+		font-size: 0.7rem;
+		white-space: nowrap;
+	}
+}
+
+.rankings-rows {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+}
+
+// no auto columns: rows size them separately, and the bars would lose their shared scale
+.rankings-row {
+	display: grid;
+	grid-template-columns: 1.5rem 1.5rem minmax(8rem, 13rem) minmax(0, 1fr) 4.5rem 4.5rem 1.5rem;
+	grid-template-areas: 'rank icon name bar dps pct link';
+	align-items: center;
+	column-gap: map-get($spacers, 2);
+	min-height: 2rem;
+	padding: 0 map-get($spacers, 1);
+	border-radius: 4px;
+	outline: none;
+
+	&:hover,
+	&:focus-visible {
+		background: rgba(255, 255, 255, 0.06);
+	}
+
+	&:focus-visible {
+		box-shadow: inset 0 0 0 1px $brand;
+	}
+
+	.rankings-row-rank {
+		grid-area: rank;
+		color: $muted-ink;
+		text-align: right;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.rankings-row-icon {
+		grid-area: icon;
+		width: 1.5rem;
+		height: 1.5rem;
+		border-radius: 3px;
+	}
+
+	.rankings-row-name {
+		grid-area: name;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	.rankings-row-dps,
+	.rankings-row-pct {
+		text-align: right;
+		white-space: nowrap;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.rankings-row-dps {
+		grid-area: dps;
+		font-weight: bold;
+	}
+
+	.rankings-row-pct {
+		grid-area: pct;
+		color: $muted-ink;
+	}
+
+	.rankings-row-link {
+		grid-area: link;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		min-height: 2rem;
+		color: $muted-ink;
+
+		&:hover,
+		&:focus-visible {
+			color: $brand;
+		}
+	}
+}
+
+.rankings-row-bar {
+	grid-area: bar;
+	position: relative;
+	height: $bar-height;
+
+	.rankings-bar {
+		height: 100%;
+		background: var(--class-color);
+		border-radius: 0 4px 4px 0;
+	}
+
+	// ±1σ of the per-iteration DPS. The surface ring keeps it readable over any class colour.
+	.rankings-whisker {
+		position: absolute;
+		top: 50%;
+		height: 2px;
+		transform: translateY(-50%);
+		background: #f0efec;
+		box-shadow: 0 0 0 1px $surface;
+
+		&::before,
+		&::after {
+			content: '';
+			position: absolute;
+			top: -4px;
+			width: 2px;
+			height: 10px;
+			background: #f0efec;
+			box-shadow: 0 0 0 1px $surface;
+		}
+
+		&::before {
+			left: 0;
+		}
+
+		&::after {
+			right: 0;
+		}
+	}
+}
+
+.rankings-tooltip {
+	min-width: 12rem;
+
+	.rankings-tooltip-title {
+		color: $muted-ink;
+		margin-bottom: map-get($spacers, 1);
+	}
+
+	dl {
+		display: grid;
+		grid-template-columns: auto auto;
+		gap: 0 map-get($spacers, 3);
+		margin: 0;
+	}
+
+	dt {
+		font-weight: normal;
+		color: $muted-ink;
+	}
+
+	dd {
+		margin: 0;
+		text-align: right;
+		font-weight: bold;
+		font-variant-numeric: tabular-nums;
+	}
+
+	.rankings-tooltip-note {
+		margin-top: map-get($spacers, 1);
+		color: $muted-ink;
+	}
+}
+
+.rankings-chart {
+	margin-top: $gap-width;
+	padding-top: map-get($spacers, 3);
+	border-top: 1px solid $hairline;
+
+	.rankings-chart-header {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: flex-start;
+		justify-content: space-between;
+		gap: map-get($spacers, 2);
+
+		h2 {
+			font-size: 1.25rem;
+			margin: 0;
+		}
+
+		.rankings-chart-note {
+			margin: 0;
+			color: $muted-ink;
+		}
+	}
+
+	.rankings-chart-plot {
+		position: relative;
+		height: 24rem;
+		margin-top: map-get($spacers, 3);
+	}
+}
+
+.rankings-legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: map-get($spacers, 1) map-get($spacers, 3);
+	list-style: none;
+	margin: map-get($spacers, 3) 0 0;
+	padding: 0;
+
+	.rankings-legend-item {
+		display: flex;
+		align-items: center;
+		gap: map-get($spacers, 1);
+		white-space: nowrap;
+		cursor: default;
+		outline: none;
+		transition: opacity 0.15s ease-in-out;
+
+		&.faded {
+			opacity: 0.4;
+		}
+
+		&:focus-visible {
+			box-shadow: 0 0 0 1px $brand;
+		}
+
+		&[hidden] {
+			display: none;
+		}
+	}
+}
+
+.rankings-footer {
+	margin-top: $gap-width;
+	padding-top: map-get($spacers, 3);
+	border-top: 1px solid $hairline;
+	color: $muted-ink;
+	font-size: 0.85rem;
+
+	p {
+		margin: 0;
+	}
+}
+
+// the full names only fit the tab row from xl up
+@include media-breakpoint-down(xl) {
+	.rankings-phases .rankings-phase-name {
+		display: none;
+	}
+}
+
+@include media-breakpoint-down(md) {
+	.rankings-root {
+		padding: 0 16px $gap-width;
+	}
+
+	.rankings-tier {
+		grid-template-columns: 2.5rem minmax(0, 1fr);
+		column-gap: map-get($spacers, 2);
+	}
+
+	.rankings-tier-badge {
+		min-height: 2.5rem;
+
+		.rankings-tier-letter {
+			font-size: 1.25rem;
+		}
+
+		.rankings-tier-range {
+			font-size: 0.6rem;
+		}
+	}
+
+	.rankings-row {
+		grid-template-columns: 1.5rem 1.5rem minmax(0, 1fr) 4.25rem 4.25rem;
+		grid-template-areas:
+			'rank icon name name link'
+			'. bar bar dps pct';
+		row-gap: 2px;
+		padding: map-get($spacers, 1);
+
+		.rankings-row-link {
+			justify-content: flex-end;
+		}
+	}
+
+	.rankings-row-bar {
+		height: 10px;
+	}
+
+	.rankings-chart .rankings-chart-plot {
+		height: 18rem;
+	}
+}

@@ -1,4 +1,4 @@
-import { REPO_NAME } from '../../constants/other';
+import { PHASE_LABELS, REPO_NAME } from '../../constants/other';
 import { setItemQualityCssClass } from '../../css_utils';
 import { IndividualSimUI } from '../../individual_sim_ui';
 import { ALL_SOURCE_KINDS, loadCatalog, MAX_CONTENT_PHASE, MIN_CONTENT_PHASE, SOURCE_KINDS } from '../../optimizer/catalog';
@@ -41,13 +41,7 @@ import { ItemRenderer } from '../gear_picker';
 import { SimTab } from '../sim_tab';
 import { GearTab } from './gear_tab';
 
-export const PHASE_LABELS: Record<number, string> = {
-	1: 'P1: Naxxramas, Eye of Eternity, Obsidian Sanctum',
-	2: 'P2: Ulduar',
-	3: 'P3: Trial of the Crusader',
-	4: 'P4: Icecrown Citadel',
-	5: 'P5: Ruby Sanctum',
-};
+export { PHASE_LABELS };
 
 export const EFFORTS: Array<{ effort: OptimizerEffort; label: string }> = [
 	{ effort: OptimizerEffort.OptimizerEffortQuick, label: 'Quick (seconds)' },

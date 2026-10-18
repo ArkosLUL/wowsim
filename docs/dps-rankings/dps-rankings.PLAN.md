@@ -2,7 +2,7 @@
 
 Effort `dps-rankings`: branch `dps-rankings`, worktree `G:\DevStuff\GitHub\wowsimwotlk-rankings`.
 
-Status: P0 and P1 done; P2 next.
+Status: done (P0, P1, P2).
 
 ## Context
 

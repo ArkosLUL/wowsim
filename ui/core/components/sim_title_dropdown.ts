@@ -38,6 +38,10 @@ type SimTitleDropdownConfig = {
 	noDropdown?: boolean;
 };
 
+const rankingsSiteUrl = '/wotlk/rankings/';
+const rankingsIcon = 'https://wow.zamimg.com/images/wow/icons/large/achievement_bg_topdps.jpg';
+const rankingsLabel = 'DPS Rankings';
+
 // Dropdown menu for selecting a player.
 export class SimTitleDropdown extends Component {
 	private readonly dropdownMenu: HTMLElement | undefined;
@@ -113,6 +117,10 @@ export class SimTitleDropdown extends Component {
 			raidListItem.appendChild(this.buildRaidLink());
 			this.dropdownMenu?.appendChild(raidListItem);
 		}
+
+		const rankingsListItem = document.createElement('li');
+		rankingsListItem.appendChild(this.buildRankingsLink());
+		this.dropdownMenu?.appendChild(rankingsListItem);
 
 		naturalClassOrder.forEach(classIndex => {
 			const listItem = document.createElement('li');
@@ -208,6 +216,22 @@ export class SimTitleDropdown extends Component {
 				</div>
 			</a>
     	`;
+
+		return fragment.children[0] as HTMLElement;
+	}
+
+	private buildRankingsLink(): HTMLElement {
+		const fragment = document.createElement('fragment');
+		fragment.innerHTML = `
+			<a href="${rankingsSiteUrl}" class="sim-link rankings-sim-link text-white">
+				<div class="sim-link-content">
+					<img src="${rankingsIcon}" class="sim-link-icon">
+					<div class="d-flex flex-column">
+						<span class="sim-link-title">${rankingsLabel}</span>
+					</div>
+				</div>
+			</a>
+		`;
 
 		return fragment.children[0] as HTMLElement;
 	}
