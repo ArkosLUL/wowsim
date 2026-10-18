@@ -92,7 +92,6 @@ replays as its records stood until a rerun replaces them.
 | PriestDiscipline | holySpecialization | holy spell crit % | the sheet field is the aura's raw sum; Penance is holy but outside its class mask, so the sim's lowest holy spell stays at 0 |
 | RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
 | DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
-| PaladinRetribution | improvedLayOnHands | | the path's last step since the sim implements the talent; the capture predates it, so no record after it until the sweep reruns the path |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),
 spell (empty check) or check is only logged.

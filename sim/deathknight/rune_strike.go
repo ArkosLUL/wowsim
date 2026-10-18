@@ -81,7 +81,10 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 
 			if isMH {
 				dk.threatOfThassarianProc(sim, result, dk.RuneStrikeOh)
-				dk.RuneStrikeAura.Deactivate(sim)
+				// 56817's charge only goes on a hit or crit (spell_proc's default hit mask), so a miss keeps the window
+				if result.Landed() {
+					dk.RuneStrikeAura.Deactivate(sim)
+				}
 				dk.RuneStrikeQueued = false
 			}
 		},
@@ -114,10 +117,11 @@ func (dk *Deathknight) registerRuneStrikeSpell() {
 	dk.RuneStrike = dk.newRuneStrikeSpell(true)
 	dk.RuneStrikeOh = dk.newRuneStrikeSpell(false)
 
+	// 56817, which 56815 needs as its caster aura: 10 s, one charge
 	dk.RuneStrikeAura = dk.RegisterAura(core.Aura{
 		Label:    "Rune Strike",
 		ActionID: RuneStrikeActionID,
-		Duration: 6 * time.Second,
+		Duration: 10 * time.Second,
 	})
 
 	// 56816 procs 56817 on the DK, a positive spell with no school: its level, 67, goes to his enemies as threat
@@ -155,8 +159,10 @@ func (dk *Deathknight) registerDrwRuneStrikeSpell() {
 		Direct: runeStrikeEffect,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, false), spell.Direct.WeaponPct) +
-				core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower()) + dk.drwVersusAttackPowerBonus(spell, false)
+			// Rage of Rivendare and Tundra Stalker scale the flat bonus too
+			baseDamage := (core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, false), spell.Direct.WeaponPct) +
+				core.PowerBonus(spell.Direct.AP, spell.MeleeAttackPower()) + dk.drwVersusAttackPowerBonus(spell, false)) *
+				dk.RoRTSBonus(target)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialNoBlockDodgeParry)
 		},
 	})

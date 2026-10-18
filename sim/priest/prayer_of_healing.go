@@ -9,6 +9,8 @@ import (
 
 func (priest *Priest) registerPrayerOfHealingSpell() {
 	var glyphSpell *core.Spell
+	// the Prayer of Healing heal the glyph's hot comes off, crit and healing taken in
+	var glyphHeal float64
 
 	priest.PrayerOfHealing = priest.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 48072},
@@ -53,8 +55,12 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 					continue
 				}
 				baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.HealingPower(partyTarget))
-				spell.CalcAndDealHealing(sim, partyTarget, baseHealing, spell.OutcomeHealingCrit)
-				if glyphSpell != nil {
+				result := spell.CalcHealing(sim, partyTarget, baseHealing, spell.OutcomeHealingCrit)
+				heal := result.Damage
+				spell.DealHealing(sim, result)
+				// spell_pri_glyph_of_prayer_of_healing gives nothing off a heal of 0
+				if glyphSpell != nil && heal > 0 {
+					glyphHeal = heal
 					glyphSpell.Hot(partyTarget).Apply(sim)
 					glyphSpell.LandOn(sim, partyTarget)
 				}
@@ -71,7 +77,8 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 			HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(6.0 / 15 / 2),
 			Flags:                   core.SpellFlagNoOnCastComplete | core.SpellFlagHelpful,
 
-			DamageMultiplier: priest.PrayerOfHealing.DamageMultiplier * 0.2 / 2,
+			// 56161's class mask is 0, so no talent or spell mod reaches its amount
+			DamageMultiplier: 1,
 			ThreatMultiplier: 1,
 
 			Hot: core.DotConfig{
@@ -82,10 +89,10 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 				TickLength:    time.Second * 3,
 				TicksCanCrit:  false,
 				OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-					base := priest.PrayerOfHealing.Direct
-					dot.SnapshotBaseDamage = base.Roll(sim) + core.PowerBonus(base.SP, dot.Spell.HealingPower(target))
-					// 56161's amount comes off the Prayer of Healing heal, which had the healing done talents, and each tick takes them again
-					dot.SnapshotHotMultiplier(dot.Spell.CasterHealingMultiplier())
+					// int32(CalculatePct(int32(heal), 20) / GetMaxTicks()); each tick then takes the healing done
+					// percents and the target's healing taken again
+					dot.SnapshotBaseDamage = float64(int32(core.ApplyPct(glyphHeal, 0.2)) / 2)
+					dot.SnapshotHotMultiplier(1)
 				},
 				OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 					dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)

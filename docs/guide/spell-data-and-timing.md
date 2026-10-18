@@ -51,8 +51,8 @@ spell is only as right as its id.
   the 5 yd floor.
 - A target's combat reach is `Target.combat_reach` (`proto/common.proto`; "Combat Reach" in the advanced
   target picker), unset the boss dummy's 2.5 (model 27510, `core.BossDummyCombatReach`), read as
-  `Unit.EnemyCombatReach`. Ranges add both reaches (`Spell::GetMinMaxRange`); only Mirror Image's read it
-  ([pets](pets.md#guardian-ais)).
+  `Unit.EnemyCombatReach`. Ranges add both reaches (`Spell::GetMinMaxRange`); only Mirror Image's ranges
+  ([pets](pets.md#guardian-ais)) and a hunter pet's spot ([pets](pets.md#reach-and-position)) read it.
 
 ## Update timing
 
@@ -100,6 +100,15 @@ exact, which is what unit tests want. Outside the fight every update takes the m
   so the fire mages' goldens move with both settings.
 - Swings, Auto Shot and hardcast landings land on the caster's next tick. A swing restarts its timer from the
   tick it landed on, losing the overshoot: up to a world tick for a player, a map update for a pet.
+- A player's missile lands on his first world tick at or after its flight's start plus the flight
+  (`Spell.landsAt`; the server re-plans its `SpellEvent`). The flight starts on the first world tick at or after
+  the launch, or the one after when launched in his own update (`sim.updating`: Auto Shot, a dot tick) or a
+  caster event (`sim.eventPass`: a landing, a `DelayedPeriodicApplier` action, a hardcast's completion bar its
+  own missile). A non-player's, a totem spell's (`CastFromAnotherUnit`), and any on exact timing land at launch
+  plus the flight.
+- A player's hardcast due on a landing's tick completes first (`landingAction.land` runs `landDueCast`):
+  `m_Events` keys it at the tick before + 1 ms, the landing at go + flight. Landings among themselves go in
+  launch order, not go + flight.
 - Auras and dots tick and expire on the grid of what counts them down: the unit they sit on, a channel's
   caster, or the map update for an area dot from a dynamic object, totem or trap (effects 27, 28, 105).
 - An aura expires at its own time (`Simulation.Step`), ahead of anything queued for then but what

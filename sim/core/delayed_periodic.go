@@ -90,6 +90,12 @@ func (dpa *DelayedPeriodicApplier) queue(sim *Simulation, target *Unit, delay ti
 		// a nanosecond early, to beat a swing or the old dot's tick due on the same server tick: the
 		// caster's events run first in Player::Update, and creatures' auras tick after players
 		NextActionAt: sim.CurrentTime + delay - time.Nanosecond,
-		OnAction:     onApply,
+		// one of the caster's events, so a missile it casts starts on his next tick
+		OnAction: func(sim *Simulation) {
+			outerPass, outerCast := sim.eventPass, sim.landingCast
+			sim.eventPass, sim.landingCast = true, nil
+			onApply(sim)
+			sim.eventPass, sim.landingCast = outerPass, outerCast
+		},
 	})
 }

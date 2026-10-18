@@ -19,7 +19,8 @@ func chainHealJumps(sim *core.Simulation, target *core.Unit, jumps []*core.Unit,
 				continue
 			}
 			cur, most := unit.CurrentHealth(), unit.MaxHealth()
-			if cur >= most {
+			// SpellInfo::CheckTarget keeps the dead out of the search
+			if cur >= most || cur <= 0 {
 				continue
 			}
 			// whole health on the server, and a tie keeps the unit found first

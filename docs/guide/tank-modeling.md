@@ -99,10 +99,10 @@ fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved w
   each. `TotalSims` counts what the passes simmed, not the second one's reads of cached points.
 - Neither ±8000 Armor, 16,000 iterations nor healing at 0.75 to 4 times DTPS moves a worn gear that dies in
   every iteration off 100%, so whether a pick brings the term back is up to the pick.
-- A death knight's Icebound Fortitude (`sim/deathknight/icebound_fortitude.go`) takes 100% off at 467 to 473
-  Defense skill over 400, and its expiry then divides the damage taken multiplier by 0: every later hit is NaN.
-  A curve knot there (Felesta P1 Quick's Defense at +2304) sims NaN; `MeasureResponse` leaves it out, stops
-  that bracket's bisection, and the run warns.
+- A curve knot that sims NaN or infinite is left out (`MeasureResponse`), stops that bracket's bisection, and
+  the run warns.
+- From 467 Defense skill over 400 (Felesta P1 Quick's Defense knot at +2304) a death knight's Icebound
+  Fortitude takes 100% off: every hit while it's up is 0 ([class mechanics](class-mechanics.md#death-knight)).
 - **Tiebreak** (`breakTie`, after verify's race): on a tank run whose best beats the seed, the loadouts within
   2 se of it that beat the seed too go to **time to live**: the same fight with healing off (Hps, cadence and
   variation 0, burst window kept), 60 s flat, a cloned request, seconds to the first death (60 alive). The

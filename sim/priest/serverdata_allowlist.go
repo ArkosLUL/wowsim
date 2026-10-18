@@ -10,6 +10,9 @@ func init() {
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 48156}, Field: core.ServerTickSP, SimFloat: 0, ServerFloat: 0.271, KeepSim: true,
 			Why: "effect 2's 0.271 goes unused: it's aura 227, whose amount AuraEffect::CalculateAmount doesn't scale, and the 58381 it casts adds its own 0.257"},
 
+		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 53007}, Field: core.ServerMissileSpeed, SimFloat: 40, ServerFloat: 0, KeepSim: true,
+			Why: "the sim deals Penance's damage ticks under 53007, the server as 53000 bolts at 40 yd a second"},
+
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 47515}, Field: core.ServerSchool, Sim: 32, Server: 2, KeepSim: true,
 			Why: "the sim casts Divine Aegis's shield under the talent's id, the server as its own spell 47753"},
 		core.ServerConflictAllowance{Spell: core.ActionID{SpellID: 63543}, Field: core.ServerSchool, Sim: 32, Server: 2, KeepSim: true,

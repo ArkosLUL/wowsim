@@ -92,6 +92,11 @@ type Simulation struct {
 	// does: an aura it puts on itself then counts from this update, not the one before
 	updating *Unit
 
+	// set while a cast landing, missile hit or delayed event runs (the caster's m_Events pass): a player's
+	// missile launched then starts on his next tick, all but the landing hardcast's own (Spell.landsAt)
+	eventPass   bool
+	landingCast *Spell
+
 	// Spell.ResistanceMultiplier's last thresholds. A resist that got here is above 0, so the zero
 	// value never matches.
 	lastResist struct {
@@ -653,6 +658,7 @@ func (sim *Simulation) reset() {
 		}
 	}
 	sim.updating = nil
+	sim.eventPass, sim.landingCast = false, nil
 
 	sim.resetPendingActions()
 
@@ -1105,7 +1111,7 @@ func (sim *Simulation) resetPendingActions() {
 	sim.pendingActions = append(sim.pendingActions[:0], pendingEntry{at: sentinelPendingAction.NextActionAt, prio: sentinelPendingAction.Priority})
 
 	for _, la := range sim.landings {
-		la.onLand, la.spell, la.result = nil, nil, nil
+		la.onLand, la.spell, la.result, la.caster = nil, nil, nil, nil
 	}
 	sim.freeLandings = append(sim.freeLandings[:0], sim.landings...)
 }
@@ -1117,6 +1123,7 @@ type landingAction struct {
 	onLand func(*Simulation) // or, when nil, spell deals result
 	spell  *Spell
 	result *SpellResult
+	caster *Unit
 }
 
 // startLanding queues the landing at the given time, as StartDelayedAction would, without allocating.
@@ -1136,19 +1143,27 @@ func (sim *Simulation) startLanding(at time.Duration, caster *Unit, onLand func(
 	if la.playerEvent {
 		la.Priority = ActionPriorityEvent
 	}
-	la.onLand, la.spell, la.result = onLand, spell, result
+	la.onLand, la.spell, la.result, la.caster = onLand, spell, result, caster
 	sim.AddPendingAction(&la.PendingAction)
 }
 
 func (la *landingAction) land(sim *Simulation) {
-	onLand, spell, result := la.onLand, la.spell, la.result
-	la.onLand, la.spell, la.result = nil, nil, nil
+	onLand, spell, result, caster, playerEvent := la.onLand, la.spell, la.result, la.caster, la.playerEvent
+	la.onLand, la.spell, la.result, la.caster = nil, nil, nil, nil
 	sim.freeLandings = append(sim.freeLandings, la)
+	// m_Events keys a hardcast's SpellEvent at the last tick + 1 ms, so it completes ahead of any landing
+	// due on the same tick
+	if playerEvent && sim.worldTickInterval > 0 {
+		caster.landDueCast(sim)
+	}
+	outerPass, outerCast := sim.eventPass, sim.landingCast
+	sim.eventPass, sim.landingCast = true, nil
 	if onLand != nil {
 		onLand(sim)
 	} else {
 		spell.DealDamage(sim, result)
 	}
+	sim.eventPass, sim.landingCast = outerPass, outerCast
 }
 
 // Sorted so the next action is last: NextActionAt descending, then Priority ascending, sentinel at 0.

@@ -155,7 +155,6 @@ var PlayerOptionsDesyncFrost = &proto.Player_Deathknight{
 
 var deathKnightOptions = &proto.Deathknight_Options{
 	UnholyFrenzyTarget: &proto.UnitReference{Type: proto.UnitReference_Player, Index: 0},
-	DrwPestiApply:      true,
 	StartingRunicPower: 0,
 	PetUptime:          1,
 }

@@ -24,8 +24,9 @@ checks it and the Go effects.
 - Item heals go the same way (`itemHealSpell`): Bauble of True Blood's use casts 71607 for both items,
   Althor's Abacus heals as 71610 / 71641, Glowing Twilight Scale ticks as 75493 / 75494. Still under the
   item: Forethought Talisman's heal over time.
-- Althor's Abacus heals the enabled raid unit with the lowest health percent (`spell_item_echoes_of_light`),
-  a tie at random; a unit without a health bar (a target dummy) counts as full.
+- Althor's Abacus heals the enabled, [living](damage-and-healing.md#healing) raid unit with the lowest health
+  percent (`spell_item_echoes_of_light`), a tie at random, no one when none is left; a unit without a health bar
+  (a target dummy) counts as full.
 - Bryntroll's proc is Drain Life 71838 (heroic 71839), magic class. It never crits (`SPELL_ATTR2_CANT_CRIT`)
   and heals the wielder for the damage dealt, a bare `HealBySpell` with no crit, threat, proc or spell power
   (`GainHealing`). The item gives the spell a 500 ms cooldown, so a roll won inside it is lost

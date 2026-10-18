@@ -60,6 +60,10 @@ func (paladin *Paladin) ApplyTalents() {
 		paladin.PseudoStats.DamageTakenMultiplier *= 1 - 0.01*float64(paladin.Talents.ShieldOfTheTemplar)
 	}
 
+	// Divinity, 63646 to 63650 on the paladin: aura 118 (healing taken) and aura 136 (healing done), 1% a point
+	paladin.AddHealingTakenPct(paladin.Talents.Divinity)
+	paladin.AddHealingDonePct(paladin.Talents.Divinity)
+
 	paladin.applyRedoubt()
 	paladin.applyReckoning()
 	paladin.applyArdentDefender()

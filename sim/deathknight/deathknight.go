@@ -20,7 +20,6 @@ type DeathknightInputs struct {
 
 	StartingRunicPower float64
 	PetUptime          float64
-	DrwPestiApply      bool
 
 	// Rotation Vars
 	UseAMS            bool
@@ -413,10 +412,6 @@ func (dk *Deathknight) AllDiseasesAreActive(target *core.Unit) bool {
 
 func (dk *Deathknight) DiseasesAreActive(target *core.Unit) bool {
 	return dk.FrostFeverSpell.Dot(target).IsActive() || dk.BloodPlagueSpell.Dot(target).IsActive()
-}
-
-func (dk *Deathknight) DrwDiseasesAreActive(target *core.Unit) bool {
-	return dk.Talents.DancingRuneWeapon && dk.RuneWeapon.FrostFeverSpell.Dot(target).IsActive() || dk.RuneWeapon.BloodPlagueSpell.Dot(target).IsActive()
 }
 
 func (dk *Deathknight) bonusCritMultiplier(bonusTalentPoints int32) float64 {

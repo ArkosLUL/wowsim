@@ -151,7 +151,9 @@ message Deathknight {
 
 		UnitReference unholy_frenzy_target = 5;
 
-		bool drw_pesti_apply = 6;
+		// The sim ignores it: the Rune Weapon never copies Pestilence. Kept so saved settings and fixtures that
+		// set it still parse as JSON.
+		bool drw_pesti_apply = 6 [deprecated = true];
 
 		bool use_ams = 9;
 		double avg_ams_success_rate = 10;

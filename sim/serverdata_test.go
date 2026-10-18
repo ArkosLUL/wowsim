@@ -98,7 +98,6 @@ func glyphVariants(p serverDataPreset) []serverDataPreset {
 var (
 	dkOptions = &proto.Player_Deathknight{Deathknight: &proto.Deathknight{Options: &proto.Deathknight_Options{
 		UnholyFrenzyTarget: &proto.UnitReference{Type: proto.UnitReference_Player, Index: 0},
-		DrwPestiApply:      true,
 		PetUptime:          1,
 	}}}
 	mageOptions = func(armor proto.Mage_Options_ArmorType) *proto.Player_Mage {
