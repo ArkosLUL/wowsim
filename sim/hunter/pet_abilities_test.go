@@ -1,7 +1,9 @@
 package hunter
 
 import (
+	"math"
 	"testing"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -146,6 +148,80 @@ func TestPetSpecialsNeverLandOnAnImmuneTarget(t *testing.T) {
 		direct, ticks = runPetAbilityOn(t, special.pet, special.spellID, nil, others)
 		if len(direct)+len(ticks) == 0 {
 			t.Errorf("%s never landed on a target that takes its mechanic", special.name)
+		}
+	}
+}
+
+// spitTravel fights a minute with the pet against a target of that reach, 0 for the boss dummy's 2.5, and gives the
+// flight of its spit's first landing.
+func spitTravel(t *testing.T, petType proto.Hunter_Options_PetType, spellID int32, reach float64) time.Duration {
+	t.Helper()
+	options := googleProto.Clone(PlayerOptionsBasic.Hunter.Options).(*proto.Hunter_Options)
+	options.PetType = petType
+	encounter := core.MakeSingleTargetEncounter(0)
+	encounter.Duration = 60
+	// the default target is shared, so the test's goes on a copy
+	target := googleProto.Clone(encounter.Targets[0]).(*proto.Target)
+	target.CombatReach = reach
+	encounter.Targets[0] = target
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(&proto.Player{
+			Race:          proto.Race_RaceOrc,
+			Class:         proto.Class_ClassHunter,
+			Equipment:     core.GetGearSet("../../ui/hunter/gear_sets", "p1_sv").GearSet,
+			Spec:          &proto.Player_Hunter{Hunter: &proto.Hunter{Options: options}},
+			Rotation:      core.APLRotationFromJsonString(`{"type":"TypeAPL","priorityList":[]}`),
+			TalentsString: SVTalents,
+		}, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{}),
+		Encounter:  encounter,
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	travel := time.Duration(-1)
+	pet := sim.Raid.Parties[0].Players[0].(*Hunter).pet
+	pet.RegisterAura(core.Aura{
+		Label:    "spit test log",
+		Duration: core.NeverExpires,
+		OnReset: func(aura *core.Aura, sim *core.Simulation) {
+			aura.Activate(sim)
+		},
+		OnSpellHitDealt: func(_ *core.Aura, _ *core.Simulation, spell *core.Spell, _ *core.SpellResult) {
+			if spell.ActionID.SpellID == spellID && travel < 0 {
+				travel = spell.TravelTime()
+			}
+		},
+	})
+	sim.Reset()
+	sim.PrePull()
+	for !sim.Step() {
+	}
+	sim.Cleanup()
+	if travel < 0 {
+		t.Fatalf("spell %d never landed against a reach of %v", spellID, reach)
+	}
+	return travel
+}
+
+// The pet stops both reaches out from the target's centre, and a spit flies from there less the pet's 1.5, 5 yd at
+// least (Spell::AddUnitTarget): the boss dummy's 2.5 leaves the floor, a reach of 10 leaves 10.
+func TestSpitsFlyFromTheTargetsReach(t *testing.T) {
+	for _, spit := range []struct {
+		name    string
+		pet     proto.Hunter_Options_PetType
+		spellID int32
+		speed   float64
+	}{
+		{"Acid Spit", proto.Hunter_Options_Worm, 55754, 24},
+		{"Poison Spit", proto.Hunter_Options_Serpent, 55557, 40},
+	} {
+		for _, reach := range []float64{0, 10} {
+			yards := 5.0
+			if reach > 0 {
+				yards = reach
+			}
+			want := time.Duration(math.Floor(yards/spit.speed*1000)) * time.Millisecond
+			if got := spitTravel(t, spit.pet, spit.spellID, reach); got != want {
+				t.Errorf("%s against a reach of %v flies %v, want %v", spit.name, reach, got, want)
+			}
 		}
 	}
 }

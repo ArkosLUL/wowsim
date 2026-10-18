@@ -90,8 +90,9 @@ func (dk *Deathknight) registerDrwPlagueStrikeSpell() {
 		Direct: plagueStrikeEffect,
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct) +
-				dk.drwVersusAttackPowerBonus(spell, true)
+			// Rage of Rivendare and Tundra Stalker scale the flat bonus too
+			baseDamage := (core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct) +
+				dk.drwVersusAttackPowerBonus(spell, true)) * dk.RoRTSBonus(target)
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 

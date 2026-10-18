@@ -4963,6 +4963,59 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\ec-pet-fix7-tmp\`.
   the spits' distance in `sim/hunter/pet_abilities.go`; the module's `e2e/petfix8_test.go`; their drops and rows.
 - **Goldens:** TestBlood and TestBloodTank (the copies); none for the spits; report each.
 
+#### As built
+
+Stage code, re-measured on `d61bbed61` against [ac] `62fb09c68` and the live DB (SELECT); notes and the live plan in
+`tmp/ec-pet-fix8-code.md`. The merge changes nothing these bullets read (`spell_dk.cpp`'s weapon script,
+`CanSpellTriggerProcOnEvent`, `ChaseMovementGenerator`'s stop spot); its 0a6c81f05 now puts a lone guardian exactly on its
+dest: the Gargoyle's is the sim's spot, the Rune Weapon's is by the target (its run-in unmodelled). Verdicts:
+- Copy on a hit (fixed, wider than the lead). spell_proc 49028 (procFlags 0, so the DBC's 86292; phase HIT, type mask
+  5, hit mask 0, default NORMAL | CRITICAL | ABSORB): only a landed hit copies, once per target it lands on, at that
+  target. The aura copies in `OnSpellHitDealt` (`copyOf`); the DK's Heart Strike chain copies too. `CheckProc` drops an
+  area spell unless its target is the DK, and a hit-phase target never is: Pestilence and Blood Boil are never copied,
+  so the weapon's copies of both (and with them `drw_pesti_apply`'s weapon diseases) are gone.
+- Rage of Rivendare and Tundra Stalker (fixed): every rank's class mask covers the strikes, and the DK's
+  `MeleeDamageBonusDone` scales the weapon's whole hit, flat creature bonus included: Heart, Death, Plague and Rune
+  Strike copies now multiply `RoRTSBonus` like Blood Strike's. No suite DK with the weapon takes either talent.
+- Magic copies take none of the DK's percents (fixed, found here): `Unit::SpellDamageBonusDone`'s entry-27893 branch
+  passes `TotalMod, stack` one argument early, so the DK's call gets TotalMod 1 and skips `SpellPctDamageModsDone`.
+  Icy Touch, Death Coil and the weapon's diseases take only spell mods and the halving (`setCopyMultipliers`); their
+  AP part takes the DK's Impurity (`getImpurityBonus`).
+- Spits (fixed): a spit flies from where the pet stops (`standAtReachOf`); stage live puts that at R + its reach.
+
+Tests: `TestRuneWeaponCopiesEachLandedHit` (2 targets, misses and area spells), `TestRuneWeaponStrikesTakeRageOfRivendare`,
+`TestRuneWeaponCopiesTakeNoneOfTheKnightsPercents` (replaces `…AsTheyStand`), `TestSpitsFlyFromTheTargetsReach`.
+No drop or allowance entry is this item's.
+
+e2e (vetted, run in stage live), `e2e/petfix8_test.go`: `TestPetfix8CasterSpots`, `TestPetfix8GargoyleSpot`,
+`TestPetfix8DeathCoilAfterACopy`, `TestPetfix8HunterPetStopSpot` (Bluff Behemoth 24894, reach 10, neutral).
+
+Goldens (`dock.sh delta`), TestBlood and TestBloodTank move, Average-Default:
+- Copies on landed hits, per target: TestBlood −0.017%; blood_dps multi-target +0.8%; BloodAggro −0.28% dps,
+  +0.28% tps (fewer copies shift the RNG; the knight's own hits move, few iterations).
+- No area copies: TestBlood −0.075%; blood_dps multi-target −0.31%; blood_pesti_aoe −1.7 to −8.0%.
+- Magic copies' percents: TestBlood −0.48% (weapon Icy Touch, Death Coil, Frost Fever, Blood Plague −23% a hit);
+  BloodAggro −0.01%.
+- Rage of Rivendare, Impurity, spits: none.
+
+Stage live (`tmp/ec-pet-fix8-live.md`), [ac] `62fb09c68`, host loaded throughout (another session's container at
+up to 1450% CPU; the worldserver restarted from outside at 12:46, not a crash). All four e2e tests pass:
+- Caster spots: Imp and both elementals stand 30.20 / 30.13 yd off the dummy, the sim's spots to 0.01 yd; flights 20
+  to 95 ms past the sim's (a map update). The glyphed elemental's Waterbolt is 72898 (same data as 31707) and a real
+  pet's spells start off autocast (`Pet::addSpell`), so the e2e orders it like the Imp's.
+- Gargoyle: casts from 27.76 yd, not the sim's 27.96: `spell_dk_summon_gargoyle` raises it 15 yd and its straight
+  drop is nudged 0.2 yd along the knight's facing (`PointMovementGenerator::DoInitialize`), about 10 ms of flight.
+  `gargoyleSpotDistance` (`summon_gargoyle.go`) isn't this item's, so it's a contract change request; golden-neutral
+  (a melee knight's Gargoyle Strike flies the 5 yd floor).
+- Death Coil: reach 1.5 then 0.01, flights 1186–1200 then 1249–1284 ms (sim 1187, 1249). The weapon's copies fly
+  1252–1381 ms from 30.02 yd; its first comes up near the dummy and flies to the knight (first copy from 14–16 yd).
+- Hunter pet stop (fixed): 11 of 14 approaches stop at R + r = 11.50, 2 at R, 1 gives the chase up. A pet drops an
+  incomplete path, so `DispatchSplineToPosition` walks it to the ring point `GetNearPoint2D` gives with the pet as
+  searcher, both reaches out. `standAtReachOf` now stands the pet at R + 1.5 (its unscaled reach: it keeps that spot
+  under Bloodlust): Acid Spit against R = 10 flies 416 ms (live 400 from 11.51, up to 609 loaded).
+  `.pet create` learns the worm's own level (79 or 80), so the e2e teaches rank 6 with `.pet learn`; the behemoth
+  steps in once hit, so each spit is timed off both units' places at its go. Hunter suites unchanged.
+
 ### EC-CLASS-FIX9 (Z13; changes goldens; stages: code, live)
 
 - Rune Strike's window: 56815 needs `CasterAuraSpell` 56817 (Spell.dbc, read in Z12's cross-review), 10 s with one

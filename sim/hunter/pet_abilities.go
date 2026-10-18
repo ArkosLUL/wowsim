@@ -227,6 +227,7 @@ func (hp *HunterPet) newSpecialAbility(config PetSpecialAbilityConfig) *core.Spe
 			land(sim, spell, result)
 			return
 		}
+		hp.standAtReachOf(target)
 		spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 			land(sim, spell, result)
 		})
@@ -586,6 +587,7 @@ func (hp *HunterPet) newPoisonSpit() *core.Spell {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			result := spell.CalcOutcome(sim, target, spell.OutcomeMagicHit)
+			hp.standAtReachOf(target)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealOutcome(sim, result)
 				if result.Landed() {
@@ -594,6 +596,15 @@ func (hp *HunterPet) newPoisonSpit() *core.Spell {
 			})
 		},
 	})
+}
+
+// a hunter pet's reach before any scale aura: it stops at the pull and keeps that spot under Bloodlust
+const hunterPetReach = 1.5
+
+// standAtReachOf stands the pet where its chase mostly stops: PetAI's path to a spot at the target's reach comes back
+// incomplete, so DispatchSplineToPosition falls back to GetNearPoint2D's ring point, both reaches out from the centre.
+func (hp *HunterPet) standAtReachOf(target *core.Unit) {
+	hp.DistanceFromTarget = target.EnemyCombatReach + hunterPetReach
 }
 
 func (hp *HunterPet) newRake() *core.Spell {
