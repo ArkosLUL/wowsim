@@ -36,6 +36,7 @@ type Pool struct {
 	limitGroups map[int32]*proto.LimitGroup
 	metas       map[int32]*proto.MetaGemCondition
 	floors      []*proto.StatMinimum
+	ceilings    []*proto.StatMaximum
 	base        *proto.RaidSimRequest
 	targetIndex int
 	reforging   *core.Reforging
@@ -141,6 +142,7 @@ func CompilePool(r *Request) (*Pool, error) {
 		limitGroups: r.LimitGroups,
 		metas:       r.MetaConditions,
 		floors:      r.Settings.GetStatMinimums(),
+		ceilings:    r.Settings.GetStatMaximums(),
 		base:        r.Base,
 		targetIndex: r.TargetIndex,
 		reforging:   &core.NewServerSettings(r.Base.GetEncounter().GetServerSettings()).Reforging,

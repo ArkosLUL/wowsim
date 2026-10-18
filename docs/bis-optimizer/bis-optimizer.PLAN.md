@@ -1286,6 +1286,14 @@ added the way `critImmunityFloor` adds Defense (one floor per stat, raised rathe
 
 Open for stage 2 (UI): the checkbox, its default and persistence, the tab/batch wiring, uitest specs.
 
+Superseded (Z14 cross-review): the haste ceiling is hard now, a floor's mirror. `Pool.Check` rejects a loadout whose
+sheet reads over a `StatMaximum` (`RuleCeiling`, in `checkSheet` off the floors' sheet), so verify, the gem check's
+twins and regems, and neighborhood adoptions stay under it; `ceilingTerm` still steers the search. A seed over it
+breaks a rule like one under a floor; when nothing gets under, `closestToCaps` keeps the loadout least over
+(`run.capCeilings`) and warns. Why: arcane p4's `gemTwins` swapped a Potent Ametrine for a Reckless one (1012 to 1022
+SpellHaste, +4.1 ± 1.8): haste past the GCD floor still pays a spec whose casts stay above 1 s. `regemSlots`' Lagrange
+premium still prices floors only, so a regem over a ceiling is dropped, not bisected back.
+
 #### As built (stage 2, UI)
 
 "Respect hit, expertise and haste caps" sits in each tab's Setup section (`optimizer_tab.ts`,

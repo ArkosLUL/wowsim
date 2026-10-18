@@ -100,8 +100,9 @@ func (dk *Deathknight) registerDeathStrikeSpell() {
 	dk.DeathStrike = dk.DeathStrikeMhHit
 }
 
+// registerDrwDeathStrikeSpell is the weapon's Death Strike, with no Glyph of Death Strike: Spell::EffectWeaponDmg
+// asks the caster, the weapon, for its aura.
 func (dk *Deathknight) registerDrwDeathStrikeSpell() {
-	hasGlyph := dk.HasMajorGlyph(proto.DeathknightMajorGlyph_GlyphOfDeathStrike)
 	direct, mods := dk.deathStrikeEffect()
 
 	dk.RuneWeapon.DeathStrike = dk.RuneWeapon.RegisterSpell(core.SpellConfig{
@@ -120,10 +121,6 @@ func (dk *Deathknight) registerDrwDeathStrikeSpell() {
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct)
-
-			if hasGlyph {
-				baseDamage = core.ApplyPct(baseDamage, 1+0.01*min(dk.CurrentRunicPower(), 25))
-			}
 			// Rage of Rivendare and Tundra Stalker scale the flat bonus too
 			baseDamage = (baseDamage + dk.drwVersusAttackPowerBonus(spell, true)) * dk.RoRTSBonus(target)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

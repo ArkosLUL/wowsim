@@ -12,6 +12,8 @@ func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.
 	critMultiplier := dk.bonusCritMultiplier(dk.Talents.MightOfMograine)
 	if isDrw {
 		critMultiplier = dk.drwBonusCritMultiplier(dk.Talents.MightOfMograine)
+		// Spell::EffectWeaponDmg asks the caster, the weapon, for the T8 4-piece
+		diseaseMulti = 0.1
 	}
 
 	conf := core.SpellConfig{

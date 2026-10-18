@@ -274,8 +274,9 @@ func (runeWeapon *RuneWeaponPet) setCopyMultipliers(target *core.Unit) {
 }
 
 // registerDrwObliterateSpell is the weapon's Obliterate. Spell::EffectWeaponDmg reads the caster's own auras, the
-// weapon's: it counts and takes off the weapon's diseases, with no Annihilation to keep them and no T8 4-piece on the
-// count. The DK's spell mods and his MeleeDamageBonusDone (Rage of Rivendare, Merciless Combat) still reach it.
+// weapon's: it counts and takes off the weapon's diseases on a hit not missed, dodged or parried, with no Annihilation
+// to keep them and no T8 4-piece on the count. The DK's spell mods and his MeleeDamageBonusDone (Rage of Rivendare,
+// Merciless Combat) still reach it.
 func (dk *Deathknight) registerDrwObliterateSpell() {
 	dk.RuneWeapon.Obliterate = dk.RuneWeapon.RegisterSpell(core.SpellConfig{
 		ActionID:    ObliterateActionID.WithTag(1),
@@ -299,14 +300,14 @@ func (dk *Deathknight) registerDrwObliterateSpell() {
 			baseDamage := core.ApplyPct(spell.Direct.Roll(sim)+dk.DrwWeaponDamage(sim, true), spell.Direct.WeaponPct)
 			baseDamage = core.ApplyPct(baseDamage, 1+dk.drwCountActiveDiseases(target)*0.125)
 			// both are DoneTotalMod, so they scale the flat creature-type bonus too
-			baseDamage = (baseDamage + dk.drwVersusAttackPowerBonus(spell, true)) * dk.RoRTSBonus(target) * dk.mercilessCombatBonus(sim)
+			bonus := dk.RoRTSBonus(target)
+			baseDamage = (baseDamage + dk.drwVersusAttackPowerBonus(spell, true)) * bonus * dk.mercilessCombatBonus(sim)
 
-			result := spell.CalcDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
-			// the effect runs on any hit that isn't avoided, a block too
-			if !result.Outcome.Matches(core.OutcomeMiss | core.OutcomeDodge | core.OutcomeParry) {
-				dk.RuneWeapon.FrostFeverSpell.Dot(target).Deactivate(sim)
-				dk.RuneWeapon.BloodPlagueSpell.Dot(target).Deactivate(sim)
-			}
+			result := spell.CalcDamage(sim, target, baseDamage, dk.obliterateOutcome(spell.OutcomeMeleeSpecialHitAndCrit, bonus,
+				func(sim *core.Simulation, target *core.Unit) {
+					dk.RuneWeapon.FrostFeverSpell.Dot(target).Deactivate(sim)
+					dk.RuneWeapon.BloodPlagueSpell.Dot(target).Deactivate(sim)
+				}))
 			spell.DealDamage(sim, result)
 		},
 	})

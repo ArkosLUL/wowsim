@@ -241,6 +241,64 @@ func TestSpitsFlyFromTheTargetsReach(t *testing.T) {
 	}
 }
 
+// Poison Spit has SPELL_ATTR5_EXTRA_INITIAL_PERIOD: AuraEffect::CalculatePeriodic starts a new aura's timer at 0, so it
+// ticks as it goes on and GetTotalTicks counts five over its 8 s.
+func TestPoisonSpitTicksAsItGoesOn(t *testing.T) {
+	options := googleProto.Clone(PlayerOptionsBasic.Hunter.Options).(*proto.Hunter_Options)
+	options.PetType = proto.Hunter_Options_Serpent
+	encounter := core.MakeSingleTargetEncounter(0)
+	encounter.Duration = 60
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(&proto.Player{
+			Race:          proto.Race_RaceOrc,
+			Class:         proto.Class_ClassHunter,
+			Equipment:     core.GetGearSet("../../ui/hunter/gear_sets", "p1_sv").GearSet,
+			Spec:          &proto.Player_Hunter{Hunter: &proto.Hunter{Options: options}},
+			Rotation:      core.APLRotationFromJsonString(`{"type":"TypeAPL","priorityList":[]}`),
+			TalentsString: SVTalents,
+		}, &proto.PartyBuffs{}, &proto.RaidBuffs{}, &proto.Debuffs{}),
+		Encounter:  encounter,
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	var landed, ticks []time.Duration
+	pet := sim.Raid.Parties[0].Players[0].(*Hunter).pet
+	pet.RegisterAura(core.Aura{
+		Label:    "spit test log",
+		Duration: core.NeverExpires,
+		OnReset: func(aura *core.Aura, sim *core.Simulation) {
+			aura.Activate(sim)
+		},
+		OnSpellHitDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if spell.ActionID.SpellID == 55557 && result.Landed() {
+				landed = append(landed, sim.CurrentTime)
+			}
+		},
+		OnPeriodicDamageDealt: func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, _ *core.SpellResult) {
+			if spell.ActionID.SpellID == 55557 {
+				ticks = append(ticks, sim.CurrentTime)
+			}
+		},
+	})
+	sim.Reset()
+	sim.PrePull()
+	for !sim.Step() {
+	}
+	sim.Cleanup()
+
+	if len(landed) < 2 || landed[1]-landed[0] < 8*time.Second {
+		t.Fatalf("spits landed at %v, want two at least, 8 s apart", landed)
+	}
+	var first []time.Duration
+	for _, tick := range ticks {
+		if tick >= landed[0] && tick < landed[1] {
+			first = append(first, tick)
+		}
+	}
+	if len(first) != 5 || first[0] != landed[0] {
+		t.Errorf("the spit landing at %v ticked at %v, want five from the landing on", landed[0], first)
+	}
+}
+
 // Pet::GetNativeObjectScale: a level 80 pet takes its family's maxScale, or 1 for the families it pins there, and
 // Creature::SetObjectScale gives a pet 1.5 times that.
 func TestHunterPetReachIsItsFamilysScale(t *testing.T) {

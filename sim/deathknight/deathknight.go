@@ -309,8 +309,9 @@ func (dk *Deathknight) registerMindFreeze() {
 			ThreatMultiplier: 0,
 
 			ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-				// Just deal 0 damage as the "Harmful Spell" is implemented on spell damage
-				spell.CalcAndDealDamage(sim, target, 0, spell.OutcomeAlwaysHit)
+				// Just deal 0 damage as the "Harmful Spell" is implemented on spell damage. 47528 is magic class, so it
+				// rolls spell hit, and a miss isn't copied by the Rune Weapon.
+				spell.CalcAndDealDamage(sim, target, 0, spell.OutcomeMagicHit)
 			},
 		})
 	}

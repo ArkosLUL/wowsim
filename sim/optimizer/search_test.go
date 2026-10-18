@@ -576,6 +576,45 @@ func TestKnownAnswerFloorBreaksTheSeed(t *testing.T) {
 		kaDPS(gearStats(got), got), kaDPS(gearStats(r.Seed), r.Seed))
 }
 
+// A seed over a stat ceiling can't be the pick either: the best loadout under it replaces the seed,
+// even scoring lower.
+func TestKnownAnswerCeilingBreaksTheSeed(t *testing.T) {
+	req := kaRequest(proto.OptimizerEffort_OptimizerEffortQuick)
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pool, err := CompilePool(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ceiling := &proto.StatMaximum{Stat: proto.Stat_StatStrength, MaxValue: sheetOf(t, pool, r.Seed)[stats.Strength] - 40}
+	req.Settings.StatMaximums = []*proto.StatMaximum{ceiling}
+	if r, err = PrepareRequest(req); err != nil {
+		t.Fatal(err)
+	}
+	if pool, err = CompilePool(r); err != nil {
+		t.Fatal(err)
+	}
+
+	result := optimize(context.Background(), r, r, newKnownEvaluator(kaMetrics), nil, time.Now())
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	got, err := LoadoutFromProto(result.Best.Equipment, result.Best.RacialTraits)
+	if err != nil {
+		t.Fatal(err)
+	}
+	strength := sheetOf(t, pool, got)[stats.Strength]
+	if !result.Improved || strength > ceiling.MaxValue {
+		t.Errorf("improved = %v, %.0f Strength; want a pick under the ceiling of %.0f", result.Improved, strength, ceiling.MaxValue)
+	}
+	if !hasWarning(result, "the seed gear breaks a rule") {
+		t.Errorf("warnings = %q, want one about the seed", result.Warnings)
+	}
+	t.Logf("strength %.0f, ceiling %.0f; %.1f DPS, seed %.1f", strength, ceiling.MaxValue, kaDPS(gearStats(got), got), kaDPS(gearStats(r.Seed), r.Seed))
+}
+
 func sheetOf(t *testing.T, p *Pool, l Loadout) stats.Stats {
 	t.Helper()
 	sheet, err := p.finalStats(l)

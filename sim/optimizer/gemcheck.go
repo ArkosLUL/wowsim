@@ -16,8 +16,8 @@ import (
 // gemTwins are copies of l, one for each distinct gem in its free non-meta sockets: Gem regems the
 // slots holding that gem with it and the banned ones out of the running, so its sockets take the
 // runners-up gemOptions drops for it, or whatever else value rates next, while socket bonuses and the
-// meta still hold. A twin that breaks a rule, stat floors included, or sims the same as l or another
-// twin (gemmingOf) is left out.
+// meta still hold. A twin that breaks a rule, stat floors and ceilings included, or sims the same as l
+// or another twin (gemmingOf) is left out.
 func (p *Pool) gemTwins(l Loadout, value func(stats.Stats) float64, banned map[int32]bool) []Loadout {
 	var order []int32
 	holders := map[int32][]proto.ItemSlot{}

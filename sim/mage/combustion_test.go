@@ -43,3 +43,46 @@ func TestCombustionStacksComeOnTheNextTick(t *testing.T) {
 		t.Errorf("a tick on: %d stacks, want %d (the cast's and %d landed hits')", got, want, landed)
 	}
 }
+
+// The stack's m_Events key is the tick before + 1 ms, the same as a hardcast's SpellEvent, which went in first: a
+// hardcast completing on the tick a stack comes due rolls without it.
+func TestCombustionStackComesAfterAHardcastOnItsTick(t *testing.T) {
+	sim, mage := newProcSim(t, procMage(FireTalents, "p3_fire_alliance", `{"type": "TypeAPL", "priorityList": []}`, PlayerOptionsFire))
+	combustion := mage.GetSpell(core.ActionID{SpellID: 11129})
+	if combustion == nil {
+		t.Fatalf("FireTalents lacks Combustion")
+	}
+	target := sim.GetTargetUnit(0)
+
+	stacksAtCompletion := int32(-1)
+	apply := mage.Fireball.ApplyEffects
+	mage.Fireball.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+		stacksAtCompletion = mage.CombustionAura.GetStacks()
+		apply(sim, target, spell)
+	}
+
+	combustion.Cast(sim, target)
+	if !mage.Fireball.Cast(sim, target) {
+		t.Fatal("Fireball didn't cast")
+	}
+	completes := mage.Hardcast.Expires
+	hitAt := sim.WorldTickBefore(completes)
+	if sim.NextWorldTick(hitAt+time.Millisecond) != completes {
+		t.Fatalf("Fireball completes at %v, off the tick after %v", completes, hitAt)
+	}
+	sim.AddPendingAction(&core.PendingAction{NextActionAt: hitAt, OnAction: func(sim *core.Simulation) {
+		mage.FireBlast.ApplyEffects(sim, target, mage.FireBlast)
+	}})
+	for sim.CurrentTime <= completes && !sim.Step() {
+	}
+
+	metrics := mage.FireBlast.SpellMetrics[target.UnitIndex]
+	if metrics.Hits+metrics.Crits != 1 {
+		t.Fatalf("Fire Blast didn't land: pick another seed")
+	}
+	// the cast's own 28682 is the first
+	if stacksAtCompletion != 1 || mage.CombustionAura.GetStacks() != 2 {
+		t.Errorf("Fireball completed on %d stacks, %d after; want the cast's 1, then Fire Blast's on top", stacksAtCompletion,
+			mage.CombustionAura.GetStacks())
+	}
+}

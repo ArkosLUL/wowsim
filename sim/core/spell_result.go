@@ -653,10 +653,6 @@ func (spell *Spell) CalcAndDealHealing(sim *Simulation, target *Unit, baseHealin
 	spell.DealHealing(sim, result)
 	return result
 }
-func (spell *Spell) CalcAndDealPeriodicHealing(sim *Simulation, target *Unit, baseHealing float64, outcomeApplier OutcomeApplier) *SpellResult {
-	// This is currently identical to CalcAndDealHealing, but keeping it separate in case they become different in the future.
-	return spell.CalcAndDealHealing(sim, target, baseHealing, outcomeApplier)
-}
 func (dot *Dot) CalcAndDealPeriodicSnapshotHealing(sim *Simulation, target *Unit, outcomeApplier OutcomeApplier) *SpellResult {
 	result := dot.CalcSnapshotHealing(sim, target, outcomeApplier)
 	dot.Spell.DealPeriodicHealing(sim, result)

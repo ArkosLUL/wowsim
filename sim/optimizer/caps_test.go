@@ -2,6 +2,7 @@ package optimizer
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"slices"
@@ -393,14 +394,14 @@ func TestClosestToCapFloors(t *testing.T) {
 		if rn.seedBroken != nil {
 			t.Fatal(rn.seedBroken)
 		}
-		if _, detail, ok := rn.closestToCapFloors([]Loadout{short}); ok {
+		if _, detail, ok := rn.closestToCaps([]Loadout{short}); ok {
 			t.Errorf("the seed reaches the hit floor, yet a candidate %s stands in for it", detail)
 		}
 	})
 	t.Run("the seed under the floor stands when it's closest", func(t *testing.T) {
 		floor.MinValue = hit + 10
 		rn := &run{r: r, pool: pool, capFloors: map[stats.Stat]float64{stats.MeleeHit: 0}, seedBroken: pool.Check(r.Seed)}
-		if pick, detail, ok := rn.closestToCapFloors([]Loadout{short}); !ok || pick != r.Seed {
+		if pick, detail, ok := rn.closestToCaps([]Loadout{short}); !ok || pick != r.Seed {
 			t.Errorf("want the seed, 10 short, over a candidate 40 short; got ok %v, %s", ok, detail)
 		}
 	})
@@ -413,14 +414,86 @@ func TestClosestToCapFloors(t *testing.T) {
 		if rn.seedBroken == nil {
 			t.Fatal("the seed should break the pool's off-hand options")
 		}
-		if _, _, ok := rn.closestToCapFloors([]Loadout{short}); !ok {
+		if _, _, ok := rn.closestToCaps([]Loadout{short}); !ok {
 			t.Error("with no floor of the settings' own, the candidate should stand")
 		}
 		rn.capFloors[stats.MeleeHit] = hit - 5
-		if _, detail, ok := rn.closestToCapFloors([]Loadout{short}); ok {
+		if _, detail, ok := rn.closestToCaps([]Loadout{short}); ok {
 			t.Errorf("the candidate is under the settings' own hit floor, yet stands: %s", detail)
 		}
 	})
+}
+
+// The fallback treats a cap ceiling the way it treats a cap floor: a seed under it stays, a seed over
+// it gives way to whichever loadout goes over it least, and relaxing it stops at the ceiling the
+// settings put on that stat themselves.
+func TestClosestToCapCeilings(t *testing.T) {
+	r, err := PrepareRequest(kohRequest(proto.OptimizerEffort_OptimizerEffortQuick, kohUnique, kohWeak))
+	if err != nil {
+		t.Fatal(err)
+	}
+	seed, err := playerSheet(r.Base, r.TargetIndex, r.Seed, stats.Stats{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	hit := seed.FinalStats[stats.MeleeHit]
+	ceiling := &proto.StatMaximum{Stat: proto.Stat_StatMeleeHit, MaxValue: hit}
+	r.Settings.StatMaximums = []*proto.StatMaximum{ceiling}
+	pool, err := CompilePool(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// 30 hit under the seed: its hit ring's gone
+	short := r.Seed
+	short.Items[proto.ItemSlot_ItemSlotFinger2] = ItemChoice{}
+	newRun := func() *run {
+		return &run{r: r, pool: pool, capCeilings: map[stats.Stat]float64{stats.MeleeHit: math.Inf(1)}, seedBroken: pool.Check(r.Seed)}
+	}
+
+	t.Run("a seed at the ceiling stays", func(t *testing.T) {
+		ceiling.MaxValue = hit
+		rn := newRun()
+		if rn.seedBroken != nil {
+			t.Fatal(rn.seedBroken)
+		}
+		if _, detail, ok := rn.closestToCaps([]Loadout{short}); ok {
+			t.Errorf("the seed keeps under the hit ceiling, yet a candidate %s stands in for it", detail)
+		}
+	})
+	t.Run("the loadout least over the ceiling stands", func(t *testing.T) {
+		ceiling.MaxValue = hit - 40
+		rn := newRun()
+		var re *RuleError
+		if !errors.As(rn.seedBroken, &re) || re.Rule != RuleCeiling {
+			t.Fatalf("the seed, 40 over the ceiling, breaks %v; want the stat ceiling", rn.seedBroken)
+		}
+		pick, detail, ok := rn.closestToCaps([]Loadout{short})
+		if !ok || pick != short || detail != "MeleeHit 10 over" {
+			t.Errorf("want the candidate, 10 over, over the seed, 40 over; got ok %v, %q", ok, detail)
+		}
+	})
+	t.Run("the settings' own ceiling stays", func(t *testing.T) {
+		ceiling.MaxValue = hit - 40
+		rn := newRun()
+		rn.capCeilings[stats.MeleeHit] = hit - 35
+		if _, detail, ok := rn.closestToCaps([]Loadout{short}); ok {
+			t.Errorf("the candidate is over the settings' own hit ceiling, yet stands: %s", detail)
+		}
+	})
+}
+
+// A cap ceiling only takes over a stat's ceiling when it's lower, addStatFloor's mirror.
+func TestAddStatCeilingKeepsALowerCeiling(t *testing.T) {
+	settings := &proto.OptimizerSettings{StatMaximums: []*proto.StatMaximum{{Stat: proto.Stat_StatSpellHaste, MaxValue: 900}}}
+	if before, lowered := addStatCeiling(settings, stats.SpellHaste, 1012); lowered || before != 900 || settings.StatMaximums[0].MaxValue != 900 {
+		t.Errorf("a 1012 cap under a 900 ceiling: lowered %v from %.0f to %.0f, want the 900 kept", lowered, before, settings.StatMaximums[0].MaxValue)
+	}
+	if before, lowered := addStatCeiling(settings, stats.SpellHaste, 850); !lowered || before != 900 || settings.StatMaximums[0].MaxValue != 850 {
+		t.Errorf("an 850 cap under a 900 ceiling: lowered %v from %.0f to %.0f, want 900 lowered to 850", lowered, before, settings.StatMaximums[0].MaxValue)
+	}
+	if before, lowered := addStatCeiling(settings, stats.MeleeHaste, 1335); !lowered || !math.IsInf(before, 1) || len(settings.StatMaximums) != 2 {
+		t.Errorf("a 1335 haste cap with no ceiling: lowered %v from %.0f, %d ceilings, want a second ceiling added", lowered, before, len(settings.StatMaximums))
+	}
 }
 
 // A cap floor only takes over a stat's floor when it's higher: a higher floor the settings already

@@ -702,17 +702,6 @@ func (aa *AutoAttacks) OffhandSwingSpeed() time.Duration {
 	return aa.oh.curSwingDuration
 }
 
-// Optionally replaces the given swing spell with an Agent-specified MH Swing replacer.
-// This is for effects like Heroic Strike or Raptor Strike.
-func (aa *AutoAttacks) MaybeReplaceMHSwing(sim *Simulation, mhSwingSpell *Spell) *Spell {
-	if aa.mh.replaceSwing == nil {
-		return mhSwingSpell
-	}
-
-	// Allow MH swing to be overridden for abilities like Heroic Strike.
-	return aa.mh.replaceSwing(sim, mhSwingSpell)
-}
-
 // rescaleTimer is Unit::ApplyAttackTimePercentMod: a haste change keeps the remaining fraction of a
 // running timer, and does the same to what a channel or an ATTR2_DO_NOT_RESET_COMBAT_TIMERS cast has
 // frozen (suspendedLeft), since that's still the same stored timer value, just not counting down.

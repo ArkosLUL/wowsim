@@ -110,8 +110,9 @@ func (dk *Deathknight) registerRuneStrikeSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			dk.RuneStrikeQueued = true
 		},
+		// Spell::prepare's CheckCast checks the window and the runic power before it queues the strike
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
-			return dk.RuneStrikeAura.IsActive() && !dk.RuneStrikeQueued
+			return !dk.RuneStrikeQueued && dk.RuneStrike.CanCast(sim, target)
 		},
 	})
 	dk.RuneStrike = dk.newRuneStrikeSpell(true)

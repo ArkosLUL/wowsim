@@ -591,8 +591,15 @@ func (hp *HunterPet) newPoisonSpit() *core.Spell {
 			hp.standAtReachOf(target)
 			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
 				spell.DealOutcome(sim, result)
-				if result.Landed() {
-					spell.Dot(result.Target).Apply(sim)
+				if !result.Landed() {
+					return
+				}
+				// SPELL_ATTR5_EXTRA_INITIAL_PERIOD: a new aura ticks as it goes on, five in all; a refresh keeps its timer
+				dot := spell.Dot(result.Target)
+				fresh := !dot.IsActive()
+				dot.Apply(sim)
+				if fresh {
+					dot.TickOnce(sim)
 				}
 			})
 		},

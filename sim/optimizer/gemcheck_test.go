@@ -164,6 +164,39 @@ func TestGemCheckTakesTheBestMean(t *testing.T) {
 	}
 }
 
+// With a Hit ceiling at the pick's own Hit, the twin with a second yellow gem goes over it, so it
+// can't take the pick's place however well it sims.
+func TestGemCheckKeepsTheCeilings(t *testing.T) {
+	r, err := PrepareRequest(kaRequest(proto.OptimizerEffort_OptimizerEffortQuick))
+	if err != nil {
+		t.Fatal(err)
+	}
+	fake := newKnownEvaluator(func(p Point) (Metrics, error) {
+		m, err := kaMetrics(p)
+		m[MetricDPS] += 60 * float64(countGems(p.Loadout, func(id int32) bool { return id == kaYellow }))
+		return m, err
+	})
+	run, pick := gemCheckRun(t, r, fake)
+	hit := sheetOf(t, run.pool, pick)[stats.MeleeHit]
+	r.Settings.StatMaximums = []*proto.StatMaximum{{Stat: proto.Stat_StatMeleeHit, MaxValue: hit}}
+	run, pick = gemCheckRun(t, r, fake)
+
+	verified := []*verifiedLoadout{{pick, evaluate(t, run.eval, run.budget.Iterations, Point{Loadout: pick})[0]}}
+	verified, err = run.checkGems(verified)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if verified[0].loadout != pick || len(run.allWarnings()) != 0 {
+		t.Errorf("head %v took the pick's place (%q), want the pick kept under its Hit ceiling of %.0f",
+			verified[0].loadout.Items[proto.ItemSlot_ItemSlotHead].Gems, run.allWarnings(), hit)
+	}
+	for _, v := range verified {
+		if got := sheetOf(t, run.pool, v.loadout)[stats.MeleeHit]; got > hit {
+			t.Errorf("twin %v has %.0f Hit, over the ceiling of %.0f", v.loadout.Items[proto.ItemSlot_ItemSlotHead].Gems, got, hit)
+		}
+	}
+}
+
 // Without a twin that beats it, the pick stays and nothing's said.
 func TestGemCheckKeepsAPickNoTwinBeats(t *testing.T) {
 	r, err := PrepareRequest(kaRequest(proto.OptimizerEffort_OptimizerEffortQuick))

@@ -89,8 +89,10 @@ func (dk *Deathknight) registerBloodStrikeSpell() {
 	dk.BloodStrike = dk.BloodStrikeMhHit
 }
 
+// registerDrwBloodStrikeSpell is the weapon's Blood Strike, with no T8 4-piece on the disease bonus:
+// Spell::EffectWeaponDmg asks the caster, the weapon, for its aura.
 func (dk *Deathknight) registerDrwBloodStrikeSpell() {
-	diseaseMulti := dk.dkDiseaseMultiplier(0.125)
+	const diseaseMulti = 0.125
 	direct, mods := dk.bloodStrikeEffect()
 
 	dk.RuneWeapon.BloodStrike = dk.RuneWeapon.RegisterSpell(core.SpellConfig{

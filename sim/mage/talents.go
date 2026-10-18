@@ -726,16 +726,13 @@ func (mage *Mage) registerCombustionCD() {
 				return
 			}
 
-			// spell_mage_combustion adds the stack 1 ms later (the mage's next tick, ahead of his other events
-			// there), so a cast's hits all roll without each other's stacks and none comes after the third crit
-			sim.AddPendingAction(&core.PendingAction{
-				NextActionAt: sim.NextWorldTick(sim.CurrentTime+time.Millisecond) - time.Nanosecond,
-				Priority:     core.ActionPriorityEvent,
-				OnAction: func(sim *core.Simulation) {
-					if aura.IsActive() {
-						aura.AddStack(sim)
-					}
-				},
+			// spell_mage_combustion adds the stack 1 ms later, an m_Events entry on the mage's next tick, so a cast's
+			// hits all roll without each other's stacks and none comes after the third crit. Its key is the hardcast
+			// SpellEvent's, which went in first, so a hardcast completing there doesn't get the stack.
+			sim.QueueSpellEvent(&mage.Unit, sim.NextWorldTick(sim.CurrentTime+time.Millisecond), func(sim *core.Simulation) {
+				if aura.IsActive() {
+					aura.AddStack(sim)
+				}
 			})
 
 			if result.DidCrit() {

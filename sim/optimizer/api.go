@@ -210,8 +210,11 @@ type run struct {
 	// Sheet Defense the boss can't crit through, once crit immunity is enforced; 0 when it isn't.
 	critImmunity float64
 	// The floors dpsCapFloors raised, each with the floor it had before (0 for none), so verify knows
-	// which ones it may relax, and how far, when nothing reaches every floor. Empty when it raised none.
+	// which ones it may relax, and how far, when nothing meets every cap. Empty when it raised none.
 	capFloors map[stats.Stat]float64
+	// The ceilings dpsCapFloors lowered, each with the ceiling it had before (+Inf for none), the same
+	// way.
+	capCeilings map[stats.Stat]float64
 
 	// The best loadout verified so far, and its evaluation; the seed until verification picks another.
 	best     Loadout

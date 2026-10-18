@@ -26,7 +26,7 @@ const (
 // pairing), until one stands out or the race's share runs out. The best's gems then face their
 // runners-up in the sim (checkGems), and a tank run hands what's still tied to time to live
 // (breakTie). The best replaces the seed only when it beats it (see beatsSeed). The result is sorted
-// best first; loadouts that break a rule, stat floors included, aren't simmed.
+// best first; loadouts that break a rule, stat floors and ceilings included, aren't simmed.
 func (r *run) verify(candidates []Loadout) ([]*verifiedLoadout, error) {
 	var picks []Loadout
 	for _, l := range candidates {
@@ -41,7 +41,7 @@ func (r *run) verify(candidates []Loadout) ([]*verifiedLoadout, error) {
 		picks = picks[:len(picks)-1]
 	}
 	if len(picks) == 0 {
-		closest, detail, ok := r.closestToCapFloors(candidates)
+		closest, detail, ok := r.closestToCaps(candidates)
 		if !ok {
 			if r.seedBroken != nil {
 				r.warn("the search found nothing that keeps every rule, so the seed stays")
@@ -49,7 +49,11 @@ func (r *run) verify(candidates []Loadout) ([]*verifiedLoadout, error) {
 			return nil, nil
 		}
 		picks = []Loadout{closest}
-		r.warn("no pick reaches every hit, expertise or spell-hit cap, so the closest one stands: %s", detail)
+		caps := "every hit, expertise or spell-hit cap"
+		if len(r.capCeilings) > 0 {
+			caps = "the hit cap and stays under the haste ceiling"
+		}
+		r.warn("no pick reaches %s, so the closest one stands: %s", caps, detail)
 	}
 	evals, err := r.evaluate(pointsOf(picks), iterations)
 	if err != nil {

@@ -112,22 +112,27 @@ func addStatFloor(settings *proto.OptimizerSettings, st stats.Stat, value float6
 	return 0, true
 }
 
-// addStatCeiling lowers settings' ceiling on st to at most value.
-func addStatCeiling(settings *proto.OptimizerSettings, st stats.Stat, value float64) {
+// addStatCeiling lowers settings' ceiling on st to at most value, addStatFloor's mirror. It returns
+// the ceiling st had before (+Inf when it had none), and whether value lowered it.
+func addStatCeiling(settings *proto.OptimizerSettings, st stats.Stat, value float64) (before float64, lowered bool) {
 	for _, ceiling := range settings.StatMaximums {
 		if stats.Stat(ceiling.Stat) == st {
-			ceiling.MaxValue = min(ceiling.MaxValue, value)
-			return
+			if value >= ceiling.MaxValue {
+				return ceiling.MaxValue, false
+			}
+			before, ceiling.MaxValue = ceiling.MaxValue, value
+			return before, true
 		}
 	}
 	settings.StatMaximums = append(settings.StatMaximums, &proto.StatMaximum{Stat: proto.Stat(st), MaxValue: value})
+	return math.Inf(1), true
 }
 
 // dpsCapFloors adds the run's DPS cap floors (melee/ranged hit, expertise, spell hit) and haste
 // ceiling for the target's role, the way critImmunityFloor adds Defense: before CompilePool, so the
 // pool, the surrogate's penalty and every rule check see them. It records each floor it raised in
-// r.capFloors, so verify can relax exactly those, back to where they were, when nothing reaches every
-// floor.
+// r.capFloors and each ceiling it lowered in r.capCeilings, so verify can relax exactly those, back to
+// where they were, when nothing meets every cap.
 func (r *run) dpsCapFloors() {
 	if r.asked.Settings.GetDisableStatCaps() {
 		return
@@ -137,7 +142,7 @@ func (r *run) dpsCapFloors() {
 		return
 	}
 	settings := r.r.Settings
-	r.capFloors = map[stats.Stat]float64{}
+	r.capFloors, r.capCeilings = map[stats.Stat]float64{}, map[stats.Stat]float64{}
 
 	floor := func(name string, st stats.Stat, ok func(core.PlayerSheet) bool) {
 		value, err := bisectCapBonus(r.r, st, ok)
@@ -156,7 +161,9 @@ func (r *run) dpsCapFloors() {
 			r.warn("the %s ceiling isn't enforced: %v", name, err)
 			return
 		}
-		addStatCeiling(settings, st, value)
+		if before, lowered := addStatCeiling(settings, st, value); lowered {
+			r.capCeilings[st] = before
+		}
 		r.trace("%s ceiling is %.0f %s rating", name, value, st.StatName())
 	}
 
@@ -246,9 +253,9 @@ func steadyShotCastTime(rangedSwingSpeed float64) time.Duration {
 	return time.Duration(float64(steadyShotBaseCast) / rangedSwingSpeed)
 }
 
-// capShortfall is the summed rating final is short of the floors in r.capFloors, plus a detail
-// string naming each one that's short.
-func (r *run) capShortfall(final stats.Stats) (float64, string) {
+// capMiss is the summed rating final is short of the floors in r.capFloors and over the ceilings in
+// r.capCeilings, plus a detail string naming each one it misses.
+func (r *run) capMiss(final stats.Stats) (float64, string) {
 	total := 0.0
 	var parts []string
 	for _, floor := range r.r.Settings.StatMinimums {
@@ -261,19 +268,29 @@ func (r *run) capShortfall(final stats.Stats) (float64, string) {
 			parts = append(parts, fmt.Sprintf("%s %.0f short", st.StatName(), short))
 		}
 	}
+	for _, ceiling := range r.r.Settings.StatMaximums {
+		st := stats.Stat(ceiling.Stat)
+		if _, capped := r.capCeilings[st]; !capped {
+			continue
+		}
+		if over := final[st] - ceiling.MaxValue; over > 0 {
+			total += over
+			parts = append(parts, fmt.Sprintf("%s %.0f over", st.StatName(), over))
+		}
+	}
 	return total, strings.Join(parts, ", ")
 }
 
-// closestToCapFloors picks, among candidates plus the seed, the one nearest the run's DPS cap floors
-// while still keeping every other rule, for when nothing reaches every floor. "Nearest" is the summed
-// rating shortfall over just those floors, each relaxed back to what it was before the caps raised
-// it, so a floor the settings set themselves stays enforced.
-func (r *run) closestToCapFloors(candidates []Loadout) (pick Loadout, detail string, ok bool) {
-	// a seed that keeps every rule reaches every floor, so nothing short of one may replace it
-	if len(r.capFloors) == 0 || r.seedBroken == nil {
+// closestToCaps picks, among candidates plus the seed, the one nearest the run's DPS cap floors and
+// haste ceiling while still keeping every other rule, for when nothing meets every cap. "Nearest" is
+// the summed rating it misses them by (capMiss), each relaxed back to what it was before the caps set
+// it, so a floor or ceiling the settings set themselves stays enforced.
+func (r *run) closestToCaps(candidates []Loadout) (pick Loadout, detail string, ok bool) {
+	// a seed that keeps every rule meets every cap, so nothing that misses one may replace it
+	if len(r.capFloors) == 0 && len(r.capCeilings) == 0 || r.seedBroken == nil {
 		return Loadout{}, "", false
 	}
-	bestShort := math.Inf(1)
+	bestMiss := math.Inf(1)
 	all := make([]Loadout, 0, len(candidates)+1)
 	all = append(all, r.r.Seed)
 	all = append(all, candidates...)
@@ -282,15 +299,15 @@ func (r *run) closestToCapFloors(candidates []Loadout) (pick Loadout, detail str
 		if r.pool.CheckGear(l) != nil {
 			continue
 		}
-		if err := r.pool.checkFloorsRelaxed(l, r.capFloors); err != nil {
+		if err := r.pool.checkSheetRelaxed(l, r.capFloors, r.capCeilings); err != nil {
 			continue
 		}
 		sheet, err := r.pool.sheet(l)
 		if err != nil {
 			continue
 		}
-		if short, d := r.capShortfall(sheet.FinalStats); short < bestShort {
-			pick, bestShort, detail, ok = l, short, d, true
+		if miss, d := r.capMiss(sheet.FinalStats); miss < bestMiss {
+			pick, bestMiss, detail, ok = l, miss, d, true
 		}
 	}
 	return pick, detail, ok

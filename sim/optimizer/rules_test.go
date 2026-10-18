@@ -182,6 +182,12 @@ func TestCheck(t *testing.T) {
 		{name: "floor missed", pool: func(req *proto.OptimizeGearRequest) {
 			req.Settings.StatMinimums = []*proto.StatMinimum{{Stat: proto.Stat_StatStrength, MinValue: 100000}}
 		}, want: RuleFloor, slot: -1},
+		{name: "under the ceiling", pool: func(req *proto.OptimizeGearRequest) {
+			req.Settings.StatMaximums = []*proto.StatMaximum{{Stat: proto.Stat_StatStrength, MaxValue: 100000}}
+		}},
+		{name: "over the ceiling", pool: func(req *proto.OptimizeGearRequest) {
+			req.Settings.StatMaximums = []*proto.StatMaximum{{Stat: proto.Stat_StatStrength, MaxValue: 100}}
+		}, want: RuleCeiling, slot: -1},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -230,6 +236,26 @@ func TestCheckFloorsUseTheSheet(t *testing.T) {
 	}
 	if err := p.Check(empty); err == nil {
 		t.Error("an empty loadout met a floor between it and the geared one")
+	}
+}
+
+// A ceiling reads the same sheet a floor does, and a loadout over it breaks a rule.
+func TestCheckCeilingsUseTheSheet(t *testing.T) {
+	l := rtLoadout()
+	var empty Loadout
+	empty.RacialTraits = proto.Race_RaceOrc
+	p := rtPool(t, nil)
+	sheet, bare := sheetOf(t, p, l), sheetOf(t, p, empty)
+
+	ceiling := (bare[stats.Strength] + sheet[stats.Strength]) / 2
+	p = rtPool(t, func(req *proto.OptimizeGearRequest) {
+		req.Settings.StatMaximums = []*proto.StatMaximum{{Stat: proto.Stat_StatStrength, MaxValue: ceiling}}
+	})
+	if err := p.Check(l); err == nil {
+		t.Errorf("a loadout with %.0f Strength passed a ceiling of %.0f", sheet[stats.Strength], ceiling)
+	}
+	if err := p.Check(empty); err != nil {
+		t.Errorf("an empty loadout under the ceiling: %v", err)
 	}
 }
 

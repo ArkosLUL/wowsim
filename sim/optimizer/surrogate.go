@@ -46,8 +46,8 @@ type surrogate struct {
 
 	floors      []floorTerm
 	floorWeight float64
-	// A haste ceiling: unlike floors, this never rejects a loadout, only steers the search away from
-	// stacking wasted haste (Pool.Check never sees it).
+	// The haste ceilings, a floor's mirror: the penalty steers the search under them, and Pool.Check
+	// rejects whatever still ends up over.
 	ceilings []ceilingTerm
 	// The seed's race's weapon specialization, set only when a floor or ceiling reads the Expertise
 	// stat it lands on, and what it adds there with the seed's weapons.

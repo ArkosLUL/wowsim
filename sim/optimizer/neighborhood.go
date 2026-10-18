@@ -291,8 +291,8 @@ rounds:
 				if r.raidMode() {
 					a.raidDelta = Delta(bestEval, a.eval, MetricDPS)
 				}
-				// the search only sees floors through its penalty, so a runner-up can miss one
-				if (top == nil || a.delta.Mean > top.delta.Mean) && r.pool.checkFloors(a.loadout) == nil {
+				// the search only sees floors and ceilings through its penalty, so a runner-up can miss one
+				if (top == nil || a.delta.Mean > top.delta.Mean) && r.pool.checkSheet(a.loadout) == nil {
 					top = a
 				}
 			}

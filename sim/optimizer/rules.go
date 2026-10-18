@@ -46,6 +46,8 @@ const (
 	RuleMeta
 	// A final stat is under its floor.
 	RuleFloor
+	// A final stat is over its ceiling.
+	RuleCeiling
 )
 
 var ruleNames = map[Rule]string{
@@ -62,6 +64,7 @@ var ruleNames = map[Rule]string{
 	RuleLimitGroup: "limit group",
 	RuleMeta:       "inactive meta",
 	RuleFloor:      "stat floor",
+	RuleCeiling:    "stat ceiling",
 }
 
 func (r Rule) String() string {
@@ -74,9 +77,9 @@ func (r Rule) String() string {
 // RuleError is the rule a loadout breaks, where.
 type RuleError struct {
 	Rule Rule
-	// -1 for rules about the whole loadout (floors).
+	// -1 for rules about the whole loadout (floors and ceilings).
 	Slot proto.ItemSlot
-	// The item, gem or enchant it's about; 0 for floors.
+	// The item, gem or enchant it's about; 0 for floors and ceilings.
 	ID     int32
 	Detail string
 }
@@ -99,17 +102,18 @@ func ruleErr(rule Rule, slot proto.ItemSlot, id int32, format string, args ...an
 	return &RuleError{Rule: rule, Slot: slot, ID: id, Detail: fmt.Sprintf(format, args...)}
 }
 
-// Check returns nil when l breaks no rule, else a *RuleError naming the first. Floors build the
-// target's character, about as costly as setting up one sim, so they come last and only when the
-// settings have any; CheckGear skips them.
+// Check returns nil when l breaks no rule, else a *RuleError naming the first. Floors and ceilings
+// build the target's character, about as costly as setting up one sim, so they come last and only
+// when the settings have any; CheckGear skips them.
 func (p *Pool) Check(l Loadout) error {
 	if err := p.CheckGear(l); err != nil {
 		return err
 	}
-	return p.checkFloors(l)
+	return p.checkSheet(l)
 }
 
-// CheckGear is Check without the stat floors. It's cheap enough for every move of a search.
+// CheckGear is Check without the stat floors and ceilings. It's cheap enough for every move of a
+// search.
 func (p *Pool) CheckGear(l Loadout) error {
 	var items [NumSlots]*core.Item
 	for slot := range l.Items {
@@ -393,14 +397,16 @@ func (p *Pool) checkMetas(l Loadout, items [NumSlots]*core.Item) error {
 	return nil
 }
 
-func (p *Pool) checkFloors(l Loadout) error {
-	return p.checkFloorsRelaxed(l, nil)
+// checkSheet checks the stat floors and ceilings, all off one character sheet.
+func (p *Pool) checkSheet(l Loadout) error {
+	return p.checkSheetRelaxed(l, nil, nil)
 }
 
-// checkFloorsRelaxed is checkFloors with the floor on each stat in relaxed lowered to its value there:
-// dpsCapFloors' fallback uses it to find how close a candidate gets when nothing reaches every floor.
-func (p *Pool) checkFloorsRelaxed(l Loadout, relaxed map[stats.Stat]float64) error {
-	if len(p.floors) == 0 {
+// checkSheetRelaxed is checkSheet with the floor on each stat in floors lowered to its value there,
+// and the ceiling on each stat in ceilings raised to its value there: dpsCapFloors' fallback uses it
+// to find how close a candidate gets when nothing meets every cap.
+func (p *Pool) checkSheetRelaxed(l Loadout, floors, ceilings map[stats.Stat]float64) error {
+	if len(p.floors) == 0 && len(p.ceilings) == 0 {
 		return nil
 	}
 	sheet, err := p.finalStats(l)
@@ -410,11 +416,21 @@ func (p *Pool) checkFloorsRelaxed(l Loadout, relaxed map[stats.Stat]float64) err
 	for _, floor := range p.floors {
 		st := stats.Stat(floor.Stat)
 		want := floor.MinValue
-		if v, ok := relaxed[st]; ok {
+		if v, ok := floors[st]; ok {
 			want = v
 		}
 		if have := sheet[st]; have < want {
 			return ruleErr(RuleFloor, -1, 0, "%s is %.1f, under its floor of %.1f", st.StatName(), have, want)
+		}
+	}
+	for _, ceiling := range p.ceilings {
+		st := stats.Stat(ceiling.Stat)
+		want := ceiling.MaxValue
+		if v, ok := ceilings[st]; ok {
+			want = v
+		}
+		if have := sheet[st]; have > want {
+			return ruleErr(RuleCeiling, -1, 0, "%s is %.1f, over its ceiling of %.1f", st.StatName(), have, want)
 		}
 	}
 	return nil

@@ -70,7 +70,8 @@ func init() {
 				}
 				icd.Use(sim)
 
-				aura.Unit.AutoAttacks.MaybeReplaceMHSwing(sim, handOfJusticeSpell).Cast(sim, result.Target)
+				// an extra attack never takes a queued melee spell (Unit::AttackerStateUpdate's extra)
+				handOfJusticeSpell.Cast(sim, result.Target)
 			},
 		})
 	})

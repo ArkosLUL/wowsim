@@ -49,24 +49,27 @@ func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// the flat effect comes before the percent one, so the percent scales it too
 			baseDamage := core.ApplyPct(normalizedStrikeBase(sim, spell, isMH, spell.Direct.Roll(sim)), spell.Direct.WeaponPct)
+			bonus := dk.RoRTSBonus(target)
 			baseDamage = core.ApplyPct(baseDamage, 1.0+dk.dkCountActiveDiseases(target)*diseaseMulti) *
-				dk.RoRTSBonus(target) *
+				bonus *
 				dk.mercilessCombatBonus(sim)
 			// the class scripts are DoneTotalMod, which scales the flat creature-type bonus too
-			baseDamage += spell.WeaponBonusForDonePct(target, dk.RoRTSBonus(target)*dk.mercilessCombatBonus(sim))
+			baseDamage += spell.WeaponBonusForDonePct(target, bonus*dk.mercilessCombatBonus(sim))
 
-			result := spell.CalcDamage(sim, target, baseDamage, dk.threatOfThassarianOutcomeApplier(spell))
+			// the off hand's strike goes after the main hand's has taken the diseases, and rolls Annihilation itself
+			result := spell.CalcDamage(sim, target, baseDamage, dk.obliterateOutcome(dk.threatOfThassarianOutcomeApplier(spell), bonus,
+				func(sim *core.Simulation, target *core.Unit) {
+					if sim.RandomFloat("Annihilation") < diseaseConsumptionChance {
+						dk.takeDiseases(sim, target)
+					}
+				}))
 
 			if isMH {
 				spell.SpendRefundableCostAndConvertFrostOrUnholyRune(sim, result, deathConvertChance)
 				dk.threatOfThassarianProc(sim, result, dk.ObliterateOhHit)
 
-				if sim.RandomFloat("Annihilation") < diseaseConsumptionChance {
-					dk.FrostFeverSpell.Dot(target).Deactivate(sim)
-					dk.BloodPlagueSpell.Dot(target).Deactivate(sim)
-				}
-
-				if sim.RandomFloat("Rime") < dk.rimeHbChanceProc() {
+				// spell_proc's default hit mask: only a landed hit procs it
+				if result.Landed() && sim.RandomFloat("Rime") < dk.rimeHbChanceProc() {
 					dk.FreezingFogAura.Activate(sim)
 				}
 			} else if result.Landed() {
@@ -89,6 +92,40 @@ func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 	}
 
 	return dk.RegisterSpell(conf)
+}
+
+// obliterateOutcome is outcome plus the launch of Spell::EffectWeaponDmg's Obliterate branch, which only a hit that
+// isn't missed, dodged or parried gets: consume takes the diseases off before MeleeDamageBonusDone reads Rage of
+// Rivendare and Tundra Stalker, so the damage, built with bonus, drops to the one left after.
+func (dk *Deathknight) obliterateOutcome(outcome core.OutcomeApplier, bonus float64, consume func(*core.Simulation, *core.Unit)) core.OutcomeApplier {
+	return func(sim *core.Simulation, result *core.SpellResult, attackTable *core.AttackTable) {
+		outcome(sim, result, attackTable)
+		if result.Outcome.Matches(core.OutcomeMiss | core.OutcomeDodge | core.OutcomeParry) {
+			return
+		}
+		consume(sim, result.Target)
+		after := dk.RoRTSBonus(result.Target)
+		if after == bonus {
+			return
+		}
+		// a partial block took the whole block value off after the bonus, or all of a smaller hit
+		switch scale := after / bonus; {
+		case !result.Outcome.Matches(core.OutcomeBlock):
+			result.Damage *= scale
+		case result.Damage > 0:
+			blockValue := result.Target.BlockValue()
+			result.Damage = max(0, (result.Damage+blockValue)*scale-blockValue)
+		}
+	}
+}
+
+// takeDiseases is GetDiseasesByCaster's consume: every disease of the knight's, Crypt Fever or Ebon Plague too.
+func (dk *Deathknight) takeDiseases(sim *core.Simulation, target *core.Unit) {
+	dk.FrostFeverSpell.Dot(target).Deactivate(sim)
+	dk.BloodPlagueSpell.Dot(target).Deactivate(sim)
+	if dk.Talents.CryptFever > 0 {
+		dk.EbonPlagueOrCryptFeverAura.Get(target).Deactivate(sim)
+	}
 }
 
 func (dk *Deathknight) registerObliterateSpell() {

@@ -510,6 +510,38 @@ func TestRuneWeaponStrikesTakeRageOfRivendare(t *testing.T) {
 	}
 }
 
+// Spell::EffectWeaponDmg asks the caster for Glyph of Death Strike's aura, and the weapon has none, so its Death Strike
+// deals the same with the knight's glyph and his runic power as without.
+func TestRuneWeaponDeathStrikeTakesNoGlyph(t *testing.T) {
+	dealt := func(glyph bool) float64 {
+		player := parityPlayer(BloodTalents, "p3_blood", noRotation)
+		if glyph {
+			player.Glyphs = &proto.Glyphs{Major1: int32(proto.DeathknightMajorGlyph_GlyphOfDeathStrike)}
+		}
+		sim := core.NewSim(&proto.RaidSimRequest{
+			Raid:       core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, nil),
+			Encounter:  core.MakeSingleTargetEncounter(0),
+			SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 1},
+		})
+		sim.Reset()
+		sim.PrePull()
+		dk := sim.Raid.Parties[0].Players[0].(*DpsDeathknight)
+		if dk.CurrentRunicPower() < 25 {
+			t.Fatalf("%v runic power, want the glyph's 25 at least", dk.CurrentRunicPower())
+		}
+		target := sim.GetTargetUnit(0)
+		dk.RuneWeapon.EnableWithTimeout(sim, dk.RuneWeapon, 12*time.Second)
+		for range 20 {
+			dk.RuneWeapon.DeathStrike.Cast(sim, target)
+		}
+		return dk.RuneWeapon.DeathStrike.SpellMetrics[target.UnitIndex].TotalDamage
+	}
+	plain, glyphed := dealt(false), dealt(true)
+	if plain == 0 || glyphed != plain {
+		t.Errorf("the weapon's Death Strike dealt %v with the knight's glyph and %v without, want the same", glyphed, plain)
+	}
+}
+
 // 49028 puts its own aura on the DK, so the cast lands on him, a magic-class landing the Shard of the Gods sets
 // roll on.
 func TestDancingRuneWeaponLandsOnTheKnight(t *testing.T) {
@@ -633,7 +665,8 @@ func TestRuneWeaponObliterateTakesItsOwnDiseases(t *testing.T) {
 }
 
 // CheckProc takes Mind Freeze too: it's in the DK's spellbook and isn't area, positive or a summon. The weapon's does
-// nothing the sim follows, but HandleProc still leaves his reach at 0.01, so his next Death Coil flies 1249 ms.
+// nothing the sim follows, but HandleProc still leaves his reach at 0.01, so his next Death Coil flies 1249 ms. 47528
+// is magic class and rolls spell hit, and a miss isn't copied.
 func TestRuneWeaponCopiesMindFreeze(t *testing.T) {
 	// the sim only has Mind Freeze with Endless Winter's two points
 	sim, dk := runeWeaponSimWith(t, talentsWith(BloodTalents, 1, 11, '2'))
@@ -649,10 +682,29 @@ func TestRuneWeaponCopiesMindFreeze(t *testing.T) {
 	if got := dk.DeathCoilDamage.TravelTime(); got != 1187*time.Millisecond {
 		t.Fatalf("the DK's Death Coil flies %v before the Mind Freeze, want 1187 ms", got)
 	}
-	if !dk.MindFreezeSpell.Cast(sim, target) {
-		t.Fatal("no Mind Freeze cast")
+	// no hit, so about one in six misses the boss
+	dk.AddStatsDynamic(sim, stats.Stats{stats.MeleeHit: -dk.GetStat(stats.MeleeHit), stats.SpellHit: -dk.GetStat(stats.SpellHit)})
+	metrics := &dk.MindFreezeSpell.SpellMetrics[target.UnitIndex]
+	landed, missed := 0, 0
+	for range 200 {
+		dk.SetCombatReach(0)
+		dk.MindFreezeSpell.CD.Reset()
+		misses := metrics.Misses
+		if !dk.MindFreezeSpell.Cast(sim, target) {
+			t.Fatal("no Mind Freeze cast")
+		}
+		want := 1249 * time.Millisecond
+		if metrics.Misses > misses {
+			missed++
+			want = 1187 * time.Millisecond
+		} else {
+			landed++
+		}
+		if got := dk.DeathCoilDamage.TravelTime(); got != want {
+			t.Fatalf("the DK's Death Coil flies %v after a Mind Freeze that missed: %v, want %v", got, metrics.Misses > misses, want)
+		}
 	}
-	if got := dk.DeathCoilDamage.TravelTime(); got != 1249*time.Millisecond {
-		t.Errorf("the DK's Death Coil flies %v after a copied Mind Freeze, want 1249 ms", got)
+	if landed == 0 || missed == 0 {
+		t.Errorf("Mind Freeze landed %d times and missed %d, want some of each", landed, missed)
 	}
 }

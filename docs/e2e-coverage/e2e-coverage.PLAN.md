@@ -5290,6 +5290,9 @@ Stage live (notes in `tmp/ec-upstream-live.md`; about 6 min of server time, run 
 Review: Combustion's stacks cap at 28682's `stackAmount` 10, not 20 (`sim/mage/talents.go`); deferred stacks make a
 big AoE reach it. Goldens: none.
 
+Cross-review: the stack is now a `sim.QueueSpellEvent` keyed like the hardcast's SpellEvent, so a hardcast completing
+on its tick goes first, as on the server (`TestCombustionStackComesAfterAHardcastOnItsTick`).
+
 ### EC-CORE-FIX11 (Z14; changes goldens, full suite; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
@@ -5358,6 +5361,10 @@ server time, loaded only by the server's own bots. Every server number matches t
 The e2e now times a press's first bolt hit or miss; a missed one made it time the second, failing at four misses of
 eight. Goldens as in the code stage; simval 1114 of 1114, the replays pass, and the optimizer test stays red.
 
+Cross-review: the optimizer test passes, the haste ceiling now a hard rule
+([BIS-caps](../bis-optimizer/bis-optimizer.PLAN.md#bis-caps-wave-l-done)). `Spell.CalcAndDealPeriodicHealing`, left
+unused, is gone.
+
 ### EC-PET-FIX9 (Z14; changes goldens; stages: code, live)
 
 - The Rune Weapon copies a killing blow: `spell_dk_dancing_rune_weapon::CheckProc` (`spell_dk.cpp`) needs the target
@@ -5424,6 +5431,16 @@ Stage live (`tmp/ec-pet-fix9-live.md`), [ac] `62fb09c68`, worldserver at 60–78
 - Poison Spit ticks 5 times, not the sim's 4: `SPELL_ATTR5_EXTRA_INITIAL_PERIOD` (`AuraEffect::CalculatePeriodic`)
   ticks on apply. Outside this item's paths; a follow-up.
 
+Cross-review, all fixed:
+- The weapon's Obliterate reads Rage of Rivendare and Tundra Stalker after taking its diseases off, as the knight's
+  own now does (`obliterateOutcome`).
+- Its Death Strike takes no Glyph of Death Strike, its Blood Strike and Heart Strike no T8 4-piece: `EffectWeaponDmg`
+  asks the weapon for those auras.
+- Mind Freeze rolls spell hit; a miss isn't copied.
+- Poison Spit ticks as a new aura goes on, five in all; a refresh doesn't. The other generated dots with the
+  attribute (Bladestorm, Death and Decay, Killing Spree, Explosive Shot, Penance) already tick on apply, so
+  `core.Dot` doesn't read it.
+
 ### EC-CLASS-FIX10 (Z14; changes goldens; stages: code)
 
 - Rune Strike's queue: in `Unit::AttackerStateUpdate`, a queued next-swing spell that fails `CheckCast` at the swing
@@ -5470,7 +5487,12 @@ Code stage (notes in `tmp/ec-class-fix10.md`), against [ac] at 62fb09c68. Verdic
 - Goldens: TestBloodTank only. The queue reset alone: BloodAggro dps -0.009%, tps -0.014%, about 0.1 more queue casts
   a fight in the others. The swing rule on top moves only FrostPresence-Average (dps and tps -0.000%, a lost swing
   now and then). Heart Strike, the tags and the heal picks move nothing.
-- Follow-ups: the queue's press needs 20 runic power (`Spell::prepare`'s CheckCast; `rune_strike.go`); Ancestral
+- Cross-review, fixed: the queue's press needs 20 runic power (`Spell::prepare`'s CheckCast); an extra attack (Hand of
+  Justice, Sword Specialization) never takes a queued melee spell (`AttackerStateUpdate`'s `extra`), so
+  `MaybeReplaceMHSwing` is gone; the knight's Obliterate takes his diseases, Crypt Fever or Ebon Plague included, and
+  rolls Annihilation and Rime only on a hit not missed, dodged or parried, before reading Rage of Rivendare and Tundra
+  Stalker, and its off-hand strike counts what's left and rolls its own Annihilation.
+- Follow-ups: Ancestral
   Awakening heals the crit's target, where its script takes the living raid member lowest in health percent; Tundra
   Stalker ranks 2 and 3 don't cover Blood Plague; the raid debuff Frost Fever gives no Tundra Stalker; Healing Stream
   Totem skips party pets; a heal on a dead explicit target, and the APL multidot and multishield picks, go through.

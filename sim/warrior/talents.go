@@ -470,7 +470,8 @@ func (warrior *Warrior) registerSwordSpecialization(procMask core.ProcMask) {
 			}
 			if sim.RandomFloat("Sword Specialization") < procChance {
 				icd.Use(sim)
-				aura.Unit.AutoAttacks.MaybeReplaceMHSwing(sim, swordSpecializationSpell).Cast(sim, result.Target)
+				// an extra attack never takes a queued Heroic Strike or Cleave (Unit::AttackerStateUpdate's extra)
+				swordSpecializationSpell.Cast(sim, result.Target)
 			}
 		},
 	})
