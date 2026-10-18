@@ -23,45 +23,16 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 		Label:    "Dancing Rune Weapon",
 		ActionID: core.ActionID{SpellID: 49028},
 		Duration: duration,
-		// Casts
-		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
-			// the weapon is unsummoned on its own update, which can come before this aura runs out
-			if !dk.RuneWeapon.IsEnabled() {
-				return
-			}
-			var copied *core.Spell
-			switch spell {
-			case dk.IcyTouch:
-				copied = dk.RuneWeapon.IcyTouch
-			case dk.PlagueStrike:
-				copied = dk.RuneWeapon.PlagueStrike
-			case dk.DeathStrike:
-				copied = dk.RuneWeapon.DeathStrike
-			case dk.BloodStrike:
-				copied = dk.RuneWeapon.BloodStrike
-			case dk.HeartStrike:
-				copied = dk.RuneWeapon.HeartStrike
-			case dk.RuneStrike:
-				copied = dk.RuneWeapon.RuneStrike
-			case dk.Pestilence:
-				copied = dk.RuneWeapon.Pestilence
-			case dk.BloodBoil:
-				copied = dk.RuneWeapon.BloodBoil
-			default:
-				return
-			}
-			dk.RuneWeapon.castCopy(sim, copied, spell.Unit.CurrentTarget)
-		},
-		// spell_dk_dancing_rune_weapon's Death Coil exception matches on 47632's own damage
-		// event, so a miss (no damage dealt) mirrors nothing and a Sudden Doom-triggered cast
-		// mirrors the same as a normal one; dk.DeathCoil's OnCastComplete fires on both a miss
-		// and a hit, so the mirror hooks the inner damage spell's outcome instead.
+		// 49028 procs in the hit phase on spell_proc's default hit mask: only a normal or critical hit gets
+		// copied, once for each target it lands on, at that target
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			// the weapon is unsummoned on its own update, which can come before this aura runs out
 			if !result.Landed() || !dk.RuneWeapon.IsEnabled() {
 				return
 			}
-			if spell == dk.DeathCoilDamage {
-				dk.RuneWeapon.castCopy(sim, dk.RuneWeapon.DeathCoil, result.Target)
+			if copied := dk.RuneWeapon.copyOf(spell); copied != nil {
+				dk.RuneWeapon.castCopy(sim, copied, result.Target)
+				return
 			}
 			// a white swing, extra attacks too, but not Rune Strike: that one has a spell to copy
 			if spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) && !spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
@@ -103,8 +74,9 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 	})
 }
 
+// Unit::SpellDamageBonusDone runs on the DK for a copy's magic damage, so his Impurity counts
 func (runeWeapon *RuneWeaponPet) getImpurityBonus(spell *core.Spell) float64 {
-	return spell.MeleeAttackPower()
+	return runeWeapon.dkOwner.getImpurityBonus(spell)
 }
 
 // drwReach is UNIT_FIELD_COMBATREACH as 53160 sets it on the weapon, and as spell_dk_dancing_rune_weapon's HandleProc
@@ -116,7 +88,7 @@ type RuneWeaponPet struct {
 
 	dkOwner            *Deathknight
 	ownerTablesApplied bool
-	// its damage percents before the DK's are laid over them
+	// its own damage percents, as they stand at reset
 	ownDamageDealt       float64
 	ownSchoolDamageDealt [stats.SchoolLen]float64
 
@@ -131,9 +103,6 @@ type RuneWeaponPet struct {
 	HeartStrikeOffHit *core.Spell
 
 	RuneStrike *core.Spell
-
-	Pestilence *core.Spell
-	BloodBoil  *core.Spell
 
 	// Diseases
 	FrostFeverSpell  *core.Spell
@@ -214,8 +183,6 @@ func (runeWeapon *RuneWeaponPet) Initialize() {
 	runeWeapon.swingCopies = [2]*core.Spell{runeWeapon.registerSwingCopy(0), runeWeapon.registerSwingCopy(1)}
 
 	runeWeapon.dkOwner.registerDrwDiseaseDots()
-	runeWeapon.dkOwner.registerDrwPestilenceSpell()
-	runeWeapon.dkOwner.registerDrwBloodBoilSpell()
 
 	runeWeapon.dkOwner.registerDrwIcyTouchSpell()
 	runeWeapon.dkOwner.registerDrwPlagueStrikeSpell()
@@ -244,26 +211,44 @@ func (dk *Deathknight) DrwWeaponDamage(sim *core.Simulation, normalized bool) fl
 	return swing.MHStrikeDamage(sim, swing.MeleeAttackPower())
 }
 
+// copyOf is the weapon's spell for a spell of the DK's that spell_dk_dancing_rune_weapon copies, nil for any other.
+// Never an area spell (Pestilence, Blood Boil): CheckProc only takes one whose target is the DK himself.
+func (runeWeapon *RuneWeaponPet) copyOf(spell *core.Spell) *core.Spell {
+	dk := runeWeapon.dkOwner
+	switch spell {
+	case dk.IcyTouch:
+		return runeWeapon.IcyTouch
+	case dk.PlagueStrike:
+		return runeWeapon.PlagueStrike
+	case dk.DeathStrike:
+		return runeWeapon.DeathStrike
+	case dk.BloodStrike:
+		return runeWeapon.BloodStrike
+	case dk.HeartStrike, dk.HeartStrikeOffHit:
+		return runeWeapon.HeartStrike
+	case dk.RuneStrike:
+		return runeWeapon.RuneStrike
+	// the Death Coil exception matches 47632, the damage spell, so a Sudden Doom one copies too
+	case dk.DeathCoilDamage:
+		return runeWeapon.DeathCoil
+	}
+	return nil
+}
+
 // castCopy is the weapon's copy of one of the DK's spells, which leaves his reach at drwReach.
 func (runeWeapon *RuneWeaponPet) castCopy(sim *core.Simulation, spell *core.Spell, target *core.Unit) {
-	runeWeapon.syncOwnerMultipliers()
+	runeWeapon.setCopyMultipliers()
 	spell.Cast(sim, target)
 	runeWeapon.dkOwner.SetCombatReach(drwReach)
 }
 
-// syncOwnerMultipliers gives the weapon the DK's damage percents as they stand, halved: Unit::SpellDamageBonusDone
-// and MeleeDamageBonusDone ask the owner on each hit. A strike's weapon roll is his own with his percents inside
-// (DrwWeaponDamage), so physical takes only the halving.
-func (runeWeapon *RuneWeaponPet) syncOwnerMultipliers() {
-	owner := &runeWeapon.dkOwner.PseudoStats
+// setCopyMultipliers halves the weapon's own percents. A strike gets the DK's physical ones through his weapon roll
+// (DrwWeaponDamage). A magic hit gets none of his: Unit::SpellDamageBonusDone's branch for entry 27893 passes TotalMod
+// and stack one argument early, so his call gets a TotalMod of 1 and never reads SpellPctDamageModsDone.
+func (runeWeapon *RuneWeaponPet) setCopyMultipliers() {
 	ps := &runeWeapon.PseudoStats
 	ps.DamageDealtMultiplier = runeWeapon.ownDamageDealt * 0.5
-	for i, own := range runeWeapon.ownSchoolDamageDealt {
-		ps.SchoolDamageDealtMultiplier[i] = own
-		if i != int(stats.SchoolIndexPhysical) {
-			ps.SchoolDamageDealtMultiplier[i] *= owner.DamageDealtMultiplier * owner.SchoolDamageDealtMultiplier[i]
-		}
-	}
+	ps.SchoolDamageDealtMultiplier = runeWeapon.ownSchoolDamageDealt
 }
 
 // drwVersusAttackPowerBonus is the creature-type attack power on a rune weapon hit: Unit::MeleeDamageBonusDone

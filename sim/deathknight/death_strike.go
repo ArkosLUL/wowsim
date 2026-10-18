@@ -124,7 +124,8 @@ func (dk *Deathknight) registerDrwDeathStrikeSpell() {
 			if hasGlyph {
 				baseDamage = core.ApplyPct(baseDamage, 1+0.01*min(dk.CurrentRunicPower(), 25))
 			}
-			baseDamage += dk.drwVersusAttackPowerBonus(spell, true)
+			// Rage of Rivendare and Tundra Stalker scale the flat bonus too
+			baseDamage = (baseDamage + dk.drwVersusAttackPowerBonus(spell, true)) * dk.RoRTSBonus(target)
 			spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)
 		},
 	})

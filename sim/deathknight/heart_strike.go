@@ -55,7 +55,8 @@ func (dk *Deathknight) newHeartStrikeSpell(isMainTarget bool, isDrw bool) *core.
 			activeDiseases := core.TernaryFloat64(isDrw, dk.drwCountActiveDiseases(target), dk.dkCountActiveDiseases(target))
 			baseDamage = core.ApplyPct(baseDamage, 1+activeDiseases*diseaseMulti)
 			if isDrw {
-				baseDamage += dk.drwVersusAttackPowerBonus(spell, true)
+				// Rage of Rivendare and Tundra Stalker scale the flat bonus too
+				baseDamage = (baseDamage + dk.drwVersusAttackPowerBonus(spell, true)) * dk.RoRTSBonus(target)
 			}
 
 			result := spell.CalcAndDealDamage(sim, target, baseDamage, spell.OutcomeMeleeSpecialHitAndCrit)

@@ -11,6 +11,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	googleProto "google.golang.org/protobuf/proto"
 )
 
 // runeWeaponLine is a damage line of the log: who dealt it, with which action, and what it came to.
@@ -230,12 +231,12 @@ func TestRuneWeaponStrikesRollTheKnightsWeapon(t *testing.T) {
 	}
 }
 
-// The weapon's hits take the DK's damage percents as they stand when it copies one of his spells, halved:
-// Unit::SpellDamageBonusDone asks the owner each time. Its strikes carry his physical percents in their weapon
-// roll, so physical gets only the halving. After a spell it copies, spell_dk_dancing_rune_weapon leaves his
-// UNIT_FIELD_COMBATREACH at 0.01, so his Death Coil flies 1.49 yd further. The weapon follows him at 0.01 yd with
-// a reach of 0.01 (53160), so its own Death Coil does too.
-func TestRuneWeaponCopiesTakeTheKnightsPercentsAsTheyStand(t *testing.T) {
+// A copy takes the weapon's own percents, halved, and none of the DK's. His physical ones are in a strike's weapon
+// roll, and Unit::SpellDamageBonusDone's branch for the weapon passes TotalMod and stack one argument early, which
+// hands his call a TotalMod of 1, so a magic hit never reads his. After a spell it copies, spell_dk_dancing_rune_weapon
+// leaves his UNIT_FIELD_COMBATREACH at 0.01, so his Death Coil flies 1.49 yd further. The weapon follows him at
+// 0.01 yd with a reach of 0.01 (53160), so its own Death Coil does too.
+func TestRuneWeaponCopiesTakeNoneOfTheKnightsPercents(t *testing.T) {
 	sim, dk := runeWeaponSim(t)
 	target := sim.GetTargetUnit(0)
 	if got := dk.DeathCoilDamage.TravelTime(); got != 1187*time.Millisecond {
@@ -246,14 +247,16 @@ func TestRuneWeaponCopiesTakeTheKnightsPercentsAsTheyStand(t *testing.T) {
 	}
 	for until := sim.CurrentTime + 2*time.Second; sim.CurrentTime < until && !sim.Step(); {
 	}
-	// an empty rotation keeps putting the GCD back
-	dk.GCD.Set(sim.CurrentTime)
 
-	frost := stats.SchoolIndexFrost
+	shadow := stats.SchoolIndexShadow
 	dk.PseudoStats.DamageDealtMultiplier *= 1.2
-	dk.PseudoStats.SchoolDamageDealtMultiplier[frost] *= 1.1
-	if !dk.IcyTouch.Cast(sim, target) {
-		t.Fatal("no Icy Touch")
+	dk.PseudoStats.SchoolDamageDealtMultiplier[shadow] *= 1.1
+	// the damage spell alone, as Sudden Doom casts it: it can't miss, and its landing is what gets copied
+	dk.DeathCoilDamage.Cast(sim, target)
+	for until := sim.CurrentTime + 1500*time.Millisecond; sim.CurrentTime < until && !sim.Step(); {
+	}
+	if dk.RuneWeapon.DeathCoil.SpellMetrics[target.UnitIndex].Casts != 1 {
+		t.Fatalf("the weapon copied the Death Coil %d times, want once", dk.RuneWeapon.DeathCoil.SpellMetrics[target.UnitIndex].Casts)
 	}
 	weapon := &dk.RuneWeapon.PseudoStats
 	// an orc's Command is taken off the weapon, so its own percents are 1
@@ -263,7 +266,7 @@ func TestRuneWeaponCopiesTakeTheKnightsPercentsAsTheyStand(t *testing.T) {
 	}{
 		{"all schools", weapon.DamageDealtMultiplier, 0.5},
 		{"physical", weapon.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical], 1},
-		{"frost", weapon.SchoolDamageDealtMultiplier[frost], dk.PseudoStats.DamageDealtMultiplier * dk.PseudoStats.SchoolDamageDealtMultiplier[frost]},
+		{"shadow", weapon.SchoolDamageDealtMultiplier[shadow], 1},
 	} {
 		if math.Abs(c.got-c.want) > 1e-9 {
 			t.Errorf("the weapon's %s multiplier after the copy is %v, want %v", c.name, c.got, c.want)
@@ -272,6 +275,175 @@ func TestRuneWeaponCopiesTakeTheKnightsPercentsAsTheyStand(t *testing.T) {
 	for _, spell := range []*core.Spell{dk.DeathCoilDamage, dk.RuneWeapon.DeathCoil} {
 		if got := spell.TravelTime(); got != 1249*time.Millisecond {
 			t.Errorf("%s's Death Coil flies %v after a copy, want 1249 ms", spell.Unit.Label, got)
+		}
+	}
+}
+
+// runeWeaponCopies counts, by the weapon's spell, the DK's hits it copies that landed and that didn't while it was
+// out, and the weapon's casts of each. landedAoE counts his Pestilences and Blood Boils that landed then, others
+// what else the weapon cast.
+type runeWeaponCopies struct {
+	landed, missed, copies map[*core.Spell]int
+	landedAoE              int
+	others                 []string
+}
+
+// countRuneWeaponCopies fights that many targets on the rotation and counts what the weapon copied.
+func countRuneWeaponCopies(t *testing.T, apl string, targets int, seed int64) runeWeaponCopies {
+	t.Helper()
+	encounter := core.MakeSingleTargetEncounter(0)
+	for len(encounter.Targets) < targets {
+		encounter.Targets = append(encounter.Targets, googleProto.Clone(encounter.Targets[0]).(*proto.Target))
+	}
+	player := parityPlayer(BloodTalents, "p3_blood", apl)
+	// in front, the targets parry his strikes
+	player.InFrontOfTarget = true
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid:       core.SinglePlayerRaidProto(player, nil, nil, nil),
+		Encounter:  encounter,
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: seed},
+	})
+	dk := sim.Raid.Parties[0].Players[0].(*DpsDeathknight)
+	weapon := dk.RuneWeapon
+	copyOf := map[*core.Spell]*core.Spell{
+		dk.IcyTouch:          weapon.IcyTouch,
+		dk.PlagueStrike:      weapon.PlagueStrike,
+		dk.DeathStrike:       weapon.DeathStrike,
+		dk.BloodStrike:       weapon.BloodStrike,
+		dk.HeartStrike:       weapon.HeartStrike,
+		dk.HeartStrikeOffHit: weapon.HeartStrike,
+		dk.RuneStrike:        weapon.RuneStrike,
+		dk.DeathCoilDamage:   weapon.DeathCoil,
+	}
+	c := runeWeaponCopies{landed: map[*core.Spell]int{}, missed: map[*core.Spell]int{}, copies: map[*core.Spell]int{}}
+	drw := dk.GetAura("Dancing Rune Weapon")
+	dk.RegisterAura(core.Aura{
+		Label:    "rune weapon copy count",
+		Duration: core.NeverExpires,
+		OnReset: func(aura *core.Aura, sim *core.Simulation) {
+			aura.Activate(sim)
+		},
+		OnSpellHitDealt: func(_ *core.Aura, _ *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if !weapon.IsEnabled() || !drw.IsActive() {
+				return
+			}
+			if copied, ok := copyOf[spell]; ok {
+				if result.Landed() {
+					c.landed[copied]++
+				} else {
+					c.missed[copied]++
+				}
+			} else if (spell == dk.Pestilence || spell == dk.BloodBoil) && result.Landed() {
+				c.landedAoE++
+			}
+		},
+	})
+	sim.Reset()
+	sim.PrePull()
+	for !sim.Step() {
+	}
+
+	copies := map[*core.Spell]bool{}
+	for _, copied := range copyOf {
+		copies[copied] = true
+	}
+	// besides its copies: the diseases its Icy Touch and Plague Strike put on, its Heart Strike's chain and its
+	// copies of white swings
+	ownCasts := map[*core.Spell]bool{weapon.FrostFeverSpell: true, weapon.BloodPlagueSpell: true, weapon.HeartStrikeOffHit: true}
+	for _, spell := range weapon.Spellbook {
+		casts := 0
+		for _, m := range spell.SpellMetrics {
+			casts += int(m.Casts)
+		}
+		switch {
+		case casts == 0, ownCasts[spell], spell.ActionID.OtherID == proto.OtherAction_OtherActionAttack:
+		case copies[spell]:
+			c.copies[spell] += casts
+		default:
+			c.others = append(c.others, spell.ActionID.String())
+		}
+	}
+	sim.Cleanup()
+	return c
+}
+
+// 49028 procs in the hit phase on spell_proc's default hit mask, so the weapon copies each normal or critical hit of
+// the DK's while it's out, once for each target it lands on (Heart Strike's chain too), and nothing that missed or
+// was dodged. Pestilence and Blood Boil are area spells, which CheckProc only takes off a hit on the DK himself, so
+// it never copies them.
+func TestRuneWeaponCopiesEachLandedHit(t *testing.T) {
+	cast := func(id, tag int) string {
+		return `{"action": {"castSpell": {"spellId": {"spellId": ` + strconv.Itoa(id) + `, "tag": ` + strconv.Itoa(tag) + `}}}}`
+	}
+	apl := func(casts ...string) string {
+		return `{"type": "TypeAPL", "priorityList": [` + strings.Join(casts, ", ") + `]}`
+	}
+	strikes := apl(cast(49028, 0), cast(49909, 0), cast(49921, 1), cast(49924, 1), cast(55262, 1), cast(49895, 0))
+	areas := apl(cast(49028, 0), cast(49909, 0), cast(49921, 1), cast(50842, 0), cast(49941, 0), cast(49930, 1))
+
+	missed, landed, landedAoE := 0, 0, 0
+	for seed := int64(1); seed <= 3; seed++ {
+		for _, rotation := range []string{strikes, areas} {
+			c := countRuneWeaponCopies(t, rotation, 2, seed)
+			for spell := range c.copies {
+				if _, ok := c.landed[spell]; !ok {
+					c.landed[spell] = 0
+				}
+			}
+			for spell, n := range c.landed {
+				if c.copies[spell] != n {
+					t.Errorf("seed %d: the weapon cast %s %d times for %d landed hits of the DK's", seed, spell.ActionID,
+						c.copies[spell], n)
+				}
+				landed += n
+			}
+			for _, n := range c.missed {
+				missed += n
+			}
+			landedAoE += c.landedAoE
+			if len(c.others) > 0 {
+				t.Errorf("seed %d: the weapon cast %v too", seed, c.others)
+			}
+		}
+	}
+	t.Logf("%d landed hits copied, %d missed ones not, %d area spells not", landed, missed, landedAoE)
+	if missed == 0 {
+		t.Error("none of the DK's hits missed with the weapon out, so nothing shows a miss isn't copied")
+	}
+	if landedAoE == 0 {
+		t.Error("no Pestilence or Blood Boil of the DK's landed with the weapon out")
+	}
+}
+
+// The weapon's strikes go through the DK's MeleeDamageBonusDone, so Rage of Rivendare and Tundra Stalker scale the
+// whole hit. Its Icy Touch goes through his SpellDamageBonusDone, which never reads them.
+func TestRuneWeaponStrikesTakeRageOfRivendare(t *testing.T) {
+	dealt := func(bonus float64) map[string]float64 {
+		sim, dk := runeWeaponSim(t)
+		dk.RoRTSBonus = func(*core.Unit) float64 { return bonus }
+		target := sim.GetTargetUnit(0)
+		dk.RuneWeapon.EnableWithTimeout(sim, dk.RuneWeapon, 12*time.Second)
+		w := dk.RuneWeapon
+		damage := map[string]float64{}
+		for _, spell := range []*core.Spell{w.HeartStrike, w.DeathStrike, w.PlagueStrike, w.BloodStrike, w.RuneStrike, w.IcyTouch} {
+			metrics := &spell.SpellMetrics[target.UnitIndex]
+			for range 10 {
+				before := metrics.TotalDamage
+				spell.Cast(sim, target)
+				damage[spell.ActionID.String()] += metrics.TotalDamage - before
+			}
+		}
+		return damage
+	}
+	plain, under := dealt(1), dealt(1.1)
+	for name, d := range plain {
+		want := d * 1.1
+		if strings.HasPrefix(name, "{SpellID: "+strconv.Itoa(49909)) {
+			want = d
+		}
+		// ten hits, each whole
+		if d == 0 || math.Abs(under[name]-want) > 10 {
+			t.Errorf("%s dealt %v under a 10%% bonus and %v without, want %v", name, under[name], d, want)
 		}
 	}
 }
