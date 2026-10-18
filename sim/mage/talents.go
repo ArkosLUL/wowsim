@@ -681,7 +681,7 @@ func (mage *Mage) registerCombustionCD() {
 		Label:     "Combustion",
 		ActionID:  actionID,
 		Duration:  core.NeverExpires,
-		MaxStacks: 20,
+		MaxStacks: 10,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			numCrits = 0
 			for _, spell := range fireSpells {
@@ -726,8 +726,17 @@ func (mage *Mage) registerCombustionCD() {
 				return
 			}
 
-			// TODO: This wont work properly with flamestrike
-			aura.AddStack(sim)
+			// spell_mage_combustion adds the stack 1 ms later (the mage's next tick, ahead of his other events
+			// there), so a cast's hits all roll without each other's stacks and none comes after the third crit
+			sim.AddPendingAction(&core.PendingAction{
+				NextActionAt: sim.NextWorldTick(sim.CurrentTime+time.Millisecond) - time.Nanosecond,
+				Priority:     core.ActionPriorityEvent,
+				OnAction: func(sim *core.Simulation) {
+					if aura.IsActive() {
+						aura.AddStack(sim)
+					}
+				},
+			})
 
 			if result.DidCrit() {
 				numCrits++
