@@ -126,6 +126,10 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 - `ui/raid/acore_importer.ts`: the AzerothCore roster import. `importRoster` serves both its dialog and the Raid
   tab's "Import from server" button (`raid_picker.ts`); `fetchServerRoster` (`acore_server.ts`) gets
   `/acoreRoster`. The server buttons show only on a sim server (`simServerAvailable`), never under wasm.
+- `ui/rankings/`: the DPS Rankings page, a non-sim page like `detailed_results`. `data.ts` fetches
+  `assets/rankings/rankings.json` and rebuilds a build's sim link at the selected fight, `tiers.ts` grades
+  and sorts, `phase_chart.ts` draws the across-phases chart. `PHASE_LABELS` lives in
+  `ui/core/constants/other.ts`: importing it from `optimizer_tab.ts` would bundle the optimizer.
 
 ## Tools
 
@@ -141,5 +145,7 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   every obtainable item's progression tier, sources and limits.
 - `tools/acore/` (`dock.sh`, `gen_basestats`, `gen_server_defaults`, `spellids`
   ([README](../../tools/acore/spellids/README.md)), `gen_serverdata`) and `tools/simval`.
+- `tools/rankings` ([README](../../tools/rankings/README.md)): sims every DPS build's BiS per content phase
+  in one standard scenario into `assets/rankings/rankings.json`, from `tools/statweights`' captured settings.
 - `tools/apldbg` ([README](../../tools/apldbg/README.md)): one character on one rotation, row by row, with
   casts, uptimes, a log or a timeline, also against a base commit's sim code.

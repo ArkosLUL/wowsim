@@ -1,0 +1,246 @@
+{
+ "sim_commit": "0123456789abcdef0123456789abcdef01234567-dirty",
+ "generated_at": "2026-01-02T03:04:05Z",
+ "catalog_date": "2026-01-01",
+ "iterations": 1000,
+ "seed": 7,
+ "fights": [
+  60,
+  180,
+  300
+ ],
+ "builds": [
+  {
+   "key": "dk_unholy",
+   "name": "DK Unholy",
+   "class": "ClassDeathknight",
+   "spec": "SpecDeathknight",
+   "dir": "deathknight",
+   "talents": "-320043500002-2300303050032152000150013133051",
+   "phases": [
+    {
+     "phase": 1,
+     "fights": {
+      "60": {
+       "dps": 6500,
+       "stdev": 195.0,
+       "min": 5850.0,
+       "max": 7150.0
+      },
+      "180": {
+       "dps": 4000,
+       "stdev": 120.0,
+       "min": 3600.0,
+       "max": 4400.0
+      },
+      "300": {
+       "dps": 4300,
+       "stdev": 129.0,
+       "min": 3870.0,
+       "max": 4730.0
+      }
+     },
+     "link": "eJzsVktoXFUYnv8/d+6c+dMxJyeP3hwbcr0mNV6dcO5cp8YiZBQEcSEBN93ZLiwiisXZqKux0JCHaEmrbSOG0kUoWh90kbZ5SIkuMotokPQR3QSFqU8MRCHxgXLv3EluSgXRdue/GPj///u+/3EOdw49wlGgxh54FPpwD+yFp+EAlgAGAA8DnAb4EPA8wEWAOYAFgKsAywDfAKwArgEOICzjz0waGnpA/b6NoyDVj9QsKlfQ+rbNMSc+xk/n0TV4p+ggEstHmWvwdtFBUvw4jdZvbQ4br2AUy4gjZ5g10hbB60VlGq21Nsccr+B4JZAdmkLrzEYgojWLt6bQOrojFu4UNklxeRK3QG2qFz9Mo1VSjjlWxrEyUkq8PoPWzDbKiOELaP1Zrd1OUixdCVyHjZUDsi3ayRDff4ZkiKWzSBnx+RRap5Vr8NuEfb1riOGP0KnnqDM90GfsMV6EAYCXMxwEWmjDASgBHASz79l9Lz31whBks35O6/v8vNZa57I5X2tf+zqvtZ/z8jmttZfX2vM939d5bxQSX0DiK7D424soRhfRenMR7eOL2HX8EuoTl7B6PqfwD6SLmPjf/pPJnn/LnMUJk5qIK5MMPriODieTjKyni9QYRedWmJOiJLFsT5Gao+CxWeakKUXJrNedL1IDmcogtBoipFeUhsLdCekom1rcJm5I/kzAO/c+C/iEfjHU+eUQkx3K2YIZj2E4mTbwV/qZvF21Usapo/RZCECrg0aUHOpnslk11hITpZDNL8yD9JVHd6nOWIost4UnZfqdDWzYcF5X26m8y2S3upeCtmOkRrdhKwkfSwR4cWQS5YNqN2nZHceHfZ4K3YVVJOkKDjI5gshRJYkReGG10XmUruqiHVLFRzv3mlFjB7WqU177gElS1eWP3HjiQK5T3Unb3ebNbkf6o2XuKsaUnlfP0T75JO1UHX8Lj0+QV364OSbTkxvrDzcX3JRAwZDpSQwy771qVBV0MXZAOaX/abFwljduPOLCKm5sYaLEZKvaHl92DXbtEJOWasnVLvbS17h5meX9Kk/3yLtr2oPreJ1G/DBqkkPrm5WPzTIL5nAOlqIv187Cd5hYw9RBVgfIjKSZ4mmq+xXqVaahiljpdRManGGWDt3S/kKUaCq0jp4IrNx7x/7QLvfmvkQraT/h3uIPY9dg4WbIlMqf3BSdW2EPhL8zPxUeqvprvXuhGkss9LopfvhxAQV4eBcHARbY2AXBK6EAfRA8NMK/wAGAk+Ez4zzg1eBFASWEAYSTCH8FAAD//29aIV8="
+    },
+    {
+     "phase": 5,
+     "fights": {
+      "60": {
+       "dps": 10000,
+       "stdev": 300.0,
+       "min": 9000.0,
+       "max": 11000.0
+      },
+      "180": {
+       "dps": 10000,
+       "stdev": 300.0,
+       "min": 9000.0,
+       "max": 11000.0
+      },
+      "300": {
+       "dps": 9800,
+       "stdev": 294.0,
+       "min": 8820.0,
+       "max": 10780.0
+      }
+     },
+     "link": "eJzsVk1oXNUXn3Pum5c7J/+Qm5tMenP/CR2fSY1PJ9w3z6mxCBkFQVxIwE13tguLiGJxNupqDCTkCxmi9iNgLV1IGT9GC6ad+EGJIsmiGEpaWnVRFay60GgsJIpU3puPvJQKou3Osxi4v/M7v/NxL28OPcBRoMFBeBCGcTfsgcdhPxYAxgGLAMcB3gE8BXAaYBFgGeACwCWA7wBWAdcBxxEu4a9MWgYGQZdbOArSFaSkWC0y9X2PY899jOUKuhZPiV5qFe+VmMPONgApfiky9XuPw8oR7MoUUzM9m7ztlBQ/Fpla73HscgXPX61Tk+K1ElNv9jj2Z5VGmj5SYmSaqZe7ncTZEC5HdD6YYtfCgc7PRaYKOpSvwn0hfKLE1IHuED6yFMDbwwJHp5m6uqVAKb6cjWIBzxIflRhZ4v0JRv8T704zdVw77MgSkoyeakVb4tOv0GnlaFoGYdjabT0L4wDPt3AQqDAF+6EAMAL28JN7n3vsmUlIp/2MMXf5WWOMyaQzvjG+8U3WGD/jZTPGGC9rjOd7vm+y3izEPofY16D4qysoZldQHVjB1KEV7D90Ds3hc1i90mP4B9JpjP1n/8rk4D+NXMA5mzqIa5ssPrGBDiebrLRn8tReQxdXmdNEcWLpwTwla+DBBeYkqIniaW8gm6c2srVFqNpqTC8vLY27YtLRKep0O7gl+RNB3Mm3WRBP6OdDnSujTPZqZwvn9QiHk50C/sIYk//XXdTiNFPiBASktQmr5pwcYzKp2+uOuUIYzStnQPrao9t0X8RFyu3kcZkoNbhhwVlTLefbN5gc0HdSUHYkqN1t2xqED8UCvnhpHuW9ehcZORDlh3UeC4/La0jSFRxkfAaRo44TI/DCbLNnULq6n7qljrZ28kWrHh3kqnZ5ucwk6erwZ67fcSDXp2+lbW5ys9qZsdowd+YjSk/rp2ivfJR26N6/pEc7yGo/nByTifnG+MPJBS8lULBkYh4Dz1vTVlXB5CMXlNHm7yYLe3nl+i0ur2FjCnMFJrv0tuiw67TLo0wq3ZmpP+yL3+DmY5Z36yzdIW+va09s4DUa0cuoS05ubGY+uMAULOIiXKx9uXbkfsDYOjaNsGZAZsXtJp6g5t+gVbe0VRmrQ27MgDPFEuGxsC9Xc3TkumYPB7Y0dMu+0M4PZb5AFU894t7kD2P/RO5GyBSWPrkhOjfD7gl/P/wpd1/1vD60B6pYbHnIbeLFh0U8B/fv5CBAQQr7IVgscjAMwW4S/gWOAxwNN5NTgBeCJQQKCOMIRxH+DAAA//8KpC3t"
+    }
+   ]
+  },
+  {
+   "key": "hunter_mm",
+   "name": "Hunter MM",
+   "class": "ClassHunter",
+   "spec": "SpecHunter",
+   "dir": "hunter",
+   "talents": "502-025335101030013233135031051-5000032",
+   "phases": [
+    {
+     "phase": 1,
+     "fights": {
+      "60": {
+       "dps": 6173,
+       "stdev": 185.2,
+       "min": 5555.7,
+       "max": 6790.3
+      },
+      "180": {
+       "dps": 5200,
+       "stdev": 156.0,
+       "min": 4680.0,
+       "max": 5720.0
+      },
+      "300": {
+       "dps": 5500,
+       "stdev": 165.0,
+       "min": 4950.0,
+       "max": 6050.0
+      }
+     },
+     "link": "eJzsVUFoHGUUnu+bye6flyz5M5j6O2TJdtjqshD5Z4eVJB52FISeJOClxypYPHgo9qSnpadYEWqppi5iQ0Ww2IN4adisEEsPiagtEdqmVVosrVZECwpGikZmdhpz8KTtze+w++Z77/veMP/Me/KUoqblFHZjlnuwFy9gP9vAHHgY+AD4CFwEloEV4DxwCbgGfA/cBjfAOeIaf3V9z2IKwW8qdQt+h4zpqz2aW+WwcOcM3/uOdU9V9YSIvnrUrXuqoqsyrJd6NHfKoXv6JqWkj5xyzZFyXujrKz2ajX6y7qlduipj+nKX5lQ5LJy+yT49oasyohd7NEfHw8JPiyktvv6qS/PGeOieXGXWbEJGdLdH0w4y7cnVtN+NHs1b4/nN+Hr9Is1mebumpDu9lMv7ePqbdYqnl7uUoj67RPNLWRwp6U+XaOZzo1AU00cx6+3xXikpaBpWsB9t4CAKsy8++/LzLx3CI03bmLSNZhw3IxvZ2NoobsRxFDdtHNlmNNm01tq40YFzGc63MGrhHPWJczTv32Dl4hprn63RXlhj/xxO8A/KMp3/8Z/gT/1b5Rm+SxmVQuAJzWhYlAFxJ6MD/oPBmIzWR9SAzxknyOjIHphxfBs8KlU/lFI4JIMfoyCe6hxiVuv6fG6rdleQp/5JMX/dvet+VxHnivnrri+ByuLu69yKv/za9U2wQ4ZDEdVImVt/Msj//SAw2zIfbjJQUqggjbYc1o//7dzZxh/bpD+skF+9uS3zziYNVriC9fwNfTj5gc4GiwfdIdD1BgpFNShDM48H04p6ItihqFFD4u52j6WDx13Jps7Ovvh2q4bpLz5P8WPriYxKjifha+5gFrf3JaP9wgeShzpvp1ht7dyX4UKrcYVmoPJM/T5/K7VXk3th0149e0987gems99Pfk76R+BstPaizznnW/WiOvy0RoInH1PQMKiwhnQqJphFumOyeTgHLGQbZhG8lC4TtIk5YoH4KwAA//9BnNHV"
+    },
+    {
+     "phase": 5,
+     "fights": {
+      "60": {
+       "dps": 9700,
+       "stdev": 291.0,
+       "min": 8730.0,
+       "max": 10670.0
+      },
+      "180": {
+       "dps": 9200,
+       "stdev": 276.0,
+       "min": 8280.0,
+       "max": 10120.0
+      },
+      "300": {
+       "dps": 9600,
+       "stdev": 288.0,
+       "min": 8640.0,
+       "max": 10560.0
+      }
+     },
+     "link": "eJzsVU+IG1UYn9/3JpOXtym+DKY+hw1Nh6ohsPImQ2R3PWQUhJ4k4KXHKlg8eCj2pKfQU9qsEEXdGsRdCoKsirFQaSqVoh4SUVu2NO76B4tFsCLsgh4CopGZyWbDsifdvfV3mPne7/t+v8fMm/k+8QQnSZpmcRRVOobjeA4nqQbUQU3gXaANugRcBbrAdWANuAX8CmyCBqA64Rb9yWxTYxZOOxW6ORdIZGW/ydSdnGt9/Dkt9aho8rw8IlKy12Auu9ghYcu1JlN/5aLVKJ2WPzaYejXmRFauN5ka5FzrYof6w62irPypwdT7Mb2tzcqbTaZem3atdmdiRyVrC0y9Mu2mbnRoR+Zmg6mNnJuKfSatPlph6o3Y6saIPiRsebnB1DDnsivjUlu2V3Zypvx0hQlTfnKGCSU/XGDqj102MURafrDA1OJ09LSu4BS+w6p5zHzpAIckRXmcRA04Dav6/NMvPvvCWTxU1qUZXSr7ftnTnva19vyS73t+WfueLnszZa219kstGN/B+BmKL18jef4aqXd+ofy3q1T4cpV0f5XiAzxPf5O4SsZd/C/Ys/9V+Rm9TSIjLMcUpDJuUiQEm/FO2fc5WZEp3sMTNs0bTkR7+tS8YWvnYXHEdsUBd0qkLsASJm+dpaiW2fTMuPYBZ5TaTbF4m225byn8kWLxNrOFw6P48ss0jr/5gdnKOSjSrhC8FDJ3/iFndLcdR01k3huSw4WVRxiNHdaXtp1bE/y5IdlpjtHq9YnMW0NS6FIX66Mv9MHgNzIGlDzNpkDMTFhJnhJT8486c5zkIecgJ4kCAnaUnQs7FutG7epwLN6sFDD39Vchfq88FlHBUuA2WCqKayeCTFx4b3B/680QvcrhExH6ldL3pBL5p4r7/K8UzgR7YVPrfbEnPvuBueh6ZSOIj8AYVI4j5ozrlWKSN5+UiQCPP8IhoZCnAsKuGKCKcDhF/bAOLEej6RJoLZxCqBHqhGXCvwEAAP//tyfiHA=="
+    }
+   ]
+  },
+  {
+   "key": "mage_fire",
+   "name": "Mage Fire",
+   "class": "ClassMage",
+   "spec": "SpecMage",
+   "dir": "mage",
+   "talents": "23000503110003-0055030012303331053120301351",
+   "phases": [
+    {
+     "phase": 1,
+     "fights": {
+      "60": {
+       "dps": 5400,
+       "stdev": 162.0,
+       "min": 4860.0,
+       "max": 5940.0
+      },
+      "180": {
+       "dps": 6000,
+       "stdev": 180.0,
+       "min": 5400.0,
+       "max": 6600.0
+      },
+      "300": {
+       "dps": 6100,
+       "stdev": 183.0,
+       "min": 5490.0,
+       "max": 6710.0
+      }
+     },
+     "link": "eJzsVU1oHGUYnveZ2dlv37j221kXvg5ddx2ChNHCNztdiV52DAjiQRa89BhRiweF4p70tOTitr2U0os5rfaiKCWgh9BJMRSFLNj056A11RqrJiGKP1FhPfjD/MSDx5DcfA4D7/M9zzPvMB/vy08ISGhM05PUxXGapRfpJPpEA8JZoreJFgiLRMtEK0TXiW4RrRNtEf1MGBMGoHX8ZjqWpmly3xUC0nTPgWtyZwnqh7pnf3wF8QZ8S9hykg/J37+AZ64tJkRDNvke+U0M9VfdM+MNcFGef89Up+tck3djqLHw7HjjX3uDa3LrM6iLdc++sIkLmxnd5Jr8KoY6f8SzhyO8OUroZvqyX5bgmbu6xP51DPV6PU0djnZ7KMsfl6B26rmqLL98H6p/f35alNfipGSW25ez6Aaz/PBSZp/ksvwkhhod9i0xmR7duLSbzHLug7xJjwXpia513JrFa2VBEgpNOkl9ojmyuy89++oLr5ymh1qh1rqtwyDQWodHtW63dah10Ap1GIaBbodBS4c6CNvBPBlrZNwlJX69Cvn3Vah3vkPz25uYWr8JPb6D7CedgpHiWPQW/gQv5+X/2Cuc6b06r+AOcZWFa7MlLi6YXpELbB5t9bjCtmsxVCWngp5juXjMcI64Lss1lNkUo+cTH+NYL/V/vwqn5la5dM5MyuFtpPSZa3Aedn2uOVWu+IdEwcFThpumBq3eTIUtsbxgSs4o/XLPabh1rvoVYaXK0jzy9DTuj1VkPfj35oL/9sBu9j03VqFoBSv0eX7DHoy2YYxRmjMnCKZVsIuixBMzwrUF1HOe4Z0xS6mwfyKqZJb7osPzbyQYdR44keLTTus2VKH5jH/AF3fqVLQfMf3RR/uScxB4NH1e/il6PKvHnVnKOON6xy+Ks09LimjmEUGSFDUxRclQj6hLyV5IR9WAaJhuhUXCrWQBUB80AA1B/wQAAP//DBDBrA=="
+    },
+    {
+     "phase": 5,
+     "fights": {
+      "60": {
+       "dps": 8000,
+       "stdev": 240.0,
+       "min": 7200.0,
+       "max": 8800.0
+      },
+      "180": {
+       "dps": 7600,
+       "stdev": 228.0,
+       "min": 6840.0,
+       "max": 8360.0
+      },
+      "300": {
+       "dps": 10000,
+       "stdev": 300.0,
+       "min": 9000.0,
+       "max": 11000.0
+      }
+     },
+     "link": "eJzslU9oK1UUxuecO5neOfXZm4mB28HYODykRB/cyTRS3WQsCOJCAm66rKjFhUIxK12FbkyaLEJ3dmMQBa2lNAu1syiUYqBZtLZFJLZQiigUFRR1EcF/zJ1QxGVpd+9bDJzD7/s4w73cQ89yFKhwFp6DCs7DArwGS1gDqAO2AT4C2ALcBtgF2Ac4AhgAXABcAvwCOASsI1zg78wxFcyC+wnnKJi7ijQhjttM/pTzrN4e9iIkW3zQYh7r9JEc8VWbyb9zHjuLsGDyu2KKHhCfrzO5kvNYN4qJXpPJIffsbhS7B1Gc+Nk6k5s5z+pGGENZcdRmcnPSs3oRdvpx0pS4SxPi0ybz7J6GEu6kzeQ7Oc19eMVlRbPF5K9Ju/ufQS6bTNYe8VhPD3LeSKpBlBjzZIqdBiMSGw2mPXlyxEaLyf6kx3auckzxXouRLf5sMm32iIMar5jz5gK+fYeDQIl5WIIawDJYlddfeuvVN1fg8WKglCqpwPeVUsE9pUolFSjlFwMVBIGvSoFfVIHyg5K/BsYpGN+C5L8doPjnAOXH32P+uxOcvjhBNTzH5JAaaGjNhO/jX0i7o/K+ritn9rrOPTwHyhB3LTL55hbzxihF7F6xSmmyXJNQpkctv+qYLj5tOA+7LolTvEOM91+JfYQzVe3/8RCdrJshe5XFZecMdbv5JTpPuAXKOhlKFyZ4ysHnDVen+sXqXJpMvrvFBCUt9UbVmXJzlCmkualJew1H6Truj0NMZig8OAL+PwO5yf8cH6KEfdyHb0Y37LHwBzSGaC+zcUBmpqwxbtP4HHctjvJlz/CazNZgbTFMJ5aHwsm1d2P1y48uan1dLp6hTOVfLNzyxZ1uhDcRU+t/cSM5t6Gn9Hfn5/CZpB6WFyDpGUflwhhvvyBSIcw9yUGAhDxOQ/yoh1CBeC/op6oO0NFbYRtwEC8AqCHUEToI/wYAAP//ZQLJLQ=="
+    }
+   ]
+  },
+  {
+   "key": "warlock_affliction",
+   "name": "Warlock Affliction",
+   "class": "ClassWarlock",
+   "spec": "SpecWarlock",
+   "dir": "warlock",
+   "talents": "2350002030023510253500331151--550000051",
+   "phases": [
+    {
+     "phase": 1,
+     "fights": {
+      "60": {
+       "dps": 4700,
+       "stdev": 141.0,
+       "min": 4230.0,
+       "max": 5170.0
+      },
+      "180": {
+       "dps": 5800,
+       "stdev": 174.0,
+       "min": 5220.0,
+       "max": 6380.0
+      },
+      "300": {
+       "dps": 5000,
+       "stdev": 150.0,
+       "min": 4500.0,
+       "max": 5500.0
+      }
+     },
+     "link": "eJzsl11sVMUXwPecuXt39vBfOp124TJ/li6rQNm4eHe32w/86Gpi4kdCqvhATIwgKQoSbFp80KfakLTFGGtCTGw0qT6hEjENxNpFRVIMNQWBUm0rJg21SIwpaGxSoqK5d++9rGVNA4E352Ez+5vzNefMnMylBzgKNLEWHoQG3AAb4VlowlaADsAugL0AHwH2ARwGOAZwEmAUYALgAsAlwFnADoQJ/I1JzYRaULvCXBNcvYoUFlM5NH6OxPSjR3DvJxjXuC6iVCJmzmKMjfdZoEJESYoLOTSuRGIsd95lAbFnHzN2RygsfsyhMctjeu48uuu3U1hc+BaNDyMFWBcVFBY/5NDYszSm9wxiz6CFo6KCpPjlEBqvL42xPLPCCIlLh9BojzgOQ2L6EBq/RhxDIfHaZ2i0LnOEA+LrnPWXNHEph0Ti8343kpAYyqExFHFckTjV726CRNsBx12MOFjpafBv8L8U4iDQwCg0QStAG+gN2ze92Ni8G1al0hnTNFNm2jRT6UzSTGUskE4nk5lkIpGxFk0zk+wG3zj4zoHB325nYmwKjeEpjLYNY+WV02i+PIz52nSizx512XfxT6TDzt//xo0OWXujmkewfyGFiT+hk8bP7NdiQQqQP5E0My1U7uCJg1qMk05aorqAjvSyIvTUcVc2U0AHL7uyGfMqHRotRntGitGpohZOFLUw0qVdS8W+zjmyypIdH3BpKl2UJovRZF1RWlOUZorSot6SyRYqK6AB8hNL1BWDNS1W2TyYL1vVGtuZrjRCozRGxElPJNdYBVrkCH8xg4VcrlC3UUk8xHWJa33KT4zAVIIWRv9yB/DORbJaVVGwFywLfe9pchXpO5u3bn6uRZapUiopFD4+wKTtSgx3MHvZ/xUiZ3Hu6ZQrOdfF0DoZVmUFLjwLy1UFWUul8RLul/iwT9kJSKZrbZHuSZxHhL/TPp+IODsxr8jpP+YVOdjJZFQto3IlScQXOiI6aYQ1ph3K+Q+Y/B7UOFA7qF1ATXJHPj1IjWqzu/3By8yZWqfWpWf2a+50aNSjPSPedMpTsy6GOx3p8tROHdfsuLSrcaUych3xp7c+E23ZsalJOifHKaCVW+6lkHs74F7OuJca7mWgSqWkSfrzTY07GpsdraMzrv5bJxx9Pumx2RmUk6AmgEZAngb6GNQBoLXxWs5ksN8Ofc9+Ta3uxZUcZLAbHUNqcS+WW+R9j9gHOPVP3S9H2Q3rTv9+XbpOLa0LlS++zTPezp9ST9J6+SjdG7+bMxnqB3IWUPivx8+/OnhEPUT18h5arVZRKLbArfzYNKNF8fKr+xqb9mzNOampGrepyBIVInaO+bwS3qXq6E6ZoCXxxZxJvs0po3JCnpzBudaSplfr/6slc09fdZUVBD/H5Rp1B8VklP5nNaeUcyiuCS3lHZc6VUNRucy+iUziY85NTNWsoKDVIe06yDIKbN+6pXHnpibptUpp9R42znxtwEnjF2dQ+eRSpRydNhAOtVvy480vNEpSXu/05uMDzIBjeAxO4hsw5rxgVmZ/Qt8sBtrYAkCm+fUAD9KCbaQ4B6EZUAmxV1jQFm3dki3NK5Vnl3S/aY3B+uVb7PFNfeo7NPzR9fFb/DSq7MzeDDOtgwM3xc6tGHX276cXs/fl/8/Wb4Q8852sjwd41zoBWbi/moMAA6JYaT+Hs9AA1geH/RDuAOixPzf6AEetLwtoRehA6EH4OwAA//85qt0+"
+    },
+    {
+     "phase": 5,
+     "fights": {
+      "60": {
+       "dps": 11000,
+       "stdev": 330.0,
+       "min": 9900.0,
+       "max": 12100.0
+      },
+      "180": {
+       "dps": 7000,
+       "stdev": 210.0,
+       "min": 6300.0,
+       "max": 7700.0
+      },
+      "300": {
+       "dps": 7800,
+       "stdev": 234.0,
+       "min": 7020.0,
+       "max": 8580.0
+      }
+     },
+     "link": "eJzsl11sFFUbx/d5zuz27ENLT09bGM7bwjIvH2VjcXa22w/86Gpi4kdCqnhBTIwgKQoSbFq80KvaGNulTVwTQmKjshIvtBKRRj5KJEHSGtYAAUpNW9Q0NDXGGPDCJiUimpmdna5lTQOBO8/F5szv/J+PeZ4zJ2fpMY4CTayHx6EJN8ImeBlasB2gCzAJ8AnAF4DHAE4CnAY4DzAKMAHwM8BvgDOAXQgT+DuTmgn1oN4u55rg6h2kYrEvyfRfK43A0CkcGkAKio97mMEODSAViv1Jpt+sNNhl5+loH9N3V2bWdDHUzfSZSiN4aMC2uzyAYY0vEyuoWBzpY/rnlUbg0ADa0nLxYZLpeyqywNVJcbib6e9WGMGhAUylXWkqyfROO5tcl+Wiu4fpeyscnErbeIVYRoXixwTT25dm8pPiSHfmaTaGJr7qY0TiRIKFNR4SK6hQHOhh+rlKg6XSSJrY18MoKG50M8eJQRzsAjX5N/rfKOIgUMcQtEA7QAcEmnZsfr25dTestqIx0zQtM2qaVjQWMa2YDaLRSCQWqa6O2YumGYv0gm8cfFdA5x90MjE2hfrwFIY6hrHq5kU03xzGTHcS6HNGQ3w//ol00n38b9zpkPV3ankKjy+kcuLPBUjjlw5qRpAKyF8dMWNtVObiicOawSlAWnVtDh3pZ3nohbNZbSyHpq9ntTFzlp4ZzUdTI/noVF4P5/J6GElqt1JxIDFHq2zt+GCWWtG8NJKPRhry0rq8NJaX5o0WibRRaQ4tID+x6oZ8sK7NbpsHM22rWesECyiNUC8xiDgFqiNr7QYtcsVfT2MulyvV/6k4XMQDEtf5lJ8YgakELQz9lR3AE4tkraqhYD/YHo59qsnVFNjVum3LK22yVJVQca747CCTTigx3MWcZf+3iJyFuWdTpuTcEGfWy3JVmhPC87BcLSN7qSRczP0Sn/QppwCRaL0j6Z3EeST8o875JOL7iXklF2/MKzmcYDKkllKZkiTCC11JgDTCOtNJ5afPmPwB1DhQJ6i3gFrkzkx5kJrVluzrp68zd2rv2iy9dFDLTs+MejQ14k2nPDP7w8hOR5Ke2YWzmpOXNpuXFZPrib+47aVQ287NLdLdOW4D7dpyr4TcewPu1Yx7peFeBWqUJU0KvNrSvLO51bUams7av3/OteeTHpuZRjkJagJoBORFoKOgvgRaF67nTAaPO6nvOaipNf24ioMM9qLrSC3uxzKb9HnE2cDWP22/GWV3bHv1j9uydXtpf1CZ5js85r35C+p52iCfpofDD3Imi44DuQso/LcT518DPKWeoEb5EK1Rq6nIWJDt/NhVRovCZbPvNXbV8zVnp1p12UNFFqsiYleYz2vhA6qB7pfVtCS8mDPJt7ttVG7Kk9M411vE9Hr9P7Vk7u6rrbGT4Fe4XKvuI0OGqNA+nCx3U9ySmuVtlwZVRyG51PkSmcRn3C/RqltJQfuEdPogS6lgx7atzbs2t0jvqJT22cPGma8DOGn82jQqn6xQyrXpAOFS50h+tvW1ZknKOzu9+fgg0+E0nobzuBfG3BvMqvgv6JvBgg62AJBp/kABD9KC7aQ4B6HpUAVGNws60vat8ZKMUVl8Se979kg3Lt/qjO8arcuo+0Mbwvf4alSViN8NN+3pwbvi516MBuf3xLX4I5nnmcZNkGG+843hAp5cL/xxeLSWgwAdQljlXIfj0AT2Xw7nItwFkHL+cBwDHLX/W0A7QhdCCuHvAAAA///SP+a0"
+    }
+   ]
+  }
+ ]
+}

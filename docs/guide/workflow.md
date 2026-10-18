@@ -29,14 +29,13 @@ How the user runs efforts, beyond the hard rules in [CLAUDE.md](../../CLAUDE.md)
 
 1. A subagent implements the phase and verifies it (build and tests in the container), uncommitted.
 2. A fresh subagent reviews it by hand at high effort, fixes every finding and re-verifies; reviewers run Go
-   and TS in the container too. The orchestrator reports the findings and stops.
-3. Wait for the user to say "commit and merge". A bare "can be merged" gets the commit blocked by auto
-   mode.
-4. Re-verify the reviewer's edits, commit on the effort branch, then
-   `git switch master && git merge --ff-only <branch>`.
+   and TS in the container too. The orchestrator reports the findings.
+3. Without waiting for the user, re-verify the reviewer's edits, commit on the effort branch and in any
+   sibling repo the phase changed, then `git switch master && git merge --ff-only <branch>`. If auto mode
+   blocks the commit, ask the user.
    - If master has moved, first merge `master` into the effort branch and test the merged tree. Set
      another phase's uncommitted work aside with a named stash and re-apply it after.
-5. Don't push or delete branches unless asked. Pushes go to `origin`.
+4. Don't push or delete branches unless asked. Pushes go to `origin`.
 
 ## Server-side work
 

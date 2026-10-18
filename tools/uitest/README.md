@@ -28,7 +28,7 @@ npx playwright show-trace test-results/<test>/trace.zip         # a failure's tr
 | `tests/lib/page.ts` | `SPECS`, `openSim(page, spec)`, `openRaid`, `openSimTab(page, id)`, `watchForErrors(page)`, which skips requests the network dropped (`net::`) |
 | `tests/lib/fixture.ts` | `loadFixture(name)`, `showFixture(page, fixture, { url, settings })`, `label(player)` |
 | `tests/smoke.spec.ts` | every spec page, the raid page and the results page load without a console error; `watchForErrors` itself |
-| `tests/<area>/` | one directory per area (`results`, `gear`, `raid`, `settings`), its helpers beside the specs |
+| `tests/<area>/` | one directory per area (`results`, `gear`, `raid`, `settings`, `rankings`), its helpers beside the specs |
 
 ## Fixtures
 
