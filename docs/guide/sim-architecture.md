@@ -141,5 +141,7 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   every obtainable item's progression tier, sources and limits.
 - `tools/acore/` (`dock.sh`, `gen_basestats`, `gen_server_defaults`, `spellids`
   ([README](../../tools/acore/spellids/README.md)), `gen_serverdata`) and `tools/simval`.
+- `tools/rankings` ([README](../../tools/rankings/README.md)): sims every DPS build's BiS per content phase
+  in one standard scenario into `assets/rankings/rankings.json`, from `tools/statweights`' captured settings.
 - `tools/apldbg` ([README](../../tools/apldbg/README.md)): one character on one rotation, row by row, with
   casts, uptimes, a log or a timeline, also against a base commit's sim code.

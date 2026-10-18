@@ -38,6 +38,8 @@ the cross-effort ties:
   `bis_presets.json`. Playerbots' `apps/simweights/generate_weights.py` reads its `weights.json` and
   maps or skips every `BUILDS` key (an unknown one fails the run), so a change to the `gen.py` API, the
   `BUILDS` keys or that layout needs the other side updated.
+- **DPS rankings:** `tools/rankings` runs statweights' `capture.py`, imports its `merge.py` and presetgen's
+  `gen.py`, and reads the `p*_bis*` presets and `bis_presets.json`, so a change to those needs it updated.
 - **Shared files:** bis-optimizer edits `proto/api.proto`, `sim/core/database.go`, `sim/web/main.go`,
   `sim/wasm/main.go`, `ui/worker/*`, `ui/core/worker_pool.ts`, `ui/core/sim.ts`, `gear_picker.tsx`,
   `player.ts`, `individual_sim_ui.ts`, `gear_tab.ts` and `saved_data_manager.ts`.
@@ -45,4 +47,5 @@ the cross-effort ties:
 - **Presets:** BiS presets take over parity P6's re-pointing of presets.
 - **Golden report:** `dock.sh delta`'s output feeds the wave-loop report schema (`wave-loop.workflow.js`), so a
   change to either needs the other updated.
-- **Re-baseline:** BiS results follow the sim, so they're re-baselined after every parity wave from D on.
+- **Re-baseline:** BiS results follow the sim, so they're re-baselined after every parity wave from D on,
+  and the DPS rankings re-run after each.
