@@ -904,7 +904,7 @@ dps_results: {
 dps_results: {
  key: "TestBlood-Average-Default"
  value: {
-  dps: 11977.06544
+  dps: 11977.04551
   tps: 5868.09907
  }
 }
@@ -1178,8 +1178,8 @@ ability_results: {
     casts: 11.0375
     hits: 11.0375
     crit_pct: 41.45866
-    amount_per_hit: 1886.43783
-    amount: 20821.5575
+    amount_per_hit: 1885.89884
+    amount: 20815.6085
    }
   }
   entries: {

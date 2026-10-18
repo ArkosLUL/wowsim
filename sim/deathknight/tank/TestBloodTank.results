@@ -1042,8 +1042,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-Talents-UnholyPresence-Average"
  value: {
-  dps: 2506.88547
-  tps: 2367.20429
+  dps: 2506.88446
+  tps: 2367.20347
   dtps: 319.55815
  }
 }
@@ -2194,8 +2194,8 @@ ability_results: {
    value: {
     casts: 18.3885
     hits: 18.3885
-    amount_per_hit: 212.18533
-    amount: 3901.77
+    amount_per_hit: 212.16888
+    amount: 3901.4675
    }
   }
   entries: {
