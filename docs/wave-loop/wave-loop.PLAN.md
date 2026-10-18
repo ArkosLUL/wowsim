@@ -187,6 +187,11 @@ chain waits for Z12.
   (`d650b530c`). Base `36e678932`; run `wf_05383cd2-e97` (offline stages in parallel, EC-UPSTREAM's spelldump
   capture alongside; then live stages one at a time; then reviews). Next: Z15 (Z14's follow-ups, specs in the
   e2e-coverage PLAN) on the user's go; the BiS chain (Deferred, below; reruns fresh) waits.
+  Hold (the user's call per the spec-balance session, 2026-10-18): neither Z15 nor the BiS chain starts until
+  spec-balance's P0b lands on master (a per-player `Player.playerbot` switch in sim core; plan
+  `docs/spec-balance/spec-balance.PLAN.md`, worktree `wowsimwotlk-balance`); that session messages when it lands.
+  The BiS chain then runs with the switch on. Meanwhile only items touching none of `sim/core`, `sim/<class>/`,
+  `ui/<dir>/apls/`, `tools/presetgen/gen.py` or `tools/rankings/`.
   Live stages stay short: the user finds hours of recordings not worth it (2026-10-16).
   The server runs [ac] `62fb09c68`: upstream merged, 338 commits over `3d89793c7` (DB import ran, `simval trace` row
   present; image rebuilt 2026-10-18 15:04 local for mod-playerbots, same rev). EC-UPSTREAM audited the merge and
