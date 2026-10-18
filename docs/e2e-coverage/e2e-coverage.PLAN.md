@@ -5121,6 +5121,39 @@ revert.
   re-take; the picker's `tools/uitest` spec; their rows.
 - **Goldens:** none.
 
+#### As built
+
+Code stage (offline; audit table and live plan in `tmp/ec-tools4-code.md`):
+- `int-check.sh`: gofmt's and eslint's files are `git diff --no-renames --diff-filter=AM BASE` (BASE against the
+  working tree; a rename would show as `R` and be skipped) plus untracked ones (`git ls-files --others
+  --exclude-standard`). `INT_CHECK_DIR`, `INT_CHECK_LOGS` and `INT_CHECK_DOCK` override the checkout, log dir and
+  dock command; unset, the defaults stand. Dry run in this worktree
+  with a stub dock running only the gofmt and eslint scripts: an uncommitted and an untracked `.go` came out
+  UNFORMATTED, an uncommitted and an untracked `.ts` reached eslint.
+- `tools/uitest/tests/settings/combat_reach.spec.ts`: on the mage page, Show Threat/Tank Options on (the picker sits
+  in the target's threat-metrics section, hidden on a non-tank page, so the "every field survives a reload" test
+  never touches it), Combat Reach `0.00` → 4.5, kept over a reload, and the routed `raidSimAsync` request carries
+  `targets[0].combatReach` 4.5.
+- `.additem` audit: `.additem A B` reads A as a character guid only when B also parses as an item entry, else
+  it backtracks to item A, count B (`MultiConsumer<Optional>` in `ChatCommand.h`, unchanged by the merge). Every
+  entry the sites gave is a playerbot's guid, but no count (1, 2, 5, 20, 1000) is an item, so every run got its items:
+  Felguard and Infernal summoned, `FIGHTITEM` read back, Raise Dead went off, Auto Shot hits in the fights and the
+  hunter captures, whose setups list quiver 44448 and ammo 52021. Only ecclass7's `.additem 44614 200` (Thick Cloth
+  Vest) misfired. Nothing to re-take; no e2e change. Negative or missing counts (the other bare sites) are safe.
+
+Live stage (2026-10-18, server lock held 10:34 to 10:51 UTC, rev 62fb09c68; all runs loaded by another session's
+container; notes in `tmp/ec-tools4-live.md`): each test that `3d0c771` touched passed, and each item reached its bot.
+- `TestEcClass5HealsUnderStrengthOfWrynn`: Raise Dead went off (Corpse Dust). Death Strike healed 5% of maximum
+  health per disease, and Death Pact healed 6110 of 15276.
+- `TestSimvalStrikes`: 15 of 15 passed, with Felguard and Infernal summoned. The streamed 103 records pass
+  `TestStrikesRecords` (601 checks), so the merge moved nothing it compares (the fixture was put back).
+- `TestSimvalEcClass3Fight` (EC-CLASS-FIX3's first DeathknightBloodIBP entry): three `FIGHTITEM` lines; Bomb and
+  Generator went off twice each; all 225 Improved Blood Presence heals are exactly int(int(damage × 0.04) × 1.10).
+- `TestSimvalFight` HunterBM: `ammo 52020 set`, Auto Shot went off 48 times; trimmed, 41 of 41 checks pass.
+- `TestRecordedRunHunter` at 120 s: the `.setup.txt` lists quiver 44448 and ammo 52021, and `simval chronicle`
+  reads 67 Auto Shot hits.
+- Nothing re-taken: every committed fixture stays. Orphan bots: none.
+
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.

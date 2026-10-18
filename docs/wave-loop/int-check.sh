@@ -1,17 +1,27 @@
 #!/usr/bin/env bash
-# RUNBOOK step 4.3 in [int]. BASE is the pre-merge commit: gofmt and eslint look only at files changed since it.
+# RUNBOOK step 4.3 in [int]. BASE is the pre-merge commit: gofmt and eslint look only at files changed since it,
+# committed or not.
 # usage: int-check.sh <base-ref> <log-name>
+# INT_CHECK_DIR, INT_CHECK_LOGS and INT_CHECK_DOCK swap the checkout, log dir and dock command, for a dry run.
 set -u
-INT=G:/DevStuff/GitHub/wowsimwotlk-int
+INT=${INT_CHECK_DIR:-G:/DevStuff/GitHub/wowsimwotlk-int}
 BASE=$1
 NAME=$2
-DOCK="bash $INT/tools/acore/dock.sh"
-LOGS=G:/DevStuff/GitHub/.wave-loop/logs/checks/$NAME
+DOCK=${INT_CHECK_DOCK:-"bash $INT/tools/acore/dock.sh"}
+LOGS=${INT_CHECK_LOGS:-G:/DevStuff/GitHub/.wave-loop/logs/checks/$NAME}
 mkdir -p "$LOGS"
 cd "$INT" || exit 1
 
-changed_go=$(git diff --name-only --diff-filter=AM "$BASE" HEAD -- '*.go' | tr '\n' ' ')
-changed_ui=$(git diff --name-only --diff-filter=AM "$BASE" HEAD -- '*.ts' '*.tsx' '*.js' | grep -v '_auto_gen\.ts$' | tr '\n' ' ')
+# a review's fix is often still uncommitted, so the working tree and untracked files count too.
+# --no-renames, or a moved file comes out as R and the filter skips it
+changed() {
+	{
+		git diff --name-only --no-renames --diff-filter=AM "$BASE" -- "$@"
+		git ls-files --others --exclude-standard -- "$@"
+	} | sort -u
+}
+changed_go=$(changed '*.go' | tr '\n' ' ')
+changed_ui=$(changed '*.ts' '*.tsx' '*.js' | grep -v '_auto_gen\.ts$' | tr '\n' ' ')
 
 echo "== test"
 # sim/optimizer alone runs past go test's 10 min default while other containers load the cores
