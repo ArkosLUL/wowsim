@@ -80,10 +80,20 @@ func (shaman *Shaman) registerHealingStreamTotemSpell() {
 		Tick: core.SpellEffect{Effect: 0, FromSpellID: 58761, Min: 25, Max: 25},
 		OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 			// 58761's party search goes through SpellInfo::CheckTarget, which keeps the dead out
-			if target.HasHealthBar() && target.CurrentHealth() <= 0 {
+			if !target.HasHealthBar() || target.CurrentHealth() > 0 {
+				hsHeal.Cast(sim, target)
+			}
+			if target != &shaman.Unit {
 				return
 			}
-			hsHeal.Cast(sim, target)
+			// CASTER_AREA_PARTY takes the party's pets too, as they stand at each tick, so they ride on the shaman's.
+			// TARGET_CHECK_PARTY skips a guardian without a pet bar, and a pet that's away isn't in the world.
+			for _, agent := range shaman.Party.Pets {
+				pet := agent.GetPet()
+				if !pet.Uncontrollable && pet.IsEnabled() && (!pet.HasHealthBar() || pet.CurrentHealth() > 0) {
+					hsHeal.Cast(sim, &pet.Unit)
+				}
+			}
 		},
 	}
 	config.ApplyEffects = func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {

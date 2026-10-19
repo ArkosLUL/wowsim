@@ -57,6 +57,13 @@ func (dk *Deathknight) registerDancingRuneWeaponCD() {
 		dk.registerDrwOwnerSwing(dk.AutoAttacks.OHConfig(), 4),
 	}
 
+	dk.RuneWeapon.copying = dancingRuneWeaponAura
+	if dk.Talents.MarkOfBlood {
+		dk.RuneWeapon.marksOfBlood = dk.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
+			return core.MarkOfBloodAura(target, &dk.RuneWeapon.Unit)
+		})
+	}
+
 	dk.DancingRuneWeapon = dk.RegisterSpell(core.SpellConfig{
 		ActionID: core.ActionID{SpellID: 49028},
 		Flags:    core.SpellFlagAPL,
@@ -123,6 +130,31 @@ type RuneWeaponPet struct {
 	// by hand: the DK's own white swing, rolled again but never dealt, and the weapon's half of it
 	ownerSwings [2]*core.Spell
 	swingCopies [2]*core.Spell
+
+	// the DK's 49028 aura, whose proc does the copying
+	copying      *core.Aura
+	marksOfBlood core.AuraArray
+}
+
+// copyMarkOfBlood is the weapon's copy of the Mark of Blood the DK just put on target. It deals no damage, so it
+// isn't a hit the aura sees, but 49028 procs on DONE_SPELL_NONE_DMG_CLASS_NEG with NO_DMG_HEAL too, and CheckProc
+// takes it. The weapon's mark replaces his.
+func (runeWeapon *RuneWeaponPet) copyMarkOfBlood(sim *core.Simulation, target *core.Unit) {
+	if runeWeapon.marksOfBlood == nil || !runeWeapon.copying.IsActive() || !runeWeapon.IsEnabled() {
+		return
+	}
+	runeWeapon.marksOfBlood.Get(target).Activate(sim)
+	runeWeapon.dkOwner.SetCombatReach(drwReach)
+}
+
+// the mark is single target, so it leaves the target with the weapon
+func (runeWeapon *RuneWeaponPet) disable(sim *core.Simulation) {
+	for _, mark := range runeWeapon.marksOfBlood {
+		// nil for the units that aren't enemies
+		if mark != nil {
+			mark.Deactivate(sim)
+		}
+	}
 }
 
 // registerDrwOwnerSwing is the white swing spell_dk_dancing_rune_weapon rolls again on the DK for each one
@@ -358,6 +390,7 @@ func (dk *Deathknight) NewRuneWeapon() *RuneWeaponPet {
 	runeWeapon.Uncontrollable = true
 	runeWeapon.OwnerBuffsOnly = true
 	runeWeapon.OnPetEnable = runeWeapon.enable
+	runeWeapon.OnPetDisable = runeWeapon.disable
 	runeWeapon.BaseCombatReach = drwReach
 
 	// npc_pet_dk_dancing_rune_weapon is a NullCreatureAI and never swings: its white hits are swingCopies, and

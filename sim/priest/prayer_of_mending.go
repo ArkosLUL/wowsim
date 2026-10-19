@@ -125,6 +125,10 @@ func prayerOfMendingJump(units []*core.Unit, holder *core.Unit) *core.Unit {
 		if unit == holder || !unit.IsEnabled() {
 			continue
 		}
+		// it takes players and Unit::IsPet only, so no guardian, not even a Shadowfiend
+		if unit.Type == core.PetUnit && !unit.SummonedAsPet {
+			continue
+		}
 		// a unit with no health bar never takes damage
 		var missing uint32
 		if unit.HasHealthBar() {
