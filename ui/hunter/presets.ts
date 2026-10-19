@@ -120,7 +120,7 @@ export const BeastMasteryTalents = {
 export const MarksmanTalents = {
 	name: 'Marksman',
 	data: SavedTalents.create({
-		talentsString: '502-025335101030013233135031051-5000032',
+		talentsString: '502-015335101030013233035031251-5000032',
 		glyphs: Glyphs.create({
 			major1: MajorGlyph.GlyphOfSerpentSting,
 			major2: MajorGlyph.GlyphOfSteadyShot,

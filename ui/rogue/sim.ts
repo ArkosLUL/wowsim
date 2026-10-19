@@ -327,6 +327,10 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecRogue, {
 		} else if (talentTree == 0) {
 			return Presets.ROTATION_PRESET_MUTILATE_EXPOSE.rotation.rotation!;
 		} else if (talentTree == 1) {
+			const debuffs = player.sim.raid.getDebuffs();
+			if (debuffs.sunderArmor || debuffs.exposeArmor) {
+				return Presets.ROTATION_PRESET_COMBAT.rotation.rotation!;
+			}
 			return Presets.ROTATION_PRESET_COMBAT_EXPOSE.rotation.rotation!;
 		} else {
 			// TODO: Need a sub rotation here

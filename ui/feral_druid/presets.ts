@@ -86,7 +86,7 @@ export const StandardTalents = {
 	data: SavedTalents.create({
 		talentsString: '-543202132322010053120030310511-203503012',
 		glyphs: Glyphs.create({
-			major1: DruidMajorGlyph.DruidMajorGlyphNone,
+			major1: DruidMajorGlyph.GlyphOfRip,
 			major2: DruidMajorGlyph.GlyphOfSavageRoar,
 			major3: DruidMajorGlyph.GlyphOfShred,
 			minor1: DruidMinorGlyph.GlyphOfDash,

@@ -5,7 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a, P0b and its follow-ups landed; next P1 (four class-group agents, then step 4). Wave Z15 and the BiS chain, held for P0b, may go.
+Status: P0a, P0b and P1 landed; P1 results, open decisions and later-phase notes in `spec-balance.INVESTIGATION.md`. Next: the user's decisions there, then the baseline (after the BiS chain).
 
 ## Context
 
