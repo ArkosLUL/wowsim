@@ -183,17 +183,23 @@ chain waits for Z12.
 
 ## Current wave
 
-- Wave: Z14 (e2e-coverage PLAN; the user's go, 2026-10-18), landed with master's `40f835edb` merged in
-  (`d650b530c`). Base `36e678932`; run `wf_05383cd2-e97` (offline stages in parallel, EC-UPSTREAM's spelldump
-  capture alongside; then live stages one at a time; then reviews). Next: Z15 (Z14's follow-ups, specs in the
-  e2e-coverage PLAN) on the user's go; the BiS chain (Deferred, below; reruns fresh) waits.
+- Wave: Z15 (e2e-coverage PLAN; the user's go, 2026-10-19), running. Base `0127441aa` (master's `cebfe037b` merged
+  in); run `wf_22003b88-2d4` (Z14's script), transcript
+  `~\.claude\projects\g--DevStuff-GitHub-wowsimwotlk\2b733101-…\subagents\workflows\wf_22003b88-2d4`; args
+  `.wave-loop\waveZ15-build.py`, rules `waveZ15-shared.md`; worktrees
+  `wowsimwotlk-wi-ec-{core-fix12,pet-fix10,class-fix11,tools5}`. EC-TOOLS5's `rebuilt` stage (the off-hand
+  `.simval damage` record) waits for the user to rebuild the worldserver with its C++, then re-runs alone. The BiS
+  chain (Deferred, below; reruns fresh) stays on hold (the user, 2026-10-19).
+  Known failure, not the wave's: `TestGeneratedFilesMatchLiveConfig` (spec-balance's
+  `sim/core/playerbot_world_buffs_auto_gen.go` lags a `Playerbot.env` change; that session was told).
+  Z14 landed `4d2fe6e5d`, base `36e678932`, run `wf_05383cd2-e97`.
   spec-balance's P0b is on master (`73ae11a98`): the `Player.playerbot` switch (`docs/guide/playerbot-rules.md`),
   which presetgen, statweights' capture and the rankings turn on, so the BiS chain optimizes under bot rules. While
   spec-balance's P1 is open (the APLs, presets and `sim.ts` defaults of its in-scope DPS builds), Z15 stays off
   `ui/<dir>/apls/`, the presets and `sim.ts` (none of its items owns any).
   Live stages stay short: the user finds hours of recordings not worth it (2026-10-16).
   The server runs [ac] `62fb09c68`: upstream merged, 338 commits over `3d89793c7` (DB import ran, `simval trace` row
-  present; image rebuilt 2026-10-18 15:04 local for mod-playerbots, same rev). EC-UPSTREAM audited the merge and
+  present; image rebuilt 2026-10-19 01:05 local for mod-playerbots, same rev). EC-UPSTREAM audited the merge and
   recaptured the spelldump; the other committed records and fight logs, all but the two Frost DK ones, predate it.
   Z14's reports: `.wave-loop\z14-run1\*.json` and `xreview.md`; item notes
   `.wave-loop\{ec-upstream,ec-core-fix11,ec-pet-fix9,ec-class-fix10}-tmp`. Briefs to copy: `waveZ14-build.py`, the
