@@ -91,7 +91,8 @@ A harness character fights the Naxx dummy under bot AI. Test `TestBotSpike` in `
 under the server lock; captures in `tmp/p2/captures/`. Recipe:
 
 1. `newBot`, gear and talents (the spike: `.playerbots bot initself=epic`), `.ip set 18`, potion via `.additem`.
-2. Teleport it off Naxx (a group member enters the leader's instance only from another map), save, log out.
+2. `.gm off` (the GM flag is saved and comes back on the bot, and a GM never enters combat), teleport it off
+   Naxx (a group member enters the leader's instance only from another map), save, log out.
 3. Log a second character into the same account (`LoginBots` creates it), GM on, level 80.
 4. `.playerbots bot add <name>` (reply `add: <name> - ok`; same-account bots allowed); the bot joins the master's
    group by itself.
@@ -99,22 +100,28 @@ under the server lock; captures in `tmp/p2/captures/`. Recipe:
    can't help, it moves only GM sessions into an instance (`Instance.GMSummonPlayer = 0`).
 6. Master `.go`es into Naxx, party chat `summon`: the bot teleports into the master's instance.
 7. The master tanks: a Night Elf druid with Ferocity 5/5 (`CMSG_LEARN_TALENT` 795 rank 4) in Bear Form, which
-   playerbots count as a tank. Spawn the dummy, `.gm off`, select it, `.simval victim`, party chat `attack`.
+   playerbots count as a tank. Check the learn by free talent points (field 0x3FC) dropping 5: after a restart
+   `character_talent` lags the save by over 10 s. Spawn the dummy, `.gm off`, select it, `.simval victim`,
+   party chat `attack`.
 8. Cleanup: `.playerbots bot remove`, then the master's `deleteCharacters` takes both characters.
 
 Burst gate: the dummy (`NullCreatureAI`) never has a victim, so `TankHasHeldBoss` never passed. The user chose a
 tank victim: `.simval victim` ([simval] `SimValidationDummy.cpp`). Verified: with it, Icy Veins and Mirror Image
 come ~11 s after `attack`; without it (control run), never.
 
-Open: the potion. `OffensivePotionTrigger` never fires in the test, even with the tank holding, though the bot
-holds 17 potions (factory 16 + `.additem`), drinks on party chat `u offensive potion`, and the user's raid bots
-drank in ToC and Ulduar the night before (botobs traces, spells 53908/53909). Static reading of the trigger,
-`TankHasHeldBoss`, the item lookup and every loaded multiplier (burst, naxx, cast time) found no difference.
-Next: the trigger's `T:` log is `LOG_DEBUG` (`Engine::LogAction`), so a debug log level for one run would show it.
-Spike switches: `SIMVAL_BOTSPIKE_DEBUG` (party `co ?`, `nc +debug`: the bot whispers each action run),
-`SIMVAL_BOTSPIKE_PROBE` (party lines at 20 s, `;;`-separated), `SIMVAL_BOTSPIKE_NOVICTIM`. Potions left are summed
-per stack (`item_instance.count`); an earlier row count read 1.
+Potion: `OffensivePotionTrigger` needs `bot->IsInCombat()`, and the bot was in GM mode (step 2), so it never
+fired; the burst multiplier has no combat check, so cooldowns went out. With `.gm off` the bot drinks Wild Magic
+5.7 s after `attack`, as raid bots do (botobs traces, ~8.4 s into a pull). The earlier spike DPS figures (Fire
+6168, Assassination 6837) came from out-of-combat bots and don't count. `tools/simval chronicle` reads the
+bot's logs; the bot had the matrix's flask and food and loaded its raid strategy.
 
-Results, 60 s, factory gear: Fire mage 6168 DPS, Living Bomb and Improved Scorch ≥ 96% uptime, Combustion and
-Mirror Image cast; Assassination rogue 6837 DPS at 1.2 yd. Both had the matrix's flask and food, and the bot
-loaded its Naxx strategy. `tools/simval chronicle` reads both logs. The rogue poisoned its weapons in combat.
+Spike switches: `SIMVAL_BOTSPIKE_DEBUG` (party `co ?`, `nc +debug`: the bot whispers each action run),
+`SIMVAL_BOTSPIKE_PROBE` (party lines at 20 s, `;;`-separated), `SIMVAL_BOTSPIKE_NOVICTIM`,
+`SIMVAL_BOTSPIKE_GO` (the fight spot), `SIMVAL_BOTSPIKE_LOGLEVEL` (GM 4 on the test account, `playerbots` logger
+at debug during the fight: `T:`/`PUSH:`/`A:` engine lines in `Playerbots.log`). Potions left are summed per
+stack (`item_instance.count`).
+
+P3 candidate: after drinking, the bot retries `offensive potion` every ~2.5 s, failing each time (raid trace
+`649_2_thrakgar_1792361718`: 105 of 127 attempts FAILED). `PotionSpellsReady` (`UseItemAction.cpp`) is meant to
+stop that but doesn't see the in-combat potion lock. No lost casts seen, wasted AI ticks only.
+Also seen: a rogue bot applied its poisons after the pull.
