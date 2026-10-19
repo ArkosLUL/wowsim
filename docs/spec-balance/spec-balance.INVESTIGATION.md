@@ -98,14 +98,22 @@ under the server lock; captures in `tmp/p2/captures/`. Recipe:
 5. Raid convert (raw `CMSG_GROUP_RAID_CONVERT` 0x28E): a non-GM enters a raid map only in a raid group. `.summon`
    can't help, it moves only GM sessions into an instance (`Instance.GMSummonPlayer = 0`).
 6. Master `.go`es into Naxx, party chat `summon`: the bot teleports into the master's instance.
-7. Spawn the dummy, party chat `co -burst`, select the dummy, party chat `attack`.
+7. The master tanks: a Night Elf druid with Ferocity 5/5 (`CMSG_LEARN_TALENT` 795 rank 4) in Bear Form, which
+   playerbots count as a tank. Spawn the dummy, `.gm off`, select it, `.simval victim`, party chat `attack`.
 8. Cleanup: `.playerbots bot remove`, then the master's `deleteCharacters` takes both characters.
 
-Burst gate: the dummy (`NullCreatureAI`) never has a victim, so `TankHasHeldBoss` never passes. `co -burst` frees
-the cooldowns, but `OffensivePotionTrigger` checks the tank hold itself, so the potion never fires. Ways out:
-leave the potion out of both the bot run and its sim run; add 999000 to [bots]' `noVictimBosses` (cooldowns and
-potion at the pull; rebuild); or a `.simval` command giving the dummy a tank victim (5 s gate as in a raid; C++ in
-[simval], rebuild).
+Burst gate: the dummy (`NullCreatureAI`) never has a victim, so `TankHasHeldBoss` never passed. The user chose a
+tank victim: `.simval victim` ([simval] `SimValidationDummy.cpp`). Verified: with it, Icy Veins and Mirror Image
+come ~11 s after `attack`; without it (control run), never.
+
+Open: the potion. `OffensivePotionTrigger` never fires in the test, even with the tank holding, though the bot
+holds 17 potions (factory 16 + `.additem`), drinks on party chat `u offensive potion`, and the user's raid bots
+drank in ToC and Ulduar the night before (botobs traces, spells 53908/53909). Static reading of the trigger,
+`TankHasHeldBoss`, the item lookup and every loaded multiplier (burst, naxx, cast time) found no difference.
+Next: the trigger's `T:` log is `LOG_DEBUG` (`Engine::LogAction`), so a debug log level for one run would show it.
+Spike switches: `SIMVAL_BOTSPIKE_DEBUG` (party `co ?`, `nc +debug`: the bot whispers each action run),
+`SIMVAL_BOTSPIKE_PROBE` (party lines at 20 s, `;;`-separated), `SIMVAL_BOTSPIKE_NOVICTIM`. Potions left are summed
+per stack (`item_instance.count`); an earlier row count read 1.
 
 Results, 60 s, factory gear: Fire mage 6168 DPS, Living Bomb and Improved Scorch ≥ 96% uptime, Combustion and
 Mirror Image cast; Assassination rogue 6837 DPS at 1.2 yd. Both had the matrix's flask and food, and the bot
