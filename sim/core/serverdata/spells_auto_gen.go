@@ -8432,6 +8432,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 107, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x1, 0x40}},
 		},
 	},
+	// Mark of Blood
+	{
+		ID: 61607, Family: 4, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x40010, 0, 0x30000004, 0x40000200, 0, 0, 0x4}, AttributesCu: 0x100010,
+		ProcChance: 101, PowerType: 1,
+		Effects: [3]Effect{
+			{Effect: 136, BasePoints: 3, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Tentacles
 	{
 		ID: 61619, SchoolMask: 1, Flags: FlagBinary | FlagPositive,

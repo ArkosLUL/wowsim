@@ -5609,6 +5609,42 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
   hunks; the module's `e2e/petfix10_test.go`; their tests and rows.
 - **Goldens:** none expected; report any.
 
+#### As built
+
+Code stage (notes and the summon map in `tmp/ec-pet-fix10-code.md`), on `0127441aa` against [ac] `62fb09c68` and the
+live DB (SELECT). Verdicts:
+- Mark of Blood's copy (fixed). Not a mark per caster: `Aura::CanStackWith` refuses the same non-periodic spell from
+  another caster, so the weapon's mark replaces the knight's. `core.MarkOfBloodAura(target, caster)` is one aura per
+  caster and target, the newest taking the others off; `copyMarkOfBlood` (`dancing_rune_weapon.go`) puts the weapon's
+  on with 49028 up and the weapon out (49028 procs on `DONE_SPELL_NONE_DMG_CLASS_NEG`, `NO_DMG_HEAL`) and leaves the
+  knight's reach at 0.01. 49005 is single target (`ATTR5_LIMIT_N`): `Unit::RemoveFromWorld`
+  (`RemoveNotOwnSingleTargetAuras`) takes the weapon's mark off the target when the weapon is unsummoned (12 s, 17
+  glyphed, against the mark's 20), which the weapon's `OnPetDisable` does. Found in the same aura, fixed:
+  the heal is 4% (was 5%) of the unit hit's max health, Vampiric Blood's included, through its healing taken auras
+  only, never on the dead; a heal on the caster himself books his threat (`HealThreat`, 61607, a new server-data
+  row); the knight keeps a mark per target (the first target's was reused).
+- Heals reaching pets (fixed). Every sim summon's flags match the server: `SummonedAsPet` is `IsPet`,
+  `Pet.Uncontrollable` a guardian without `CONTROLLABLE_GUARDIAN` (SummonProperties type or category PET);
+  `isGuardian` is neither (the glyphed Water Elemental). `prayerOfMendingJump` skips a pet that isn't
+  `SummonedAsPet` (Shadowfiend included). Prayer of Healing and Healing Stream Totem are `TARGET_CHECK_PARTY`, which
+  keeps a Shadowfiend and skips only `Uncontrollable` pets; the totem's party pets ride on the shaman's own tick, as
+  they stand at it. Chain Heal and the Abacus are `TARGET_CHECK_ALLY`: right as is.
+- Hunter pet stop spot: no rule, `standAtReachOf` keeps R + r. The angled path (R, behind) fails for a pet on
+  `PathGenerator`'s INCOMPLETE (start or end over 7 yd from a poly, findPath short of the end poly, too steep) or
+  NOPATH (no poly found), then the ring point R + r is tried: the navmesh's verdict, reading nothing of R, r or the
+  family. The logs' same spawn and run-in give both within one run, so it hangs on the pet's start spot. The 400 ms
+  recheck (`PositionOkay` against R + r) could stop an angled run inside R + r; the logs never show it. No live stage.
+
+Tests: `TestMarkOfBloodHealsTheUnitHit`, `TestRuneWeaponCopiesMarkOfBlood`, `TestPrayerOfMendingJumpsToPetsOnly`,
+`TestPrayerOfHealingHealsThePartysPets`, `TestHealingStreamTotemHealsThePartysPets`.
+
+Goldens (`dock.sh delta`, each change apart): the copy and per-caster marks, none; the heal's amount and target, none;
+the knight's heal threat, TestBloodTank `Talents-FrostPresence-Average` tps +0.027% (the only row casting Mark of
+Blood); the pet checks, none (no healer suite casts Shadowfiend or has a party pet at a totem tick).
+
+Review (round 1): the weapon's mark had outlived the weapon, burning charges with no heal; now it leaves with the
+weapon (above), golden-neutral.
+
 ### EC-CLASS-FIX11 (Z15; changes goldens; stages: code, live)
 
 - Threat of Thassarian's off-hand strike lands before the main hand's damage: `threatOfThassarianProc`

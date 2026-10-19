@@ -54,6 +54,10 @@ func (priest *Priest) registerPrayerOfHealingSpell() {
 				if !partyTarget.IsEnabled() || (partyTarget.HasHealthBar() && partyTarget.CurrentHealth() <= 0) {
 					continue
 				}
+				// TARGET_CHECK_PARTY skips a guardian without a pet bar; a Shadowfiend has one
+				if pet, ok := partyAgent.(core.PetAgent); ok && pet.GetPet().Uncontrollable {
+					continue
+				}
 				baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.HealingPower(partyTarget))
 				result := spell.CalcHealing(sim, partyTarget, baseHealing, spell.OutcomeHealingCrit)
 				heal := result.Damage

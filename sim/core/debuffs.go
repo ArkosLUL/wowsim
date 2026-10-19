@@ -860,44 +860,55 @@ func AtkSpeedReductionEffect(aura *Aura, speedMultiplier float64) *ExclusiveEffe
 	})
 }
 
-func MarkOfBloodAura(target *Unit) *Aura {
-	actionId := ActionID{SpellID: 49005}
+const markOfBloodTag = "MarkOfBlood"
 
-	var healthMetrics *ResourceMetrics
-	aura := target.GetOrRegisterAura(Aura{
-		Label:     "MarkOfBlood",
-		ActionID:  actionId,
+// MarkOfBloodAura is the Mark of Blood (49005) caster puts on target. Aura::CanStackWith keeps one a target: a mark
+// from another caster, a Rune Weapon's copy too, takes the old one off as it goes on. It's single target
+// (ATTR5_LIMIT_N): Unit::RemoveFromWorld takes it off the target when its caster leaves, so a pet caster's owner
+// deactivates it on the pet's disable. Each landed hit of the target's uses a charge and has it cast 61607 on the unit
+// hit, 4% of that unit's max health, with the mark's caster as original caster, so the heal's threat is his.
+func MarkOfBloodAura(target *Unit, caster *Unit) *Aura {
+	actionID := ActionID{SpellID: 49005}
+	healed := make(map[*Unit]*ResourceMetrics)
+
+	return target.RegisterAura(Aura{
+		Label:     "MarkOfBlood-" + caster.Label,
+		Tag:       markOfBloodTag,
+		ActionID:  actionID,
 		Duration:  20 * time.Second,
 		MaxStacks: 20,
 		OnGain: func(aura *Aura, sim *Simulation) {
-			aura.SetStacks(sim, aura.MaxStacks)
-
-			target := aura.Unit.CurrentTarget
-
-			if healthMetrics == nil && target != nil {
-				healthMetrics = target.NewHealthMetrics(actionId)
+			for _, other := range aura.Unit.GetAurasWithTag(markOfBloodTag) {
+				if other != aura {
+					other.Deactivate(sim)
+				}
 			}
+			aura.SetStacks(sim, aura.MaxStacks)
 		},
 		OnSpellHitDealt: func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
-			target := aura.Unit.CurrentTarget
-
-			if target != nil && result.Landed() {
-				// Vampiric Blood bonus max health is ignored in MoB calculation (maybe other Max health effects as well?)
-				targetHealth := target.MaxHealth()
-				if target.HasActiveAura("Vampiric Blood") {
-					targetHealth /= 1.15
+			if !result.Landed() {
+				return
+			}
+			victim := result.Target
+			if victim.HasHealthBar() && victim.CurrentHealth() > 0 {
+				metrics := healed[victim]
+				if metrics == nil {
+					metrics = victim.NewHealthMetrics(actionID)
+					// booked only for a heal on himself, as for Judgement of Light
+					if victim == caster {
+						victim.HealThreat(metrics, 61607)
+					}
+					healed[victim] = metrics
 				}
-				// Current testing shows 5% healing instead of 4% as stated in the tooltip
-				target.GainHealing(sim, targetHealth*0.05, healthMetrics)
-				aura.RemoveStack(sim)
-
-				if aura.GetStacks() == 0 {
-					aura.Deactivate(sim)
-				}
+				// no damage class or bonus row, so no done percents, only the healing taken auras
+				victim.GainHealth(sim, wholeHeal(victim.CountPctFromMaxHealth(4)*victim.HealingTakenPctMultiplier()), metrics)
+			}
+			aura.RemoveStack(sim)
+			if aura.GetStacks() == 0 {
+				aura.Deactivate(sim)
 			}
 		},
 	})
-	return aura
 }
 
 // RuneOfRazoriceVulnerabilityAura is Frost Vulnerability (51714): up to 5 stacks for 20 s. Its 2% a
