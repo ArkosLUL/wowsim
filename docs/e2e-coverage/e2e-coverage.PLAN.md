@@ -5553,10 +5553,14 @@ covered any bullet.
   pass. The sim has no melee range, so Hand of Justice's range test never fails. Tests
   `TestExtraAttackSwingsOnTheNextUpdate`, `TestExtraAttackGoesBetweenTheAurasAndTheMelee`,
   `TestExtraAttackSwingsBesideAnotherPlayersAutoShot`, `TestExtraAttackProcGate`,
-  `TestSwordSpecializationSwingsOnTheNextUpdate`. Rogue's Hack and Slash (`sim/rogue/hack_and_slash.go`, not owned)
-  still swings at once.
+  `TestSwordSpecializationSwingsOnTheNextUpdate`. Cross-review: Hack and Slash queues too, ending the chain, without
+  its 500 ms ICD (-13960 has none); Reckoning's 20178 queues on any white swing, using one of its 4 charges each
+  (`TestHackAndSlashSwingsOnTheNextUpdate`, `TestReckoningUsesAChargeAnExtraAttack`; TestProtection's 3 boss-swing
+  rows down to -0.31%, TestCombat's HackAndSlash row +0.003%). Left: the server swings a
+  queued extra with auto attacks off too; the sim drops it.
 - Ancestral Awakening (fixed): `procAncestralAwakening` (`sim/shaman/heals.go`) heals the living, enabled raid unit
-  lowest in health percent (no health bar counts full, above max caps), raid order on a tie. Also fixed: the heal is
+  lowest in health percent (no health bar counts full, above max caps), raid order on a tie, skipping a guardian
+  without a pet bar (`TARGET_CHECK_RAID`, cross-review). Also fixed: the heal is
   10% a rank (bp 9/19/29), was 30% at every rank. 52759 (not in the spelldump; live DBC: dummy,
   `TARGET_UNIT_CASTER_AREA_RAID`, 40 yd). Tests `TestAncestralAwakeningHealsTheLowestHealthPercent`,
   `TestAncestralAwakeningIsAWholePercentOfTheCrit`.
@@ -5622,7 +5626,9 @@ live DB (SELECT). Verdicts:
   glyphed, against the mark's 20), which the weapon's `OnPetDisable` does. Found in the same aura, fixed:
   the heal is 4% (was 5%) of the unit hit's max health, Vampiric Blood's included, through its healing taken auras
   only, never on the dead; a heal on the caster himself books his threat (`HealThreat`, 61607, a new server-data
-  row); the knight keeps a mark per target (the first target's was reused).
+  row); the knight keeps a mark per target (the first target's was reused). Cross-review: a charge goes only on a
+  hit or tick dealing damage (SpellTypeMask 1, `DONE_PERIODIC`). Left: the caster's threat for a heal on another
+  unit (`ForwardThreatForAssistingMe`), as for Judgement of Light.
 - Heals reaching pets (fixed). Every sim summon's flags match the server: `SummonedAsPet` is `IsPet`,
   `Pet.Uncontrollable` a guardian without `CONTROLLABLE_GUARDIAN` (SummonProperties type or category PET);
   `isGuardian` is neither (the glyphed Water Elemental). `prayerOfMendingJump` skips a pet that isn't
@@ -5688,7 +5694,8 @@ Code stage (notes in `tmp/ec-class-fix11-code.md`), against [ac] at 62fb09c68. V
   TestFrost -0.117%, TestFrostUH -0.206% Average-Default (rows -0.03 to -0.69%), Blood Plague per hit -2.2% and -1.9%. Rime,
   Rune Strike and both Tundra Stalker fixes move nothing; 35 of 37 unchanged.
 - Follow-ups: a proc order in core (an aura proc's server id, weapon enchants after) to put the off-hand strike among
-  the main hand's procs; the knight's untagged Frost Fever debuff aura outlives his dot after an Obliterate consume.
+  the main hand's procs. The knight's Frost Fever slow outliving an Obliterate consume: fixed in the cross-review
+  (`takeDiseases`, `TestObliterateTakesTheFrostFeverSlow`).
 
 Live stage (notes in `tmp/ec-class-fix11-live.md`), no rebuild: `TestEcClass11ElunesWrath` passed in 56 s. Twice each,
 a Starfire sent under Elune's Wrath started with no cast time and took the charge, and one casting when it came up kept
@@ -5751,6 +5758,13 @@ Rebuilt stage (off-hand record; notes in `tmp/ec-tools5-rebuilt.md`):
   and 712 to 906.
 - Both records are appended to `strikes.jsonl`; `TestStrikesRecords` matches them exactly (fixed, percent, min, max,
   crit).
+
+Cross-review: 66216 is compared under the sim's off-hand Plague Strike (`spellModSimSpells`): Annihilation's and
+Vicious Strikes' crit agree, Outbreak moves nothing (554 agree, 393 move nothing, 256 not compared). 20185, 47753
+and 48111 stay uncompared rightly: a triggered aura's cost or dispel resist, or 48113's lines again.
+`TestStrikesFixtureHasEveryProbe` now wants both 66974 records (`strikesOtherProbes`); the e2e's `strikesRedo`
+doubles a death knight's off-hand fixed bonus itself (`ecTools5Base` gone); `strikeProbe` takes the off hand from
+`SPELL_ATTR3_REQUIRES_OFF_HAND_WEAPON`.
 
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)
 

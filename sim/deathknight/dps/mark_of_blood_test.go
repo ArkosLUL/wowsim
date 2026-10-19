@@ -25,13 +25,16 @@ func markOfBloodSim(t *testing.T) (*core.Simulation, *DpsDeathknight, *core.Unit
 // markOfBloodHit is a hit of the target's on the DK, as the marks on it see it.
 func markOfBloodHit(t *testing.T, sim *core.Simulation, dk *DpsDeathknight, target *core.Unit, outcome core.HitOutcome) {
 	t.Helper()
-	swing := target.GetOrRegisterSpell(core.SpellConfig{
+	target.OnSpellHitDealt(sim, markOfBloodSwing(target), &core.SpellResult{Target: &dk.Unit, Outcome: outcome, Damage: 1})
+}
+
+func markOfBloodSwing(target *core.Unit) *core.Spell {
+	return target.GetOrRegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{OtherID: proto.OtherAction_OtherActionAttack},
 		SpellSchool: core.SpellSchoolPhysical,
 		ProcMask:    core.ProcMaskMeleeMHAuto,
 		Flags:       core.SpellFlagNoMetrics,
 	})
-	target.OnSpellHitDealt(sim, swing, &core.SpellResult{Target: &dk.Unit, Outcome: outcome, Damage: 1})
 }
 
 // 61607 heals the unit hit for 4% of its max health, through its healing taken auras only (no damage class, no
@@ -47,6 +50,11 @@ func TestMarkOfBloodHealsTheUnitHit(t *testing.T) {
 	markOfBloodHit(t, sim, dk, target, core.OutcomeMiss)
 	if dk.CurrentHealth() != 40000 || mark.GetStacks() != 20 {
 		t.Errorf("a miss healed to %v and left %d charges, want 40000 and 20", dk.CurrentHealth(), mark.GetStacks())
+	}
+	// spell_proc's SpellTypeMask 1: a hit that deals nothing, a debuff going on, is no damage
+	target.OnSpellHitDealt(sim, markOfBloodSwing(target), &core.SpellResult{Target: &dk.Unit, Outcome: core.OutcomeHit})
+	if dk.CurrentHealth() != 40000 || mark.GetStacks() != 20 {
+		t.Errorf("a hit dealing nothing healed to %v and left %d charges, want 40000 and 20", dk.CurrentHealth(), mark.GetStacks())
 	}
 	threat := dk.GainThreat(core.ActionID{SpellID: 49005})
 	markOfBloodHit(t, sim, dk, target, core.OutcomeHit)
@@ -64,6 +72,12 @@ func TestMarkOfBloodHealsTheUnitHit(t *testing.T) {
 	dk.RemoveHealingTakenPct(35)
 	if dk.CurrentHealth() != 44700 {
 		t.Errorf("a hit under 35%% healing taken healed to %v, want 44700", dk.CurrentHealth())
+	}
+
+	// DONE_PERIODIC: a tick of the target's dot on him
+	target.OnPeriodicDamageDealt(sim, markOfBloodSwing(target), &core.SpellResult{Target: &dk.Unit, Outcome: core.OutcomeHit, Damage: 1})
+	if dk.CurrentHealth() != 46700 || mark.GetStacks() != 17 {
+		t.Errorf("a tick healed to %v and left %d charges, want 46700 and 17", dk.CurrentHealth(), mark.GetStacks())
 	}
 
 	// the last charge goes with the mark

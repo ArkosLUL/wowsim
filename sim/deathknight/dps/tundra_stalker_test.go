@@ -48,7 +48,7 @@ func TestTundraStalkerRanksOnBloodPlague(t *testing.T) {
 }
 
 // The script asks the target for anyone's Frost Fever (HasAura(55095)): the raid's Frost Fever debuff, another
-// knight's, counts. The knight's own debuff part outliving his consumed disease doesn't.
+// knight's, counts. The knight's own debuff part, up without his disease, doesn't.
 func TestTundraStalkerCountsTheRaidsFrostFever(t *testing.T) {
 	sim, dk := tundraStalkerSim(t, FrostTalents, &proto.Debuffs{FrostFever: proto.TristateEffect_TristateEffectRegular})
 	target := sim.GetTargetUnit(0)

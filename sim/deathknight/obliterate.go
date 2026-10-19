@@ -122,6 +122,11 @@ func (dk *Deathknight) obliterateOutcome(outcome core.OutcomeApplier, bonus floa
 // takeDiseases is GetDiseasesByCaster's consume: every disease of the knight's, Crypt Fever or Ebon Plague too.
 func (dk *Deathknight) takeDiseases(sim *core.Simulation, target *core.Unit) {
 	dk.FrostFeverSpell.Dot(target).Deactivate(sim)
+	// the attack speed slow is the same 55095 aura, so it goes too, unless it's the raid's debuff or another
+	// knight's Frost Fever is still up
+	if slow := dk.FrostFeverDebuffAura.Get(target); slow.Duration != core.NeverExpires && !target.HasActiveAuraWithTag("FrostFever") {
+		slow.Deactivate(sim)
+	}
 	dk.BloodPlagueSpell.Dot(target).Deactivate(sim)
 	if dk.Talents.CryptFever > 0 {
 		dk.EbonPlagueOrCryptFeverAura.Get(target).Deactivate(sim)

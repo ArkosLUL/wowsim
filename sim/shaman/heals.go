@@ -32,11 +32,23 @@ func (shaman *Shaman) procAncestralAwakening(sim *core.Simulation, crit *core.Sp
 	if shaman.Talents.AncestralAwakening == 0 {
 		return
 	}
+	if shaman.raidPets == nil {
+		shaman.raidPets = make(map[*core.Unit]*core.Pet)
+		for _, party := range shaman.Env.Raid.Parties {
+			for _, agent := range party.Pets {
+				shaman.raidPets[&agent.GetPet().Unit] = agent.GetPet()
+			}
+		}
+	}
 	var target *core.Unit
 	var lowest float32
 	for _, unit := range shaman.Env.Raid.AllUnits {
 		// a pet that's away isn't in the world, and SpellInfo::CheckTarget keeps the dead out
 		if !unit.IsEnabled() || (unit.HasHealthBar() && unit.CurrentHealth() <= 0) {
+			continue
+		}
+		// TARGET_CHECK_RAID skips a guardian without a pet bar
+		if pet := shaman.raidPets[unit]; pet != nil && pet.Uncontrollable {
 			continue
 		}
 		if pct := healthPctOrder(unit); target == nil || pct < lowest {

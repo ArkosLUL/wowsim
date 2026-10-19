@@ -3,6 +3,7 @@ package restoration
 import (
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -57,7 +58,7 @@ func TestAncestralAwakeningIsAWholePercentOfTheCrit(t *testing.T) {
 }
 
 // spell_sha_ancestral_awakening_proc heals the living raid member lowest in health percent, raid order breaking a
-// tie, not the crit's own target.
+// tie, not the crit's own target. TARGET_CHECK_RAID leaves out a guardian without a pet bar.
 func TestAncestralAwakeningHealsTheLowestHealthPercent(t *testing.T) {
 	r := newChainHealRaid()
 	caster := r.shamans[0]
@@ -72,16 +73,22 @@ func TestAncestralAwakeningHealsTheLowestHealthPercent(t *testing.T) {
 		},
 	})
 	main, second, third := &r.shamans[0].Unit, &r.shamans[1].Unit, &r.shamans[2].Unit
+	elemental := r.shamans[1].FireElemental
+	defer func() { elemental.Uncontrollable = true }()
 
 	for _, c := range []struct {
 		name   string
 		critOn *core.Unit
 		hurt   map[*core.Unit]float64 // the part of max health taken off
-		want   *core.Unit
+		// the second shaman's Fire Elemental out, with or without a pet bar
+		summon, petBar bool
+		want           *core.Unit
 	}{
-		{"no one hurt", third, nil, main},
-		{"lowest percent", third, map[*core.Unit]float64{main: 0.1, second: 0.3}, second},
-		{"the dead", main, map[*core.Unit]float64{second: 1, third: 0.1}, third},
+		{"no one hurt", third, nil, false, false, main},
+		{"lowest percent", third, map[*core.Unit]float64{main: 0.1, second: 0.3}, false, false, second},
+		{"the dead", main, map[*core.Unit]float64{second: 1, third: 0.1}, false, false, third},
+		{"a guardian lowest", third, map[*core.Unit]float64{&elemental.Unit: 0.5, second: 0.1}, true, false, second},
+		{"a pet lowest", third, map[*core.Unit]float64{&elemental.Unit: 0.5, second: 0.1}, true, true, &elemental.Unit},
 	} {
 		sim := r.sim
 		sim.Reset()
@@ -90,6 +97,10 @@ func TestAncestralAwakeningHealsTheLowestHealthPercent(t *testing.T) {
 		}
 		watch.Activate(sim)
 		healed = healed[:0]
+		elemental.Uncontrollable = !c.petBar
+		if c.summon {
+			elemental.EnableWithTimeout(sim, elemental, time.Minute)
+		}
 		for unit, part := range c.hurt {
 			unit.RemoveHealth(sim, part*unit.MaxHealth())
 		}

@@ -865,11 +865,33 @@ const markOfBloodTag = "MarkOfBlood"
 // MarkOfBloodAura is the Mark of Blood (49005) caster puts on target. Aura::CanStackWith keeps one a target: a mark
 // from another caster, a Rune Weapon's copy too, takes the old one off as it goes on. It's single target
 // (ATTR5_LIMIT_N): Unit::RemoveFromWorld takes it off the target when its caster leaves, so a pet caster's owner
-// deactivates it on the pet's disable. Each landed hit of the target's uses a charge and has it cast 61607 on the unit
-// hit, 4% of that unit's max health, with the mark's caster as original caster, so the heal's threat is his.
+// deactivates it on the pet's disable. Each landed hit or tick of the target's that deals damage (spell_proc's
+// SpellTypeMask 1) uses a charge and has it cast 61607 on the unit hit, 4% of that unit's max health, with the mark's
+// caster as original caster, so the heal's threat is his.
 func MarkOfBloodAura(target *Unit, caster *Unit) *Aura {
 	actionID := ActionID{SpellID: 49005}
 	healed := make(map[*Unit]*ResourceMetrics)
+
+	proc := func(aura *Aura, sim *Simulation, _ *Spell, result *SpellResult) {
+		if !result.Landed() || result.Damage <= 0 {
+			return
+		}
+		victim := result.Target
+		if victim.HasHealthBar() && victim.CurrentHealth() > 0 {
+			metrics := healed[victim]
+			if metrics == nil {
+				metrics = victim.NewHealthMetrics(actionID)
+				// booked only for a heal on himself, as for Judgement of Light
+				if victim == caster {
+					victim.HealThreat(metrics, 61607)
+				}
+				healed[victim] = metrics
+			}
+			// no damage class or bonus row, so no done percents, only the healing taken auras
+			victim.GainHealth(sim, wholeHeal(victim.CountPctFromMaxHealth(4)*victim.HealingTakenPctMultiplier()), metrics)
+		}
+		aura.RemoveStack(sim)
+	}
 
 	return target.RegisterAura(Aura{
 		Label:     "MarkOfBlood-" + caster.Label,
@@ -885,29 +907,8 @@ func MarkOfBloodAura(target *Unit, caster *Unit) *Aura {
 			}
 			aura.SetStacks(sim, aura.MaxStacks)
 		},
-		OnSpellHitDealt: func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
-			if !result.Landed() {
-				return
-			}
-			victim := result.Target
-			if victim.HasHealthBar() && victim.CurrentHealth() > 0 {
-				metrics := healed[victim]
-				if metrics == nil {
-					metrics = victim.NewHealthMetrics(actionID)
-					// booked only for a heal on himself, as for Judgement of Light
-					if victim == caster {
-						victim.HealThreat(metrics, 61607)
-					}
-					healed[victim] = metrics
-				}
-				// no damage class or bonus row, so no done percents, only the healing taken auras
-				victim.GainHealth(sim, wholeHeal(victim.CountPctFromMaxHealth(4)*victim.HealingTakenPctMultiplier()), metrics)
-			}
-			aura.RemoveStack(sim)
-			if aura.GetStacks() == 0 {
-				aura.Deactivate(sim)
-			}
-		},
+		OnSpellHitDealt:       proc,
+		OnPeriodicDamageDealt: proc,
 	})
 }
 
