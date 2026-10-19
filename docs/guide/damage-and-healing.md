@@ -64,7 +64,14 @@ rounding, caps and crit damage. Everything else the server does differently is i
 - A heal's target search skips a unit at 0 health (`SpellInfo::CheckTarget`): Chain Heal's jumps
   ([caster mechanics](caster-mechanics.md#shaman)), Althor's Abacus, Prayer of Healing's party, Healing Stream
   Totem's tick (58761) and the picks below. A unit without a health bar counts as alive and full, and so does
-  health above max, which the sim doesn't cap when max health drops, where the server does.
+  health above max, which the sim doesn't cap when max health drops, where the server does. Which pets each
+  search takes: [pets](pets.md#buffs-and-casts).
+  - An APL's helpful cast, channel, multidot or multishield pick skips a dead unit with a health bar
+    (`Spell::CheckCast`; `helpfulAtTheDead` in `sim/core/apl_actions_casting.go`), never the caster: the sim
+    plays a unit on at 0 health.
+  - Ancestral Awakening (52759) heals the living raid unit lowest in health percent
+    (`spell_sha_ancestral_awakening_proc`, `HealthPctOrderPred`; `procAncestralAwakening`), a tie to the first
+    in raid order.
   - Prayer of Mending's jump (`prayerOfMendingJump`; `Acore::MostHPMissingGroupInRange`) takes the unit missing
     the most whole health, not the holder, a tie to the first in raid order.
   - Circle of Healing, past its 5 or 6 targets, keeps the lowest health percents (`circleOfHealingTargets`;
@@ -101,8 +108,8 @@ rounding, caps and crit damage. Everything else the server does differently is i
     `spell_bonus_data` row, to `core.DefaultHealingTakenCoefficient` (Empowered Renew's 63544, Ancestral
     Awakening's 52752, Earth Shield's 379, `itemHealSpell`'s item heals).
   - On a guardian, an instant heal's default is 1 × 1.88, not 1.5 / 3.5 × 1.88: `Unit::GetCastingTimeForBonus`
-    gives a creature that isn't `IsPet()` 3500 ms (`Unit.isGuardian`: a pet unit not `SummonedAsPet`, which only
-    the hunter's and warlock's pets, the permanent ghoul and the glyphed Water Elemental are).
+    gives a creature that isn't `IsPet()` 3500 ms (`Unit.isGuardian`; the summon flags:
+    [pets](pets.md#buffs-and-casts)).
   - An absorb takes none, nor does a heal with neither.
 - A heal whose server spell has `SPELL_ATTR6_IGNORE_HEALTH_MODIFIERS` or `SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS`
   loses the flat term and the taken percent when that percent is over 1 (`noPositiveHealingTaken`). Among the
@@ -112,5 +119,8 @@ rounding, caps and crit damage. Everything else the server does differently is i
   again (`sim/priest/renew.go`). Glyph of Prayer of Healing's 56161 ticks `int32(heal × 20%) / 2` off the
   Prayer of Healing heal on that target, crit and healing taken in, none off a heal of 0; its class mask is 0,
   so each tick takes only aura 136 and the target's taken terms again (`sim/priest/prayer_of_healing.go`).
-  Ancestral Awakening is `int32(crit × 30 / 100)` and ignores caster modifiers, Purification included
+  Ancestral Awakening is `int32(crit × 10% a rank)` and ignores caster modifiers, Purification included
   (`sim/shaman/heals.go`).
+- **Mark of Blood**'s 61607 heals the unit the marked target hits for 4% of that unit's max health, Vampiric
+  Blood's included, through its healing taken percents only, never a dead unit (`core.MarkOfBloodAura`). Its
+  charges: [class mechanics](class-mechanics.md#death-knight).

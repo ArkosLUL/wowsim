@@ -57,6 +57,14 @@ The files: [sim architecture](sim-architecture.md#classes-items-encounters).
   raid cast (`TARGET_CHECK_PARTY`/`RAID`), Replenishment and Bloodlust included: Bloodworms, Mirror Images,
   the Greater Fire Elemental, the DK's gargoyle, army and Raise Dead guardian (not Master of Ghouls' pet).
   The Water Elemental guardian has a pet bar and takes them.
+- Every summon's flags match the server's: `SummonedAsPet` is `IsPet` (the hunter's and warlock's pets, the
+  permanent ghoul, the glyphed Water Elemental), `Pet.Uncontrollable` a guardian without
+  `CONTROLLABLE_GUARDIAN`, and `Unit.isGuardian` a summon that isn't `SummonedAsPet`. So a raid heal reaches:
+  - Prayer of Mending's jump: `SummonedAsPet` pets only (`Acore::MostHPMissingGroupInRange`), no Shadowfiend.
+  - Prayer of Healing, Healing Stream Totem's tick and Ancestral Awakening (`TARGET_CHECK_PARTY`/`RAID`): all
+    but `Uncontrollable` ones, a Shadowfiend included. The totem's party pets take the shaman's own tick, as
+    they stand at it.
+  - Chain Heal and Althor's Abacus (`TARGET_CHECK_ALLY`): every pet.
 - Wrath of Air is a raid area aura (effect 65), so it reaches every pet and guardian but a haste carrier, whose
   script makes it immune to positive `MOD_CASTING_SPEED_NOT_STACK`: Firebolt and Waterbolt take 2380 ms, a
   Mirror Image's Frostbolt 2857.
@@ -66,7 +74,8 @@ The files: [sim architecture](sim-architecture.md#classes-items-encounters).
   so `Aura.Activate` returns for it and a summon starts without what was cast while it was away. A permanent
   aura stands for a buff that's always up and stays on. A caller that needs the aura on asks
   `pet.IsEnabled()` first (Cobra Strikes' stacks). A heal that picks a raid unit skips it too: Althor's Abacus,
-  Chain Heal's bounces, Prayer of Healing, Circle of Healing, Prayer of Mending.
+  Chain Heal's bounces, Prayer of Healing, Circle of Healing, Prayer of Mending, Healing Stream Totem, Ancestral
+  Awakening.
 - Haste carriers (the hunter pet, the DK's ghouls, gargoyle and army, Spirit Wolves; `Unit.HasteCarrier`)
   ignore direct haste and slows, Bloodlust's haste included but not its scale (`bloodlustScaleAura`: the
   immunity is per effect), and take the owner's attack speed as whole percent
@@ -87,9 +96,11 @@ The files: [sim architecture](sim-architecture.md#classes-items-encounters).
   60: CreatureFamily.dbc's maxScale, 1 for the families it pins), so its `ScaleBonus` starts at that scale − 1
   and a scale aura adds to it: a crocolisk's 0.9, a serpent's 1.2.
 - A hunter pet stops at the target's reach plus its own before any scale aura (`standAtReachOf`), and keeps that
-  spot under Bloodlust: PetAI's path to the spot behind mostly comes back incomplete, so it walks to
-  `GetNearPoint2D`'s ring point, both reaches out. Live, about a third of stops land at the target's reach
-  alone instead, when the first path works; the sim keeps the ring point.
+  spot under Bloodlust: PetAI's angled path to the spot behind mostly comes back INCOMPLETE or NOPATH, so it
+  walks to `GetNearPoint2D`'s ring point, both reaches out. Live, about a third of stops land at exactly the
+  target's reach instead, when that path works, never between. Which one is `PathGenerator`'s verdict on the
+  navmesh from the pet's start spot, reading neither reach nor the family; with no rule to model, the sim keeps
+  the ring point.
 - Not modelled: the Rune Weapon's run-in from 2 yd in front of the target; a timed Water Elemental summoned
   while something attacks the mage casting from its spawn spot; a caster pet moving when its owner stands
   past its spell's range.
@@ -164,8 +175,11 @@ Fire Elemental lives and Mirror Image summons, `pets_casts.jsonl`, against both 
     (`ownerVersus`, divided off each magic school per target), only spell mods and the weapon's own percents
     halved (`castCopy`, `setCopyMultipliers`): `Unit::SpellDamageBonusDone`'s entry-27893
     branch passes TotalMod one argument early. Its AP part takes his Impurity (`getImpurityBonus`).
-  - After each spell copy, Mind Freeze's too, the DK's reach is 0.01 until his scale next changes (`Unit.SetCombatReach`), so his
-    missiles fly the whole distance (Death Coil).
+  - Mark of Blood copies though it deals nothing (49028 procs on `NO_DMG_HEAL` too; `copyMarkOfBlood`): the
+    weapon's mark replaces his ([class mechanics](class-mechanics.md#death-knight)) and leaves the target when
+    the weapon is unsummoned (`RemoveNotOwnSingleTargetAuras`; the weapon's `OnPetDisable`).
+  - After each spell copy, Mind Freeze's and Mark of Blood's too, the DK's reach is 0.01 until his scale next
+    changes (`Unit.SetCombatReach`), so his missiles fly the whole distance (Death Coil).
   - It makes no threat: `UNIT_FLAG_NON_ATTACKABLE` keeps its threat ref on the target offline, and 49028's
     redirect to the DK never runs (`SpellInfoCorrections` zeroes the effect it hooks). Its spells have
     `ThreatMultiplier` 0; the DK's threat is his own damage's.

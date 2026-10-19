@@ -47,15 +47,30 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 - **Dirge** covers Obliterate.
 - **Obliterate** takes the diseases at its launch, which only a hit not missed, dodged or parried gets
   (`Spell::EffectWeaponDmg`; `obliterateOutcome`): unless Annihilation keeps them, it takes every disease of his,
-  Crypt Fever or Ebon Plague too (`takeDiseases`), and only then do Rage of Rivendare and Tundra Stalker read the
+  Crypt Fever or Ebon Plague too (`takeDiseases`), and Frost Fever's slow, the same 55095 aura, unless it's the
+  raid's debuff or another knight's Frost Fever is up; only then do Rage of Rivendare and Tundra Stalker read the
   target. The disease count comes before. Rime procs only off a landed hit. The Threat of Thassarian off-hand
   strike goes after the main hand's launch, counts what's left and rolls its own Annihilation.
 - **Heart Strike** takes Rage of Rivendare and Tundra Stalker (`RoRTSBonus`) like Blood Strike, its chain hit
   too. Both talents count the Rune Weapon's diseases, as the server takes any caster's: `DrwFrostFever` and
   `DrwBloodPlague` carry the `FrostFever` and `BloodPlague` tags.
+- **Tundra Stalker** counts the raid's permanent Frost Fever debuff, standing in for another knight's
+  (`HasAura(55095)`; `applyTundaStalker`), not the knight's own untagged slow aura. Ranks 2 and 3 (50127, 50128)
+  leave Blood Plague out of their class mask, so its snapshot skips `RoRTSBonus` there
+  (`tundraStalkerSkipsBloodPlague`).
 - **Threat of Thassarian**'s off-hand Plague Strike is always 66216 (fixed bonus 62):
   `spell_dk_threat_of_thassarian` looks its rank up from 66216, which `spell_ranks` doesn't chain (the off-hand
   chain starts at 59133). The other off-hand strikes find their rank.
+  - On the server the main hand's damage goes first, then its hit-phase procs in spell id order, the off-hand
+    strike cast whole from ToT's place among them, then the target's procs, the weapon enchants and the finish
+    phase (Killing Machine's charge). The sim runs a hit's procs in one pass, so `threatOfThassarianProc` casts
+    the off hand ahead of the main hand's `DealDamage`, after what resolves first on the server (Rime,
+    Plague Strike's Blood Plague). Not modelled: the main hand's damage and its lower-id procs (Mjolnir
+    Runestone) come after the off hand.
+- **Mark of Blood** (49005) is single target (`SPELL_ATTR5_LIMIT_N`), one a target: another caster's,
+  the Rune Weapon's included, replaces it (`Aura::CanStackWith`). A charge goes on each landed hit or dot tick
+  of the target's that deals damage (spell_proc SpellTypeMask 1, `DONE_PERIODIC`). Its heal:
+  [damage and healing](damage-and-healing.md#healing).
 - **Blood Presence**'s heal (63611: 4%, Improved Blood Presence 2% a point in the other presences) comes from
   swings, own casts, dot ticks, `NOT_A_PROC` triggered spells and an on-use item's damage, which
   `Player::CastItemUseSpell` casts untriggered (`onUseItemDamage`: the explosives, Pyro Rocket, Gnomish
@@ -109,6 +124,8 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   the best paladin's aura +204 / +409 armor (`improveDevotionAura`). Its 63514 adds 2% healing taken a point.
 - **Crusade:** its first percent is aura 79 on all damage (`DamageDealtMultiplier`), its second DONE_VERSUS on
   humanoids, demons, undead and elementals, per target.
+- **Reckoning**'s 20178 queues 32746's [extra attack](spell-data-and-timing.md#update-timing) on any white
+  swing but a special, any outcome, using one of its 4 charges; 32746's own swing can't proc it.
 - **Glyph of Reckoning** has a server script (mod-spell-tweaks) but no client data, so no player has it: Hand of
   Reckoning never deals damage (67485), and the sim registers nothing for it.
 - **Ardent Defender** is a school absorb (`spell_pal_ardent_defender::Absorb`) on the whole hit as it reaches the
@@ -135,6 +152,8 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 
 - **Prey on the Weak:** a 2 s check puts on the 10 s 58670 while the rogue's health percent beats the target's,
   and only once it's gone, so it's down one check in six.
+- **Hack and Slash** procs 1% a point with no ICD (spell_proc -13960), queuing an
+  [extra attack](spell-data-and-timing.md#update-timing).
 - **Hemorrhage**'s debuff goes on solo; its charges go on any landed hit on the target but poisons.
 - **Honor Among Thieves** procs at the finish phase (spell_proc 51701), one roll a cast, so crit ticks give no
   combo point. Fan of Knives rolls once per hand; Mutilate's hands, poisons and Killing Spree are triggered

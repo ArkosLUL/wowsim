@@ -33,7 +33,8 @@ The live server: where it runs, how to reach it, what's installed. For table and
   docker compose up -d`. It's ready when "World Initialized" appears in `docker logs ac-worldserver`.
   Build both: only `ac-db-import` applies module SQL, and a worldserver missing a module's table crash-loops.
   `ac-db-import` reads `[ac]/modules` live, so even a plain `up -d` applies changed module SQL: check the modules'
-  working trees for unfinished edits before any restart.
+  working trees for unfinished edits before any restart. Module C++ goes live only with a worldserver rebuild,
+  which compiles the module working trees as they stand, uncommitted edits included.
 - To compile-check C++ without a rebuild, use image `acore/ac-wotlk-build:master`: mount [ac]'s `src/` over its
   `/azerothcore/src` and run a module file's command from its `/azerothcore/build/compile_commands.json` with
   `-fsyntax-only`. mod-bis-tooltip's `test/syntax-check.sh` does this. A module file that
@@ -143,7 +144,7 @@ mod-individual-progression stores a character's tier as rewarded quest `66000 + 
 - `.additem <id> -1` destroys the item even when it's equipped. `.additem A B` reads A as a character guid
   only when one has that guid and B is an item entry too, giving that character item B; otherwise it gives
   item A, count B (`MultiConsumer<Optional>` in `ChatCommand.h`). Name the player first (the e2e's
-  `runner.addItem`).
+  `runner.addItem`). It only fills the bags: gear a test must wear goes on with `.simval equip`.
 - The playerbot factory resets a bot's progression, and below `PROGRESSION_PRE_TBC` the live
   `VanillaPowerAdjustment` scales a level 80's damage by 0.3. A recorded run sets `.ip set <name> 18` after
   gearing.

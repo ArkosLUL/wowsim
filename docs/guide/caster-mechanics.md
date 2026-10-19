@@ -136,7 +136,8 @@ pets and guardians in [pets](pets.md).
   rolls its own hit.
   - 53007 is a channel with no duration: it casts from its `SpellEvent` on the press's world tick, and the
     script's channel (53003, or 52988 at a friend) from its own on the next, firing the first bolt
-    (`penanceChannelStart`, `sim.QueueSpellEvent`).
+    (`penanceChannelStart`, `sim.QueueSpellEvent`). 53007's mana, the amount worked out at the press, and its
+    cooldown go on that tick too, the GCD at the press (`penancePress`, `penanceCost`).
   - Each bolt, 53000 or the heal's 52985, is a missile at 40 yd/s, rolled at the tick and dealt after its
     flight (`sim/priest/penance.go`; a KeepSim allowance on 53007's speed), a heal's to a friend or the priest
     as [missiles](missiles.md#flight-and-reach) give it.
