@@ -858,6 +858,12 @@
     {"id":42463,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]}
   ]}
 ]},
+{"class":"paladin","tree":"Holy","talent":"improvedLayOnHands","passive":true,"groups": [
+ {"ranks":[20234,20235],"mods":[{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[32768,0,0]}],
+  "spells": [
+    {"id":48788,"name":"Lay on Hands","ops":["COOLDOWN"]}
+  ]}
+]},
 {"class":"paladin","tree":"Protection","talent":"improvedRighteousFury","passive":true,"groups": [
  {"ranks":[20468,20469,20470],"mods":[{"effect":1,"type":"flat","op":"EFFECT2","classMask":[1,0,0]}],
   "spells": [
@@ -892,6 +898,7 @@
     {"id":498,"name":"Divine Protection","ops":["COST"]},
     {"id":6940,"name":"Hand of Sacrifice","ops":["COST"]},
     {"id":20154,"name":"Seal of Righteousness","ops":["COST"]},
+    {"id":20185,"name":"Judgement of Light","ops":["COST"]},
     {"id":20186,"name":"Judgement of Wisdom","ops":["COST"]},
     {"id":20187,"name":"Judgement of Righteousness","ops":["COST"]},
     {"id":20271,"name":"Judgement of Light","ops":["COST"]},
@@ -985,6 +992,7 @@
     {"id":47788,"name":"Guardian Spirit","ops":["DAMAGE"]},
     {"id":48068,"name":"Renew","ops":["DOT"]},
     {"id":48089,"name":"Circle of Healing","ops":["DAMAGE"]},
+    {"id":48111,"name":"Prayer of Mending","ops":["DAMAGE"]},
     {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE"]},
     {"id":48125,"name":"Shadow Word: Pain","ops":["DOT"]},
     {"id":48158,"name":"Shadow Word: Death","ops":["DAMAGE"]},
@@ -1002,6 +1010,7 @@
     {"id":47788,"name":"Guardian Spirit","ops":["DAMAGE"]},
     {"id":48068,"name":"Renew","ops":["DOT"]},
     {"id":48089,"name":"Circle of Healing","ops":["DAMAGE"]},
+    {"id":48111,"name":"Prayer of Mending","ops":["DAMAGE"]},
     {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE"]},
     {"id":48125,"name":"Shadow Word: Pain","ops":["DOT"]},
     {"id":48158,"name":"Shadow Word: Death","ops":["DAMAGE"]},
@@ -1021,9 +1030,11 @@
     {"id":15258,"name":"Shadow Weaving","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":33206,"name":"Pain Suppression","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":47585,"name":"Dispersion","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":47753,"name":"Divine Aegis","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":47788,"name":"Guardian Spirit","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":48066,"name":"Power Word: Shield","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":48068,"name":"Renew","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48111,"name":"Prayer of Mending","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":48113,"name":"Prayer of Mending","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":48125,"name":"Shadow Word: Pain","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":48135,"name":"Holy Fire","ops":["RESIST_DISPEL_CHANCE"]},
@@ -1048,6 +1059,7 @@
     {"id":33206,"name":"Pain Suppression","ops":["CRITICAL_CHANCE","COST"]},
     {"id":34433,"name":"Shadowfiend","ops":["CRITICAL_CHANCE","COST"]},
     {"id":47585,"name":"Dispersion","ops":["COST"]},
+    {"id":47753,"name":"Divine Aegis","ops":["COST"]},
     {"id":47788,"name":"Guardian Spirit","ops":["CRITICAL_CHANCE","COST"]},
     {"id":48063,"name":"Greater Heal","ops":["CRITICAL_CHANCE","COST"]},
     {"id":48066,"name":"Power Word: Shield","ops":["COST"]},
@@ -1055,6 +1067,7 @@
     {"id":48071,"name":"Flash Heal","ops":["CRITICAL_CHANCE","COST"]},
     {"id":48072,"name":"Prayer of Healing","ops":["CRITICAL_CHANCE","COST"]},
     {"id":48089,"name":"Circle of Healing","ops":["COST"]},
+    {"id":48111,"name":"Prayer of Mending","ops":["CRITICAL_CHANCE","COST"]},
     {"id":48113,"name":"Prayer of Mending","ops":["CRITICAL_CHANCE","COST"]},
     {"id":48120,"name":"Binding Heal","ops":["CRITICAL_CHANCE","COST"]},
     {"id":48123,"name":"Smite","ops":["CRITICAL_CHANCE","COST"]},
@@ -1091,6 +1104,7 @@
     {"id":48066,"name":"Power Word: Shield","ops":["COST"]},
     {"id":48068,"name":"Renew","ops":["COST"]},
     {"id":48089,"name":"Circle of Healing","ops":["COST"]},
+    {"id":48111,"name":"Prayer of Mending","ops":["COST"]},
     {"id":48113,"name":"Prayer of Mending","ops":["COST"]},
     {"id":48125,"name":"Shadow Word: Pain","ops":["COST"]},
     {"id":48158,"name":"Shadow Word: Death","ops":["COST"]},
@@ -1156,6 +1170,7 @@
  {"ranks":[14911,15018],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[512,32,0]}],
   "spells": [
     {"id":48072,"name":"Prayer of Healing","ops":["COST"]},
+    {"id":48111,"name":"Prayer of Mending","ops":["COST"]},
     {"id":48113,"name":"Prayer of Mending","ops":["COST"]}
   ]}
 ]},
@@ -1167,6 +1182,7 @@
     {"id":48071,"name":"Flash Heal","ops":["DAMAGE","DOT"]},
     {"id":48072,"name":"Prayer of Healing","ops":["DAMAGE","DOT"]},
     {"id":48089,"name":"Circle of Healing","ops":["DAMAGE","DOT"]},
+    {"id":48111,"name":"Prayer of Mending","ops":["DAMAGE"]},
     {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE"]},
     {"id":48120,"name":"Binding Heal","ops":["DAMAGE","DOT"]},
     {"id":52985,"name":"Penance","ops":["DAMAGE","DOT"]}
@@ -1191,6 +1207,7 @@
   "spells": [
     {"id":48072,"name":"Prayer of Healing","ops":["DAMAGE"]},
     {"id":48089,"name":"Circle of Healing","ops":["DAMAGE"]},
+    {"id":48111,"name":"Prayer of Mending","ops":["DAMAGE","COOLDOWN"]},
     {"id":48113,"name":"Prayer of Mending","ops":["DAMAGE","COOLDOWN"]},
     {"id":48120,"name":"Binding Heal","ops":["DAMAGE"]}
   ]}
@@ -2508,12 +2525,12 @@
     {"id":55268,"name":"Frost Strike","ops":["CRITICAL_CHANCE"]},
     {"id":55271,"name":"Scourge Strike","ops":["CRITICAL_CHANCE"]},
     {"id":56815,"name":"Rune Strike","ops":["CRITICAL_CHANCE"]},
+    {"id":66216,"name":"Plague Strike","ops":["CRITICAL_CHANCE"]},
     {"id":66217,"name":"Rune Strike","ops":["CRITICAL_CHANCE"]},
     {"id":66953,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
     {"id":66962,"name":"Frost Strike","ops":["CRITICAL_CHANCE"]},
     {"id":66974,"name":"Obliterate","ops":["CRITICAL_CHANCE"]},
-    {"id":66979,"name":"Blood Strike","ops":["CRITICAL_CHANCE"]},
-    {"id":66992,"name":"Plague Strike","ops":["CRITICAL_CHANCE"]}
+    {"id":66979,"name":"Blood Strike","ops":["CRITICAL_CHANCE"]}
   ]}
 ]},
 {"class":"deathknight","tree":"Frost","talent":"endlessWinter","passive":true,"groups": [
@@ -2579,8 +2596,8 @@
     {"id":49921,"name":"Plague Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
     {"id":49924,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
     {"id":55271,"name":"Scourge Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
+    {"id":66216,"name":"Plague Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
     {"id":66953,"name":"Death Strike","ops":["CRITICAL_CHANCE"]},
-    {"id":66992,"name":"Plague Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
     {"id":70890,"name":"Scourge Strike","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]}
   ]}
 ]},
@@ -2611,7 +2628,7 @@
   "spells": [
     {"id":49921,"name":"Plague Strike","ops":["DAMAGE"]},
     {"id":55271,"name":"Scourge Strike","ops":["DAMAGE"]},
-    {"id":66992,"name":"Plague Strike","ops":["DAMAGE"]}
+    {"id":66216,"name":"Plague Strike","ops":["DAMAGE"]}
   ]}
 ]},
 {"class":"deathknight","tree":"Unholy","talent":"nightOfTheDead","passive":true,"groups": [

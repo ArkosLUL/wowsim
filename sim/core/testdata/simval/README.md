@@ -18,7 +18,8 @@ replays it through `CheckRecord` on every `go test`, and `int-check.sh` runs it 
 replays against `goldchar_setups.json` ([tools/simval](../../../../tools/simval/README.md#golden-characters)).
 
 `strikes.jsonl` holds `TestSimvalStrikes`' weapon strike and pet `damage`, pet `info` and Ghoul Frenzy `timing`
-records, which `TestStrikesRecords` replays ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
+records and `TestEcTools5OffHandObliterate`'s two off-hand Obliterate `damage` records, which `TestStrikesRecords`
+replays ([tools/simval](../../../../tools/simval/README.md#damage-probe)).
 
 `pets.jsonl` holds `TestPetfixRecords`' pet `info`, `damage`, `spell`, `melee` and `timing` records (Greater Fire
 Elemental, Mirror Image, Imp, Water Elemental, Shadowfiend), which `TestPetsRecords` replays
