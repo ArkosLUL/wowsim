@@ -26,12 +26,21 @@ func (rot *APLRotation) newActionCastSpell(config *proto.APLActionCastSpell) APL
 	}
 }
 func (action *APLActionCastSpell) IsReady(sim *Simulation) bool {
-	return action.spell.CanCast(sim, action.target.Get()) && (!action.spell.Flags.Matches(SpellFlagMCD) || action.spell.Unit.GCD.IsReady(sim))
+	target := action.target.Get()
+	return action.spell.CanCast(sim, target) && !helpfulAtTheDead(action.spell, target) && (!action.spell.Flags.Matches(SpellFlagMCD) || action.spell.Unit.GCD.IsReady(sim))
 }
 
 // keep in step with IsReady
 func (action *APLActionCastSpell) isReadyPastGate(sim *Simulation) bool {
-	return aplCanCastPastGate(action.spell, sim, action.target.Get()) && (!action.spell.Flags.Matches(SpellFlagMCD) || action.spell.Unit.GCD.IsReady(sim))
+	target := action.target.Get()
+	return aplCanCastPastGate(action.spell, sim, target) && !helpfulAtTheDead(action.spell, target) && (!action.spell.Flags.Matches(SpellFlagMCD) || action.spell.Unit.GCD.IsReady(sim))
+}
+
+// helpfulAtTheDead is a helpful cast at a dead unit, which Spell::CheckCast refuses (SpellInfo::CheckTarget's
+// SPELL_FAILED_TARGETS_DEAD). Not at the caster: the sim plays a unit on at 0 health.
+func helpfulAtTheDead(spell *Spell, target *Unit) bool {
+	return spell.Flags.Matches(SpellFlagHelpful) && target != nil && target != spell.Unit &&
+		target.HasHealthBar() && target.CurrentHealth() <= 0
 }
 func (action *APLActionCastSpell) Execute(sim *Simulation) {
 	action.spell.Cast(sim, action.target.Get())
@@ -81,12 +90,14 @@ func (action *APLActionChannelSpell) GetAPLValues() []APLValue {
 	return []APLValue{action.interruptIf}
 }
 func (action *APLActionChannelSpell) IsReady(sim *Simulation) bool {
-	return action.spell.CanCast(sim, action.target.Get())
+	target := action.target.Get()
+	return action.spell.CanCast(sim, target) && !helpfulAtTheDead(action.spell, target)
 }
 
 // keep in step with IsReady
 func (action *APLActionChannelSpell) isReadyPastGate(sim *Simulation) bool {
-	return aplCanCastPastGate(action.spell, sim, action.target.Get())
+	target := action.target.Get()
+	return aplCanCastPastGate(action.spell, sim, target) && !helpfulAtTheDead(action.spell, target)
 }
 func (action *APLActionChannelSpell) Execute(sim *Simulation) {
 	action.spell.Cast(sim, action.target.Get())
@@ -148,7 +159,7 @@ func (action *APLActionMultidot) IsReady(sim *Simulation) bool {
 		for i := int32(0); i < action.maxDots; i++ {
 			target := sim.Raid.AllPlayerUnits[i]
 			dot := action.spell.Dot(target)
-			if (!dot.IsActive() || dot.RemainingDuration(sim) < maxOverlap) && action.spell.CanCast(sim, target) {
+			if (!dot.IsActive() || dot.RemainingDuration(sim) < maxOverlap) && action.spell.CanCast(sim, target) && !helpfulAtTheDead(action.spell, target) {
 				action.nextTarget = target
 				return true
 			}
@@ -219,7 +230,7 @@ func (action *APLActionMultishield) IsReady(sim *Simulation) bool {
 	for i := int32(0); i < action.maxShields; i++ {
 		target := sim.Raid.AllPlayerUnits[i]
 		shield := action.spell.Shield(target)
-		if (!shield.IsActive() || shield.RemainingDuration(sim) < maxOverlap) && action.spell.CanCast(sim, target) {
+		if (!shield.IsActive() || shield.RemainingDuration(sim) < maxOverlap) && action.spell.CanCast(sim, target) && !helpfulAtTheDead(action.spell, target) {
 			action.nextTarget = target
 			return true
 		}

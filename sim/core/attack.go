@@ -249,6 +249,15 @@ type WeaponAttack struct {
 
 	curSwingSpeed    float64
 	curSwingDuration time.Duration
+
+	// main hand only: extra attacks waiting for the unit's update at extraAttacksAt
+	extraAttacks   []extraAttack
+	extraAttacksAt time.Duration
+}
+
+type extraAttack struct {
+	spell  *Spell
+	target *Unit
 }
 
 func (wa *WeaponAttack) getWeapon() *Weapon {
@@ -289,10 +298,82 @@ func (wa *WeaponAttack) setWeapon(weapon Weapon) {
 
 // inlineable stub for swing
 func (wa *WeaponAttack) trySwing(sim *Simulation, releasingHold bool) time.Duration {
+	if len(wa.extraAttacks) > 0 {
+		return wa.trySwingWithExtraAttacks(sim, releasingHold)
+	}
 	if sim.CurrentTime < wa.swingAt {
 		return wa.swingAt
 	}
 	return wa.swing(sim, releasingHold)
+}
+
+// extra attacks go in Unit::Update, ahead of the melee Player::Update or the AI swings after it, cast or no cast
+func (wa *WeaponAttack) trySwingWithExtraAttacks(sim *Simulation, releasingHold bool) time.Duration {
+	if wa.extraAttacksAt <= sim.CurrentTime {
+		wa.swingExtraAttacks(sim)
+	}
+	next := wa.swingAt
+	if sim.CurrentTime >= wa.swingAt {
+		next = wa.swing(sim, releasingHold)
+	}
+	if len(wa.extraAttacks) > 0 {
+		next = min(next, wa.extraAttacksAt)
+	}
+	return next
+}
+
+// one pass takes them all, chained procs too: Unit::Update loops until extraAttacksTargets is empty
+func (wa *WeaponAttack) swingExtraAttacks(sim *Simulation) {
+	outer := sim.updating
+	sim.updating = wa.unit
+	for i := 0; i < len(wa.extraAttacks); i++ {
+		ea := wa.extraAttacks[i]
+		ea.spell.Cast(sim, ea.target)
+	}
+	wa.clearExtraAttacks()
+	wa.unit.AutoAttacks.lastExtraAttack = nil
+	sim.updating = outer
+}
+
+// nextAt is the next time the attack needs a pass, a pass that skips it included
+func (wa *WeaponAttack) nextAt() time.Duration {
+	if len(wa.extraAttacks) > 0 {
+		return min(wa.swingAt, wa.extraAttacksAt)
+	}
+	return wa.swingAt
+}
+
+func (wa *WeaponAttack) clearExtraAttacks() {
+	clear(wa.extraAttacks)
+	wa.extraAttacks = wa.extraAttacks[:0]
+}
+
+// QueueExtraAttack is SPELL_EFFECT_ADD_EXTRA_ATTACKS (Hand of Justice, Sword Specialization): the unit's next
+// Unit::Update swings spell, a plain main-hand swing, at target, after its auras and before its melee
+// (HandleProcExtraAttackFor). A proc off its own melee misses that update's pass and waits for the next one.
+// endsChain is Sword Specialization's: no extra attack procs while it's the last one (CanProcExtraAttack).
+func (aa *AutoAttacks) QueueExtraAttack(sim *Simulation, spell *Spell, target *Unit, endsChain bool) {
+	// main hand off the weapon attack list, nothing would swing it
+	if !aa.enabled || !aa.AutoSwingMelee {
+		return
+	}
+	aa.lastExtraAttack, aa.lastExtraAttackEndsChain = spell, endsChain
+	mh := &aa.mh
+	if len(mh.extraAttacks) == 0 {
+		at := sim.nextUpdate(mh.unit, sim.CurrentTime)
+		if aa.inMelee {
+			at = sim.nextUpdate(mh.unit, sim.CurrentTime+1)
+		}
+		mh.extraAttacksAt = at
+		sim.rescheduleWeaponAttack(at)
+	}
+	mh.extraAttacks = append(mh.extraAttacks, extraAttack{spell: spell, target: target})
+}
+
+// CanProcExtraAttack is AuraEffect::CheckEffectProc for a proc that queues spell: not while spell is the last extra
+// attack, nor while that one ends the chain, its own swing included.
+func (aa *AutoAttacks) CanProcExtraAttack(spell *Spell) bool {
+	return aa.lastExtraAttack == nil || aa.lastExtraAttack != spell && !aa.lastExtraAttackEndsChain
 }
 
 func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration {
@@ -302,11 +383,21 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 		wa.swingAt = at
 		return at
 	}
+	aa := &wa.unit.AutoAttacks
+	// a creature's landings due now go first (m_Events, ahead of UpdateAI), and as its event pass, so before
+	// sim.updating is set
+	if wa.unit.Type != PlayerUnit && sim.landOwnDue(wa.unit) {
+		if !aa.enabled {
+			return NeverExpires
+		}
+		if wa.swingAt > sim.CurrentTime {
+			return wa.swingAt
+		}
+	}
 	outer := sim.updating
 	defer func(outer *Unit) { sim.updating = outer }(outer)
 	sim.updating = wa.unit
 
-	aa := &wa.unit.AutoAttacks
 	// a creature's auras tick in Unit::Update, ahead of the AI that swings: Creature::Update. A tick can
 	// stop or move the swing.
 	if wa.unit.Type != PlayerUnit && len(wa.unit.tickingDots) > 0 && wa.unit.runDueTicks(sim, nil) {
@@ -343,6 +434,10 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 		// that action can cancel auto attacks outright (a shapeshift, Vanish): nothing left to swing
 		if !aa.enabled {
 			return NeverExpires
+		}
+		// an extra attack it procced goes in this update's Unit::Update, before the swing
+		if len(wa.extraAttacks) > 0 && wa.extraAttacksAt <= sim.CurrentTime {
+			wa.swingExtraAttacks(sim)
 		}
 
 		// the server takes casts before it gets to melee, so a fresh one can restart, pause or hold
@@ -394,11 +489,17 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 			sim.rescheduleWeaponAttack(aa.oh.swingAt)
 		}
 	}
+	outerMelee := aa.inMelee
+	aa.inMelee = wa != &aa.ranged
+	if aa.inMelee {
+		aa.lastExtraAttack = nil
+	}
 	attackSpell.Cast(sim, wa.unit.CurrentTarget)
 
 	if !sim.Options.Interactive && wa.unit.Rotation != nil {
 		wa.unit.Rotation.DoNextAction(sim)
 	}
+	aa.inMelee = outerMelee
 
 	return wa.swingAt
 }
@@ -452,6 +553,14 @@ type AutoAttacks struct {
 	ranged WeaponAttack
 
 	enabled bool
+
+	// a melee swing, or the action right after it, is running: past this update's extra attacks
+	inMelee bool
+
+	// Unit::_lastExtraAttackSpell: the last extra attack queued, till a plain melee swing or the pass that
+	// swings it. lastExtraAttackEndsChain is set for Sword Specialization's.
+	lastExtraAttack          *Spell
+	lastExtraAttackEndsChain bool
 }
 
 // Options for initializing auto attacks.
@@ -585,6 +694,9 @@ func (aa *AutoAttacks) reset(sim *Simulation) {
 	}
 
 	aa.enabled = false
+	aa.inMelee = false
+	aa.mh.clearExtraAttacks()
+	aa.lastExtraAttack = nil
 
 	aa.mh.stopTimer()
 	aa.oh.stopTimer()
@@ -649,6 +761,9 @@ func (aa *AutoAttacks) CancelAutoSwing(sim *Simulation) {
 	aa.enabled = false
 
 	if aa.AutoSwingMelee {
+		// nothing swings them off the list, and stale ones mustn't go once it's back
+		aa.mh.clearExtraAttacks()
+		aa.lastExtraAttack = nil
 		sim.removeWeaponAttack(&aa.mh)
 		if aa.IsDualWielding {
 			sim.removeWeaponAttack(&aa.oh)

@@ -856,9 +856,35 @@ func (sim *Simulation) playerEventAt(head pendingEntry, t time.Duration) bool {
 	return pa.playerEvent && !pa.cancelled
 }
 
-// landingAheadOfSwings is whether a player's landing due with the weapon attacks goes first.
+// landingAheadOfSwings is whether a player's landing due with the weapon attacks goes first. A creature's own swing
+// lands its own first (landOwnDue): players update ahead of every creature.
 func (sim *Simulation) landingAheadOfSwings(head pendingEntry) bool {
 	return head.at == sim.minWeaponAttackTime && sim.playerEventAt(head, head.at)
+}
+
+// landOwnDue lands the unit's own landings due now, by key, ahead of its swing: Creature::Update runs
+// Unit::Update's m_Events before UpdateAI's melee. Reports whether any landed.
+func (sim *Simulation) landOwnDue(unit *Unit) bool {
+	landed := false
+	for {
+		var first *landingAction
+		for _, la := range sim.landings {
+			if la.caster != unit || !la.ownEvent || la.NextActionAt != sim.CurrentTime {
+				continue
+			}
+			if first == nil || la.key < first.key || la.key == first.key && la.seq < first.seq {
+				first = la
+			}
+		}
+		// a popped one is out of the queue already: its hardcast landing released this swing (land)
+		if first == nil || !first.consumed && !sim.detachPendingAction(&first.PendingAction) {
+			return landed
+		}
+		// out of the queue now too, so a swing its cast releases lands it first all the same
+		first.consumed = true
+		first.land(sim)
+		landed = true
+	}
 }
 
 // playerShotDue is whether a player's Auto Shot is due at t and nothing holds it back: Unit::_UpdateSpells
@@ -884,13 +910,17 @@ func (sim *Simulation) advanceClock(nextTime time.Duration) {
 	sim.runExecutePhases()
 }
 
-// playerSwingDue is whether a player's melee swing is due at t and nothing holds it back: Map::Update runs
-// every player's update, swings and all, ahead of the creatures'. Only once a tick, as playerShotDue.
+// playerSwingDue is whether a player's extra attack or melee swing is due at t and nothing holds it back:
+// Map::Update runs every player's update, swings and all, ahead of the creatures'. Only once a tick, as
+// playerShotDue.
 func (sim *Simulation) playerSwingDue(t time.Duration) bool {
 	if sim.meleePassAt == t {
 		return false
 	}
 	for _, wa := range sim.weaponAttacks[:sim.playerAttacks] {
+		if len(wa.extraAttacks) > 0 && wa.extraAttacksAt <= t {
+			return true
+		}
 		if wa != &wa.unit.AutoAttacks.ranged && wa.swingAt <= t && !wa.held {
 			if _, held := wa.castHold(sim); !held {
 				return true
@@ -950,7 +980,7 @@ func (sim *Simulation) advanceWeaponAttacks(pass attackPass) {
 	for i := 0; i < len(sim.weaponAttacks); i++ {
 		wa := sim.weaponAttacks[i]
 		if pass != allAttacks && (i >= sim.playerAttacks || (pass == playerShots) != wa.isPlayerShot()) {
-			sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.swingAt)
+			sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.nextAt())
 			continue
 		}
 		sim.minWeaponAttackTime = min(sim.minWeaponAttackTime, wa.trySwing(sim, wa.releasing))
@@ -1181,7 +1211,12 @@ func (la *landingAction) land(sim *Simulation) {
 	if ownEvent && sim.onUpdateGrid(caster) {
 		// m_Events keys a hardcast's SpellEvent at the update before + 1 ms, so it completes ahead of any
 		// landing due on the same update
+		seq := la.seq
 		caster.landDueCast(sim)
+		// a creature's swing the cast released has landed this one ahead of itself (landOwnDue)
+		if la.seq != seq || la.caster == nil {
+			return
+		}
 		// and runs the caster's landings due now by key, so a missile launched later with a shorter flight
 		// can land first
 		for {

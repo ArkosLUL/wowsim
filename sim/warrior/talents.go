@@ -465,13 +465,12 @@ func (warrior *Warrior) registerSwordSpecialization(procMask core.ProcMask) {
 			if spell == warrior.WhirlwindOH {
 				return // OH WW hits can't proc this
 			}
-			if !icd.IsReady(sim) {
+			if !icd.IsReady(sim) || !warrior.AutoAttacks.CanProcExtraAttack(swordSpecializationSpell) {
 				return
 			}
 			if sim.RandomFloat("Sword Specialization") < procChance {
 				icd.Use(sim)
-				// an extra attack never takes a queued Heroic Strike or Cleave (Unit::AttackerStateUpdate's extra)
-				swordSpecializationSpell.Cast(sim, result.Target)
+				warrior.AutoAttacks.QueueExtraAttack(sim, swordSpecializationSpell, result.Target, true)
 			}
 		},
 	})

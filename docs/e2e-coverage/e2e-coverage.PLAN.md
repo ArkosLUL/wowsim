@@ -5535,6 +5535,52 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 - **Goldens:** TestFury and the Hand of Justice suites (extra attacks), TestRestoration (Ancestral Awakening),
   TestDisc (Penance); none for the dead targets or, likely, the pet swing; report each.
 
+#### As built
+
+Code stage (offline; [ac] `62fb09c68`; notes `tmp/ec-core-fix12.md`). No drop, allowance or fixture README row
+covered any bullet.
+- Extra attacks (fixed): `AutoAttacks.QueueExtraAttack` (`sim/core/attack.go`), called by Hand of Justice and
+  `registerSwordSpecialization`, queues on the main hand; the unit's next update swings it in the weapon-attack pass,
+  after its auras and ahead of its melee, cast hold or not (`trySwingWithExtraAttacks`; `playerSwingDue` counts it,
+  so it beats the creatures' auras). A proc off the unit's own swing or the action right after it (`inMelee`) waits
+  for the next update; one from a session cast, landing or the pre-swing APL check goes this update; chained procs
+  go in the same pass. `CanProcExtraAttack` is `AuraEffect::CheckEffectProc`'s gate on `_lastExtraAttackSpell` (the
+  last queued, till a plain melee swing or the pass ends): no proc of that same spell, none at all after Sword
+  Specialization's (`endsChain`). A pass that skips the unit (another player's Auto Shot) keeps the queue's time
+  (`WeaponAttack.nextAt`). Cancelled autos and reset clear the queue. The lead isn't real: the only non-extra
+  `AttackerStateUpdate` callers (`Player::Update`'s melee, `DoMeleeAttackIfReady`) run after the unit's
+  `Unit::Update` pass, and a main-hand swing pushes the off hand to 200 ms, so nothing swings between a proc and its
+  pass. The sim has no melee range, so Hand of Justice's range test never fails. Tests
+  `TestExtraAttackSwingsOnTheNextUpdate`, `TestExtraAttackGoesBetweenTheAurasAndTheMelee`,
+  `TestExtraAttackSwingsBesideAnotherPlayersAutoShot`, `TestExtraAttackProcGate`,
+  `TestSwordSpecializationSwingsOnTheNextUpdate`. Rogue's Hack and Slash (`sim/rogue/hack_and_slash.go`, not owned)
+  still swings at once.
+- Ancestral Awakening (fixed): `procAncestralAwakening` (`sim/shaman/heals.go`) heals the living, enabled raid unit
+  lowest in health percent (no health bar counts full, above max caps), raid order on a tie. Also fixed: the heal is
+  10% a rank (bp 9/19/29), was 30% at every rank. 52759 (not in the spelldump; live DBC: dummy,
+  `TARGET_UNIT_CASTER_AREA_RAID`, 40 yd). Tests `TestAncestralAwakeningHealsTheLowestHealthPercent`,
+  `TestAncestralAwakeningIsAWholePercentOfTheCrit`.
+- Dead targets (fixed): `helpfulAtTheDead` (`sim/core/apl_actions_casting.go`): castSpell, channelSpell and the
+  helpful multidot and multishield picks skip a dead unit with a health bar, never the caster (the sim plays a unit
+  on at 0 health). `TestHelpfulCastsSkipTheDead`.
+- A creature's landing and its swing (fixed): a non-player's swing first lands its own landings due now, by key, as
+  its event pass (`Simulation.landOwnDue`, `sim.go`); `landingAheadOfSwings` stays players'. Also fixed: a swing a
+  creature's hardcast held, released inside a landing popped first, went ahead of that landing; `landOwnDue` lands
+  it and `landingAction.land` returns if the swing dealt it. A landing `landOwnDue` detaches counts as popped too
+  (`consumed`), for a pass another unit's swing brings first. `TestCreatureLandingGoesAheadOfItsSwing`.
+- Penance (fixed): 53007's mana and cooldown go on the press's world tick (`penancePress`; `penanceCost` spends the
+  press's amount through `QueueSpellEvent`), the GCD at the press. `TestPenanceTakesItsManaAndCooldownOnThePressTick`.
+- Goldens, each change apart (package runs, then the full run, identical), 2 of 37:
+  - Extra attacks: TestFury Talents-SwordSpecialization-Average dps +0.326% (4448.62 to 4463.14), tps +0.346%. A
+    variant swinging the extra on the procing tick, after the swing, moves it the same: the cause is the extra no
+    longer running inside the procing hit's own proc handlers (Deep Wounds per tick +2.7%, Heroic Strike +1.25 casts,
+    white main hand -1.36, off hand +1.10), not the tick of delay. No golden wears Hand of Justice.
+  - Ancestral Awakening: TestRestoration Talents-HealingGrace-Average tps -1.656%, hps unchanged: it followed
+    Riptide to the raid's target dummy (no health bar, every heal counted); now all tie at full and it heals the
+    shaman, first in raid order, all overheal.
+  - Dead targets, the creature landing, Penance: none. TestDisc's presses all come off a hardcast landing, on a world
+    tick, so the press's tick is the press.
+
 ### EC-PET-FIX10 (Z15; golden-neutral; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
