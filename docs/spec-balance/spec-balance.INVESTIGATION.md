@@ -144,10 +144,10 @@ Bot/sim, the mean of two runs where repeated; median 89.0%, flag line 84.0%:
 
 | Build | % | Main differences (bot against sim) |
 |---|---|---|
-| BM Hunter | 67.9 | pet Bite 94 against 116, Growl 48 (focus); Steady Shot 75 against 91; Aimed Shot and Explosive Trap, which the sim's BM doesn't cast |
-| Demonology | 72.1 | 8 Life Taps (11.4), the last at 107 s, at full health, then wands from 155 s (18 shots); Immolate up 80% (93); Curse of Agony, not Doom |
-| Shadow | 73.3 | Mind Flay 64 channels (82) of 2.6 ticks; no Devouring Plague (9.6); Mind Blast 23 against 14.6 |
-| Elemental | 83.5 | Chain Lightning 32 and 29 on one target (0); Lightning Bolt 63 and 67 against 114.5 |
+| BM Hunter | 67.9 | pet Bite 94 against 116, Growl 48 (focus); Steady Shot 75 against 91 (the sim casts Aimed Shot 16.9 and Explosive Trap 6.0 too; the bot's traps count under 425782) |
+| Demonology | 72.1 | 8 Life Taps (11.4), the last at 107 s, then wands from 155 s (18 shots): eating swapped Fel Armor for Demon Armor; Immolate up 80% (93); Curse of Agony, not Doom |
+| Shadow | 73.3 | Mind Flay 64 channels (82) of 2.6 ticks; Mind Blast 23 against 14.6 (the sim's 9.6 under 63675 is Improved Devouring Plague; the bot cast 8 Plagues) |
+| Elemental | 83.5 | Chain Lightning 32 and 29 on one target (0); Lightning Bolt 63 and 67 against 114.5 (overloads, 45284, not counted) |
 | Survival | 83.7 | Explosive Trap 1 against 7.7 |
 | Balance | 83.9 | Moonfire up 52% and 43% (97); Starfire 41 against 54 |
 | MM Hunter | 84.1 | no Silencing Shot (10); Explosive Trap 1 against 7; pet Growl |
@@ -155,7 +155,7 @@ Bot/sim, the mean of two runs where repeated; median 89.0%, flag line 84.0%:
 | Frost DK | 87.3 | Obliterate 37 against 44; Army of the Dead in combat |
 | Unholy 2H | 88.6 | Scourge Strike 11 against 27; Death and Decay 6 (0) |
 | Arms | 89.4 | never Slam (43.5); Heroic Strike 46 against 26 |
-| Combat | 89.6 | Rupture up 77% (87) |
+| Combat | 89.6 | Rupture up 77% (87); the sim's finishers count under combo point tags (Rupture 7.9 at 5 points, Eviscerate 1.7); hits 10-15% weaker than the sim's, unexplained (worth a sim against server stat check) |
 | Affliction | 91.6 | |
 | Fire | 92.8 | |
 | Feral | 92.9 | Ferocious Bite 5 against 7.7 |
@@ -171,7 +171,9 @@ with clear mistakes too); MM (Silencing Shot); Arms and Fury (spells never cast)
 
 What the test itself does, so a difference isn't the bot's:
 - A Life Tap bot stops below `Playerbots.LowHealth` (45%) and wands; the tank Full Heals the bot below max health
-  every 8 s, as raid healers would. The warlocks ran again with it; Demonology never needed one (Fel Synergy).
+  every 8 s, as raid healers would. It never lands: the server takes `.cast 25840 triggered` without an error,
+  yet no bot log has a Full Heal, and a rogue (no regen in combat) gets one at every check. Open.
+- The test's Blood Frenzy refresh knocks the rogue's Savage Combat off; its Thunder Clap pulls critters in.
 - Buffs the server keeps off: Trueshot Aura and Unleashed Rage (Abomination's Might holds their slot), Elemental
   Oath (Moonkin Aura's), Curse of Weakness (misses). Left out: Devotion Aura, Sanctuary, Might for a caster or
   Wisdom otherwise, Expose Armor, Heroic Presence, Mana Tide, Replenishment, Demonic Pact, Thorns, Judgements of
@@ -181,3 +183,34 @@ What the test itself does, so a difference isn't the bot's:
   procs as casts, some spells under other ids in the sim (Mutilate's hits, Envenom, Stormstrike's off hand,
   stances). Shadow Mastery's bot uptime is the bot's own share; the master keeps it up too.
 - The sim's Rend bonus above 75% health follows time left; the dummy's health never drops, so Arms' sim is low.
+
+## P3 results (2026-10-20)
+
+[bots] `Custom` `f8e88b208..2586e5b25` (deployed): hunters use potions and trinkets while Auto Shot repeats; pet
+taunts off autocast while the group has a tank; per-class fixes in `docs/classes/<class>.md` (Hunter D8-D10,
+Warlock DM3/DM4/DM7, Priest S3, Shaman, Druid, Rogue, Warrior). `b12b91fae` (not deployed, needs a rebuild): the
+curse strategies are siblings, so Demonology's `curse of doom` was evicted by the `curse of agony` listed after it
+(0 Doom casts against 4.0); Doom now carries its own Agony fallback.
+
+Test fix ([simval] `f63562a`): `playerbots_db_store` keeps a bot's strategies by guid after the character is
+deleted, and a restart reissues those guids, so the first P3 run's BM, MM, SV and Arms bots fought with other
+classes' strategies (no damage) and Balance with only its DoTs (void, `tmp/p3/botdps/`). The test now sends
+`reset botAI` once the bot is in Naxxramas. P2 may have hit the same with a same-class row; its bots cast their
+spec's spells.
+
+Bot/sim, one 180 s run (`tmp/p3/botdps-v2/`, `compare-v2.txt`); median 89.5%, flag line 84.5%:
+
+| Build | P2 | P3 | Left (bot against sim) |
+|---|---|---|---|
+| BM Hunter | 67.9 | 73.5 | Steady Shot 77 against 91; pet setup (above) the likely rest. Flagged |
+| Demonology | 72.1 | 82.0 | no Curse of Doom (fixed in `b12b91fae`); Shadow Bolt 54 against 67.5. Flagged |
+| MM Hunter | 84.1 | 87.3 | |
+| Elemental | 83.5 | 87.7 | |
+| Shadow | 73.3 | 89.4 | Mind Flay 65 against 82 |
+| Combat | 89.6 | 89.6 | |
+| Survival | 83.7 | 90.3 | |
+| Fury | 95.0 | 90.5 | dances now (Rend up 66%, sim 77%); P2 didn't. Within noise, the void run had 92.3 |
+| Balance | 83.9 | 91.4 | |
+| Arms | 89.4 | 101.9 | Slams as the sim does |
+
+Next: rebuild for `b12b91fae`, re-measure Demonology; BM's pet against the sim's.
