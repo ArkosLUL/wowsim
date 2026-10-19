@@ -10,7 +10,7 @@ All in the core, while the character is built (`sim/core/playerbot.go`, `Charact
 
 | Rule | Where | Bot evidence ([bots] = `[ac]/modules/mod-playerbots`) |
 |---|---|---|
-| No pre-pot. A DPS spec gets one offensive potion, Potion of Wild Magic for a caster, Potion of Speed otherwise, never Indestructible; a tank or healer none | `playerbotPotion` | `PlayerbotFactory::InitPotions`, `PlayerbotAI::IsDps` and `IsCaster` by spec |
+| No pre-pot. A DPS spec gets one offensive potion, Potion of Wild Magic for a caster except Shadow, Balance and Affliction, Potion of Speed otherwise, never Indestructible; a tank or healer none | `playerbotPotion` | `PlayerbotFactory::InitPotions`, `PlayerbotAI::IsDps` and `IsCaster` by spec |
 | The potion waits until the fight is 5 s old, drunk by a top-priority action the rotation gets injected; every potion spell is held to that time, so no other entry drinks first | `addPlayerbotPotion` (`apl.go`), `makePotionActivation` (`consumes.go`) | `POTION_HOLD_MS`, `docs/systems/consumables-and-burst.md` |
 | Pre-pull keeps only `castSpell` of `playerbotPrepullSpells`: stances, presences, Aspect of the Dragonhawk, Horn of Winter, Bone Shield. The rest is skipped with a "Playerbot:" validation warning, and the automatic -1 s pre-pot is off | `newAPLRotation` | stances and presences persist between fights; `GenericDKNonCombatStrategy` (Horn, Bone Shield), the hunter's `bdps` |
 | No explosives, conjured items (Dark Rune, Healthstone, Flame Cap, Thistle Tea) or pet food | `playerbotConsumes` | [bots] never uses Thistle Tea or Flame Cap |

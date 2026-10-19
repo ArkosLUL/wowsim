@@ -40,7 +40,7 @@ Build = namedtuple('Build', 'key dir label talents seed tree name tank race filt
                    defaults=(None, None))
 BUILDS = [
     Build('dk_blood', 'deathknight', 'DK Blood', 'Blood DPS', 'p1_blood.gear.json', 'blood', 'Blood', False, 'RaceDraenei'),
-    Build('dk_frost', 'deathknight', 'DK Frost', 'Frost BL', 'p1_frost.gear.json', 'frost', 'Frost', False, 'RaceDraenei'),
+    Build('dk_frost', 'deathknight', 'DK Frost', 'Frost UH', 'p1_frost.gear.json', 'frost', 'Frost', False, 'RaceDraenei'),
     Build('dk_unholy', 'deathknight', 'DK Unholy', 'Unholy DW', 'p1_uh_dw.gear.json', 'unholy', 'Unholy', False, 'RaceDraenei'),
     Build('hunter_mm', 'hunter', 'Hunter MM', 'Marksman', 'p1_mm.gear.json', 'mm', 'MM', False, 'RaceDraenei'),
     Build('hunter_sv', 'hunter', 'Hunter SV', 'Survival', 'p1_sv.gear.json', 'sv', 'SV', False, 'RaceDraenei'),

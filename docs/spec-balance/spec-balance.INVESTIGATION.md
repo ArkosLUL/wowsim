@@ -31,27 +31,24 @@ TestAffliction; every other suite unchanged.
 
 Frost DK: no fix inside P1's paths. Arcane and Arms are rotation-clean; their gaps are P4 work.
 
-## Open decisions (user)
+## Decisions (user, 2026-10-19)
 
-- **Frost DK ranks 'Frost UH'** (existing preset, `frost_uh_pesti.apl.json`): +10.2/+10.2/+11.1/+11.1%, as it
-  takes Epidemic, which carries the module's disease-haste tweak. Patch: `tmp/p1/plate/dk_frost_talents_gen.patch`
-  (`tools/presetgen/gen.py`, bis-optimizer's). If P4 limits that tweak to Unholy, the gain reverses.
-- **Fire ranks 'Frostfire'** (0/56/15): +4.0/+4.1/+2.0/+3.7% over the fixed TTW Fire. Patch:
-  `tmp/p1/ranged/proposal/mage_fire_frostfire.patch`.
-- Either needs a recapture and a BiS rerun for that build.
-- **Bot consumables** (step 4, `tmp/p1/consumables/proposals.md`). The bot's flask is best for all 20 builds.
-  - Food, via `Playerbot.env` matrix rows:
-    - Fury → Dragonfin Filet (+0.13 to +0.75%);
-    - Combat → Mega Mammoth Meal (+0.30 to +0.49%);
-    - Frost DK → Dragonfin Filet (+0.34 to +0.77%; row 73 covers Frost tanks too);
-    - Enhancement → Fish Feast (+0.29 to +0.46%);
-    - Arcane → Imperial Manta Steak (+0.04 to +0.15%).
-  - Potion of Speed for Shadow, Balance and Affliction (+0.03 to +0.64%): a [bots] `InitPotions` ladder by spec,
-    with the drink lookup ordered the same way, plus `playerbotPotion` and its test.
-- **Combat's Glyph of Tricks of the Trade** helps only the Tricks target; a self glyph gives the rogue +0.5–0.7%.
-  Kept.
-- **UI tests** for the warlock and mage tree hooks belong to `tools/uitest/` (ui-tests loop). A ready test:
-  `tmp/p1/caster/uitest_warlock_tree_options.patch`.
+- **Frost DK ranks 'Frost UH'** (existing preset, `frost_uh_pesti.apl.json`; `tools/presetgen/gen.py`):
+  +10.2/+10.2/+11.1/+11.1%, as it takes Epidemic, which carries the module's disease-haste tweak. If P4 limits
+  that tweak to Unholy, the gain reverses. The user's Frost DK bots need these talents too.
+- **Fire keeps TTW.** Frostfire (0/56/15) would add +4.0/+4.1/+2.0/+3.7%; declined.
+- **Bot food**, applied to `Playerbot.env`'s matrix (step 4, `tmp/p1/consumables/proposals.md`; the bot's flask is
+  already best for all 20 builds):
+  - Fury → Dragonfin Filet (+0.13 to +0.75%);
+  - Combat → Mega Mammoth Meal (+0.30 to +0.49%);
+  - Frost DK → Dragonfin Filet (+0.34 to +0.77%; row 73 covers Frost tanks too);
+  - Enhancement → Fish Feast (+0.29 to +0.46%);
+  - Arcane → Imperial Manta Steak (+0.04 to +0.15%).
+- **Potion of Speed for Shadow, Balance and Affliction** (+0.03 to +0.64%): [bots] `GetOffensivePotionLadder`
+  drives stocking and the drink lookup; the sim's `playerbotPotion` matches. Affliction rechecked with a bot-like
+  rotation (Corruption only when missing): Speed still wins +0.36/+0.24/+0.36/+0.21%.
+- **Combat's Glyph of Tricks of the Trade** stays (a self glyph: +0.5–0.7% to the rogue at the raid's cost).
+- **UI tests** for the warlock and mage tree hooks added in `tools/uitest/tests/settings/talents.spec.ts`.
 
 ## Notes for later phases
 
@@ -70,6 +67,9 @@ Frost DK: no fix inside P1's paths. Arcane and Arms are rotation-clean; their ga
   - Hunters: cooldowns at the pull.
   - Warlocks: pet and stone per spec (Demo Felguard + Spellstone, Destro Imp + Firestone, Aff Felhunter + Spellstone).
   - Shadow: Mind Blast only while its cast is ≥ 1 s.
+  - Affliction: recast Corruption when a damage or crit buff is up that the running Corruption missed (the sim's
+    `warlockShouldRefreshCorruption`): +0.2/+0.8/+1.6/+2.5% over casting it only when missing. Everlasting
+    Affliction refreshes carry haste and spell power, not crit or multipliers (server and sim agree).
 - **Sim/server gaps:**
   - `Shaman.Reset` (`sim/shaman/shaman.go`) applies Totem of Wrath and its glyph's SP every reset, even while the APL
     swaps in Searing; recheck Elemental against P2.
@@ -83,3 +83,30 @@ Frost DK: no fix inside P1's paths. Arcane and Arms are rotation-clean; their ga
   cap-exempt.
 - Golden gap: TestCombat still runs `combat_expose`, so the new Combat default has no golden.
 - Assassination's autoRotation has the same Expose Armor waste. It's at or above B, so left alone.
+
+## P2 spike (2026-10-19): passed
+
+A harness character fights the Naxx dummy under bot AI. Test `TestBotSpike` in `tmp/p2/e2e/botspike_test.go`
+(a copy of [simval]'s committed `e2e/`, untracked), run by `tmp/p2/run-spike.sh <label> [class] [seconds] [potion]`
+under the server lock; captures in `tmp/p2/captures/`. Recipe:
+
+1. `newBot`, gear and talents (the spike: `.playerbots bot initself=epic`), `.ip set 18`, potion via `.additem`.
+2. Teleport it off Naxx (a group member enters the leader's instance only from another map), save, log out.
+3. Log a second character into the same account (`LoginBots` creates it), GM on, level 80.
+4. `.playerbots bot add <name>` (reply `add: <name> - ok`; same-account bots allowed); the bot joins the master's
+   group by itself.
+5. Raid convert (raw `CMSG_GROUP_RAID_CONVERT` 0x28E): a non-GM enters a raid map only in a raid group. `.summon`
+   can't help, it moves only GM sessions into an instance (`Instance.GMSummonPlayer = 0`).
+6. Master `.go`es into Naxx, party chat `summon`: the bot teleports into the master's instance.
+7. Spawn the dummy, party chat `co -burst`, select the dummy, party chat `attack`.
+8. Cleanup: `.playerbots bot remove`, then the master's `deleteCharacters` takes both characters.
+
+Burst gate: the dummy (`NullCreatureAI`) never has a victim, so `TankHasHeldBoss` never passes. `co -burst` frees
+the cooldowns, but `OffensivePotionTrigger` checks the tank hold itself, so the potion never fires. Ways out:
+leave the potion out of both the bot run and its sim run; add 999000 to [bots]' `noVictimBosses` (cooldowns and
+potion at the pull; rebuild); or a `.simval` command giving the dummy a tank victim (5 s gate as in a raid; C++ in
+[simval], rebuild).
+
+Results, 60 s, factory gear: Fire mage 6168 DPS, Living Bomb and Improved Scorch ≥ 96% uptime, Combustion and
+Mirror Image cast; Assassination rogue 6837 DPS at 1.2 yd. Both had the matrix's flask and food, and the bot
+loaded its Naxx strategy. `tools/simval chronicle` reads both logs. The rogue poisoned its weapons in combat.

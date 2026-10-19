@@ -140,11 +140,11 @@ func TestPlayerbotPotionBySpec(t *testing.T) {
 		talents string
 		want    proto.Potions
 	}{
-		{"balance", proto.Class_ClassDruid, "5", wildMagic},
+		{"balance", proto.Class_ClassDruid, "5", speed},
 		{"cat", proto.Class_ClassDruid, "-5", speed},
 		{"bear, Thick Hide 3", proto.Class_ClassDruid, "-00003", none},
 		{"restoration druid", proto.Class_ClassDruid, "--5", none},
-		{"shadow", proto.Class_ClassPriest, "--5", wildMagic},
+		{"shadow", proto.Class_ClassPriest, "--5", speed},
 		{"discipline", proto.Class_ClassPriest, "5", none},
 		{"no talents: a priest is holy", proto.Class_ClassPriest, "", none},
 		{"elemental", proto.Class_ClassShaman, "5", wildMagic},
@@ -162,7 +162,10 @@ func TestPlayerbotPotionBySpec(t *testing.T) {
 		{"hunter", proto.Class_ClassHunter, "5", speed},
 		{"rogue", proto.Class_ClassRogue, "-5", speed},
 		{"mage", proto.Class_ClassMage, "5", wildMagic},
-		{"warlock", proto.Class_ClassWarlock, "--5", wildMagic},
+		{"affliction", proto.Class_ClassWarlock, "5", speed},
+		{"no talents: a warlock is demonology", proto.Class_ClassWarlock, "", wildMagic},
+		{"demonology", proto.Class_ClassWarlock, "-5", wildMagic},
+		{"destruction", proto.Class_ClassWarlock, "--5", wildMagic},
 	} {
 		if got := playerbotConsumes(&proto.Consumes{}, tc.class, tc.talents).DefaultPotion; got != tc.want {
 			t.Errorf("%s: potion %v, want %v", tc.name, got, tc.want)

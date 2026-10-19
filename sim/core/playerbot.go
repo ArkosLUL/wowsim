@@ -89,18 +89,20 @@ func talentRank(talents string, tree, index int) int {
 }
 
 // playerbotPotion is InitPotions' offensive potion at level 80: none unless PlayerbotAI::IsDps by spec,
-// Wild Magic for IsCaster, else Speed.
+// Wild Magic for IsCaster, else Speed. Shadow, Balance and Affliction drink Speed instead.
 func playerbotPotion(class proto.Class, tab int32, bear bool) proto.Potions {
 	const speed, wildMagic = proto.Potions_PotionOfSpeed, proto.Potions_PotionOfWildMagic
 	switch {
+	case class == proto.Class_ClassWarlock && tab == 0:
+		return speed
 	case class == proto.Class_ClassMage, class == proto.Class_ClassWarlock:
 		return wildMagic
 	case class == proto.Class_ClassHunter, class == proto.Class_ClassRogue:
 		return speed
 	case class == proto.Class_ClassPriest && tab == 2:
-		return wildMagic
+		return speed
 	case class == proto.Class_ClassDruid && tab == 0:
-		return wildMagic
+		return speed
 	case class == proto.Class_ClassDruid && tab == 1 && !bear:
 		return speed
 	case class == proto.Class_ClassShaman && tab == 0:

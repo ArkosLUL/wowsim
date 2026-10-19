@@ -5,7 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a, P0b and P1 landed; P1 results, open decisions and later-phase notes in `spec-balance.INVESTIGATION.md`. Next: the user's decisions there, then the baseline (after the BiS chain).
+Status: P0a, P0b and P1 landed, with the user's P1 decisions; P2's spike passed. Results, later-phase notes and the spike's recipe in `spec-balance.INVESTIGATION.md`. Next: the baseline (after the BiS chain); P2's `TestBotDps`.
 
 ## Context
 
@@ -34,8 +34,9 @@ which models the server exactly (ADR 0001).
   pages (a "Playerbot" checkbox); presetgen, statweights' capture and the rankings always turn it on. Goldens
   don't move (default off).
 - With it on:
-  - No pre-pot. One DPS potion per fight, by role (casters Potion of Wild Magic, physical DPS Potion of Speed;
-    never Indestructible), drunk through an injected top-priority action once the fight is 5 s old.
+  - No pre-pot. One DPS potion per fight, by role (casters Potion of Wild Magic; physical DPS, Shadow, Balance
+    and Affliction Potion of Speed; never Indestructible), drunk through an injected top-priority action once the
+    fight is 5 s old.
   - Prepull stripped to persistent states bots set up out of combat (stances, presences, aspects; Horn of Winter
     or Bone Shield only if [bots] casts them out of combat). Gone: potions, cooldowns (Army of the Dead,
     Recklessness, Death Wish, Berserk, Mirror Image), precasts, Bloodrage/Berserker Rage, Life Tap stacking,
@@ -89,6 +90,8 @@ which models the server exactly (ADR 0001).
 - [tweaks]: a `feature/balance-<class>` branch per class batch, one commit per tweak, push the branch and open a
   PR to master; show the user the PR text first. The user runs `/code-review` and merges.
 - [bots]: commit on `Custom` (its `CLAUDE.md` asks for it). No push, no upstream PRs.
+- [simval]: commit, staging only this effort's files (other sessions keep edits open there). No push.
+- Commits in any repo need no asking (user, 2026-10-19); pushes and PRs stay as listed.
 - Live runs under the server lock (bot test chunks, spelldump recaptures, `.simval` parity probes).
 - Still asked each time, batched: image rebuilds, worldserver restarts, `ac-db-import` runs, messages to the
   wave-loop session. Anything not listed needs the user's word. The live DB is SELECT-only.
@@ -200,7 +203,7 @@ Phase loop per [sim] `docs/guide/workflow.md`: implement + verify in a subagent,
    Chronicle log + `.setup.txt`.
 3. `[sim] tools/simval chronicle` reads the bot's DPS and casts; the sim runs the same setup with the switch on
    and the build's current APL. Report per spec: bot/sim DPS ratio, cast-count and uptime differences.
-4. README entry in [simval] under "Live e2e tests". Committing there needs the user's word.
+4. README entry in [simval] under "Live e2e tests".
 
 ## P3: Playerbot rotation fixes ([bots], after P2)
 
