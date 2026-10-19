@@ -10,8 +10,10 @@ import {
 import {
 	APLRotation,
 } from '../core/proto/apl.js';
+import { Warlock_Options as WarlockOptions } from '../core/proto/warlock.js';
 
 import { Stats } from '../core/proto_utils/stats.js';
+import { TypedEvent } from '../core/typed_event.js';
 import { Player } from '../core/player.js';
 import { getSpecIcon } from '../core/proto_utils/utils.js';
 import { IndividualSimUI, registerSpecConfig } from '../core/individual_sim_ui.js';
@@ -276,5 +278,19 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecWarlock, {
 export class WarlockSimUI extends IndividualSimUI<Spec.SpecWarlock> {
 	constructor(parentElem: HTMLElement, player: Player<Spec.SpecWarlock>) {
 		super(parentElem, player, SPEC_CONFIG);
+
+		// a talent preset sets only talents and glyphs, so the pet and stone follow the tree here,
+		// unless changed by hand. hooked after load, so a saved setup or link keeps its own
+		const treeOptions = [Presets.AfflictionOptions, Presets.DemonologyOptions, Presets.DestructionOptions];
+		this.sim.waitForInit().then(() => {
+			let tree = player.getTalentTree();
+			player.talentsChangeEmitter.on(() => {
+				const oldTree = tree;
+				tree = player.getTalentTree();
+				if (tree != oldTree && WarlockOptions.equals(player.getSpecOptions(), treeOptions[oldTree])) {
+					player.setSpecOptions(TypedEvent.nextEventID(), treeOptions[tree]);
+				}
+			});
+		});
 	}
 }

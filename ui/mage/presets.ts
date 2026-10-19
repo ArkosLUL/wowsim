@@ -146,14 +146,14 @@ export const ArcaneTalents = {
 export const FireTalents = {
 	name: 'Fire',
 	data: SavedTalents.create({
-		talentsString: '23000503110003-0055030012303331053120301351',
+		talentsString: '23000503310003-0055030012303330053120300351',
 		glyphs: Glyphs.create({
 			major1: MageMajorGlyph.GlyphOfFireball,
 			major2: MageMajorGlyph.GlyphOfMoltenArmor,
 			major3: MageMajorGlyph.GlyphOfLivingBomb,
 			minor1: MageMinorGlyph.GlyphOfSlowFall,
 			minor2: MageMinorGlyph.GlyphOfFrostWard,
-			minor3: MageMinorGlyph.GlyphOfBlastWave,
+			minor3: MageMinorGlyph.GlyphOfArcaneIntellect,
 		}),
 	}),
 };

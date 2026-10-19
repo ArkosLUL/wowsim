@@ -96,7 +96,7 @@ export const ArmsTalents = {
 export const FuryTalents = {
 	name: 'Fury',
 	data: SavedTalents.create({
-		talentsString: '32002301233-305053000520310053120500351',
+		talentsString: '302023102331-305052000520310053120500351',
 		glyphs: Glyphs.create({
 			major1: WarriorMajorGlyph.GlyphOfWhirlwind,
 			major2: WarriorMajorGlyph.GlyphOfHeroicStrike,

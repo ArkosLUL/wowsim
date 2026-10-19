@@ -1,4 +1,4 @@
-import {Class, Cooldowns, Debuffs, Faction, IndividualBuffs, PartyBuffs, Race, RaidBuffs, Spec, Stat, TristateEffect} from '../core/proto/common.js';
+import {Class, Consumes, Cooldowns, Debuffs, Faction, IndividualBuffs, PartyBuffs, Race, RaidBuffs, Spec, Stat, TristateEffect} from '../core/proto/common.js';
 import {APLAction, APLListItem, APLPrepullAction, APLRotation} from '../core/proto/apl.js';
 import {Stats} from '../core/proto_utils/stats.js';
 import { getSpecIcon } from '../core/proto_utils/utils.js';
@@ -384,5 +384,19 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecMage, {
 export class MageSimUI extends IndividualSimUI<Spec.SpecMage> {
 	constructor(parentElem: HTMLElement, player: Player<Spec.SpecMage>) {
 		super(parentElem, player, SPEC_CONFIG);
+
+		// swap Fire's and Arcane's default consumes with the tree, leaving any other pick alone
+		player.talentsChangeEmitter.on(eventID => {
+			const tree = player.getTalentTree();
+			if (tree > 1) {
+				return;
+			}
+			const current = player.getConsumes();
+			const treeDefault = tree == 0 ? Presets.DefaultArcaneConsumes : Presets.DefaultFireConsumes;
+			const otherDefault = tree == 0 ? Presets.DefaultFireConsumes : Presets.DefaultArcaneConsumes;
+			if (Consumes.equals(current, otherDefault)) {
+				player.setConsumes(eventID, treeDefault);
+			}
+		});
 	}
 }

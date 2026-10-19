@@ -31,7 +31,7 @@ var (
 	simDB       = flag.String("simDb", "assets/database/db.json", "sim item database, which decides whether a reforge does anything")
 	minSkill    = flag.Int("minSkill", azerothcore.DefaultMinSkill, "skill level a profession counts as known at")
 	players     = flag.String("players", "", "comma separated characters someone plays; everyone else counts as a bot. Empty: read off mod-playerbots' tables")
-	worldBuffs  = flag.String("worldBuffMatrix", "", "file holding the bots' AiPlayerbot.WorldBuffMatrix: Playerbot.env, playerbots.conf or the bare matrix")
+	worldBuffs  = flag.String("worldBuffMatrix", "", "file holding the bots' Playerbots.WorldBuffMatrix: Playerbot.env, playerbots.conf or the bare matrix")
 	out         = flag.String("out", "", "roster JSON to write (required)")
 )
 

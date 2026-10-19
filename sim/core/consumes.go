@@ -509,6 +509,12 @@ func makePotionActivation(potionType proto.Potions, character *Character, potion
 				character.UpdateMajorCooldowns()
 			}
 		}
+		if character.Playerbot {
+			// holds every potion entry in the rotation, not just the injected one
+			mcd.Spell.ExtraCastCondition = func(sim *Simulation, _ *Unit) bool {
+				return sim.CurrentTime >= PlayerbotPotionAt
+			}
+		}
 	}
 	return mcd
 }

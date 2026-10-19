@@ -87,6 +87,10 @@ message Player {
 	double nibelung_average_casts = 43;
 	// hack to set a proper default value
 	bool nibelung_average_casts_set = 44;
+
+	// Sims the character as a mod-playerbots bot plays it: the bots' potion, flask and food, and only
+	// the pre-pull setup they keep between fights.
+	bool playerbot = 49;
 }
 
 message Party {

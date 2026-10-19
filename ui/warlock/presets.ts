@@ -114,7 +114,7 @@ export const AfflictionTalents = {
 export const DemonologyTalents = {
 	name: 'Demonology',
 	data: SavedTalents.create({
-		talentsString: '-203203301035012530135201351-550000052',
+		talentsString: '-203203301035012530135201351-55200005',
 		glyphs: Glyphs.create({
 			major1: MajorGlyph.GlyphOfLifeTap,
 			major2: MajorGlyph.GlyphOfQuickDecay,

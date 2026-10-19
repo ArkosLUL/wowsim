@@ -82,6 +82,7 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 - Fork fields:
   - `ItemSpec.reforge` (`ItemReforge`, raw server stat-type ids)
   - `Player.racial_traits`
+  - `Player.playerbot` ([playerbot rules](playerbot-rules.md))
   - `Player.professions`, with `profession1`/`profession2` kept for old links and presets
   - `SavedSettings.racial_traits`
   - `Encounter.raid_difficulty` and `Encounter.server_settings`

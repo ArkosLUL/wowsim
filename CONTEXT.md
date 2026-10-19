@@ -109,6 +109,10 @@ _Avoid_: player (clashes with the sim's Player)
 A raider driven by mod-playerbots.
 _Avoid_: bot account
 
+**Playerbot switch**:
+`Player.playerbot`: sims a character with the consumables and pre-pull a playerbot really uses.
+_Avoid_: bot mode
+
 ### Server modules
 
 **Reforge**:

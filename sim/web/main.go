@@ -58,7 +58,7 @@ func main() {
 	var acoreDbcDir = flag.String("acoreDbcDir", "", "directory holding the AzerothCore server's DBC files; $AC_DBC_DIR when empty")
 	var acoreNamesFile = flag.String("acoreNamesFile", "", "file listing the core raid for /acoreRoster, one character a line; $AC_RAID_NAMES_FILE when empty")
 	var acoreLeader = flag.String("acoreLeader", "", "a member of the raid's group, whose parties the roster follows; $AC_RAID_LEADER when empty")
-	var acoreWorldBuffMatrix = flag.String("acoreWorldBuffMatrix", "", "file holding the bots' AiPlayerbot.WorldBuffMatrix, e.g. Playerbot.env; $AC_WORLD_BUFF_MATRIX when empty")
+	var acoreWorldBuffMatrix = flag.String("acoreWorldBuffMatrix", "", "file holding the bots' Playerbots.WorldBuffMatrix, e.g. Playerbot.env; $AC_WORLD_BUFF_MATRIX when empty")
 
 	flag.Parse()
 

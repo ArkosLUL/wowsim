@@ -85,7 +85,7 @@ func workingConfig(t *testing.T) Config {
 		DBCDir:          writeDBCDir(t, 54733),
 		NamesFile:       writeFile(t, "# party 1\nAngry\nDeathsong\n"),
 		Leader:          "Deathsong",
-		WorldBuffMatrix: writeFile(t, `AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX="1:0,3,0,80,80:53760,57371"`),
+		WorldBuffMatrix: writeFile(t, `AC_PLAYERBOTS_WORLD_BUFF_MATRIX="1:0,3,0,80,80:53760,57371"`),
 		Assets:          itemDB(oneItem),
 	}
 }

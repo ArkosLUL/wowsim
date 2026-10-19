@@ -8,6 +8,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -758,7 +759,7 @@ const (
 type Loadout struct {
 	DBC      *RosterDBC
 	PetTrees PetTalentTrees
-	// WorldBuffs is the bots' AiPlayerbot.WorldBuffMatrix. Nil means none was given, which leaves the
+	// WorldBuffs is the bots' Playerbots.WorldBuffMatrix. Nil means none was given, which leaves the
 	// bots' flask, elixirs and food as the importer finds them.
 	WorldBuffs []WorldBuff
 	// AuraItems maps a flask's or elixir's buff to its item, so a buff the sim has no value for still
@@ -951,7 +952,7 @@ const (
 
 // Where a consumable came from.
 const (
-	SourceMatrix = "matrix" // the bot's AiPlayerbot.WorldBuffMatrix rows
+	SourceMatrix = "matrix" // the bot's Playerbots.WorldBuffMatrix rows
 	SourceBuffs  = "buffs"  // the character's saved auras
 	SourceBags   = "bags"
 	SourceRules  = "rules" // mod-playerbots never has the bot use one
@@ -1691,7 +1692,7 @@ func faction(raceID int32) int32 {
 	return 2
 }
 
-// WorldBuff is one spell of an AiPlayerbot.WorldBuffMatrix entry. A faction, class or level of 0
+// WorldBuff is one spell of a Playerbots.WorldBuffMatrix entry. A faction, class or level of 0
 // matches any.
 type WorldBuff struct {
 	Faction, Class, Spec, MinLevel, MaxLevel, Spell int32
@@ -1771,40 +1772,71 @@ func leadingInt(token string) (int32, bool) {
 	return int32(value), err == nil
 }
 
-// worldBuffMatrixKeys name the setting in a docker env file and in playerbots.conf.
-var worldBuffMatrixKeys = []string{"AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX", "AiPlayerbot.WorldBuffMatrix"}
+// The matrix's setting in a docker env file and in playerbots.conf.
+const (
+	worldBuffMatrixEnvKey  = "AC_PLAYERBOTS_WORLD_BUFF_MATRIX"
+	worldBuffMatrixConfKey = "Playerbots.WorldBuffMatrix"
+)
 
-// WorldBuffMatrixSetting pulls the matrix out of a config file, a quoted value running over several
-// lines included. A file without the setting is taken to be the bare matrix.
+var (
+	settingLine = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_.]*[ \t]*([=:])(.*)$`)
+	matrixMeta  = regexp.MustCompile(`^\s*\d+(,\s*\d+){4}\s*:`)
+)
+
+// isSettingLine tells a "KEY=value" or "KEY: value" line from a bare-matrix entry like "ARMS:0,1,0,80,80:5".
+func isSettingLine(line string) bool {
+	m := settingLine.FindStringSubmatch(line)
+	return m != nil && (m[1] == "=" || !matrixMeta.MatchString(m[2]))
+}
+
+// WorldBuffMatrixSetting pulls the matrix out of a config file as the server reads it, the env key
+// winning over the conf one. Only a file with no settings is the bare matrix. Settings without the
+// matrix, or an unterminated quote, give "", so no other setting's value comes back.
 func WorldBuffMatrixSetting(text string) string {
-	for start := 0; start < len(text); {
-		end := strings.IndexByte(text[start:], '\n')
-		if end < 0 {
-			end = len(text)
-		} else {
-			end += start
+	lines := strings.Split(text, "\n")
+	var env, conf string
+	envFound, confFound, bare := false, false, true
+	for i := 0; i < len(lines); i++ {
+		line := strings.TrimPrefix(strings.TrimSpace(lines[i]), "export ")
+		if isSettingLine(line) {
+			bare = false
 		}
-		line := strings.TrimLeft(text[start:end], " \t")
-		for _, key := range worldBuffMatrixKeys {
-			rest := strings.TrimLeft(strings.TrimPrefix(line, key), " \t")
-			if !strings.HasPrefix(line, key) || rest == "" || (rest[0] != '=' && rest[0] != ':') {
-				continue
+		if key, value, ok := strings.Cut(line, "="); ok && strings.TrimSpace(key) == worldBuffMatrixConfKey {
+			if !confFound {
+				conf, confFound = strings.ReplaceAll(strings.TrimSpace(value), `"`, ""), true
 			}
-			value := strings.TrimLeft(text[end-len(rest)+1:], " \t")
-			if value != "" && (value[0] == '"' || value[0] == '\'') {
-				if closing := strings.IndexByte(value[1:], value[0]); closing >= 0 {
-					return value[1 : 1+closing]
-				}
-				return value[1:]
-			}
-			if newline := strings.IndexByte(value, '\n'); newline >= 0 {
-				value = value[:newline]
-			}
-			return strings.TrimSpace(value)
+			continue
 		}
-		start = end + 1
+		rest, ok := strings.CutPrefix(line, worldBuffMatrixEnvKey)
+		rest = strings.TrimLeft(rest, " \t")
+		if !ok || rest == "" || (rest[0] != '=' && rest[0] != ':') {
+			continue
+		}
+		v := strings.TrimSpace(rest[1:])
+		if v == "" || (v[0] != '"' && v[0] != '\'') {
+			if j := strings.Index(v, " #"); j >= 0 {
+				v = strings.TrimSpace(v[:j])
+			}
+			env, envFound = v, true
+			continue
+		}
+		quoted := strings.Join(append([]string{v[1:]}, lines[i+1:]...), "\n")
+		closing := strings.IndexByte(quoted, v[0])
+		if closing < 0 {
+			return ""
+		}
+		env, envFound = quoted[:closing], true
+		i += strings.Count(quoted[:closing], "\n")
 	}
-	return text
+	switch {
+	case envFound:
+		return env
+	case confFound:
+		return conf
+	case bare:
+		return text
+	}
+	return ""
 }
 
 // ReadWorldBuffMatrix reads the matrix from a file: Playerbot.env, playerbots.conf or the bare matrix.

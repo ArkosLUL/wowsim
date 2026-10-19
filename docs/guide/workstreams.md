@@ -21,6 +21,7 @@ gets its own `<effort>-<id>` branch and worktree off `integration` ([int]).
 | bis-tooltip-addon | Serve the BiS optimizer's results to an in-game tooltip addon through a server module | `bis-tooltip-addon`; [sim] | [docs/bis-tooltip-addon/](../bis-tooltip-addon/) | `tools/database/acbis/`, `tools/database/azerothcore/bisdata*.go`, `[ac]/modules/mod-bis-tooltip` (own repo), the BisTooltipAC addon (own repo) |
 | stat-weights | Wide-step stat slopes per build and phase at the BiS presets, for the playerbots' stat weights | `stat-weights`; [sim] | [statweights README](../../tools/statweights/README.md) | `tools/statweights/` |
 | dps-rankings | DPS tier list page: every DPS build's DPS per content phase in one standard scenario | `dps-rankings`; `wowsimwotlk-rankings` | [docs/dps-rankings/](../dps-rankings/) | `tools/rankings/`, `ui/rankings/`, `ui/scss/sims/rankings/`, `assets/rankings/`, `tools/uitest/tests/rankings/` |
+| spec-balance | Every in-scope DPS build at B tier or above in the rankings, through rotation fixes and mod-spell-tweaks buffs; the Playerbot switch | `spec-balance`; `wowsimwotlk-balance` | [docs/spec-balance/](../spec-balance/) | `docs/spec-balance/`, `tools/rankings/balance_check*.py`, the Playerbot switch's core files; per-phase carve-outs in its PLAN |
 | dev-guide | This guide's structure | `master` | `docs/dev-guide/` | `CLAUDE.md`, `CONTEXT.md`, `docs/guide/`, `docs/adr/`. Every effort adds content |
 
 ## Dependencies
@@ -38,6 +39,8 @@ the cross-effort ties:
   `bis_presets.json`. Playerbots' `apps/simweights/generate_weights.py` reads its `weights.json` and
   maps or skips every `BUILDS` key (an unknown one fails the run), so a change to the `gen.py` API, the
   `BUILDS` keys or that layout needs the other side updated.
+- **Playerbot switch:** presetgen, statweights' capture and the rankings all turn it on
+  ([playerbot rules](playerbot-rules.md)), so a change to it moves the BiS presets, stat weights and rankings.
 - **DPS rankings:** `tools/rankings` runs statweights' `capture.py`, imports its `merge.py` and presetgen's
   `gen.py`, and reads the `p*_bis*` presets and `bis_presets.json`, so a change to those needs it updated.
 - **Shared files:** bis-optimizer edits `proto/api.proto`, `sim/core/database.go`, `sim/web/main.go`,

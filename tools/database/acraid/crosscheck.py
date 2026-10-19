@@ -239,12 +239,49 @@ def food_buff(spell):
 
 
 def matrix_text(text):
-    """The world-buff matrix out of Playerbot.env, playerbots.conf, or a file holding just the matrix."""
-    quoted = re.search(r'^[ \t]*AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX[ \t]*[=:][ \t]*(["\'])(.*?)\1', text, re.M | re.S)
-    if quoted:
-        return quoted.group(2)
-    line = re.search(r'^[ \t]*(?:AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX|AiPlayerbot\.WorldBuffMatrix)[ \t]*[=:](.*)$', text, re.M)
-    return line.group(1) if line else text
+    """The world-buff matrix out of Playerbot.env, playerbots.conf, or a file holding just the matrix, as
+    the server reads it, the env key winning over the conf one. Only a file with no settings is the bare
+    matrix. Settings without the matrix, or an unterminated quote, give '', so no other setting's value
+    comes back."""
+    env_key, conf_key = 'AC_PLAYERBOTS_WORLD_BUFF_MATRIX', 'Playerbots.WorldBuffMatrix'
+    setting = re.compile(r'[A-Za-z_][A-Za-z0-9_.]*[ \t]*([=:])(.*)', re.A)
+    # a bare matrix's "ARMS:0,1,0,80,80:..." looks like a setting otherwise
+    matrix_meta = re.compile(r'\s*\d+(,\s*\d+){4}\s*:', re.A)
+    lines = text.split('\n')
+    env = conf = None
+    bare = True
+    i = 0
+    while i < len(lines):
+        line = lines[i].strip()
+        i += 1
+        if line.startswith('export '):
+            line = line[len('export '):]
+        match = setting.fullmatch(line)
+        if match and (match.group(1) == '=' or not matrix_meta.match(match.group(2))):
+            bare = False
+        key, equals, value = line.partition('=')
+        if equals and key.strip() == conf_key:
+            if conf is None:
+                conf = value.strip().replace('"', '')
+            continue
+        rest = line[len(env_key):].lstrip(' \t') if line.startswith(env_key) else ''
+        if rest[:1] not in ('=', ':'):
+            continue
+        value = rest[1:].strip()
+        if value[:1] not in ('"', "'"):
+            env = value.split(' #')[0].strip()
+            continue
+        quoted = '\n'.join([value[1:]] + lines[i:])
+        closing = quoted.find(value[0])
+        if closing < 0:
+            return ''
+        env = quoted[:closing]
+        i += quoted.count('\n', 0, closing)
+    if env is not None:
+        return env
+    if conf is not None:
+        return conf
+    return text if bare else ''
 
 
 def world_buffs():

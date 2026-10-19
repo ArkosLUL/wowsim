@@ -54,6 +54,9 @@ type Character struct {
 	// Consumables this Character will be using.
 	Consumes *proto.Consumes
 
+	// simmed as a mod-playerbots bot plays: its consumables, potion timing and pre-pull
+	Playerbot bool
+
 	// Base stats for this Character.
 	baseStats stats.Stats
 
@@ -152,6 +155,10 @@ func NewCharacter(party *Party, partyIndex int, player *proto.Player) Character 
 	character.Consumes = &proto.Consumes{}
 	if player.Consumes != nil {
 		character.Consumes = player.Consumes
+	}
+	character.Playerbot = player.Playerbot
+	if character.Playerbot {
+		character.Consumes = playerbotConsumes(character.Consumes, character.Class, player.TalentsString)
 	}
 
 	character.baseStats = BaseStats(character.BaseStatsRace, character.Class)

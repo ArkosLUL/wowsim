@@ -877,15 +877,56 @@ func TestParseWorldBuffMatrix(t *testing.T) {
 
 func TestWorldBuffMatrixSetting(t *testing.T) {
 	for comment, text := range map[string]string{
-		"env file, quoted over several lines": "      AC_AI_PLAYERBOT_ROLL: \"5\"\n       AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX=\"1:0,1,0,80,80:53760; \n         2:0,1,1,80,80:53760\"\n      AC_NEXT: \"1\"\n",
-		"compose environment":                 "    AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX: '1:0,1,0,80,80:53760; 2:0,1,1,80,80:53760'\r\n",
-		"playerbots.conf, after a comment":    "# AiPlayerbot.WorldBuffMatrix = 9:0,9,9,1,1:1\nAiPlayerbot.WorldBuffMatrix = # ARMS 1:0,1,0,80,80:53760; # FURY 2:0,1,1,80,80:53760\nAiPlayerbot.Next = 1\n",
+		"env file, quoted over several lines": "      AC_PLAYERBOTS_ROLL: \"5\"\n       AC_PLAYERBOTS_WORLD_BUFF_MATRIX=\"1:0,1,0,80,80:53760; \n         2:0,1,1,80,80:53760\"\n      AC_NEXT: \"1\"\n",
+		"compose environment":                 "    AC_PLAYERBOTS_WORLD_BUFF_MATRIX: '1:0,1,0,80,80:53760; 2:0,1,1,80,80:53760'\r\n",
+		"playerbots.conf, after a comment":    "# Playerbots.WorldBuffMatrix = 9:0,9,9,1,1:1\nPlayerbots.WorldBuffMatrix = # ARMS 1:0,1,0,80,80:53760; # FURY 2:0,1,1,80,80:53760\nPlayerbots.Next = 1\n",
+		"the last one set wins":               "AC_PLAYERBOTS_WORLD_BUFF_MATRIX=\"9:0,9,9,1,1:1\"\nAC_PLAYERBOTS_WORLD_BUFF_MATRIX=\"1:0,1,0,80,80:53760;2:0,1,1,80,80:53760\"\n",
+		"env file, CRLF":                      "AC_PLAYERBOTS_ROLL: \"5\"\r\nAC_PLAYERBOTS_WORLD_BUFF_MATRIX=\"1:0,1,0,80,80:53760;\r\n  2:0,1,1,80,80:53760\"\r\nAC_NEXT: \"1\"\r\n",
+		"export":                              "export AC_PLAYERBOTS_WORLD_BUFF_MATRIX=\"1:0,1,0,80,80:53760;2:0,1,1,80,80:53760\"\nexport AC_NEXT=\"a;b\"\n",
+		"unquoted, up to a comment":           "AC_PLAYERBOTS_WORLD_BUFF_MATRIX=1:0,1,0,80,80:53760;2:0,1,1,80,80:53760 # 3:0,1,2,80,80:53760\n",
+		"playerbots.conf, the first one set":  "Playerbots.WorldBuffMatrix = \"1:0,1,0,80,80:53760;2:0,1,1,80,80:53760\"\r\nPlayerbots.WorldBuffMatrix = 9:0,9,9,1,1:1\r\n",
+		"the env key over the conf one":       "AC_PLAYERBOTS_WORLD_BUFF_MATRIX='1:0,1,0,80,80:53760;2:0,1,1,80,80:53760'\nPlayerbots.WorldBuffMatrix = 9:0,9,9,1,1:1\n",
 		"bare matrix":                         "1:0,1,0,80,80:53760;\n2:0,1,1,80,80:53760\n",
+		"bare matrix, CRLF":                   "1:0,1,0,80,80:53760;\r\n2:0,1,1,80,80:53760\r\n",
+		"bare matrix, labels as identifiers":  "ARMS:0,1,0,80,80:53760;\nFURY:0,1,1,80,80:53760\n",
 	} {
 		buffs, problems := ParseWorldBuffMatrix(WorldBuffMatrixSetting(text))
 		if len(buffs) != 2 || buffs[0].Spec != 0 || buffs[1].Spec != 1 || len(problems) != 0 {
 			t.Errorf("%s: %+v, %v", comment, buffs, problems)
 		}
+	}
+}
+
+func TestWorldBuffMatrixSettingKeepsOtherSettingsOut(t *testing.T) {
+	for comment, text := range map[string]string{
+		"no matrix key":          "AC_PLAYERBOTS_ROLL: \"5\"\nAC_SECRET=hunter2\nPlayerbots.Next = 1\n",
+		"the old keys":           "AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX=\"1:0,1,0,80,80:53760\"\nAiPlayerbot.WorldBuffMatrix = 1:0,1,0,80,80:53760\nAC_SECRET=hunter2\n",
+		"unterminated quote":     "AC_PLAYERBOTS_WORLD_BUFF_MATRIX=\"1:0,1,0,80,80:53760;\nAC_SECRET=hunter2\n",
+		"a key as a prefix only": "AC_PLAYERBOTS_WORLD_BUFF_MATRIX_X=\"1:0,1,0,80,80:53760\"\nAC_SECRET=hunter2\n",
+		"export lines only":      "export AC_SECRET=hunter2\nexport AC_OTHER=x\n",
+		"settings, CRLF":         "AC_SECRET=hunter2\r\nAC_OTHER: \"x\"\r\n",
+	} {
+		if got := WorldBuffMatrixSetting(text); got != "" {
+			t.Errorf("%s: got %d bytes, want none", comment, len(got))
+		}
+	}
+}
+
+func TestReadWorldBuffMatrixLogsNothingOutsideTheMatrix(t *testing.T) {
+	path := filepath.Join(t.TempDir(), "Playerbot.env")
+	text := "AC_SECRET=hunter2\nAC_PLAYERBOTS_WORLD_BUFF_MATRIX=\"1:0,1,0,80,80:53760;\n  bad entry;\n  2:0,1,1,80,80:53760\"\nAC_OTHER: x:y\n"
+	if err := os.WriteFile(path, []byte(text), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	buffs, problems, err := ReadWorldBuffMatrix(path)
+	if err != nil || len(buffs) != 2 || len(problems) != 1 || strings.Contains(problems[0], "hunter2") || strings.Contains(problems[0], "AC_OTHER") {
+		t.Errorf("buffs %+v, problems %v, err %v", buffs, problems, err)
+	}
+	if err := os.WriteFile(path, []byte("AC_SECRET=hunter2\nAC_OTHER: x:y\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, problems, err := ReadWorldBuffMatrix(path); err == nil || len(problems) != 0 {
+		t.Errorf("without a matrix: problems %v, err %v", problems, err)
 	}
 }
 

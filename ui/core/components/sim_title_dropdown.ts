@@ -12,6 +12,7 @@ import {
 	raidSimIcon,
 	raidSimLabel,
 	raidSimSiteUrl,
+	rankingsSiteUrl,
 	specNames,
 	specToClass,
 	textCssClassForClass,
@@ -38,7 +39,6 @@ type SimTitleDropdownConfig = {
 	noDropdown?: boolean;
 };
 
-const rankingsSiteUrl = '/wotlk/rankings/';
 const rankingsIcon = 'https://wow.zamimg.com/images/wow/icons/large/achievement_bg_topdps.jpg';
 const rankingsLabel = 'DPS Rankings';
 

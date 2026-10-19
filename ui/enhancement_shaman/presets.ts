@@ -98,6 +98,7 @@ export const DefaultOptions = EnhancementShamanOptions.create({
 		fire: 	FireTotem.MagmaTotem,
 		water: 	WaterTotem.ManaSpringTotem,
 		air: 	AirTotem.WindfuryTotem,
+		useFireElemental: true,
 	})
 });
 

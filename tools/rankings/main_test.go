@@ -64,27 +64,19 @@ func TestStandardizeReplacesBuffs(t *testing.T) {
 	}
 }
 
-func TestStandardizePotions(t *testing.T) {
-	c := standardize(capturedSettings(), 180).Player.Consumes
-	if c.DefaultPotion != proto.Potions_PotionOfSpeed || c.PrepopPotion != proto.Potions_PotionOfSpeed {
-		t.Errorf("potions %v / %v: want Potion of Speed for both", c.DefaultPotion, c.PrepopPotion)
-	}
-	if c.Flask != proto.Flask_FlaskOfEndlessRage || c.Food != proto.Food_FoodFishFeast {
-		t.Errorf("flask %v, food %v: want the page's", c.Flask, c.Food)
-	}
-
+// The core's Playerbot switch picks the potion, flask and food, so the page's stay in the settings as
+// they were.
+func TestStandardizePlaysAsABot(t *testing.T) {
 	in := capturedSettings()
-	in.Player.Consumes.DefaultPotion = proto.Potions_PotionOfWildMagic
-	in.Player.Consumes.PrepopPotion = proto.Potions_HastePotion
-	c = standardize(in, 180).Player.Consumes
-	if c.DefaultPotion != proto.Potions_PotionOfWildMagic || c.PrepopPotion != proto.Potions_HastePotion {
-		t.Errorf("potions %v / %v: a set pre-pot must stay", c.DefaultPotion, c.PrepopPotion)
+	out := standardize(in, 180)
+	if !out.Player.Playerbot {
+		t.Error("the Playerbot switch is off")
 	}
-
-	in.Player.Consumes.PrepopPotion = proto.Potions_UnknownPotion
-	c = standardize(in, 180).Player.Consumes
-	if c.PrepopPotion != proto.Potions_PotionOfWildMagic {
-		t.Errorf("pre-pot %v: want the main potion", c.PrepopPotion)
+	if !googleProto.Equal(out.Player.Consumes, capturedSettings().Player.Consumes) {
+		t.Errorf("consumes %v: want the page's", out.Player.Consumes)
+	}
+	if in.Player.Playerbot {
+		t.Error("the captured settings were modified")
 	}
 }
 

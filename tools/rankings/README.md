@@ -29,12 +29,13 @@ python tools/rankings/merge.py --out tmp/rankings
 
 ## Standard scenario
 
-Applied to each captured request (`scenario.go`), so builds compare:
-- **Kept from the page:** talents, glyphs, spec options, flasks, food and rotation.
+Applied to each captured request (`scenario.go`), so builds compare as playerbots play them:
+- **Kept from the page:** talents, glyphs, spec options and rotation.
+- **Playerbot switch** on: the bots' potion, flask and food, and their pre-pull
+  ([playerbot rules](../../docs/guide/playerbot-rules.md)).
 - **Buffs:** explicit full raid buffs, boss debuffs, blessings, Mana Tide and Heroic Presence in every
   party. No single-target gifts (Focus Magic, Tricks, Power Infusion, Innervate, Hysteria). The lists
   are copies of `core.Full*` in `sim/core/test_utils.go`, which the goldens own.
-- **Potions:** no pre-pot becomes the main potion; Indestructible becomes Potion of Speed.
 - **Tanks:** none.
 - **Boss:** one level 83 Giant, armor 10643, AP 805, as the optimizer's `plainBossTarget`; execute
   20/25/35%; length 60, 180 or 300 s ±5 s. The captured raid difficulty (unset on every page, so
@@ -57,3 +58,22 @@ In `--out`:
 - `sim_commit` (HEAD, `-dirty` when `sim/`, `proto/` or `assets/` outside `assets/rankings/` changed),
   `generated_at`, `catalog_date` (one value across the BiS presets), `iterations`, `seed`, `fights`.
 - `builds[]`: `key`, `name`, `class`, `spec`, `dir`, `talents`, and `phases[]` of `{phase, fights, link}`.
+
+## Balance check
+
+`balance_check.py` checks a `rankings.json` against [spec-balance](../../docs/spec-balance/spec-balance.PLAN.md)'s
+targets and prints every build's % of top and tier per phase and fight, as the page shows them.
+
+```sh
+python tools/rankings/balance_check.py [--rankings FILE] [--base FILE] [--buffed key,key]
+python -B -m unittest tools/rankings/balance_check_test.py
+```
+
+`--rankings` defaults to the committed JSON; `--base` is a run from before the buffs; `--buffed` lists every
+build a server buff changed, spillover included. It checks the counted cells (P1–P5 at 180 and 300 s) and
+exits 1 on any of:
+- a missing result, or an in-scope build below 85% of the cell's top (the excluded builds are `EXCLUDED`);
+- a `--buffed` build at 95% or more, unless `--base` had it there already and it rose 0.3 points at most; a
+  build that held the cell's top counts its rise against its own old DPS;
+- a `--buffed` build taking a cell's top from another build (needs `--base`);
+- an excluded build at 95% or more.

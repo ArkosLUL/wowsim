@@ -32,6 +32,7 @@
 				"castSpell": { "spellId": { "spellId": 2825, "tag": -1 } }
 			}
 		},
+		{ "action": { "autocastOtherCooldowns": {} } },
 		{
 			"action": {
 				"condition": { "auraIsActive": { "auraId": { "spellId": 70840 } } },
@@ -114,13 +115,13 @@
 				"sequence": {
 					"name": "big snap",
 					"actions": [
-						{ "castSpell": { "spellId": { "otherId": "OtherActionPotion" } } },
 						{ "castSpell": { "spellId": { "itemId": 45466 } } },
 						{ "castSpell": { "spellId": { "spellId": 33697 } } },
 						{ "castSpell": { "spellId": { "spellId": 54758 } } },
 						{ "castSpell": { "spellId": { "itemId": 45148 } } },
 						{ "castSpell": { "spellId": { "itemId": 48722 } } },
-						{ "castSpell": { "spellId": { "itemId": 50357 } } }
+						{ "castSpell": { "spellId": { "itemId": 50357 } } },
+						{ "castSpell": { "spellId": { "otherId": "OtherActionPotion" } } }
 					]
 				}
 			}

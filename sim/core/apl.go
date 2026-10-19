@@ -87,12 +87,15 @@ func (unit *Unit) newAPLRotation(config *proto.APLRotation) *APLRotation {
 		prepullWarnings:      make([][]string, len(config.PrepullActions)),
 		priorityListWarnings: make([][]string, len(config.PriorityList)),
 	}
+	playerbot := unit.isPlayerbot()
 
 	// Parse prepull actions
 	for i, prepullItem := range config.PrepullActions {
 		prepullIdx := i // Save to local variable for correct lambda capture behavior
 		rotation.doAndRecordWarnings(&rotation.prepullWarnings[prepullIdx], true, func() {
-			if !prepullItem.Hide {
+			if !prepullItem.Hide && playerbot && !playerbotKeepsPrepull(prepullItem.Action) {
+				rotation.ValidationWarning("Playerbot: skipped, bots don't set this up before the pull")
+			} else if !prepullItem.Hide {
 				doAtVal := rotation.newAPLValue(prepullItem.DoAtValue)
 				if doAtVal != nil {
 					doAt := doAtVal.GetDuration(nil)
@@ -142,6 +145,10 @@ func (unit *Unit) newAPLRotation(config *proto.APLRotation) *APLRotation {
 		})
 	}
 
+	if playerbot {
+		rotation.addPlayerbotPotion()
+	}
+
 	// Remove MCDs that are referenced by APL actions, so that the Autocast Other Cooldowns
 	// action does not include them.
 	agent := unit.Env.GetAgentFromUnit(unit)
@@ -156,6 +163,9 @@ func (unit *Unit) newAPLRotation(config *proto.APLRotation) *APLRotation {
 
 	// If user has a Prepull potion set but does not use it in their APL settings, we enable it here.
 	rotation.doAndRecordWarnings(nil, true, func() {
+		if playerbot {
+			return
+		}
 		prepotSpell := rotation.GetAPLSpell(ActionID{OtherID: proto.OtherAction_OtherActionPotion}.ToProto())
 		if prepotSpell != nil {
 			found := false

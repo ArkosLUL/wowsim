@@ -65,7 +65,8 @@ In `--out`:
   `TypeAuto` without the APL the page resolves (it sims Fire Mage at 0 DPS). UI defaults live only
   in TS, so there is no browser-free path.
   - Each build's page opens as presetgen opens it: cleared storage, the tree's talent preset, an
-    Alliance race, all professions, party Heroic Presence, the build's pet talent preset. Other buffs,
+    Alliance race, all professions, party Heroic Presence, the build's pet talent preset, the Playerbot
+    switch on ([playerbot rules](../../docs/guide/playerbot-rules.md)). Other buffs,
     debuffs, consumes, encounter and rotation stay the page's defaults.
   - Per phase, capture imports the gear from `ui/<dir>/gear_sets/p<N>_bis[_<tree>].gear.json` and
     the racial traits from that directory's `bis_presets.json`. It saves the last `computeStats`
