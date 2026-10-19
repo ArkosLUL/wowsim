@@ -526,13 +526,9 @@ func goldcharSetupsFromSuites(root string) ([]goldcharSetup, error) {
 	if err != nil {
 		return nil, err
 	}
-	data, err := loadDamageData()
+	glyphSpells, err := glyphItemSpells()
 	if err != nil {
 		return nil, err
-	}
-	glyphSpells := make(map[int32]int32, len(data.glyphItems))
-	for spell, item := range data.glyphItems {
-		glyphSpells[item] = spell
 	}
 
 	var setups []goldcharSetup
@@ -552,6 +548,19 @@ func goldcharSetupsFromSuites(root string) ([]goldcharSetup, error) {
 		}
 	}
 	return setups, nil
+}
+
+// glyphItemSpells maps each glyph item to the glyph spell it teaches.
+func glyphItemSpells() (map[int32]int32, error) {
+	data, err := loadDamageData()
+	if err != nil {
+		return nil, err
+	}
+	spells := make(map[int32]int32, len(data.glyphItems))
+	for spell, item := range data.glyphItems {
+		spells[item] = spell
+	}
+	return spells, nil
 }
 
 func (s suiteSetup) goldchar(root string, glyphSpells map[int32]int32) (goldcharSetup, error) {
@@ -579,23 +588,35 @@ func (s suiteSetup) goldchar(root string, glyphSpells map[int32]int32) (goldchar
 		return setup, err
 	}
 	var gear struct {
-		Items []struct {
-			ID      int32   `json:"id"`
-			Enchant int32   `json:"enchant"`
-			Gems    []int32 `json:"gems"`
-		} `json:"items"`
+		Items []gearSetItem `json:"items"`
 	}
 	if err := json.Unmarshal(raw, &gear); err != nil {
 		return setup, fmt.Errorf("%s: %w", s.gearSet, err)
 	}
-	if len(gear.Items) > len(serverEquipSlots) {
-		return setup, fmt.Errorf("%s has %d items", s.gearSet, len(gear.Items))
+	err = setup.fill(root, s.gearSet, gear.Items, s.glyphs, glyphSpells)
+	return setup, err
+}
+
+// gearSetItem is an item as a gear set file or a page's equipment lists it, in the sim's ItemSlot order.
+type gearSetItem struct {
+	ID      int32   `json:"id"`
+	Enchant int32   `json:"enchant"`
+	Gems    []int32 `json:"gems"`
+}
+
+// fill works out the server's items, enchants, gems, talent spells and glyphs for the class and talents the
+// setup already has. source names where the items came from, for an error.
+func (setup *goldcharSetup) fill(root, source string, items []gearSetItem, glyphs *proto.Glyphs,
+	glyphSpells map[int32]int32) error {
+	className := azerothcore.ClassNames[int32(setup.Class)]
+	if len(items) > len(serverEquipSlots) {
+		return fmt.Errorf("%s has %d items", source, len(items))
 	}
 	gearData, err := loadGoldcharGearData()
 	if err != nil {
-		return setup, err
+		return err
 	}
-	for i, item := range gear.Items {
+	for i, item := range items {
 		if item.ID == 0 {
 			continue
 		}
@@ -611,8 +632,8 @@ func (s suiteSetup) goldchar(root string, glyphSpells map[int32]int32) (goldchar
 			case gem == 0:
 				continue
 			case socket > sockets || socket == sockets && socketEnchants[slot] == 0 || socket >= maxGemSockets:
-				return setup, fmt.Errorf("%s: item %d has %d sockets and no way to add one, but a gem in socket %d",
-					s.gearSet, item.ID, sockets, socket)
+				return fmt.Errorf("%s: item %d has %d sockets and no way to add one, but a gem in socket %d",
+					source, item.ID, sockets, socket)
 			case socket == sockets:
 				setup.Enchants = append(setup.Enchants, goldcharEnchant{Slot: slot, Enchant: socketEnchants[slot]})
 			}
@@ -620,28 +641,28 @@ func (s suiteSetup) goldchar(root string, glyphSpells map[int32]int32) (goldchar
 		}
 	}
 
-	setup.TalentSpells, err = talentStringSpells(filepath.Join(root, talentTreesDir, className+".json"), s.talents)
+	setup.TalentSpells, err = talentStringSpells(filepath.Join(root, talentTreesDir, className+".json"), setup.Talents)
 	if err != nil {
-		return setup, err
+		return err
 	}
 
 	for _, slot := range []struct {
 		item   int32
 		server uint8
 	}{
-		{s.glyphs.Major1, majorGlyphSlots[0]}, {s.glyphs.Major2, majorGlyphSlots[1]}, {s.glyphs.Major3, majorGlyphSlots[2]},
-		{s.glyphs.Minor1, minorGlyphSlots[0]}, {s.glyphs.Minor2, minorGlyphSlots[1]}, {s.glyphs.Minor3, minorGlyphSlots[2]},
+		{glyphs.GetMajor1(), majorGlyphSlots[0]}, {glyphs.GetMajor2(), majorGlyphSlots[1]}, {glyphs.GetMajor3(), majorGlyphSlots[2]},
+		{glyphs.GetMinor1(), minorGlyphSlots[0]}, {glyphs.GetMinor2(), minorGlyphSlots[1]}, {glyphs.GetMinor3(), minorGlyphSlots[2]},
 	} {
 		if slot.item == 0 {
 			continue
 		}
 		spell, ok := glyphSpells[slot.item]
 		if !ok {
-			return setup, fmt.Errorf("glyph item %d isn't in %s", slot.item, simDBJSON)
+			return fmt.Errorf("glyph item %d isn't in %s", slot.item, simDBJSON)
 		}
 		setup.Glyphs = append(setup.Glyphs, goldcharGlyph{Slot: slot.server, Item: slot.item, Spell: spell})
 	}
-	return setup, nil
+	return nil
 }
 
 type talentLocation struct {

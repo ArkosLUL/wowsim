@@ -1,8 +1,8 @@
 # Playerbot rules
 
 The Playerbot switch, `Player.playerbot` (`proto/api.proto`), sims a character as mod-playerbots plays it.
-Off by default: the "Playerbot" checkbox in a sim page's Player settings. presetgen, statweights' capture
-and the rankings always turn it on (their READMEs). Goldens run with it off.
+Off by default: the "Playerbot" checkbox in a sim page's Player settings. presetgen, statweights' capture,
+the rankings and `tools/simval botdps compare` always turn it on (their READMEs). Goldens run with it off.
 
 ## What it changes
 

@@ -21,6 +21,9 @@
 //
 // `threat` cuts a TestSimvalThreat run's streamed records down to the fixture TestThreatRecords replays.
 //
+// `botdps setups` writes mod-sim-validation's TestBotDps setups from captured page settings, and `botdps
+// compare` sims each of its captures' builds as a bot plays them, next to the bot's DPS and casts.
+//
 //	tools/acore/dock.sh run ./tools/simval
 //	tools/acore/dock.sh run ./tools/simval -fixture
 //	tools/acore/dock.sh run ./tools/simval chronicle -sim 8123 <log>
@@ -28,6 +31,8 @@
 //	tools/acore/dock.sh run ./tools/simval talents -records /wotlk/tmp/sweep.jsonl
 //	tools/acore/dock.sh run --tags=with_db ./tools/simval fight sim/core/testdata/fights/WarriorFury.log.gz
 //	tools/acore/dock.sh run ./tools/simval threat -records /wotlk/tmp/stream.jsonl -since 1791638900000
+//	tools/acore/dock.sh run --tags=with_db ./tools/simval botdps setups -settings tmp/p2/settings -out tmp/p2/setups.json
+//	tools/acore/dock.sh run --tags=with_db ./tools/simval botdps compare -setups tmp/p2/setups.json <capture.log>...
 package main
 
 import (
@@ -57,6 +62,8 @@ func main() {
 			os.Exit(runTalentTrim(os.Args[2:]))
 		case "fight":
 			os.Exit(runFight(os.Args[2:]))
+		case "botdps":
+			os.Exit(runBotDps(os.Args[2:]))
 		case "threat":
 			os.Exit(runThreatFixture(os.Args[2:]))
 		}

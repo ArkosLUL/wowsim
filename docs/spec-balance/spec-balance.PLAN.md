@@ -5,7 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a, P0b and P1 landed, with the user's P1 decisions; P2's spike passed. Results, later-phase notes and the spike's recipe in `spec-balance.INVESTIGATION.md`. Next: the baseline (after the BiS chain); P2's `TestBotDps`.
+Status: P0a, P0b, P1 and P2 landed, with the user's P1 decisions. Results, later-phase notes and P2's per-build bot findings in `spec-balance.INVESTIGATION.md`. Next: P3 for the builds P2 flagged; the baseline (after the BiS chain).
 
 ## Context
 
@@ -201,9 +201,13 @@ Phase loop per [sim] `docs/guide/workflow.md`: implement + verify in a subagent,
    (`SIMVAL_RECORD_TALENT_SPELLS`), glyphs and BiS gear (`.simval equip`) from the build's sim setup at the chosen
    phase; raid buffs as far as the harness can apply them; 180 s; the bot's own strategies cast. Writes the
    Chronicle log + `.setup.txt`.
-3. `[sim] tools/simval chronicle` reads the bot's DPS and casts; the sim runs the same setup with the switch on
+3. `[sim] tools/simval botdps compare` reads the bot's DPS and casts; the sim runs the same setup with the switch on
    and the build's current APL. Report per spec: bot/sim DPS ratio, cast-count and uptime differences.
 4. README entry in [simval] under "Live e2e tests".
+
+Carve-outs from e2e-coverage's trees: [sim] `tools/simval/botdps*.go`, its README's `## botdps`, `fill` and
+`glyphItemSpells` in `goldchar.go`; [simval] `e2e/botdps_test.go`, its `run.sh` lines and README paragraph,
+`goldcharBuild`'s `learnAll`, `records_test.go`'s `holdRecordDrops`.
 
 ## P3: Playerbot rotation fixes ([bots], after P2)
 

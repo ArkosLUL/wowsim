@@ -738,6 +738,50 @@ crit and glance averages and its crit rate over landed hits, each ± one standar
 | `-out` | also write the sim request here as JSON |
 | `-v` | also print final stats, pet talents, glyphs, an ability breakdown and per-outcome averages |
 
+## botdps
+
+The two ends of mod-sim-validation's `TestBotDps`, where a playerbot fights the boss dummy in a build's gear
+(module README):
+
+```bash
+python tools/statweights/capture.py --out tmp/p2/capture --phases 3 --builds <keys> --base <sim server>
+tools/acore/dock.sh run --tags=with_db ./tools/simval botdps setups \
+  -dbc /dbc/Server -settings tmp/p2/capture/settings -phase 3 -out tmp/p2/botdps_setups.json
+tools/acore/dock.sh run --tags=with_db ./tools/simval botdps compare \
+  -setups tmp/p2/botdps_setups.json tmp/p2/botdps/*.log
+```
+
+`-dbc /dbc/Server` is the live DBCs under dock.sh's default `DBC_DIR`; compare reads none.
+
+**setups** reads captured page settings (`<build>_p<N>.bin`, statweights' capture: the page's
+`ComputeStatsRequest`) and writes per build the server's side, as `goldchar.go` works it out for a golden
+character (`fill`): items, enchants and gems, talent spells, glyphs with their GlyphProperties ids (`-dbc`). Plus:
+the racial traits (`traits`, mod-racial-trait-swap), reforges by ItemModType, the Playerbot switch's potion, a
+hunter's ammo (the arrow or bullet of its setting, by the ranged weapon) and pet family (CreatureFamily.dbc
+name), the professions' SkillLine ids (`skills`), `caster` (mage, warlock,
+Shadow, Balance, Elemental: blessed with Wisdom, not Might), and the settings themselves. `-builds` takes keys,
+default every one captured at `-phase`.
+
+**compare** sims each capture's build from the settings its `.setup.txt` names: Playerbot switch on, only the
+`buffs:` switches the e2e saw on (`buffSetOf`), the boss dummy as target (level 83 giant world boss, no execute
+phase: the dummy's health never drops), for the fight's length, `-iterations` (3000), `-seed` (101). The window
+runs `seconds:` from the `pull:` (on the log's clock); a log ending before it is refused. The bot's DPS is its and
+its minions' damage to the unit they hurt most. Per capture it prints bot and sim DPS (± one iteration's stdev)
+and bot/sim, the casts that differ by more than 10% and more than 2 (`SPELL_CAST_SUCCESS` in the window against
+the sim's mean; a spell's lowest tag, since a higher one is a part the cast sets off, such as Pyroblast's dot),
+and the target auras the bot and its minions put up whose uptime differs by more than 5 points; `-v` lists them
+all. A failed capture is reported and skipped; the exit code says so. With several captures it adds a table by bot/sim, flagging
+a build more than 5 points below the median (the spec-balance PLAN's trigger for bot fixes).
+
+Reading it:
+- Procs and triggered spells log casts the sim has none of (Hot Streak, Clearcasting).
+- Mirror Image's three images each log their casts; the sim's image pet counts one image's.
+- The sim's Rend bonus above 75% health follows time left, the dummy's health never drops: Arms' sim is low.
+- A buff the bot lost during the fight (`buffs lost:`) stays on in the sim; the report names them.
+- Mind Flay's row (48156) counts channels: the sim's are its tick spell's casts (58381, every tag), and the log's
+  per-tick 58381 casts are left out.
+- A hunter's pet has playerbots' default talents for its family (`tame family`), the sim's the page's.
+
 ## Captures
 
 `sim/core/testdata/chronicle/` holds recorded runs as `<spec>_<player>_<unix>.log.gz`, each with a

@@ -125,3 +125,59 @@ P3 candidate: after drinking, the bot retries `offensive potion` every ~2.5 s, f
 `649_2_thrakgar_1792361718`: 105 of 127 attempts FAILED). `PotionSpellsReady` (`UseItemAction.cpp`) is meant to
 stop that but doesn't see the in-combat potion lock. No lost casts seen, wasted AI ticks only.
 Also seen: a rogue bot applied its poisons after the pull.
+
+## P2 results (2026-10-19)
+
+`TestBotDps` ([simval] README) fought each build 180 s, five at a time; `tools/simval botdps compare` (its README
+section) simmed the same. Phase P3: the core raid is on ToC 25H and Ulduar 25 (26 characters bound to maps 649 and
+603, none to ICC; `character_instance`). Settings: the 20 builds captured at P3 from a dev server on [bal]
+`72287986a`. Files in `tmp/p2/`: `capture/settings/`, `botdps_setups.json`, `botdps/` (one fight per build),
+`botdps-repeat/`, `compare-v2.txt`, Fire's serial and parallel control in `botdps-serial/` and `botdps-control/`.
+The first run (`botdps-v1/`) is void: its bots lacked the professions' passives the sim gives (Master of Anatomy,
+Toughness, Mixology), and its window ended at the last hit Chronicle had flushed.
+
+Noise: one 180 s fight varies about ±4.5% (1σ). Fire serial 103.9%, parallel 93.3%: the same casts (65 Fireballs
+each), 29 against 23 Hot Streaks, so crit luck, not the parallel runs. Arcane swings most: 80.2% and 93.1%. Builds
+near the flag line ran twice.
+
+Bot/sim, the mean of two runs where repeated; median 89.0%, flag line 84.0%:
+
+| Build | % | Main differences (bot against sim) |
+|---|---|---|
+| BM Hunter | 67.9 | pet Bite 94 against 116, Growl 48 (focus); Steady Shot 75 against 91; Aimed Shot and Explosive Trap, which the sim's BM doesn't cast |
+| Demonology | 72.1 | 8 Life Taps (11.4), the last at 107 s, at full health, then wands from 155 s (18 shots); Immolate up 80% (93); Curse of Agony, not Doom |
+| Shadow | 73.3 | Mind Flay 64 channels (82) of 2.6 ticks; no Devouring Plague (9.6); Mind Blast 23 against 14.6 |
+| Elemental | 83.5 | Chain Lightning 32 and 29 on one target (0); Lightning Bolt 63 and 67 against 114.5 |
+| Survival | 83.7 | Explosive Trap 1 against 7.7 |
+| Balance | 83.9 | Moonfire up 52% and 43% (97); Starfire 41 against 54 |
+| MM Hunter | 84.1 | no Silencing Shot (10); Explosive Trap 1 against 7; pet Growl |
+| Arcane | 86.7 | Arcane Blast 80 and 89 against 100; Frostbolt 30 (10) |
+| Frost DK | 87.3 | Obliterate 37 against 44; Army of the Dead in combat |
+| Unholy 2H | 88.6 | Scourge Strike 11 against 27; Death and Decay 6 (0) |
+| Arms | 89.4 | never Slam (43.5); Heroic Strike 46 against 26 |
+| Combat | 89.6 | Rupture up 77% (87) |
+| Affliction | 91.6 | |
+| Fire | 92.8 | |
+| Feral | 92.9 | Ferocious Bite 5 against 7.7 |
+| Assassination | 93.5 | |
+| Retribution | 94.6 | |
+| Fury | 95.0 | never Rend or Overpower (9.6, 6.9): no stance dance |
+| Enhancement | 96.6 | Fire Nova 18 against 38 |
+| Destruction | 97.1 | |
+
+P3 (PLAN trigger: more than 5 points below the median, a key spell never cast, or an uptime under 80%):
+BM, Demonology, Shadow; Elemental, Survival and Balance (under the line by less than a point, the first and last
+with clear mistakes too); MM (Silencing Shot); Arms and Fury (spells never cast); Combat (Rupture uptime).
+
+What the test itself does, so a difference isn't the bot's:
+- A Life Tap bot stops below `Playerbots.LowHealth` (45%) and wands; the tank Full Heals the bot below max health
+  every 8 s, as raid healers would. The warlocks ran again with it; Demonology never needed one (Fel Synergy).
+- Buffs the server keeps off: Trueshot Aura and Unleashed Rage (Abomination's Might holds their slot), Elemental
+  Oath (Moonkin Aura's), Curse of Weakness (misses). Left out: Devotion Aura, Sanctuary, Might for a caster or
+  Wisdom otherwise, Expose Armor, Heroic Presence, Mana Tide, Replenishment, Demonic Pact, Thorns, Judgements of
+  Light and Wisdom, Shadow Embrace. The sim goes without each.
+- Hunter pets: `tame family Wolf`, pet talents the bot's own (`InitPetTalents`); the sim's BM has BM pet talents.
+- Report quirks: Mirror Image's casts per image (three times the sim's), the Infernal's Immolation ticks (20153),
+  procs as casts, some spells under other ids in the sim (Mutilate's hits, Envenom, Stormstrike's off hand,
+  stances). Shadow Mastery's bot uptime is the bot's own share; the master keeps it up too.
+- The sim's Rend bonus above 75% health follows time left; the dummy's health never drops, so Arms' sim is low.
