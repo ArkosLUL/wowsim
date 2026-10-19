@@ -335,6 +335,19 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 				encounter.targetsChangeEmitter.emit(eventID);
 			},
 		});
+		this.combatReachPicker = new NumberPicker(section1, null, {
+			label: 'Combat Reach',
+			labelTooltip:
+				"This enemy's combat reach in yards, its model's size, which moves the range of a Mirror Image's casts and chase and where a hunter pet stands. 0 means the boss dummy's 2.5.",
+			float: true,
+			positive: true,
+			changedEvent: () => encounter.targetsChangeEmitter,
+			getValue: () => this.getTarget().combatReach,
+			setValue: (eventID: EventID, _: null, newValue: number) => {
+				this.getTarget().combatReach = newValue;
+				encounter.targetsChangeEmitter.emit(eventID);
+			},
+		});
 		this.tankIndexPicker = new EnumPicker<null>(section1, null, {
 			extraCssClasses: ['threat-metrics'],
 			label: 'Tanked By',
@@ -402,18 +415,6 @@ class TargetPicker extends Input<Encounter, TargetProto> {
 			getValue: () => this.getTarget().damageSpread,
 			setValue: (eventID: EventID, _: null, newValue: number) => {
 				this.getTarget().damageSpread = newValue;
-				encounter.targetsChangeEmitter.emit(eventID);
-			},
-		});
-		this.combatReachPicker = new NumberPicker(section3, null, {
-			label: 'Combat Reach',
-			labelTooltip: "This enemy's combat reach in yards, its model's size, which moves the range of a Mirror Image's casts and chase. 0 means the boss dummy's 2.5.",
-			float: true,
-			positive: true,
-			changedEvent: () => encounter.targetsChangeEmitter,
-			getValue: () => this.getTarget().combatReach,
-			setValue: (eventID: EventID, _: null, newValue: number) => {
-				this.getTarget().combatReach = newValue;
 				encounter.targetsChangeEmitter.emit(eventID);
 			},
 		});

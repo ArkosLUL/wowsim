@@ -2,20 +2,11 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { RaidSimRequest } from '../../../../ui/core/proto/api';
 import { openSimTab } from '../lib/page';
-import { checkbox, numberInput, openSpec, reloadSim, setNumber } from './helpers';
+import { numberInput, openSpec, reloadSim, setNumber } from './helpers';
 
-// a mage's Mirror Image reads the reach
+// a mage's Mirror Image reads the reach, and a mage page hides the threat and tank options
 const SPEC = 'mage';
 const ITERATIONS = 50;
-
-// Combat Reach sits with the tank options, which a mage page hides until they're turned on
-async function showTankOptions(page: Page) {
-	await page.locator('.sim-toolbar .sim-options').click();
-	const options = page.locator('.modal.show:has(.settings-menu)');
-	await checkbox(options, 'Show Threat/Tank Options').setChecked(true);
-	await options.locator('.close-button').click();
-	await expect(page.locator('.modal.show')).toHaveCount(0);
-}
 
 async function openFirstTarget(page: Page) {
 	await page.locator('#settings-tab .encounter-settings .advanced-button').click();
@@ -31,9 +22,13 @@ async function closeModal(page: Page) {
 
 test('a Combat Reach set on the target survives a reload and goes out in the sim request', async ({ page }) => {
 	await openSpec(page, SPEC, 'settings-tab');
-	await showTankOptions(page);
+	await expect(page.locator('.sim-ui')).toHaveClass(/(^|\s)hide-threat-metrics(\s|$)/);
 
-	let reach = numberInput(await openFirstTarget(page), 'Combat Reach');
+	let target = await openFirstTarget(page);
+	// the threat options stay hidden, the reach doesn't
+	await expect(numberInput(target, 'Swing Speed')).toBeHidden();
+	let reach = numberInput(target, 'Combat Reach');
+	await expect(reach).toBeVisible();
 	// 0 leaves it unset, which the sim takes as the boss dummy's 2.5
 	await expect(reach).toHaveValue('0.00');
 	await setNumber(reach, 4.5);
@@ -41,8 +36,8 @@ test('a Combat Reach set on the target survives a reload and goes out in the sim
 
 	await reloadSim(page);
 	await openSimTab(page, 'settings-tab');
-	await showTankOptions(page);
-	reach = numberInput(await openFirstTarget(page), 'Combat Reach');
+	target = await openFirstTarget(page);
+	reach = numberInput(target, 'Combat Reach');
 	await expect(reach).toHaveValue('4.50');
 	await closeModal(page);
 	await setNumber(numberInput(page.locator('.sim-sidebar'), 'Iterations'), ITERATIONS);

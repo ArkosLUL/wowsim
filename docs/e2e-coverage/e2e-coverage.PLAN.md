@@ -5719,6 +5719,39 @@ as recorded. Goldens unchanged.
   the off-hand record and its fixture rows; the spell-mod fixture files and their re-swept lines.
 - **Goldens:** none.
 
+#### As built
+
+Code stage (offline; notes and both live plans in `tmp/ec-tools5-code.md`):
+- Combat Reach: the picker sits in section 1 after Mob Type, out of `threat-metrics`; its tooltip names hunter pets.
+  `combat_reach.spec.ts` checks it shows on a mage page with threat metrics hidden (Swing Speed hidden). Passes on a
+  dev server, as do `settings_tab.spec.ts`' advanced-encounter tests.
+- `tools/acore/spellmods` rerun: 66216 replaces 66992; added Lay on Hands 48788, Judgement of Light 20185, Prayer of
+  Mending 48111, Divine Aegis 47753. `TestSpellModRecords` fails only on their 14 unprobed steps over
+  PaladinRetribution, PriestDiscipline, PriestHoly, DeathknightFrost and DeathknightUnholy. The sim compares only
+  improvedLayOnHands' 48788 (cooldown -240 s); it registers none of the others on those characters (`not compared`).
+- `.simval damage` (`WriteWeaponStrike`): a death knight's physical off-hand strike doubles its fixed bonus before
+  `totalPct`; `fixed` stays the effects' sum, as the sim declares it. Compile-only check passed; not built.
+- e2e `TestEcTools5OffHandObliterate` (`damage_test.go`), vetted only: an orc death knight (47528 is Horde only) with 47528 in
+  both hands probes 66974 bare and with Nerves of Cold Steel 3/3, holding each base to the doubled redo. A hand-built
+  record replays in the sim at the doubled numbers (bare 459 to 594 at 1000 AP; undoubled would be 342 to 477).
+- Live, left: `TestSimvalSpellModSweep` on those five paths (about 8 min); after the user's rebuild, the off-hand
+  test (about 1 min), its two records appended to `strikes.jsonl`.
+
+Live stage (spell-mod sweep only; notes in `tmp/ec-tools5-live.md`):
+- `TestSimvalSpellModSweep` on the five paths passed in 286 s, no orphans. Its 474 lines replace those paths' blocks
+  in `spellmods.jsonl` in place (Ret 103, Disc 159, Holy 90, Frost 96, Unholy 26).
+- `TestSpellModRecords` passes: 552 agree, 392 move nothing, 2 disagree (the existing drops), 259 not compared.
+  48788 agrees (-240 s); the other 13 new steps aren't compared; every other step's verdict is unchanged, so the
+  post-merge server matches the old Disc, Holy and DK lines. No new drop.
+- Left: the off-hand test, once the server runs this C++.
+
+Rebuilt stage (off-hand record; notes in `tmp/ec-tools5-rebuilt.md`):
+- The worldserver image (built 16:23) postdates the C++ edit (15:31). `TestEcTools5OffHandObliterate` passed in 8 s,
+  no orphans, so the server doubles: bare, `totalPct` 0.575 (Blood Presence) and base 569 to 724; with 50138, 0.71875
+  and 712 to 906.
+- Both records are appended to `strikes.jsonl`; `TestStrikesRecords` matches them exactly (fixed, percent, min, max,
+  crit).
+
 ### EC-TOOLS2 (Z10, done; golden-neutral; stages: code, live)
 
 - `db.json` has no icon rows for the explosives' spells (56350, 67769, 56488) or 55039: the UI fetches them.
