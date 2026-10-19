@@ -46,11 +46,12 @@ func (dk *Deathknight) newPlagueStrikeSpell(isMH bool) *core.Spell {
 
 			if isMH {
 				spell.SpendRefundableCost(sim, result)
-				dk.threatOfThassarianProc(sim, result, dk.PlagueStrikeOhHit)
+				// Blood Plague is the strike's launch effect, so it's up before the off hand's strike
 				if result.Landed() {
 					dk.BloodPlagueExtended[target.Index] = 0
 					dk.BloodPlagueSpell.Cast(sim, target)
 				}
+				dk.threatOfThassarianProc(sim, result, dk.PlagueStrikeOhHit)
 			}
 
 			spell.DealDamage(sim, result)
