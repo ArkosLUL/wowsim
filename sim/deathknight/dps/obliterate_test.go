@@ -65,3 +65,48 @@ func TestObliterateTakesTheDiseasesOnlyWhenItLands(t *testing.T) {
 		t.Errorf("%d Obliterates avoided of %d, want 5", avoided, avoided+landed)
 	}
 }
+
+// The consume takes the knight's whole 55095 aura, its attack speed slow too, but not the raid's Frost Fever debuff,
+// which stands in for another knight's.
+func TestObliterateTakesTheFrostFeverSlow(t *testing.T) {
+	for _, raid := range []bool{false, true} {
+		var debuffs *proto.Debuffs
+		if raid {
+			debuffs = &proto.Debuffs{FrostFever: proto.TristateEffect_TristateEffectRegular}
+		}
+		// no Annihilation, so a landed Obliterate always takes them
+		player := parityPlayer(BloodTalents, "p3_blood", noRotation)
+		sim := core.NewSim(&proto.RaidSimRequest{
+			Raid:       core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, &proto.RaidBuffs{}, debuffs),
+			Encounter:  core.MakeSingleTargetEncounter(0),
+			SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 1},
+		})
+		sim.Reset()
+		sim.PrePull()
+		for sim.CurrentTime < 0 && !sim.Step() {
+		}
+		dk := sim.Raid.Parties[0].Players[0].(*DpsDeathknight)
+		if dk.Talents.Annihilation != 0 {
+			t.Fatalf("Annihilation %d", dk.Talents.Annihilation)
+		}
+		dk.AddStatsDynamic(sim, stats.Stats{stats.MeleeHit: 50 * core.MeleeHitRatingPerHitChance, stats.Expertise: 200 * core.ExpertisePerQuarterPercentReduction})
+		target := sim.GetTargetUnit(0)
+		for !dk.Obliterate.CanCast(sim, target) {
+			if sim.Step() {
+				t.Fatal("the fight ended")
+			}
+		}
+		dk.FrostFeverSpell.Cast(sim, target)
+		slow := dk.FrostFeverDebuffAura.Get(target)
+		if !slow.IsActive() {
+			t.Fatal("no slow with his Frost Fever")
+		}
+		if !dk.Obliterate.Cast(sim, target) {
+			t.Fatal("Obliterate didn't cast")
+		}
+		if dk.FrostFeverSpell.Dot(target).IsActive() || slow.IsActive() != raid {
+			t.Errorf("raid debuff %v: his Frost Fever up %v and the slow %v after a landed Obliterate, want the slow only with the raid's",
+				raid, dk.FrostFeverSpell.Dot(target).IsActive(), slow.IsActive())
+		}
+	}
+}

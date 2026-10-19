@@ -61,7 +61,7 @@ func init() {
 					return
 				}
 
-				if !icd.IsReady(sim) {
+				if !icd.IsReady(sim) || !character.AutoAttacks.CanProcExtraAttack(handOfJusticeSpell) {
 					return
 				}
 
@@ -70,8 +70,7 @@ func init() {
 				}
 				icd.Use(sim)
 
-				// an extra attack never takes a queued melee spell (Unit::AttackerStateUpdate's extra)
-				handOfJusticeSpell.Cast(sim, result.Target)
+				character.AutoAttacks.QueueExtraAttack(sim, handOfJusticeSpell, result.Target, false)
 			},
 		})
 	})

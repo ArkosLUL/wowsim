@@ -15,7 +15,9 @@ func (dk *Deathknight) registerMarkOfBloodSpell() {
 	cdTimer := dk.NewTimer()
 	cd := time.Minute * 3
 
-	var markOfBloodAura *core.Aura = nil
+	marks := dk.NewEnemyAuraArray(func(target *core.Unit) *core.Aura {
+		return core.MarkOfBloodAura(target, &dk.Unit)
+	})
 	dk.MarkOfBlood = dk.RegisterSpell(core.SpellConfig{
 		ActionID: actionID,
 		Flags:    core.SpellFlagNoOnCastComplete | core.SpellFlagAPL,
@@ -34,11 +36,10 @@ func (dk *Deathknight) registerMarkOfBloodSpell() {
 		},
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			dk.bladeBarrierCastPhase(sim)
-			if markOfBloodAura == nil {
-				markOfBloodAura = core.MarkOfBloodAura(target)
+			marks.Get(target).Activate(sim)
+			if dk.RuneWeapon != nil {
+				dk.RuneWeapon.copyMarkOfBlood(sim, target)
 			}
-
-			markOfBloodAura.Activate(sim)
 		},
 	})
 

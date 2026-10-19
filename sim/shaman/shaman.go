@@ -126,6 +126,7 @@ type Shaman struct {
 	// Healing Spells
 	tidalWaveProc          *core.Aura
 	ancestralHealingAmount float64
+	raidPets               map[*core.Unit]*core.Pet
 	AncestralAwakening     *core.Spell
 	LesserHealingWave      *core.Spell
 	HealingWave            *core.Spell

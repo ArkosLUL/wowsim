@@ -285,6 +285,7 @@ var spellModSimSpells = map[int32]spellModSimSpell{
 	7386:  {sim: 47467, sameCast: true},
 	58567: {sim: 47467}, // the debuff Sunder Armor and Devastate cast
 	70890: {sim: 55271}, // Scourge Strike's shadow damage
+	66216: {sim: 49921}, // Threat of Thassarian's off-hand Plague Strike
 }
 
 // spellModExtraSpecs are specs past the class's own that register a spell of spellModSimSpells, by server

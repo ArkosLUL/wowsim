@@ -97,10 +97,11 @@ exact, which is what unit tests want. Outside the fight every update takes the m
   and self hot ticks too, then their melee, then the creatures' auras (`Step`; the players' attacks lead
   `sim.weaponAttacks`). A unit's due ticks go, lowest spell id first, before its expiries
   (`Unit::_UpdateSpells`; `Unit.tickingDots`): Ignite (12654) ticks before Pyroblast's DoT (42891).
-- A creature's own update runs its due hardcast landing, then the auras on it, then its AI's instant cast and
-  its swing (`Creature::Update`): the landing still finds an aura running out on that update
-  (`Unit.landDueCast`), and the cast or swing comes behind the ticks due with it (`target_ai.go`,
-  `WeaponAttack.swing`). Its landings keep their queue order against those auras.
+- A creature's own update runs its due landings, then the auras on it, then its AI's instant cast and its swing
+  (`Creature::Update`): the landing still finds an aura running out on that update (`Unit.landDueCast`), and
+  the cast or swing comes behind the ticks due with it (`target_ai.go`, `WeaponAttack.swing`). Its landings keep
+  their queue order against those auras, and its swing, one its hardcast held too, lands its landings due by
+  key first (`Simulation.landOwnDue`, `sim/core/sim.go`).
 - A periodic action with `PeriodicActionOptions.Owner` is one of that unit's periodic ticks: on its first
   update after each period, the remainder carried, ahead of a player's expiries, and an aura it puts on counts
   from that update (Prey on the Weak's check).
@@ -144,8 +145,18 @@ exact, which is what unit tests want. Outside the fight every update takes the m
   - Any other hit reads the current clock, as a hardcast's landing does: a missile's (a Hot Streak
     Pyroblast) or one off a tick, a swing or an aura's end (Living Bomb's explosion). Ignite tells them apart
     with `SpellResult.DealtWithItsCast`.
-- An extra attack (Hand of Justice, Sword Specialization) is a plain swing: it never takes a queued melee spell
-  such as Heroic Strike or Rune Strike (`Unit::AttackerStateUpdate`'s `extra`).
+- An extra attack (Hand of Justice, Sword Specialization, Hack and Slash, Reckoning;
+  `AutoAttacks.QueueExtraAttack` in `sim/core/attack.go`) is a plain main-hand swing: it never takes a queued
+  melee spell such as Heroic Strike or Rune Strike (`Unit::AttackerStateUpdate`'s `extra`).
+  - It swings on the unit's next update, after its auras and ahead of its melee, cast hold or not
+    (`HandleProcExtraAttackFor`), so a player's beats the creatures' auras. A proc off the unit's own swing, or
+    the APL action right after it, waits for the update after; one off a session cast, a landing or the
+    pre-swing APL check goes this update. A chained proc swings in the same pass.
+  - `CanProcExtraAttack` is `AuraEffect::CheckEffectProc`'s gate on the last extra attack queued, until a plain
+    melee swing or the pass: no proc of that same spell, and none at all after Sword Specialization's or Hack
+    and Slash's.
+  - Auto attacks off, cancelled or reset drop the queue. Not modelled: the server swings it anyway. The sim has
+    no melee range, so Hand of Justice's range check never fails.
 - A landed swing pushes the other hand to at least 200 ms. A melee swing restarts the ranged timer, and
   every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - At the pull, and when auto attacks restart (breaking stealth), a ready off hand starts half the main hand's

@@ -132,22 +132,49 @@ func (priest *Priest) makePenanceSpell(isHeal bool) *core.Spell {
 				dot.Apply(sim)
 				dot.TickOnce(sim)
 			}
-			if at := penanceChannelStart(sim); at > sim.CurrentTime {
-				sim.QueueSpellEvent(&priest.Unit, at, channel)
+			cast, start := penancePress(sim)
+			// 53007's cooldown starts as its SpellEvent casts it (Spell::_cast's SendSpellCooldown)
+			spell.CD.Set(cast + spell.CD.Duration)
+			if start > sim.CurrentTime {
+				sim.QueueSpellEvent(&priest.Unit, start, channel)
 			} else {
 				channel(sim)
 			}
 		},
 	})
+	spell.Cost = penanceCost{spell.Cost.(*core.ManaCost)}
 	tickThreat = spell.NewThreatTick(tickSpellID)
 	return spell
 }
 
-// penanceChannelStart is the world tick after the one a press now is handled on, or now with exact timing.
-func penanceChannelStart(sim *core.Simulation) time.Duration {
-	pressed := sim.NextWorldTick(sim.CurrentTime)
-	if next := sim.NextWorldTick(pressed + 1); next != pressed+1 {
-		return next
+// penancePress is the world tick a press now is handled on, where 53007's SpellEvent casts it, and the tick after,
+// where its channel starts. Both now with exact timing.
+func penancePress(sim *core.Simulation) (cast, channel time.Duration) {
+	cast = sim.NextWorldTick(sim.CurrentTime)
+	if next := sim.NextWorldTick(cast + 1); next != cast+1 {
+		return cast, next
 	}
-	return sim.CurrentTime
+	return sim.CurrentTime, sim.CurrentTime
+}
+
+// penanceCost takes 53007's mana as its SpellEvent casts it (Spell::_cast's TakePower), the amount Spell::prepare
+// worked out at the press.
+type penanceCost struct {
+	*core.ManaCost
+}
+
+func (pc penanceCost) SpendCost(sim *core.Simulation, spell *core.Spell) {
+	cast, _ := penancePress(sim)
+	if cast == sim.CurrentTime {
+		pc.ManaCost.SpendCost(sim, spell)
+		return
+	}
+	cost := spell.CurCast.Cost
+	sim.QueueSpellEvent(spell.Unit, cast, func(sim *core.Simulation) {
+		// a CanCast since the press can have rewritten CurCast
+		current := spell.CurCast.Cost
+		spell.CurCast.Cost = cost
+		pc.ManaCost.SpendCost(sim, spell)
+		spell.CurCast.Cost = current
+	})
 }

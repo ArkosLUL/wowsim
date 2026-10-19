@@ -203,10 +203,16 @@ func (paladin *Paladin) applyReckoning() {
 			config.ActionID = actionID
 			reckoningSpell = paladin.GetOrRegisterSpell(config)
 		},
+		// 20178 procs on any white swing, extra attacks too, whatever the outcome (hit mask 0x2477), a charge each
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if spell == paladin.AutoAttacks.MHAuto() {
-				reckoningSpell.Cast(sim, result.Target)
+			if !spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) || spell.ProcMask.Matches(core.ProcMaskMeleeSpecial) {
+				return
 			}
+			if !paladin.AutoAttacks.CanProcExtraAttack(reckoningSpell) {
+				return
+			}
+			paladin.AutoAttacks.QueueExtraAttack(sim, reckoningSpell, result.Target, false)
+			aura.RemoveStack(sim)
 		},
 	})
 

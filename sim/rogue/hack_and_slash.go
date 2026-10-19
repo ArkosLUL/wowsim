@@ -1,18 +1,13 @@
 package rogue
 
 import (
-	"time"
-
 	"github.com/wowsims/wotlk/sim/core"
 )
 
 func (rogue *Rogue) registerHackAndSlash(mask core.ProcMask) {
 	// https://wotlk.wowhead.com/spell=13964/sword-specialization, proc mask = 20.
 	var hackAndSlashSpell *core.Spell
-	icd := core.Cooldown{
-		Timer:    rogue.NewTimer(),
-		Duration: time.Millisecond * 500,
-	}
+	// spell_proc's -13960 has no cooldown and keeps each rank's own chance
 	procChance := 0.01 * float64(rogue.Talents.HackAndSlash)
 
 	rogue.RegisterAura(core.Aura{
@@ -33,12 +28,12 @@ func (rogue *Rogue) registerHackAndSlash(mask core.ProcMask) {
 			if !spell.ProcMask.Matches(mask) {
 				return
 			}
-			if !icd.IsReady(sim) {
+			if !rogue.AutoAttacks.CanProcExtraAttack(hackAndSlashSpell) {
 				return
 			}
 			if sim.RandomFloat("Hack and Slash") < procChance {
-				icd.Use(sim)
-				hackAndSlashSpell.Cast(sim, result.Target)
+				// 66923 ends the chain, as Sword Specialization's does
+				rogue.AutoAttacks.QueueExtraAttack(sim, hackAndSlashSpell, result.Target, true)
 			}
 		},
 	})

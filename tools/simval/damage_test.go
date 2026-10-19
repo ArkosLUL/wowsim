@@ -620,8 +620,12 @@ var strikesPets = []struct {
 // strikesTimings are the `timing` probes of TestSimvalStrikes' pet owners, by class.
 var strikesTimings = map[uint8][]int32{deathKnight: {63560}}
 
+// strikesOtherProbes are strikes.jsonl's records from other e2e tests, which a re-record of TestSimvalStrikes has to
+// keep: TestEcTools5OffHandObliterate's off-hand Obliterate, bare and with Nerves of Cold Steel.
+var strikesOtherProbes = strikesBothPasses(deathKnight, 66974)
+
 func expectedStrikesKeys() []strikesKey {
-	var keys []strikesKey
+	keys := slices.Clone(strikesOtherProbes)
 	for _, c := range strikesCharacters {
 		for _, spell := range slices.Concat(c.compared, c.shaped) {
 			for _, modded := range []bool{false, true} {
@@ -847,18 +851,19 @@ func TestShapedOrWeaponlessStrike(t *testing.T) {
 }
 
 // strikeProbe is a strike record for the character's weapons: its fixed bonus and percent from serverdata, the
-// amounts a rough guess. Mutilate's, Stormstrike's and Shiv's second hits are the off hand's.
+// amounts a rough guess. A strike needing an off hand is the off hand's, as SimValidation::SpellAttackType has it.
 func strikeProbe(t *testing.T, class, race uint8, hands []strikeHand, spellID int32, auras []int32) damageRecord {
 	t.Helper()
 	s := serverdata.SpellByID(spellID)
 	if s == nil {
 		t.Fatalf("spell %d isn't in serverdata", spellID)
 	}
+	const attr3RequiresOffHandWeapon = 0x01000000
 	attackType := "mainhand"
 	switch {
 	case s.DmgClass == serverdata.DmgClassRanged:
 		attackType = "ranged"
-	case spellID == 48664 || spellID == 32176 || spellID == 5940:
+	case s.DmgClass == serverdata.DmgClassMelee && s.Attributes[3]&attr3RequiresOffHandWeapon != 0:
 		attackType = "offhand"
 	}
 	fixed, percent, normalized := 0.0, 100.0, false

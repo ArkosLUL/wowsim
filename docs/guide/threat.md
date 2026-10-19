@@ -13,9 +13,11 @@ How the sim computes threat, matching the server (`sim/core/threat.go`; `ThreatM
   without a school.
 - A heal's threat is half the health it restores (a quarter for a paladin), modified like a hit and shared as
   assist threat; overhealing makes none. Self heals dealt outside a spell count too (`HealThreat(metrics,
-  spellID)`): Death Strike, (Improved) Blood Presence, Rune Tap, Frenzied Regeneration, Lifeward, potions,
-  healthstone, Lifeblood. Every heal is whole, as the server's. Judgement of Light's heal makes none for the
-  healed ([class mechanics](class-mechanics.md#paladin)).
+  spellID)`): Death Strike, (Improved) Blood Presence, Rune Tap, Mark of Blood's 61607 on its knight,
+  Frenzied Regeneration, Lifeward, potions, healthstone, Lifeblood. Every heal is whole, as the server's.
+  Judgement of Light's heal makes none for the healed ([class mechanics](class-mechanics.md#paladin)), nor
+  does Mark of Blood's on another unit. Not modelled: the server's assist threat to the knight for the latter
+  (`ForwardThreatForAssistingMe`).
 - `SPELL_EFFECT_THREAT` adds its flat amount, unmodified, on each enemy hit; a cut never takes threat below 0
   (Feint).
 

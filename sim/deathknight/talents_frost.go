@@ -108,14 +108,33 @@ func (dk *Deathknight) mercilessCombatBonus(sim *core.Simulation) float64 {
 
 func (dk *Deathknight) applyTundaStalker() {
 	bonus := 1.0 + 0.03*float64(dk.Talents.TundraStalker)
+
+	// the raid's Frost Fever debuff, the permanent one, is another knight's: the script takes anyone's (HasAura(55095))
+	raidFrostFever := make([]*core.Aura, len(dk.Env.Encounter.TargetUnits))
+	for i, target := range dk.Env.Encounter.TargetUnits {
+		if aura := target.GetAura("FrostFever"); aura != nil && aura.Duration == core.NeverExpires {
+			raidFrostFever[i] = aura
+		}
+	}
+
 	dk.RoRTSBonus = func(target *core.Unit) float64 {
 		// assume if external ebon plaguebringer is active, then another DK will always have Frost Fever up
 		if dk.MakeTSRoRAssumptions && target.HasActiveAura("EbonPlaguebringer-1") {
 			return bonus
 		}
-
-		return core.TernaryFloat64(target.HasActiveAuraWithTag("FrostFever"), bonus, 1.0)
+		if target.HasActiveAuraWithTag("FrostFever") {
+			return bonus
+		}
+		if i := int(target.UnitIndex); i < len(raidFrostFever) && raidFrostFever[i] != nil && raidFrostFever[i].IsActive() {
+			return bonus
+		}
+		return 1
 	}
+}
+
+// only Tundra Stalker's ranks 2 and 3 (50127, 50128) leave Blood Plague out of their class mask
+func (dk *Deathknight) tundraStalkerSkipsBloodPlague() bool {
+	return dk.Talents.TundraStalker == 2 || dk.Talents.TundraStalker == 3
 }
 
 func (dk *Deathknight) applyRime() {
@@ -345,6 +364,8 @@ func (dk *Deathknight) threatOfThassarianOutcomeApplier(spell *core.Spell) core.
 	}
 }
 
+// call before the main hand's DealDamage, after the strike's own lower id procs (Rime): the server casts the off hand's
+// strike from the main hand's hit procs in spell id order, ahead of its weapon enchants and Killing Machine's charge
 func (dk *Deathknight) threatOfThassarianProc(sim *core.Simulation, result *core.SpellResult, ohSpell *core.Spell) {
 	if sim.Proc(dk.bonusCoeffs.threatOfThassarianChance, "Threat of Thassarian") && dk.GetOHWeapon() != nil {
 		ohSpell.Cast(sim, result.Target)
