@@ -16,6 +16,7 @@ import (
 	"strconv"
 	"strings"
 
+	"google.golang.org/protobuf/encoding/protojson"
 	googleProto "google.golang.org/protobuf/proto"
 
 	"github.com/wowsims/wotlk/sim"
@@ -457,9 +458,57 @@ type botdpsResult struct {
 	// target aura uptime in percent, by spell id
 	BotUptime map[int32]float64
 	SimUptime map[int32]float64
+	// damage to the target over the fight: the bot's, the sim's mean
+	BotDamage botdpsDamageMap
+	SimDamage botdpsDamageMap
+}
+
+// botdpsDamage is a source's damage over the fight, then its hits that landed, ticks too, their damage and how
+// many crit. The sim counts most dots' ticks but not all (Serpent Sting's), and a tag without hits adds no
+// damage to theirs.
+type botdpsDamage struct {
+	Amount, Hits, Direct, Crits float64
+}
+
+type botdpsDamageMap map[botdpsSource]botdpsDamage
+
+func (m botdpsDamageMap) add(s botdpsSource, d botdpsDamage) {
+	sum := m[s]
+	sum.Amount += d.Amount
+	sum.Hits += d.Hits
+	sum.Direct += d.Direct
+	sum.Crits += d.Crits
+	m[s] = sum
 }
 
 func (r botdpsResult) ratio() float64 { return 100 * r.BotDPS / r.SimDPS }
+
+// botdpsSource is who did a share of the damage, the player or one of its minions, and with what: a spell id,
+// or one of the auto attacks below, which the server and the sim book differently.
+type botdpsSource struct {
+	Pet bool
+	ID  int32
+}
+
+const (
+	botdpsMelee = 0
+	// a hunter's Auto Shot (75) and a wand's Shoot (5019), the sim's Shoot action
+	botdpsRanged = -1
+	// damage the sim books under an item, which the server logs under the proc's spell
+	botdpsItems = -2
+)
+
+var botdpsAutoNames = map[int32]string{botdpsMelee: "melee", botdpsRanged: "auto shot", botdpsItems: "item procs"}
+
+func botdpsDamageID(e chronicleEvent) int32 {
+	switch {
+	case e.Type == "SWING_DAMAGE":
+		return botdpsMelee
+	case e.Spell.ID == 75 || e.Spell.ID == 5019:
+		return botdpsRanged
+	}
+	return e.Spell.ID
+}
 
 func runBotDpsCompare(args []string) int {
 	flags := flag.NewFlagSet("simval botdps compare", flag.ExitOnError)
@@ -467,6 +516,8 @@ func runBotDpsCompare(args []string) int {
 	iterations := flags.Int("iterations", 3000, "sim iterations")
 	seed := flags.Int64("seed", 101, "the sim's random seed")
 	verbose := flags.Bool("v", false, "also list every cast and aura, not only those where bot and sim differ")
+	damage := flags.Bool("damage", false, "also list the bot's and the sim's DPS by spell, the player and its pets apart")
+	outDir := flags.String("out", "", "also write each capture's sim request into this directory as <build>.request.json")
 	flags.Usage = func() {
 		fmt.Fprintf(flags.Output(), "usage: simval botdps compare -setups <file> [flags] <capture.log>...\n\n"+
 			"Sims each TestBotDps capture's build as a bot plays it and reports the bot's DPS against the sim's,\n"+
@@ -498,13 +549,16 @@ func runBotDpsCompare(args []string) int {
 	var results []botdpsResult
 	failed := 0
 	for _, path := range flags.Args() {
-		result, err := compareBotDps(file, path, int32(*iterations), *seed)
+		result, err := compareBotDps(file, path, int32(*iterations), *seed, *outDir)
 		if err != nil {
 			fmt.Fprintf(os.Stderr, "%s: %v\n", path, err)
 			failed++
 			continue
 		}
 		reportBotDps(os.Stdout, result, *verbose)
+		if *damage {
+			reportBotDpsDamage(os.Stdout, result, *verbose)
+		}
 		results = append(results, result)
 	}
 	if len(results) > 1 {
@@ -517,7 +571,7 @@ func runBotDpsCompare(args []string) int {
 	return 0
 }
 
-func compareBotDps(file botdpsFile, path string, iterations int32, seed int64) (botdpsResult, error) {
+func compareBotDps(file botdpsFile, path string, iterations int32, seed int64, outDir string) (botdpsResult, error) {
 	run, err := readBotDpsRun(strings.TrimSuffix(path, ".log") + ".setup.txt")
 	if err != nil {
 		return botdpsResult{}, err
@@ -548,6 +602,15 @@ func compareBotDps(file botdpsFile, path string, iterations int32, seed int64) (
 	if err != nil {
 		return botdpsResult{}, err
 	}
+	if outDir != "" {
+		js, err := protojson.MarshalOptions{Multiline: true}.Marshal(request)
+		if err == nil {
+			err = os.WriteFile(filepath.Join(outDir, run.Build+".request.json"), js, 0o644)
+		}
+		if err != nil {
+			return botdpsResult{}, err
+		}
+	}
 	simResult := core.RunRaidSim(request)
 	if simResult.ErrorResult != "" {
 		return botdpsResult{}, fmt.Errorf("the sim: %s", simResult.ErrorResult)
@@ -555,6 +618,7 @@ func compareBotDps(file botdpsFile, path string, iterations int32, seed int64) (
 	player := simResult.RaidMetrics.Parties[0].Players[0]
 	result.SimDPS, result.SimSD = player.Dps.Avg, player.Dps.Stdev
 	result.SimCasts = botdpsSimCasts(player, iterations)
+	result.SimDamage = botdpsSimDamage(player, iterations)
 	for _, aura := range simResult.EncounterMetrics.GetTargets()[0].GetAuras() {
 		if id := aura.GetId().GetSpellId(); id != 0 {
 			result.SimUptime[id] = math.Min(100, 100*aura.UptimeSecondsAvg/result.Seconds)
@@ -600,13 +664,23 @@ func measureBotDps(log *chronicleLog, run botdpsRun) (botdpsResult, error) {
 	}
 
 	result := botdpsResult{Run: run, Seconds: run.Seconds, BotCasts: map[int32]int{}, Names: map[int32]string{},
-		BotUptime: map[int32]float64{}, SimUptime: map[int32]float64{}}
+		BotUptime: map[int32]float64{}, SimUptime: map[int32]float64{}, BotDamage: botdpsDamageMap{}}
 	var damage int64
 	upSince, upMs := map[int32]int64{}, map[int32]int64{}
 	for _, e := range log.Events {
 		switch {
 		case during(e) && e.isDamage() && e.Dst.GUID == target:
-			damage += e.damage().Amount
+			hit := e.damage()
+			damage += hit.Amount
+			d := botdpsDamage{Amount: float64(hit.Amount), Hits: 1, Direct: float64(hit.Amount)}
+			if hit.Crit {
+				d.Crits = 1
+			}
+			id := botdpsDamageID(e)
+			result.BotDamage.add(botdpsSource{Pet: e.Src.GUID != stats.Source.GUID, ID: id}, d)
+			if id > 0 {
+				result.Names[id] = e.Spell.Name
+			}
 		case during(e) && e.Type == "SPELL_CAST_SUCCESS" && botdpsChannels[e.Spell.ID] == 0:
 			result.BotCasts[e.Spell.ID]++
 			result.Names[e.Spell.ID] = e.Spell.Name
@@ -673,6 +747,44 @@ func botdpsSimCasts(player *proto.UnitMetrics, iterations int32) map[int32]float
 	return casts
 }
 
+// botdpsSimDamage is the sim's mean damage per source, every tag of a spell together, as the server logs a
+// spell's hits and ticks under one id.
+func botdpsSimDamage(player *proto.UnitMetrics, iterations int32) botdpsDamageMap {
+	damage := botdpsDamageMap{}
+	n := float64(iterations)
+	add := func(actions []*proto.ActionMetrics, pet bool) {
+		for _, action := range actions {
+			var id int32
+			switch {
+			case action.GetId().GetSpellId() != 0:
+				id = action.GetId().GetSpellId()
+			case action.GetId().GetItemId() != 0:
+				id = botdpsItems
+			case action.GetId().GetOtherId() == proto.OtherAction_OtherActionAttack:
+				id = botdpsMelee
+			case action.GetId().GetOtherId() == proto.OtherAction_OtherActionShoot:
+				id = botdpsRanged
+			default:
+				continue
+			}
+			for _, t := range action.Targets {
+				if t.Damage > 0 {
+					d := botdpsDamage{Amount: t.Damage / n}
+					if landed := t.Hits + t.Crits + t.Glances + t.Blocks + t.Crushes; landed > 0 {
+						d.Hits, d.Direct, d.Crits = float64(landed)/n, d.Amount, float64(t.Crits)/n
+					}
+					damage.add(botdpsSource{Pet: pet, ID: id}, d)
+				}
+			}
+		}
+	}
+	add(player.Actions, false)
+	for _, pet := range player.Pets {
+		add(pet.Actions, true)
+	}
+	return damage
+}
+
 // botdpsCastsDiffer is whether a cast count strays far enough for the report to list it: by more than 10% and
 // more than 2 casts.
 func botdpsCastsDiffer(bot int, sim float64) bool {
@@ -723,6 +835,61 @@ func reportBotDps(out io.Writer, r botdpsResult, verbose bool) {
 	if len(rows) > 0 {
 		fmt.Fprintln(out, "  target aura uptime:")
 		fmt.Fprintln(out, strings.Join(rows, "\n"))
+	}
+}
+
+// reportBotDpsDamage lists the bot's and the sim's DPS by source, the player and its minions apart, largest
+// first, each with its direct hits, their mean damage and crit rate; without verbose, a source under 1% of the
+// sim's DPS on both sides is left out.
+func reportBotDpsDamage(out io.Writer, r botdpsResult, verbose bool) {
+	who := map[bool]string{false: "player", true: "pets"}
+	totals := map[bool][2]botdpsDamage{}
+	sources := map[botdpsSource]bool{}
+	for i, side := range []botdpsDamageMap{r.BotDamage, r.SimDamage} {
+		for s, d := range side {
+			sources[s] = true
+			t := totals[s.Pet]
+			t[i].Amount += d.Amount
+			totals[s.Pet] = t
+		}
+	}
+	cols := func(d botdpsDamage) string {
+		text := fmt.Sprintf("%7.0f", d.Amount/r.Seconds)
+		if d.Hits > 0 {
+			text += fmt.Sprintf(" %5.0f %6.0f %3.0f%%", d.Hits, d.Direct/d.Hits, 100*d.Crits/d.Hits)
+		} else {
+			text += strings.Repeat(" ", 18)
+		}
+		return text
+	}
+	fmt.Fprintf(out, "  damage:%41s  %7s %5s %6s %4s  %7s %5s %6s %4s\n", "", "bot DPS", "hits", "avg", "crit",
+		"sim DPS", "hits", "avg", "crit")
+	for _, pet := range []bool{false, true} {
+		if t, ok := totals[pet]; ok {
+			fmt.Fprintf(out, "    %-6s %-32s %6s  %s  %s\n", who[pet], "total", "", cols(t[0]), cols(t[1]))
+		}
+	}
+	list := make([]botdpsSource, 0, len(sources))
+	for s := range sources {
+		list = append(list, s)
+	}
+	largest := func(s botdpsSource) float64 { return math.Max(r.BotDamage[s].Amount, r.SimDamage[s].Amount) }
+	sort.Slice(list, func(a, b int) bool {
+		if largest(list[a]) != largest(list[b]) {
+			return largest(list[a]) > largest(list[b])
+		}
+		return list[a].ID < list[b].ID
+	})
+	for _, s := range list {
+		if !verbose && largest(s) < 0.01*r.SimDPS*r.Seconds {
+			continue
+		}
+		name, id := botdpsAutoNames[s.ID], ""
+		if s.ID > 0 {
+			name, id = cmp.Or(r.Names[s.ID], "?"), strconv.Itoa(int(s.ID))
+		}
+		fmt.Fprintf(out, "    %-6s %-32s %6s  %s  %s\n", who[s.Pet], trim(name, 32), id, cols(r.BotDamage[s]),
+			cols(r.SimDamage[s]))
 	}
 }
 

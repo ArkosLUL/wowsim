@@ -773,6 +773,11 @@ and the target auras the bot and its minions put up whose uptime differs by more
 all. A failed capture is reported and skipped; the exit code says so. With several captures it adds a table by bot/sim, flagging
 a build more than 5 points below the median (the spec-balance PLAN's trigger for bot fixes).
 
+`-damage` adds each source's DPS, the player and its pets apart, with its landed hits, their mean and crit rate:
+melee and auto shot (75, 5019; the sim's Shoot) as their own sources, the sim's item procs as one. Hits count dot
+ticks; the sim counts most dots' ticks but not all (Serpent Sting's). `-out <dir>` writes each build's sim request
+as `<build>.request.json`, for `tools/apldbg -request`.
+
 Reading it:
 - Procs and triggered spells log casts the sim has none of (Hot Streak, Clearcasting).
 - Mirror Image's three images each log their casts; the sim's image pet counts one image's.

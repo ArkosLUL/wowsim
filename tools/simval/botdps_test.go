@@ -172,11 +172,13 @@ func TestMeasureBotDps(t *testing.T) {
 1789900000000  CHRONICLE_UNIT_INFO,0x1,"Testlock",80,0x511,0x0000000000000000,30000,"MINE",false
 1789900000000  CHRONICLE_UNIT_INFO,0xA,"Dummy",83,0xa28,0x0000000000000000,24009944,"NEUTRAL",true
 1789900000000  CHRONICLE_UNIT_INFO,0xB,"Maggot",80,0xa28,0x0000000000000000,9000,"NEUTRAL",false
+1789900000000  CHRONICLE_UNIT_INFO,0x2,"Imp",80,0x1111,0x1,5000,"MINE",false
 1789900005000  SPELL_CAST_SUCCESS,0x1,"Testlock",0x511,0xA,"Dummy",0xa28,47813,"Corruption",0x20
 1789900005000  SPELL_AURA_APPLIED,0x1,"Testlock",0x511,0xA,"Dummy",0xa28,47813,"Corruption",0x20,DEBUFF
 1789900008000  SPELL_PERIODIC_DAMAGE,0x1,"Testlock",0x511,0xA,"Dummy",0xa28,47813,"Corruption",0x20,300,0,32,0,0,0,nil,nil,nil
 1789900011000  SPELL_PERIODIC_DAMAGE,0x1,"Testlock",0x511,0xA,"Dummy",0xa28,47813,"Corruption",0x20,300,0,32,0,0,0,nil,nil,nil
 1789900012000  SPELL_CAST_SUCCESS,0x1,"Testlock",0x511,0xA,"Dummy",0xa28,47809,"Shadow Bolt",0x20
+1789900012500  SWING_DAMAGE,0x2,"Imp",0x1111,0xA,"Dummy",0xa28,100,0,1,0,0,0,nil,nil,nil
 1789900013000  SPELL_DAMAGE,0x1,"Testlock",0x511,0xA,"Dummy",0xa28,47809,"Shadow Bolt",0x20,2000,0,32,0,0,0,nil,nil,nil
 1789900014000  SPELL_DAMAGE,0x1,"Testlock",0x511,0xB,"Maggot",0xa28,47809,"Shadow Bolt",0x20,500,0,32,0,0,0,nil,nil,nil
 1789900015000  SPELL_AURA_REMOVED,0x1,"Testlock",0x511,0xA,"Dummy",0xa28,47813,"Corruption",0x20,DEBUFF
@@ -192,8 +194,16 @@ func TestMeasureBotDps(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got.BotDPS != 230 {
-		t.Errorf("DPS %v, want 230: a tick and a Shadow Bolt on the dummy in the 10 s", got.BotDPS)
+	if got.BotDPS != 240 {
+		t.Errorf("DPS %v, want 240: a tick, a Shadow Bolt and the Imp's swing on the dummy in the 10 s", got.BotDPS)
+	}
+	wantDamage := botdpsDamageMap{
+		{ID: 47813}:                  {Amount: 300, Hits: 1, Direct: 300},
+		{ID: 47809}:                  {Amount: 2000, Hits: 1, Direct: 2000},
+		{Pet: true, ID: botdpsMelee}: {Amount: 100, Hits: 1, Direct: 100},
+	}
+	if !reflect.DeepEqual(got.BotDamage, wantDamage) {
+		t.Errorf("damage %v, want %v", got.BotDamage, wantDamage)
 	}
 	if !reflect.DeepEqual(got.BotCasts, map[int32]int{47809: 1}) {
 		t.Errorf("casts %v, want the one Shadow Bolt after the pull", got.BotCasts)
@@ -222,6 +232,39 @@ func TestBotDpsSimCasts(t *testing.T) {
 	}
 	want := map[int32]float64{42891: 2, 48156: 9, 52474: 10}
 	if got := botdpsSimCasts(player, 10); !reflect.DeepEqual(got, want) {
+		t.Errorf("got %v, want %v", got, want)
+	}
+}
+
+// The sim's damage is every tag of a spell together, the player's and its pets' apart, with melee, Shoot and
+// item procs under their own sources and actions that did no damage left out. Hits are every landed outcome,
+// and a tag that lands none adds no damage to theirs.
+func TestBotDpsSimDamage(t *testing.T) {
+	action := func(id *proto.ActionID, damage float64, hits int32) *proto.ActionMetrics {
+		return &proto.ActionMetrics{Id: id, Targets: []*proto.TargetedActionMetrics{{Damage: damage, Hits: hits}}}
+	}
+	spell := func(id, tag int32) *proto.ActionID {
+		return &proto.ActionID{RawId: &proto.ActionID_SpellId{SpellId: id}, Tag: tag}
+	}
+	other := func(id proto.OtherAction) *proto.ActionID {
+		return &proto.ActionID{RawId: &proto.ActionID_OtherId{OtherId: id}}
+	}
+	melee := action(other(proto.OtherAction_OtherActionAttack), 1000, 6)
+	melee.Targets[0].Crits, melee.Targets[0].Glances = 2, 2
+	player := &proto.UnitMetrics{
+		Actions: []*proto.ActionMetrics{action(spell(42891, 1), 300, 3), action(spell(42891, 2), 100, 0),
+			action(other(proto.OtherAction_OtherActionShoot), 200, 2), action(spell(54758, 0), 0, 0),
+			action(&proto.ActionID{RawId: &proto.ActionID_ItemId{ItemId: 40255}}, 50, 1)},
+		Pets: []*proto.UnitMetrics{{Actions: []*proto.ActionMetrics{melee, action(spell(52474, 0), 400, 4)}}},
+	}
+	want := botdpsDamageMap{
+		{ID: 42891}:                  {Amount: 40, Hits: 0.3, Direct: 30},
+		{ID: botdpsRanged}:           {Amount: 20, Hits: 0.2, Direct: 20},
+		{ID: botdpsItems}:            {Amount: 5, Hits: 0.1, Direct: 5},
+		{Pet: true, ID: botdpsMelee}: {Amount: 100, Hits: 1, Direct: 100, Crits: 0.2},
+		{Pet: true, ID: 52474}:       {Amount: 40, Hits: 0.4, Direct: 40},
+	}
+	if got := botdpsSimDamage(player, 10); !reflect.DeepEqual(got, want) {
 		t.Errorf("got %v, want %v", got, want)
 	}
 }
