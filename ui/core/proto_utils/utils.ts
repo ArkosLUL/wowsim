@@ -364,6 +364,7 @@ export function getSpecSiteUrl(spec: Spec): string {
 	return specSiteUrlTemplate.toString().replace('SPEC', specString);
 }
 export const raidSimSiteUrl = new URL(`${window.location.protocol}//${window.location.host}/${REPO_NAME}/raid/`).toString();
+export const rankingsSiteUrl = new URL(`${window.location.protocol}//${window.location.host}/${REPO_NAME}/rankings/`).toString();
 
 export function cssClassForClass(klass: Class): string {
 	return classNames[klass].toLowerCase().replace(/\s/g, '-');

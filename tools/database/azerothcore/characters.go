@@ -60,7 +60,7 @@ type RosterInputs struct {
 	PetTrees  PetTalentTrees
 	MinSkill  int32 // where a profession counts as known
 	ItemStats ItemStats
-	// WorldBuffs is the bots' AiPlayerbot.WorldBuffMatrix, nil when none was given.
+	// WorldBuffs is the bots' Playerbots.WorldBuffMatrix, nil when none was given.
 	WorldBuffs []WorldBuff
 	// Players, when set, are the only characters someone plays; everyone else counts as a bot.
 	Players []string

@@ -12,7 +12,10 @@ passing run says the check is doing something.
 The same server is then checked the way -namesOnly exports it: a names file that leaves two of the
 group out and names the played character, who takes the place one of them left. Last, without a group,
 where the names file's order is the seating.
+
+matrix_text, which picks the world-buff matrix out of a config file, is tested on its own.
 """
+import ast
 import contextlib
 import copy
 import io
@@ -25,6 +28,8 @@ import subprocess
 import sys
 import tempfile
 import types
+import unittest
+import warnings
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 CROSSCHECK = os.path.join(HERE, 'crosscheck.py')
@@ -46,7 +51,7 @@ SERVER = {'group': GROUP}
 HUNTER_GUID, WARLOCK_GUID = 100, 101
 CLASSES = {HUNTER_GUID: '3', WARLOCK_GUID: '9'}  # the rest are paladins
 QUIVER_GUID = HUNTER_GUID  # only this raider carries a quiver
-MATRIX = 'AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX="1:0,3,0,80,80:53760,57371;\n  2:0,3,1,80,80:53758"\n'
+MATRIX = 'AC_PLAYERBOTS_WORLD_BUFF_MATRIX="1:0,3,0,80,80:53760,57371;\n  2:0,3,1,80,80:53758"\n'
 
 
 def write_wdbc(path, fields, rows, strings=b'\0'):
@@ -273,7 +278,7 @@ GROUPLESS_CASES = [
 ]
 
 
-def main():
+def run_cases():
     failures = []
     with tempfile.TemporaryDirectory() as directory:
         write_fixtures(directory)
@@ -293,8 +298,72 @@ def main():
             failures += [f'{label}: {problem}' for problem in problems]
 
     print('\n'.join(failures) if failures else '\nall cases passed')
-    return 1 if failures else 0
+    return failures
+
+
+class StubbedServerTest(unittest.TestCase):
+    def test_cases(self):
+        # crosscheck and the fixtures open files without closing them, which unittest reports by default
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', ResourceWarning)
+            self.assertEqual(run_cases(), [])
+
+
+def load_matrix_text():
+    """crosscheck.matrix_text alone, since importing crosscheck runs the whole check."""
+    with open(CROSSCHECK) as source:
+        tree = ast.parse(source.read(), CROSSCHECK)
+    function = next(node for node in tree.body if isinstance(node, ast.FunctionDef) and node.name == 'matrix_text')
+    namespace = {'re': re}
+    exec(compile(ast.Module(body=[function], type_ignores=[]), CROSSCHECK, 'exec'), namespace)
+    return namespace['matrix_text']
+
+
+ENTRIES = '1:0,1,0,80,80:53760;2:0,1,1,80,80:53760'
+BARE = '1:0,1,0,80,80:53760;\r\n2:0,1,1,80,80:53760\r\n'
+BARE_LABELS = 'ARMS:0,1,0,80,80:53760;\nFURY:0,1,1,80,80:53760\n'
+
+
+class MatrixTextTest(unittest.TestCase):
+    matrix_text = staticmethod(load_matrix_text())
+
+    def test_reads_the_matrix(self):
+        for label, text, want in [
+            ('env file, quoted over several lines, CRLF',
+             'AC_PLAYERBOTS_ROLL: "5"\r\n  AC_PLAYERBOTS_WORLD_BUFF_MATRIX="1:0,1,0,80,80:53760;\r\n'
+             '  2:0,1,1,80,80:53760"\r\nAC_NEXT: "1"\r\n', '1:0,1,0,80,80:53760;\n  2:0,1,1,80,80:53760'),
+            ('compose environment', f"AC_PLAYERBOTS_WORLD_BUFF_MATRIX: '{ENTRIES}'\n", ENTRIES),
+            ('export', f'export AC_PLAYERBOTS_WORLD_BUFF_MATRIX="{ENTRIES}"\nexport AC_NEXT="a;b"\n', ENTRIES),
+            ('the last one set wins',
+             f'AC_PLAYERBOTS_WORLD_BUFF_MATRIX="9:0,9,9,1,1:1"\nAC_PLAYERBOTS_WORLD_BUFF_MATRIX="{ENTRIES}"\n', ENTRIES),
+            ('unquoted, up to a comment', f'AC_PLAYERBOTS_WORLD_BUFF_MATRIX={ENTRIES} # 3:0,1,2,80,80:53760\n', ENTRIES),
+            ('playerbots.conf, after a comment',
+             f'# Playerbots.WorldBuffMatrix = 9:0,9,9,1,1:1\nPlayerbots.WorldBuffMatrix = # ARMS {ENTRIES}\n'
+             'Playerbots.Next = 1\n', f'# ARMS {ENTRIES}'),
+            ('playerbots.conf, the first one set',
+             f'Playerbots.WorldBuffMatrix = "{ENTRIES}"\r\nPlayerbots.WorldBuffMatrix = 9:0,9,9,1,1:1\r\n', ENTRIES),
+            ('the env key over the conf one',
+             f"AC_PLAYERBOTS_WORLD_BUFF_MATRIX='{ENTRIES}'\nPlayerbots.WorldBuffMatrix = 9:0,9,9,1,1:1\n", ENTRIES),
+            ('bare matrix, CRLF', BARE, BARE),
+            ('bare matrix, labels as identifiers', BARE_LABELS, BARE_LABELS),
+        ]:
+            with self.subTest(label):
+                self.assertEqual(self.matrix_text(text), want)
+
+    def test_nothing_but_the_matrix_comes_back(self):
+        for label, text in [
+            ('no matrix key', 'AC_PLAYERBOTS_ROLL: "5"\nAC_SECRET=hunter2\nPlayerbots.Next = 1\n'),
+            ('the old keys', 'AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX="1:0,1,0,80,80:53760"\n'
+                             'AiPlayerbot.WorldBuffMatrix = 1:0,1,0,80,80:53760\nAC_SECRET=hunter2\n'),
+            ('any character where the key has a dot', 'PlayerbotsXWorldBuffMatrix = 1:0,1,0,80,80:53760\nAC_SECRET=hunter2\n'),
+            ('unterminated quote', 'AC_PLAYERBOTS_WORLD_BUFF_MATRIX="1:0,1,0,80,80:53760;\nAC_SECRET=hunter2\n'),
+            ('a key as a prefix only', 'AC_PLAYERBOTS_WORLD_BUFF_MATRIX_X="1:0,1,0,80,80:53760"\nAC_SECRET=hunter2\n'),
+            ('export lines only', 'export AC_SECRET=hunter2\nexport AC_OTHER=x\n'),
+            ('settings, CRLF', 'AC_SECRET=hunter2\r\nAC_OTHER: "x"\r\n'),
+        ]:
+            with self.subTest(label):
+                self.assertEqual(self.matrix_text(text), '')
 
 
 if __name__ == '__main__':
-    sys.exit(main())
+    unittest.main()

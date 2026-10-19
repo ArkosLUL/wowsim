@@ -126,7 +126,7 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   - Forbearance or the 30 s Avenging Wrath marker blocks it, and it puts up both, as Divine Protection does; the
     DP/AW shared timer stands in for the marker.
   - The Prot Paladin default APL casts it under 25% health, mod-playerbots' critical health
-    (`AiPlayerbot.CriticalHealth`).
+    (`Playerbots.CriticalHealth`).
 - **Judgement of Light**'s 20185 procs like Judgement of Wisdom's (15 PPM, landed damaging hits, no triggered
   casts): 20267 heals the attacker for 2% of his max health through his healing taken percents. Its original
   caster, the judging paladin, gets the healing and its threat, so the sim credits nobody.

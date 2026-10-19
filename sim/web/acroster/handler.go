@@ -29,7 +29,7 @@ type Config struct {
 	// Leader is any member of the raid's group, whose subgroups the roster follows. Without one the
 	// raid is seated in the names file's order.
 	Leader string
-	// WorldBuffMatrix is the file holding the bots' AiPlayerbot.WorldBuffMatrix, e.g. Playerbot.env.
+	// WorldBuffMatrix is the file holding the bots' Playerbots.WorldBuffMatrix, e.g. Playerbot.env.
 	WorldBuffMatrix string
 	// Assets is the file system the server serves the UI from, which has the item database in it.
 	Assets fs.FS

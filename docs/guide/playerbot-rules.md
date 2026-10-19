@@ -34,6 +34,6 @@ All in the core, while the character is built (`sim/core/playerbot.go`, `Charact
 `playerbots.conf.dist`. Rerun it when the matrix changes. `TestPlayerbotWorldBuffsCoverInScopeSpecs`
 fails when an in-scope spec has no flask or food.
 
-The roster import's `ReadWorldBuffMatrix` (`tools/database/azerothcore/roster.go`) reads only the
-`AiPlayerbot.WorldBuffMatrix` and `AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX` keys, which `Playerbot.env` doesn't
-set, so it takes the whole file as the matrix and logs the entries it can't parse, other settings included.
+The roster import's `ReadWorldBuffMatrix` (`tools/database/azerothcore/roster.go`) and acraid's
+`crosscheck.py` (`matrix_text`) read these keys the same way. Only a file with no settings is the bare
+matrix; settings without the keys give no matrix.

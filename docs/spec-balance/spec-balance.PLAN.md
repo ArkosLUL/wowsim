@@ -5,7 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a and P0b landed; next FU-1 and FU-2, then P1. Wave Z15 and the BiS chain, held for P0b, may go.
+Status: P0a, P0b and its follow-ups landed; next P1 (four class-group agents, then step 4). Wave Z15 and the BiS chain, held for P0b, may go.
 
 ## Context
 
@@ -189,15 +189,6 @@ Baseline (once P1 and the BiS chain are both on master): rebuild the dev sim con
 in the INVESTIGATION. The rankings page footer then says the ranking follows playerbot rules.
 
 Phase loop per [sim] `docs/guide/workflow.md`: implement + verify in a subagent, fresh reviewer, land.
-
-## Follow-ups (after P0b)
-
-- **FU-1:** `tools/uitest/tests/header.spec.ts` "sim title menu links every sim page" fails on master: `new URL(href)`
-  throws on the menu's relative `/wotlk/rankings/` link. Fix the test or the link, whichever is wrong.
-- **FU-2:** `ReadWorldBuffMatrix` (`tools/database/azerothcore/roster.go`) knows only the old
-  `AiPlayerbot.WorldBuffMatrix` / `AC_AI_PLAYERBOT_WORLD_BUFF_MATRIX` keys, so on the live `Playerbot.env` it parses
-  the whole file and logs lines outside the matrix. Read `AC_PLAYERBOTS_WORLD_BUFF_MATRIX` /
-  `Playerbots.WorldBuffMatrix` as `gen_server_defaults` does, and never log other values.
 
 ## P2: Live bot DPS test ([simval] e2e; any time after P0a)
 
