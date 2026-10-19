@@ -146,6 +146,55 @@ func TestHealPenanceTicksFly(t *testing.T) {
 	}
 }
 
+// Spell::prepare takes the press in its tick's session pass, and 53007's SpellEvent casts it in that tick's update:
+// its mana goes and its cooldown starts there, not at the press.
+func TestPenanceTakesItsManaAndCooldownOnThePressTick(t *testing.T) {
+	sim := core.NewSim(&proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(&proto.Player{
+			Race:          proto.Race_RaceUndead,
+			Class:         proto.Class_ClassPriest,
+			Equipment:     &proto.EquipmentSpec{},
+			Consumes:      &proto.Consumes{},
+			Spec:          PlayerOptionsDisc,
+			Rotation:      core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+			TalentsString: penanceHealTalents,
+		}, nil, nil, nil),
+		Encounter:  core.MakeSingleTargetEncounter(0),
+		SimOptions: &proto.SimOptions{Iterations: 1, IsTest: true, RandomSeed: 101},
+	})
+	sim.Reset()
+	priest := sim.Raid.Parties[0].Players[0].(*HealingPriest)
+	spell := priest.PenanceHeal
+	press := 1003 * time.Millisecond
+	tick := sim.NextWorldTick(press)
+	if tick == press {
+		t.Fatalf("the press at %v is on a world tick", press)
+	}
+	var before, atPress, beforeTick, afterTick, cost float64
+	check := func(at time.Duration, f func(*core.Simulation)) {
+		sim.AddPendingAction(&core.PendingAction{NextActionAt: at, OnAction: f})
+	}
+	check(press, func(sim *core.Simulation) {
+		priest.GCD.Reset()
+		before = priest.CurrentMana()
+		if !spell.Cast(sim, &priest.Unit) {
+			t.Fatal("Penance failed")
+		}
+		atPress, cost = priest.CurrentMana(), spell.CurCast.Cost
+		if got, want := spell.CD.ReadyAt(), tick+spell.CD.Duration; got != want {
+			t.Errorf("Penance is ready again at %v, want %v", got, want)
+		}
+	})
+	check(tick-1, func(*core.Simulation) { beforeTick = priest.CurrentMana() })
+	check(tick+1, func(*core.Simulation) { afterTick = priest.CurrentMana() })
+	runFor(sim, tick+2-sim.CurrentTime)
+
+	if cost <= 0 || atPress != before || beforeTick != before || before-afterTick != cost {
+		t.Errorf("mana %v before the press, %v after it, %v just before its tick at %v and %v after, want %v off at the tick",
+			before, atPress, beforeTick, tick, afterTick, cost)
+	}
+}
+
 // runFor runs the sim for d.
 func runFor(sim *core.Simulation, d time.Duration) {
 	for until := sim.CurrentTime + d; sim.CurrentTime < until && !sim.Step(); {

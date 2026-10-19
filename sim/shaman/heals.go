@@ -24,6 +24,42 @@ func (shaman *Shaman) registerAncestralHealingSpell() {
 	})
 }
 
+// procAncestralAwakening is spell_sha_ancestral_awakening: a crit heal casts 52759 for the talent's percent of
+// it, and spell_sha_ancestral_awakening_proc heals the living raid member lowest in health percent (52759's area
+// is 40 yd round the shaman, the whole raid in the sim). Its stable sort leaves a tie in the grid search's order,
+// raid order here.
+func (shaman *Shaman) procAncestralAwakening(sim *core.Simulation, crit *core.SpellResult) {
+	if shaman.Talents.AncestralAwakening == 0 {
+		return
+	}
+	var target *core.Unit
+	var lowest float32
+	for _, unit := range shaman.Env.Raid.AllUnits {
+		// a pet that's away isn't in the world, and SpellInfo::CheckTarget keeps the dead out
+		if !unit.IsEnabled() || (unit.HasHealthBar() && unit.CurrentHealth() <= 0) {
+			continue
+		}
+		if pct := healthPctOrder(unit); target == nil || pct < lowest {
+			target, lowest = unit, pct
+		}
+	}
+	if target == nil {
+		return
+	}
+	shaman.ancestralHealingAmount = float64(int32(float32(crit.Damage) * float32(10*shaman.Talents.AncestralAwakening) / 100))
+	shaman.AncestralAwakening.Cast(sim, target)
+}
+
+// healthPctOrder is Acore::HealthPctOrderPred's float ratio of whole health, full without a health bar.
+func healthPctOrder(unit *core.Unit) float32 {
+	if !unit.HasHealthBar() {
+		return 1
+	}
+	cur, most := uint32(unit.CurrentHealth()), uint32(unit.MaxHealth())
+	// health can sit above max after max health drops, where the server caps it
+	return float32(min(cur, most)) / float32(most)
+}
+
 // impWaterShieldChance is Improved Water Shield's chance on a heal's crit: the talent's proc chance, then
 // spell_sha_imp_water_shield's pct of it (60 for Lesser Healing Wave, 30 for Chain Heal, 100 otherwise).
 func (shaman *Shaman) impWaterShieldChance(pct int32) float64 {
@@ -91,13 +127,7 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
 				shaman.procImpWaterShield(sim, impShieldChance)
-				if shaman.Talents.AncestralAwakening > 0 {
-					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
-
-					// TODO: this should actually target the lowest health target in the raid.
-					//  does it matter in a sim? We currently only simulate tanks taking damage (multiple tanks could be handled here though.)
-					shaman.AncestralAwakening.Cast(sim, target)
-				}
+				shaman.procAncestralAwakening(sim, result)
 			}
 
 			if shaman.tidalWaveProc.IsActive() {
@@ -164,12 +194,7 @@ func (shaman *Shaman) registerRiptideSpell() {
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
 				shaman.procImpWaterShield(sim, impShieldChance)
-				if shaman.Talents.AncestralAwakening > 0 {
-					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
-					// TODO: this should actually target the lowest health target in the raid.
-					//  does it matter in a sim? We currently only simulate tanks taking damage (multiple tanks could be handled here though.)
-					shaman.AncestralAwakening.Cast(sim, target)
-				}
+				shaman.procAncestralAwakening(sim, result)
 			}
 			if shaman.Talents.TidalWaves > 0 {
 				shaman.tidalWaveProc.Activate(sim)
@@ -220,13 +245,7 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
 				shaman.procImpWaterShield(sim, impShieldChance)
-				if shaman.Talents.AncestralAwakening > 0 {
-					shaman.ancestralHealingAmount = float64(int32(float32(result.Damage) * 30 / 100))
-
-					// TODO: this should actually target the lowest health target in the raid.
-					//  does it matter in a sim? We currently only simulate tanks taking damage (multiple tanks could be handled here though.)
-					shaman.AncestralAwakening.Cast(sim, target)
-				}
+				shaman.procAncestralAwakening(sim, result)
 			}
 
 			if shaman.tidalWaveProc.IsActive() {

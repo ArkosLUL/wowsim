@@ -376,3 +376,89 @@ func TestCreatureHardcastCompletesAheadOfALandingOnItsUpdate(t *testing.T) {
 		t.Errorf("went %v, want %v", order, want)
 	}
 }
+
+// Creature::Update runs Unit::Update, its m_Events with them, before UpdateAI swings: a pet's missile landing on
+// the update its swing is due goes first, and after a hardcast landing then, which held the swing, whichever the
+// sim pops first, or when another unit's swing then brings the weapon attacks ahead of both.
+func TestCreatureLandingGoesAheadOfItsSwing(t *testing.T) {
+	for _, tc := range []struct {
+		name                        string
+		held, castFirst, otherSwing bool
+	}{
+		{"free", false, false, false},
+		{"held, the cast queued first", true, true, false},
+		{"held, the landing queued first", true, false, false},
+		{"held, the player swinging then", true, true, true},
+	} {
+		held := tc.held
+		var pet *tickTestPet
+		timingTestConstruct = func(a *timingTestAgent) {
+			pet = &tickTestPet{Pet: NewPet("Pet", &a.Character, stats.Stats{}, func(stats.Stats) stats.Stats { return stats.Stats{} }, true, false)}
+			pet.EnableAutoAttacks(pet, AutoAttackOptions{MainHand: testWeapon(2), AutoSwingMelee: true})
+			a.AddPet(pet)
+		}
+		var hardcast *Spell
+		var order []string
+		sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
+			if tc.otherSwing {
+				a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2), AutoSwingMelee: true})
+			}
+			config := castConfig(testSpellNoServerData, 0)
+			config.ApplyEffects = func(sim *Simulation, _ *Unit, _ *Spell) {
+				order = append(order, "hardcast at "+sim.CurrentTime.String())
+			}
+			hardcast = pet.RegisterSpell(config)
+		})
+		timingTestConstruct = nil
+		pet.AutoAttacks.MHAuto().ApplyEffects = func(sim *Simulation, _ *Unit, _ *Spell) {
+			order = append(order, "swing at "+sim.CurrentTime.String())
+		}
+		missile := &Spell{Unit: &pet.Unit, MissileSpeed: 20}
+		sim.PrePull()
+		var lands time.Duration
+		at(sim, ms(1003), func(sim *Simulation) {
+			order = order[:0]
+			lands = pet.AutoAttacks.mh.swingAt
+			cast := func() {
+				// a cast running past the swing holds it to the cast's landing
+				pet.GCD.Set(sim.CurrentTime)
+				hardcast.DefaultCast.CastTime = lands - sim.CurrentTime
+				if !hardcast.Cast(sim, a.CurrentTarget) || pet.Hardcast.Expires != lands {
+					t.Fatalf("%s: the hardcast failed or lands at %v, want %v", tc.name, pet.Hardcast.Expires, lands)
+				}
+			}
+			if held {
+				lands = sim.NextServerTick(lands + ms(50))
+			}
+			if held && tc.castFirst {
+				cast()
+			}
+			start := sim.NextServerTick(sim.CurrentTime)
+			if lands <= start {
+				t.Fatalf("%s: the pet swings at %v, the flight starts at %v", tc.name, lands, start)
+			}
+			missile.startFlight(sim, lands-start, func(sim *Simulation) {
+				order = append(order, "landing at "+sim.CurrentTime.String())
+			}, nil)
+			if held && !tc.castFirst {
+				cast()
+			}
+			if tc.otherSwing {
+				a.AutoAttacks.mh.setTimer(sim, lands)
+				if a.AutoAttacks.mh.swingAt != lands {
+					t.Fatalf("%s: the player swings at %v, want %v", tc.name, a.AutoAttacks.mh.swingAt, lands)
+				}
+				sim.rescheduleWeaponAttack(lands)
+			}
+		})
+		runUntil(sim, ms(2500))
+
+		want := []string{"landing at " + lands.String(), "swing at " + lands.String()}
+		if held {
+			want = append([]string{"hardcast at " + lands.String()}, want...)
+		}
+		if !slices.Equal(order, want) {
+			t.Errorf("%s: went %v, want %v", tc.name, order, want)
+		}
+	}
+}
