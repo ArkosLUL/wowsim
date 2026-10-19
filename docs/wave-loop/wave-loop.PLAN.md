@@ -93,6 +93,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z13 | EC-CORE-FIX10 (G, FS) · EC-PET-FIX8 (G, live) · EC-CLASS-FIX9 (G, live) · EC-TOOLS4 (live) | ✔ |
 | Z14 | EC-UPSTREAM (G, FS, live) · EC-CORE-FIX11 (G, FS, live) · EC-PET-FIX9 (G, live) · EC-CLASS-FIX10 (G) | ✔ |
 | Z15 | EC-CORE-FIX12 (G) · EC-PET-FIX10 (live) · EC-CLASS-FIX11 (G, live) · EC-TOOLS5 (C++, live) | ✔ |
+| Z16 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -217,13 +218,13 @@ chain waits for Z12.
   open across a rebuild sends the optimizer's tank boss its old input group, and the run fails: reload it. Auto
   mode refuses the prod docker commands, a DSN on a command line and chained commands: the user's allow rules
   (`.claude/settings.local.json` in [sim]) cover each plain command.
-- Open: the e2e-coverage backlog Z14 leaves, sim-performance's Left items, the sims' run time over Z6's (Sim
+- Open: the e2e-coverage backlog Z15 leaves, sim-performance's Left items, the sims' run time over Z6's (Sim
   throughput; EC-CORE-FIX8 has the dot ticking), the bis-optimizer backlog (Z3's As
   builts: the enchant residual, Mutilate's pair, Combat Rogue P3 Normal; Z4's: the surrogate overpricing a
   one-hander's pairing, stage 2 and the Heroic Presence checks not yet run on the new lists, whether
   Ecoterrorist's rotation casts Mangle (Idol of the Corruptor sims like a dead idol); Z5's re-baseline: the
   search ends on a weaker set after sim changes that leave the presets within 0.1%, Ret P4 Normal 40 rating
-  over the expertise cap; Z10's to Z12's: Feral Tank P2's search unsettled; Z12's picks: identical tied loadouts; Z14's re-baseline: Fire P3's search settles 17 to 25 J lower after Combustion's change; BIS-GEM-SIM's: Quick's
+  over the expertise cap; Z10's to Z12's: Feral Tank P2's search unsettled; Z12's picks: identical tied loadouts; Z14's re-baseline: Fire P3's search settles 17 to 25 J lower after Combustion's change; Z15's: Prot Pal P3's gains 923 and 515 J less after Reckoning's charges; BIS-GEM-SIM's: Quick's
   noise loses tanks' Stamina twins, Bulwark P1 Quick 3 hit gems, Felesta P1 Quick Agility and hit in the figurine).
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
@@ -242,7 +243,7 @@ chain waits for Z12.
   - Then the DPS rankings ([tools/rankings/README.md](../../tools/rankings/README.md): a fresh work dir, the
     runner, `merge.py`) and a new `assets/rankings/rankings.json`; the committed one was simmed at `85d65c4c5`,
     before Z13.
-- Workflow runIds: Z14's `wf_05383cd2-e97` (all four, base `36e678932`; the cross-review, the specs and the guides ran as plain agents); Z13's `wf_6395e35a-086` (all four, base `d61bbed61`; the cross-review, the specs and the guides ran as plain agents); Z12's `wf_661e4362-520` and `wf_ce509f13-550` (base `9a5d8fb6a`; the cross-review, the picks, the specs and the guides ran as plain agents); Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z15's `wf_22003b88-2d4` (all four, base `0127441aa`; the cross-review, the specs and the guides ran as plain agents); Z14's `wf_05383cd2-e97` (all four, base `36e678932`; the cross-review, the specs and the guides ran as plain agents); Z13's `wf_6395e35a-086` (all four, base `d61bbed61`; the cross-review, the specs and the guides ran as plain agents); Z12's `wf_661e4362-520` and `wf_ce509f13-550` (base `9a5d8fb6a`; the cross-review, the picks, the specs and the guides ran as plain agents); Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
@@ -313,6 +314,7 @@ Reckoning that way), but J isn't DPS: see below.
 | GEM | 8599.5, +173 / +206 | 10770.0, +855 / +875 | 5013.3, +92 / +84 | 12922.4, +197 / +234 | 5732.1, +2168 / +2498 | 1846.3, -74 / +129 |
 | Z13 | 8603.0, +217 / +218 | 10770.0, +855 / +875 | 5012.8, +97 / +98 | 12922.4, +230 / +234 | 5722.6, +2167 / +2485 | 1846.3, -74 / +129 |
 | Z14 | 8603.0, +217 / +218 | 10770.0, +855 / +875 | 5012.8, +80 / +74 | 12922.4, +230 / +234 | 5722.6, +2167 / +2485 | 1846.3, -74 / +129 |
+| Z15 | 8603.0, +217 / +218 | 10770.0, +855 / +875 | 5012.8, +80 / +74 | 12929.4, +222 / +259 | 5744.3, +1244 / +1970 | 1846.3, -74 / +129 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -883,6 +885,12 @@ crashed before F2, so its column starts there.
 | EC-PET-FIX9 | merged | `bb5ae713a` | module `9ffc352`; the Rune Weapon skips a killing blow, copies Obliterate and Mind Freeze, magic copies skip the versus bonus; a hunter pet's reach is 1.5 × its family's scale (live agrees); no golden moves |
 | EC-CLASS-FIX10 | merged | `7c776fbce` | Rune Strike's queue cleared at the swing and on reset; Heart Strike takes RoR and Tundra Stalker, which count the weapon's diseases; heals skip the dead, Prayer of Mending jumps to the most missing health; BloodTank -0.009% (`4a46774ef`; `d4f566c45` removed a helper both DK items added) |
 | wave Z14 cross-review | direct | `b4a7f73de` | the haste ceiling a hard rule (`RuleCeiling`); Obliterate takes its diseases and rolls Annihilation only on a hit, before RoR and TS read them; extra attacks never take a queued strike; Combustion's stack after a same-tick hardcast; Rune Strike's 20 runic power, Mind Freeze's hit roll, the weapon's copies without glyph or T8, Poison Spit's tick on apply; Blood -0.20%, Fury SwordSpec +0.58% (`098d90ece`) |
+| EC-CORE-FIX12 | merged | `47c137b92` | extra attacks swing on the next update behind the server's proc gate; Ancestral Awakening heals the lowest health percent, 10% a rank; helpful casts skip the dead; a creature's landings ahead of its own swing; Penance's cost and cooldown on the press's tick; Fury SwordSpec +0.33%, Restoration HealingGrace tps -1.66% (`b60239201`) |
+| EC-PET-FIX10 | merged | `9bf80abc7` | the Rune Weapon copies Mark of Blood, replacing the knight's and gone with the weapon; the mark heals 4% and books its self-heal threat; heals reach pets by the server's target checks; the hunter pet's stop spot has no rule (navmesh); BloodTank one row tps +0.03% (`41bfa8211`) |
+| EC-CLASS-FIX11 | merged | `b36186739` | module `a131385`; Threat of Thassarian's off-hand strike after Rime and Blood Plague; Tundra Stalker 2/3 skip Blood Plague and count the raid's Frost Fever; Elune's Wrath agrees live; Frost -0.12%, FrostUH -0.21% (`1cebe702f`) |
+| EC-TOOLS5 | merged | `bb1e339a8` | module `0dca206` (C++, live from the 2026-10-19 16:23 image another session built); the Combat Reach picker out of the threat section; spell-mod fixtures regenerated and re-swept; `.simval damage` doubles a DK's off-hand fixed bonus, two 66974 records; no golden moves |
+| wave Z15 cross-review | direct | `28e0a197d` | Hack and Slash and Reckoning queue their extras (no ICD; 4 charges); Ancestral Awakening skips uncontrollable guardians; Mark of Blood's charges only on damage; Obliterate's consume takes the Frost Fever slow; the 66216 alias, the 66974 keys; Protection dtps +0.85% (`d136c8d0f`), module `13586b3` |
+
 
 Later WIs are added as their wave starts.
 
