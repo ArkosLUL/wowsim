@@ -5584,6 +5584,39 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 - **Goldens:** TestFrost and TestFrostUH (the off-hand order); none for Tundra Stalker's ranks or the raid Frost
   Fever unless a suite takes them; report each.
 
+#### As built
+
+Code stage (notes in `tmp/ec-class-fix11-code.md`), against [ac] at 62fb09c68. Verdicts:
+- Threat of Thassarian's order: partly fixed. On the server the main hand's damage goes first, then its hit-phase
+  procs in spell id order (`m_appliedAuras` is keyed by id), the off-hand strike cast whole from ToT's place among
+  them, then the target's procs, the main hand's weapon enchants (`CastItemCombatSpell`) and the finish phase (Killing
+  Machine's and Deathchill's charges); the Z14 logs agree (Chill of the Grave, off-hand strike, Razor Frost, Killing
+  Machine gone). The sim runs a hit's procs in one `OnSpellHitDealt` pass, so moving the call after `DealDamage` would
+  put Razorice, Paragon, T9 2P, Desolation and Killing Machine's charge ahead of the off hand (the off-hand Frost
+  Strike would lose its crit). The call stays ahead of `DealDamage`, after what the strike resolves first on the server:
+  Rime before it (`obliterate.go`), Blood Plague, a launch effect, before it (`plague_strike.go`); Rune Strike's moves
+  ahead of `DealDamage` like the others. Left: the main hand's damage and its lower-id procs (Mjolnir Runestone) still
+  come after the off hand. `TestThreatOfThassarianStrikeOrder`.
+- Tundra Stalker ranks 2 and 3: fixed. Only Blood Plague's mask differs across ranks; its snapshot skips `RoRTSBonus`
+  at those ranks (`tundraStalkerSkipsBloodPlague`). `TestTundraStalkerRanksOnBloodPlague`.
+- Raid Frost Fever: fixed. `applyTundaStalker` counts a target's permanent `FrostFever` aura (the raid debuff); the
+  knight's own debuff aura, which outlives his consumed disease, doesn't. `TestTundraStalkerCountsTheRaidsFrostFever`.
+- Live: `e2e/ecclass11_test.go`'s `TestEcClass11ElunesWrath`, vetted, not run.
+- Goldens: Blood Plague before the off hand only, as its snapshot no longer takes the off-hand strike's procs:
+  TestFrost -0.117%, TestFrostUH -0.206% Average-Default (rows -0.03 to -0.69%), Blood Plague per hit -2.2% and -1.9%. Rime,
+  Rune Strike and both Tundra Stalker fixes move nothing; 35 of 37 unchanged.
+- Follow-ups: a proc order in core (an aura proc's server id, weapon enchants after) to put the off-hand strike among
+  the main hand's procs; the knight's untagged Frost Fever debuff aura outlives his dot after an Obliterate consume.
+
+Live stage (notes in `tmp/ec-class-fix11-live.md`), no rebuild: `TestEcClass11ElunesWrath` passed in 56 s. Twice each,
+a Starfire sent under Elune's Wrath started with no cast time and took the charge, and one casting when it came up kept
+its 3421 ms cast and left it, as `insect_swarm.go` models: nothing to fix. The gear goes on with `.simval equip`, since
+`.additem` only fills the bags. Goldens as the code stage.
+
+Review: the e2e's hardcast case now also needs no fresh Elune's Wrath gain right after the cast (a consumed charge
+replaced by a new proc passed it); vetted only, the live run's three gains each fall inside a counted case, so it passes
+as recorded. Goldens unchanged.
+
 ### EC-TOOLS5 (Z15; golden-neutral; C++; stages: code, C++ and e2e, live)
 
 - The Combat Reach picker (`combatReachPicker`, `ui/core/components/encounter_picker.ts`) sits in the target's

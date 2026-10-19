@@ -66,12 +66,12 @@ func (dk *Deathknight) newObliterateHitSpell(isMH bool) *core.Spell {
 
 			if isMH {
 				spell.SpendRefundableCostAndConvertFrostOrUnholyRune(sim, result, deathConvertChance)
-				dk.threatOfThassarianProc(sim, result, dk.ObliterateOhHit)
 
 				// spell_proc's default hit mask: only a landed hit procs it
 				if result.Landed() && sim.RandomFloat("Rime") < dk.rimeHbChanceProc() {
 					dk.FreezingFogAura.Activate(sim)
 				}
+				dk.threatOfThassarianProc(sim, result, dk.ObliterateOhHit)
 			} else if result.Landed() {
 				// Death Rune Mastery procs from procs, so the off hand rolls for the main hand's runes too
 				dk.RollFrostUnholyDeathRunes(sim, deathConvertChance)

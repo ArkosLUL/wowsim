@@ -72,6 +72,7 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 			result := spell.CalcDamage(sim, target, baseDamage, outcomeApplier)
 			if isMH {
 				spell.SpendRefundableCost(sim, result)
+				dk.threatOfThassarianProc(sim, result, dk.RuneStrikeOh)
 			}
 			spell.DealDamage(sim, result)
 
@@ -80,7 +81,6 @@ func (dk *Deathknight) newRuneStrikeSpell(isMH bool) *core.Spell {
 			}
 
 			if isMH {
-				dk.threatOfThassarianProc(sim, result, dk.RuneStrikeOh)
 				// 56817's charge only goes on a hit or crit (spell_proc's default hit mask), so a miss keeps the window
 				if result.Landed() {
 					dk.RuneStrikeAura.Deactivate(sim)

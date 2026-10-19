@@ -221,7 +221,9 @@ func (dk *Deathknight) registerBloodPlague() {
 				if !isRollover {
 					dot.SnapshotCritChance = dk.diseaseCritChance(dot, target)
 					dot.SnapshotAttackerMultiplier = dot.Spell.AttackerDamageMultiplier(dot.Spell.Unit.AttackTables[target.UnitIndex])
-					dot.SnapshotAttackerMultiplier *= dk.RoRTSBonus(target)
+					if !dk.tundraStalkerSkipsBloodPlague() {
+						dot.SnapshotAttackerMultiplier *= dk.RoRTSBonus(target)
+					}
 				}
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
