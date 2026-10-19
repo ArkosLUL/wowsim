@@ -83,3 +83,30 @@ Frost DK: no fix inside P1's paths. Arcane and Arms are rotation-clean; their ga
   cap-exempt.
 - Golden gap: TestCombat still runs `combat_expose`, so the new Combat default has no golden.
 - Assassination's autoRotation has the same Expose Armor waste. It's at or above B, so left alone.
+
+## P2 spike (2026-10-19): passed
+
+A harness character fights the Naxx dummy under bot AI. Test `TestBotSpike` in `tmp/p2/e2e/botspike_test.go`
+(a copy of [simval]'s committed `e2e/`, untracked), run by `tmp/p2/run-spike.sh <label> [class] [seconds] [potion]`
+under the server lock; captures in `tmp/p2/captures/`. Recipe:
+
+1. `newBot`, gear and talents (the spike: `.playerbots bot initself=epic`), `.ip set 18`, potion via `.additem`.
+2. Teleport it off Naxx (a group member enters the leader's instance only from another map), save, log out.
+3. Log a second character into the same account (`LoginBots` creates it), GM on, level 80.
+4. `.playerbots bot add <name>` (reply `add: <name> - ok`; same-account bots allowed); the bot joins the master's
+   group by itself.
+5. Raid convert (raw `CMSG_GROUP_RAID_CONVERT` 0x28E): a non-GM enters a raid map only in a raid group. `.summon`
+   can't help, it moves only GM sessions into an instance (`Instance.GMSummonPlayer = 0`).
+6. Master `.go`es into Naxx, party chat `summon`: the bot teleports into the master's instance.
+7. Spawn the dummy, party chat `co -burst`, select the dummy, party chat `attack`.
+8. Cleanup: `.playerbots bot remove`, then the master's `deleteCharacters` takes both characters.
+
+Burst gate: the dummy (`NullCreatureAI`) never has a victim, so `TankHasHeldBoss` never passes. `co -burst` frees
+the cooldowns, but `OffensivePotionTrigger` checks the tank hold itself, so the potion never fires. Ways out:
+leave the potion out of both the bot run and its sim run; add 999000 to [bots]' `noVictimBosses` (cooldowns and
+potion at the pull; rebuild); or a `.simval` command giving the dummy a tank victim (5 s gate as in a raid; C++ in
+[simval], rebuild).
+
+Results, 60 s, factory gear: Fire mage 6168 DPS, Living Bomb and Improved Scorch ≥ 96% uptime, Combustion and
+Mirror Image cast; Assassination rogue 6837 DPS at 1.2 yd. Both had the matrix's flask and food, and the bot
+loaded its Naxx strategy. `tools/simval chronicle` reads both logs. The rogue poisoned its weapons in combat.
