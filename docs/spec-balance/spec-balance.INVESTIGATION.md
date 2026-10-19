@@ -202,26 +202,34 @@ Bot/sim, one 180 s run (`tmp/p3/botdps-v2/`, `compare-v2.txt`); median 89.5%, fl
 
 | Build | P2 | P3 | Left (bot against sim) |
 |---|---|---|---|
-| BM Hunter | 67.9 | 73.5 | Steady Shot 77 against 91; pet setup (above) the likely rest. Flagged |
-| Demonology | 72.1 | 82.0 | no Curse of Doom; after `b12b91fae` 89.2 and 85.6 (below) |
+| BM Hunter | 67.9 | 73.5 | pet without its talents and raid buffs; fixed, 87.2 then 92.8 (below) |
+| Demonology | 72.1 | 82.0 | no Curse of Doom; fixed, four runs 89.2, 85.6, 90.4, 83.6 (below) |
 | MM Hunter | 84.1 | 87.3 | |
 | Elemental | 83.5 | 87.7 | |
 | Shadow | 73.3 | 89.4 | Mind Flay 65 against 82 |
-| Combat | 89.6 | 89.6 | |
+| Combat | 89.6 | 89.6 | 98.8 without Prey on the Weak (below) |
 | Survival | 83.7 | 90.3 | |
 | Fury | 95.0 | 90.5 | dances now (Rend up 66%, sim 77%); P2 didn't. Within noise, the void run had 92.3 |
 | Balance | 83.9 | 91.4 | |
 | Arms | 89.4 | 101.9 | Slams as the sim does |
 
 Damage by source (`botdps compare -damage`; pet stats from the setup's pet `info` line, `tmp/p3/botdps-pets/`):
-- BM: the pet's melee is 2900 of the 3930 DPS missing (bot 3974, sim 6868); the hunter is close (6165, 6847).
-  Swings 344 against 412, mean 2079 against 2999, crit 18-24% against 32% (glancing 27%, the sheet 35%). Same
-  pet abilities cast, every passive talent on (Cobra Reflexes, Spiked Collar, Spider's Bite, Shark Attack, Wild
-  Hunt), pet AP 4008 where the sim's inheritance gives about 4025. No module hooks the melee roll. Unchecked in
-  the sim: the fight replays fight without pets (`fight.go`). Next: a pet melee parity probe; BM is the ranking's
-  top, the tiers' reference.
-- Combat: white swings 14% weaker (1534 against 1792) at the same crit and hit count, Sinister Strike 9%; the
-  weapons are the setup's. The compare doesn't split the hands yet.
+- BM: the pet's melee was 2900 of the 3930 DPS missing: swings 344 against 412, crit 18% against 32%, hits
+  smaller. Two causes:
+  - A freshly tamed pet casts its passives before `SetMinion` gives it an owner, so the hunter's spell mods on
+    them (Ferocity, Unleashed Fury, Serpent's Swiftness, Bestial Discipline, ...) stay off until it's loaded from
+    the DB again. Core Tame Beast does this for players too; [bots] `919092c27` recalculates the pet's passives in
+    `PlayerbotFactory::InitPet` (`tame` runs it). BM 87.2%, pet crit and swings now the sim's
+    (`tmp/p3/botdps-fix1/`).
+  - The test put single target buffs and Kings on the bot only, so the pet had 10% less of every stat. [simval]
+    `851f059` buffs the pet too: its stats match the sim's; BM 92.8% (`botdps-fix2/`).
+- `.simval info`'s `critVsOther` against a pet adds (400 - the GM's current defense skill, 1) x 0.04 = 16%: the
+  pet's "35%" sheet crit was 19%.
+- Combat: every hit 8-14% weaker, Rupture and Instant Poison too, at the same stats (sim `ComputeStats` against
+  `.simval info`: AP 8241 against 8148, crit, hit, expertise equal). Prey on the Weak: the sim has it up 150 s (its
+  target's health drains with time left), the dummy never leaves 100%. Without the talent the sim does 11480, bot/sim
+  98.8%. Execute ranges are off on both sides (`botdps compare` sets no execute proportions); Arms' Rend is the only
+  other in-scope mechanic on the target's health.
 - Demonology, a third run 85.0%: Shadow Bolt 42 and Incinerate 40 against 67.5 and 26.9 (Molten Core charges),
   12 fewer fillers in all.
 - Demonology after `b12b91fae` (`tmp/p3/botdps-demo/`, `botdps-demo2/`): 89.2% and 85.6%, unflagged. Curse of
@@ -229,6 +237,9 @@ Damage by source (`botdps compare -damage`; pet stats from the setup's pet `info
   Immolation Aura 0 against 2 (330 DPS): the bot casts it only in its AoE strategy within 5 yd; the sim assumes
   melee range. Shadow Mastery up 71-74% against 96%. Run 2: Molten Core procs stop after 80 s (3 against 11; 62
   Corruption ticks without one, 0.04% by chance at 12%), so Incinerate 6 against 26.9; no module touches it,
-  unexplained.
+  unexplained. Two later runs proc normally (12, 10): 90.4% and 83.6% (crit 43% against 53%). Totem of Wrath
+  "gone by the end" is Demonic Pact replacing it, as in the sim.
+- Full Heal: `.cast 25840 triggered` gets no reply and the bot's health doesn't move. Harmless so far: warlock bots
+  stay above 75% between checks.
 
-Next: the BM pet probe; whether Molten Core's stall recurs.
+Next: no build flagged. Open: Molten Core's one stall; Full Heal; Prey on the Weak against a full health dummy.

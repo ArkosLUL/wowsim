@@ -5,7 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a, P0b, P1, P2 and P3 landed, with the user's P1 decisions. Results, later-phase notes and P2/P3's per-build bot findings in `spec-balance.INVESTIGATION.md`. Next: BM's pet gap; the baseline (after the BiS chain).
+Status: P0a, P0b, P1, P2 and P3 landed, with the user's P1 decisions. Results, later-phase notes and P2/P3's per-build bot findings in `spec-balance.INVESTIGATION.md`. Next: the baseline (after the BiS chain).
 
 ## Context
 
