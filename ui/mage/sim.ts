@@ -3,6 +3,7 @@ import {APLAction, APLListItem, APLPrepullAction, APLRotation} from '../core/pro
 import {Stats} from '../core/proto_utils/stats.js';
 import { getSpecIcon } from '../core/proto_utils/utils.js';
 import {Player} from '../core/player.js';
+import {TypedEvent} from '../core/typed_event.js';
 import {IndividualSimUI, registerSpecConfig} from '../core/individual_sim_ui.js';
 import {
 	Mage_Rotation as MageRotation,
@@ -386,7 +387,7 @@ export class MageSimUI extends IndividualSimUI<Spec.SpecMage> {
 		super(parentElem, player, SPEC_CONFIG);
 
 		// swap Fire's and Arcane's default consumes with the tree, leaving any other pick alone
-		player.talentsChangeEmitter.on(eventID => {
+		player.talentsChangeEmitter.on(() => {
 			const tree = player.getTalentTree();
 			if (tree > 1) {
 				return;
@@ -395,7 +396,8 @@ export class MageSimUI extends IndividualSimUI<Spec.SpecMage> {
 			const treeDefault = tree == 0 ? Presets.DefaultArcaneConsumes : Presets.DefaultFireConsumes;
 			const otherDefault = tree == 0 ? Presets.DefaultFireConsumes : Presets.DefaultArcaneConsumes;
 			if (Consumes.equals(current, otherDefault)) {
-				player.setConsumes(eventID, treeDefault);
+				// fresh id, the talents change's id was already emitted so this change would never get saved
+				player.setConsumes(TypedEvent.nextEventID(), treeDefault);
 			}
 		});
 	}

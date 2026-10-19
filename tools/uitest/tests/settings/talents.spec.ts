@@ -1,7 +1,7 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
 import { openSimTab } from '../lib/page';
-import { acceptDialogs, expectActive, openSpec, reloadSim, savedData, storedSettings } from './helpers';
+import { acceptDialogs, expectActive, iconEnum, openSpec, reloadSim, savedData, storedSettings } from './helpers';
 
 const SPEC = 'mage';
 
@@ -213,4 +213,51 @@ test('a pet of another family brings its own talent tree, and both survive a rel
 	await talentsTab(page).locator('a[data-bs-target="#pet-talents-tab"]').click();
 	await expect(family).toHaveText(newFamily);
 	expect(await button.evaluate(e => (e as HTMLElement).style.backgroundImage)).toBe(petIcon);
+});
+
+test("a warlock talent preset brings its tree's pet and stone, and a reload keeps them", async ({ page }) => {
+	await openTalents(page, 'warlock');
+	const presets = savedData(talentsTab(page), 'Saved Talents');
+	const options = async () => (await storedSettings(page, 'warlock'))?.player?.warlock?.options ?? {};
+
+	await presets.chip('Demonology').locator('.saved-data-set-name').click();
+	await expect.poll(async () => (await options()).summon).toBe('Felguard');
+	expect((await options()).weaponImbue).toBe('GrandSpellstone');
+
+	await presets.chip('Destruction').locator('.saved-data-set-name').click();
+	await expect.poll(async () => (await options()).summon).toBe('Imp');
+	expect((await options()).weaponImbue).toBe('GrandFirestone');
+
+	await reloadSim(page);
+	await openSimTab(page, 'talents-tab');
+	expect((await options()).summon).toBe('Imp');
+
+	await presets.chip('Affliction').locator('.saved-data-set-name').click();
+	await expect.poll(async () => (await options()).summon).toBe('Felhunter');
+	expect((await options()).weaponImbue).toBe('GrandSpellstone');
+});
+
+test("a mage's Arcane preset brings Arcane's default consumes, and Fire restores Fire's", async ({ page }) => {
+	await openTalents(page);
+	const presets = savedData(talentsTab(page), 'Saved Talents');
+	const conjured = iconEnum(page.locator('#settings-tab .consumes-settings'), 'item', 12662).button;
+	const darkRune = /item=12662/;
+	const flameCap = /item=22788/;
+
+	await openSimTab(page, 'settings-tab');
+	await expect(conjured).toHaveAttribute('href', flameCap);
+
+	await openSimTab(page, 'talents-tab');
+	await presets.chip('Arcane').locator('.saved-data-set-name').click();
+	await openSimTab(page, 'settings-tab');
+	await expect(conjured).toHaveAttribute('href', darkRune);
+
+	await reloadSim(page);
+	await openSimTab(page, 'settings-tab');
+	await expect(conjured).toHaveAttribute('href', darkRune);
+
+	await openSimTab(page, 'talents-tab');
+	await presets.chip('Fire').locator('.saved-data-set-name').click();
+	await openSimTab(page, 'settings-tab');
+	await expect(conjured).toHaveAttribute('href', flameCap);
 });

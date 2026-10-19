@@ -31,27 +31,24 @@ TestAffliction; every other suite unchanged.
 
 Frost DK: no fix inside P1's paths. Arcane and Arms are rotation-clean; their gaps are P4 work.
 
-## Open decisions (user)
+## Decisions (user, 2026-10-19)
 
-- **Frost DK ranks 'Frost UH'** (existing preset, `frost_uh_pesti.apl.json`): +10.2/+10.2/+11.1/+11.1%, as it
-  takes Epidemic, which carries the module's disease-haste tweak. Patch: `tmp/p1/plate/dk_frost_talents_gen.patch`
-  (`tools/presetgen/gen.py`, bis-optimizer's). If P4 limits that tweak to Unholy, the gain reverses.
-- **Fire ranks 'Frostfire'** (0/56/15): +4.0/+4.1/+2.0/+3.7% over the fixed TTW Fire. Patch:
-  `tmp/p1/ranged/proposal/mage_fire_frostfire.patch`.
-- Either needs a recapture and a BiS rerun for that build.
-- **Bot consumables** (step 4, `tmp/p1/consumables/proposals.md`). The bot's flask is best for all 20 builds.
-  - Food, via `Playerbot.env` matrix rows:
-    - Fury → Dragonfin Filet (+0.13 to +0.75%);
-    - Combat → Mega Mammoth Meal (+0.30 to +0.49%);
-    - Frost DK → Dragonfin Filet (+0.34 to +0.77%; row 73 covers Frost tanks too);
-    - Enhancement → Fish Feast (+0.29 to +0.46%);
-    - Arcane → Imperial Manta Steak (+0.04 to +0.15%).
-  - Potion of Speed for Shadow, Balance and Affliction (+0.03 to +0.64%): a [bots] `InitPotions` ladder by spec,
-    with the drink lookup ordered the same way, plus `playerbotPotion` and its test.
-- **Combat's Glyph of Tricks of the Trade** helps only the Tricks target; a self glyph gives the rogue +0.5–0.7%.
-  Kept.
-- **UI tests** for the warlock and mage tree hooks belong to `tools/uitest/` (ui-tests loop). A ready test:
-  `tmp/p1/caster/uitest_warlock_tree_options.patch`.
+- **Frost DK ranks 'Frost UH'** (existing preset, `frost_uh_pesti.apl.json`; `tools/presetgen/gen.py`):
+  +10.2/+10.2/+11.1/+11.1%, as it takes Epidemic, which carries the module's disease-haste tweak. If P4 limits
+  that tweak to Unholy, the gain reverses. The user's Frost DK bots need these talents too.
+- **Fire keeps TTW.** Frostfire (0/56/15) would add +4.0/+4.1/+2.0/+3.7%; declined.
+- **Bot food**, applied to `Playerbot.env`'s matrix (step 4, `tmp/p1/consumables/proposals.md`; the bot's flask is
+  already best for all 20 builds):
+  - Fury → Dragonfin Filet (+0.13 to +0.75%);
+  - Combat → Mega Mammoth Meal (+0.30 to +0.49%);
+  - Frost DK → Dragonfin Filet (+0.34 to +0.77%; row 73 covers Frost tanks too);
+  - Enhancement → Fish Feast (+0.29 to +0.46%);
+  - Arcane → Imperial Manta Steak (+0.04 to +0.15%).
+- **Potion of Speed for Shadow, Balance and Affliction** (+0.03 to +0.64%): [bots] `GetOffensivePotionLadder`
+  drives stocking and the drink lookup; the sim's `playerbotPotion` matches. Affliction rechecked with a bot-like
+  rotation (Corruption only when missing): Speed still wins +0.36/+0.24/+0.36/+0.21%.
+- **Combat's Glyph of Tricks of the Trade** stays (a self glyph: +0.5–0.7% to the rogue at the raid's cost).
+- **UI tests** for the warlock and mage tree hooks added in `tools/uitest/tests/settings/talents.spec.ts`.
 
 ## Notes for later phases
 
@@ -70,6 +67,9 @@ Frost DK: no fix inside P1's paths. Arcane and Arms are rotation-clean; their ga
   - Hunters: cooldowns at the pull.
   - Warlocks: pet and stone per spec (Demo Felguard + Spellstone, Destro Imp + Firestone, Aff Felhunter + Spellstone).
   - Shadow: Mind Blast only while its cast is ≥ 1 s.
+  - Affliction: recast Corruption when a damage or crit buff is up that the running Corruption missed (the sim's
+    `warlockShouldRefreshCorruption`): +0.2/+0.8/+1.6/+2.5% over casting it only when missing. Everlasting
+    Affliction refreshes carry haste and spell power, not crit or multipliers (server and sim agree).
 - **Sim/server gaps:**
   - `Shaman.Reset` (`sim/shaman/shaman.go`) applies Totem of Wrath and its glyph's SP every reset, even while the APL
     swaps in Searing; recheck Elemental against P2.

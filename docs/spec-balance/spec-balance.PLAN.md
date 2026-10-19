@@ -5,7 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a, P0b and P1 landed; P1 results, open decisions and later-phase notes in `spec-balance.INVESTIGATION.md`. Next: the user's decisions there, then the baseline (after the BiS chain).
+Status: P0a, P0b and P1 landed, with the user's P1 decisions; results and later-phase notes in `spec-balance.INVESTIGATION.md`. Next: the baseline (after the BiS chain); P2 may start.
 
 ## Context
 
@@ -34,8 +34,9 @@ which models the server exactly (ADR 0001).
   pages (a "Playerbot" checkbox); presetgen, statweights' capture and the rankings always turn it on. Goldens
   don't move (default off).
 - With it on:
-  - No pre-pot. One DPS potion per fight, by role (casters Potion of Wild Magic, physical DPS Potion of Speed;
-    never Indestructible), drunk through an injected top-priority action once the fight is 5 s old.
+  - No pre-pot. One DPS potion per fight, by role (casters Potion of Wild Magic; physical DPS, Shadow, Balance
+    and Affliction Potion of Speed; never Indestructible), drunk through an injected top-priority action once the
+    fight is 5 s old.
   - Prepull stripped to persistent states bots set up out of combat (stances, presences, aspects; Horn of Winter
     or Bone Shield only if [bots] casts them out of combat). Gone: potions, cooldowns (Army of the Dead,
     Recklessness, Death Wish, Berserk, Mirror Image), precasts, Bloodrage/Berserker Rage, Life Tap stacking,
