@@ -188,7 +188,7 @@ What the test itself does, so a difference isn't the bot's:
 
 [bots] `Custom` `f8e88b208..2586e5b25` (deployed): hunters use potions and trinkets while Auto Shot repeats; pet
 taunts off autocast while the group has a tank; per-class fixes in `docs/classes/<class>.md` (Hunter D8-D10,
-Warlock DM3/DM4/DM7, Priest S3, Shaman, Druid, Rogue, Warrior). `b12b91fae` (not deployed, needs a rebuild): the
+Warlock DM3/DM4/DM7, Priest S3, Shaman, Druid, Rogue, Warrior). `b12b91fae` (deployed by a second rebuild): the
 curse strategies are siblings, so Demonology's `curse of doom` was evicted by the `curse of agony` listed after it
 (0 Doom casts against 4.0); Doom now carries its own Agony fallback.
 
@@ -203,7 +203,7 @@ Bot/sim, one 180 s run (`tmp/p3/botdps-v2/`, `compare-v2.txt`); median 89.5%, fl
 | Build | P2 | P3 | Left (bot against sim) |
 |---|---|---|---|
 | BM Hunter | 67.9 | 73.5 | Steady Shot 77 against 91; pet setup (above) the likely rest. Flagged |
-| Demonology | 72.1 | 82.0 | no Curse of Doom (fixed in `b12b91fae`); Shadow Bolt 54 against 67.5. Flagged |
+| Demonology | 72.1 | 82.0 | no Curse of Doom; after `b12b91fae` 89.2 and 85.6 (below) |
 | MM Hunter | 84.1 | 87.3 | |
 | Elemental | 83.5 | 87.7 | |
 | Shadow | 73.3 | 89.4 | Mind Flay 65 against 82 |
@@ -224,5 +224,11 @@ Damage by source (`botdps compare -damage`; pet stats from the setup's pet `info
   weapons are the setup's. The compare doesn't split the hands yet.
 - Demonology, a third run 85.0%: Shadow Bolt 42 and Incinerate 40 against 67.5 and 26.9 (Molten Core charges),
   12 fewer fillers in all.
+- Demonology after `b12b91fae` (`tmp/p3/botdps-demo/`, `botdps-demo2/`): 89.2% and 85.6%, unflagged. Curse of
+  Doom hits 4 times a run like the sim, hasted (32 s under Bloodlust, 42 s after) and critting (0/4, then 3/4).
+  Immolation Aura 0 against 2 (330 DPS): the bot casts it only in its AoE strategy within 5 yd; the sim assumes
+  melee range. Shadow Mastery up 71-74% against 96%. Run 2: Molten Core procs stop after 80 s (3 against 11; 62
+  Corruption ticks without one, 0.04% by chance at 12%), so Incinerate 6 against 26.9; no module touches it,
+  unexplained.
 
-Next: rebuild for `b12b91fae`, re-measure Demonology; the BM pet probe.
+Next: the BM pet probe; whether Molten Core's stall recurs.
