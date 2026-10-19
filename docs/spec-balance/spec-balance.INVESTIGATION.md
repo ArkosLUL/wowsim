@@ -213,4 +213,16 @@ Bot/sim, one 180 s run (`tmp/p3/botdps-v2/`, `compare-v2.txt`); median 89.5%, fl
 | Balance | 83.9 | 91.4 | |
 | Arms | 89.4 | 101.9 | Slams as the sim does |
 
-Next: rebuild for `b12b91fae`, re-measure Demonology; BM's pet against the sim's.
+Damage by source (`botdps compare -damage`; pet stats from the setup's pet `info` line, `tmp/p3/botdps-pets/`):
+- BM: the pet's melee is 2900 of the 3930 DPS missing (bot 3974, sim 6868); the hunter is close (6165, 6847).
+  Swings 344 against 412, mean 2079 against 2999, crit 18-24% against 32% (glancing 27%, the sheet 35%). Same
+  pet abilities cast, every passive talent on (Cobra Reflexes, Spiked Collar, Spider's Bite, Shark Attack, Wild
+  Hunt), pet AP 4008 where the sim's inheritance gives about 4025. No module hooks the melee roll. Unchecked in
+  the sim: the fight replays fight without pets (`fight.go`). Next: a pet melee parity probe; BM is the ranking's
+  top, the tiers' reference.
+- Combat: white swings 14% weaker (1534 against 1792) at the same crit and hit count, Sinister Strike 9%; the
+  weapons are the setup's. The compare doesn't split the hands yet.
+- Demonology, a third run 85.0%: Shadow Bolt 42 and Incinerate 40 against 67.5 and 26.9 (Molten Core charges),
+  12 fewer fillers in all.
+
+Next: rebuild for `b12b91fae`, re-measure Demonology; the BM pet probe.
