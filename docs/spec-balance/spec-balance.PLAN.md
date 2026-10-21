@@ -5,7 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a, P0b, P1, P2 and P3 landed, with the user's P1 decisions. Results, later-phase notes and P2/P3's per-build bot findings in `spec-balance.INVESTIGATION.md`. Next: the baseline (after the BiS chain).
+Status: P0a, P0b, P1, P2, P3 and the baseline landed, with the user's P1 decisions. Results, later-phase notes, P2/P3's per-build bot findings and each build's remaining gap in `spec-balance.INVESTIGATION.md`. Next: P4's proposal round (design agents running, `tmp/p4/`).
 
 ## Context
 
@@ -98,23 +98,22 @@ which models the server exactly (ADR 0001).
 
 ## In-scope builds and baseline
 
-20 builds. ≥ 85% in every counted cell already: BM Hunter, Unholy 2H, Assassination, Balance. Below B somewhere,
-worst and best % of top over the counted cells (rankings at sim `85d65c4c5`, human rules; the switch and the BiS
-chain will move these):
+20 builds. Baseline: rankings `3b28d98dc` (sim `5756270a2`: P1's fixes, the rebuilt BiS presets, playerbot rules).
+≥ 85% in every counted cell: BM Hunter, Unholy 2H, Frost DK (Frost UH), Assassination, Balance. Below B somewhere,
+worst and best % of top over the counted cells:
 
 | Build | Worst | Best | | Build | Worst | Best |
 |---|---|---|---|---|---|---|
-| Retribution | 67.8 (P1) | 87.6 (P4) | | Fury | 78.2 (P1) | 98.1 (P5) |
-| Arms | 68.2 (P2) | 82.0 (P5) | | Feral | 79.2 (P2) | 94.1 (P4) |
-| Demonology | 72.8 (P5) | 80.5 (P1) | | Survival | 79.7 (P2) | 87.9 (P3) |
-| Destruction | 73.3 (P5) | 82.7 (P1) | | Fire | 80.2 (P2) | 100 (P5) |
-| Enhancement | 74.3 (P4) | 82.2 (P1) | | DK Frost | 80.5 (P2) | 87.5 (P1) |
-| Elemental | 75.1 (P5) | 83.1 (P2) | | Shadow | 80.2 (P3) | 91.0 (P4) |
-| Combat | 75.8 (P2) | 80.6 (P1) | | Arcane | 82.2 (P2) | 87.5 (P1) |
-| Marksmanship | 75.6 (P2) | 91.1 (P4) | | Affliction | 83.2 (P5) | 92.9 (P1) |
+| Retribution | 68.7 (P1) | 88.4 (P4) | | Feral | 80.1 (P1) | 94.9 (P4) |
+| Arms | 69.9 (P2) | 81.7 (P5) | | Fury | 80.2 (P1) | 100 (P5) |
+| Destruction | 74.1 (P4) | 88.8 (P1) | | Demonology | 80.3 (P5) | 91.9 (P1) |
+| Elemental | 75.0 (P5) | 83.2 (P2) | | Combat | 80.9 (P2) | 84.6 (P1) |
+| Enhancement | 76.3 (P5) | 86.0 (P1) | | Arcane | 81.1 (P2) | 85.3 (P1) |
+| Fire | 77.5 (P2) | 97.4 (P4) | | Survival | 81.1 (P2) | 88.5 (P3) |
+| Marksmanship | 78.9 (P2) | 92.6 (P4) | | Shadow | 81.9 (P3) | 91.9 (P4) |
+| | | | | Affliction | 83.8 (P5) | 92.7 (P1) |
 
-Known setup bugs, fixed in P1: all three warlock builds carry Affliction's spec options (Demonology sims with a
-Felhunter and Grand Spellstone, `ui/warlock/sim.ts`); Arcane uses Fire's consumes (`ui/mage/sim.ts`).
+Cell tops: BM (P1/180, P3–P5/180, P4/300), Frost DK (P1/300, P3/300), Assassination (P2), Fury (P5/300).
 
 ## Rules that bind every phase
 
@@ -189,7 +188,8 @@ All measurements with the switch on. For each below-B build, worst gap first:
 
 Baseline (once P1 and the BiS chain are both on master): rebuild the dev sim container from [bal] (:3334), capture
 (~50 min), runner (~5 min), merge; `balance_check.py`; record the table in the PLAN and the remaining gap per build
-in the INVESTIGATION. The rankings page footer then says the ranking follows playerbot rules.
+in the INVESTIGATION. The rankings page footer then says the ranking follows playerbot rules. Done 2026-10-21: the
+BiS chain's own rankings rerun (`3b28d98dc`) served as the capture.
 
 Phase loop per [sim] `docs/guide/workflow.md`: implement + verify in a subagent, fresh reviewer, land.
 
@@ -223,9 +223,11 @@ For each spec meeting a trigger:
 For each build still below B at the baseline:
 1. Find what it lacks (scaling its peers got, weak base values, procs that fade with gear) via apldbg damage
    breakdowns at P1 and P5, and WotLK Classic's changes for the class.
-2. Prototype 1–3 candidates as uncommitted edits in [bal] (sim values set directly; a C++ tweak as its future
-   switch), run the runner for that build only (`--builds`), all phases at 180/300, and check spillover builds
-   sharing the spell. Undo rejected prototypes by hand before P5 lands anything.
+2. Prototype 1–3 candidates (sim values set directly; a C++ tweak hard-coded on) in a per-class plain copy of [bal],
+   `tmp/p4/trees/<class>/` (no `.git`: run no git there, it would act on [bal]), run the runner for that class's
+   builds (`--builds`), all phases at 180/300, and check spillover builds sharing the spell. The copy's
+   `tmp/p4/check.py` runs `balance_check.py` on its results against the baseline; the kept prototypes end as
+   `tmp/p4/<class>.patch`.
 3. One proposal doc, `docs/spec-balance/spec-balance.PROPOSAL.md`: per build, the tweak, its gating talent, spell
    ids and changed fields, predicted % per counted cell, cap and spillover check. The user reviews it in one
    sitting; only approved tweaks go to P5.

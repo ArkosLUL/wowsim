@@ -379,6 +379,7 @@ export class RankingsPage extends Component {
 				{` · simmed ${r.generatedAt.slice(0, 10)} · item catalog ${r.catalogDate} · ${whole.format(r.iterations)} iterations`}
 				{` · ${fightLabel(this.state.fight)} fight (±5 s) against one level 83 boss`}
 				{' · full raid buffs and debuffs, a Draenei in every party, no single-target gifts'}
+				{" · playerbot rules: the bots' potion, flask, food and pre-pull"}
 			</p>,
 		);
 	}

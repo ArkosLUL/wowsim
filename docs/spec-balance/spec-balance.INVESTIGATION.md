@@ -243,3 +243,22 @@ Damage by source (`botdps compare -damage`; pet stats from the setup's pet `info
   stay above 75% between checks.
 
 Next: no build flagged. Open: Molten Core's one stall; Full Heal; Prey on the Weak against a full health dummy.
+
+## Baseline (2026-10-21)
+
+Rankings `3b28d98dc`, table in the PLAN. Per build: the lift its worst cell needs to reach 85%, the room its best
+cell has below 95% (none: already ≥ 95%, so ±0.3 points there), and how many of the 10 counted cells are below B.
+
+| Build | Lift | Room | < 85 | | Build | Lift | Room | < 85 |
+|---|---|---|---|---|---|---|---|---|
+| Retribution | 23.7% | 7.4% | 6 | | Fury | 6.0% | none | 4 |
+| Arms | 21.6% | 16.3% | 10 | | Demonology | 5.9% | 3.4% | 7 |
+| Destruction | 14.7% | 6.9% | 9 | | Combat | 5.1% | 12.3% | 10 |
+| Elemental | 13.3% | 14.2% | 10 | | Arcane | 4.8% | 11.3% | 8 |
+| Enhancement | 11.4% | 10.5% | 8 | | Survival | 4.8% | 7.3% | 3 |
+| Fire | 9.7% | none | 6 | | Shadow | 3.8% | 3.4% | 3 |
+| Marksmanship | 7.7% | 2.6% | 4 | | Affliction | 1.5% | 2.5% | 4 |
+| Feral | 6.2% | 0.1% | 5 | | | | | |
+
+Weak early, strong late (a gear-shaped lever must help low gear only): Ret, Arms, Fire, Fury, Feral, MM, SV.
+Weak late: Destruction, Elemental, Enhancement, Demonology, Affliction. Flat: Combat, Arcane, Shadow.

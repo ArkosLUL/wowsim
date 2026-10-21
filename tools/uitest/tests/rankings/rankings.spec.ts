@@ -236,6 +236,7 @@ test('the footer names the sim, the data and the fight', async ({ page }) => {
 	await expect(footer).toContainText(`${FIXTURE.iterations.toLocaleString('en-US')} iterations`);
 	await expect(footer).toContainText('3 min fight');
 	await expect(footer).toContainText('a Draenei in every party');
+	await expect(footer).toContainText('playerbot rules');
 
 	await fightButton(page, 300).click();
 	await expect(footer).toContainText('5 min fight');
