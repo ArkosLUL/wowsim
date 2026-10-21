@@ -5,7 +5,35 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a, P0b, P1, P2, P3 and the baseline landed, with the user's P1 decisions. Results, later-phase notes, P2/P3's per-build bot findings and each build's remaining gap in `spec-balance.INVESTIGATION.md`. Next: the user's review of P4's `spec-balance.PROPOSAL.md`.
+Status: P0a–P3 and the baseline landed; results, bot findings and each build's gap in
+`spec-balance.INVESTIGATION.md`. P4's `spec-balance.PROPOSAL.md` approved as recommended (user, 2026-10-21).
+P5 in progress:
+- Sim: `ca5062282` on `spec-balance` only (not master): every approved tweak (Call of Thunder +70%, re-sized after
+  the Lightning Overload fix), parity fixes (Lightning Overload, Demonic Pact ICD, T10 Ret 2pc), cap-exempt fixes
+  (Combat Lethality, Glyph of Stormstrike, Ret Consecration first, Enh Shamanistic Rage on cooldown with T10 2pc).
+  `tools/simval` replays of the buffed spells fail until re-recorded. Per-class work, staged SQL and reports:
+  `tmp/p4/trees/<class>/tmp/p5/`.
+- [tweaks]: `feature/balance-<class>` off `origin/master` (local master is 6 unpushed commits ahead), one commit
+  per tweak; Arms (both talents) and Marked for Death not yet committed (re-size first).
+- [bots] uncommitted: Ret Consecration first (`DpsPaladinStrategy.cpp`, reviewed), Enh T10 Shamanistic Rage
+  trigger (3 shaman files, unreviewed; `docs/classes/shaman.md` mana-kit row needs it). Close per its
+  `CLAUDE.local.md`.
+
+Next, in order:
+1. Dev server over [bal] (`wotlk-bal-p5`, :3337), presetgen Normal: `warrior_arms`, `hunter_mm` P1–5;
+   `warlock_destruction`, `enhancement_shaman` P4–5. Rebuild the bundle, capture those four plus
+   `retribution_paladin`, `rogue_combat` into `tmp/p5/rk` (other builds' baseline captures are there), runner,
+   merge, `balance_check.py`.
+2. Re-size Arms/MM if a cell leaves 86–94 (constants in `sim/warrior/talents.go`, `sim/hunter/talents.go`), commit
+   their SQL.
+3. Ask: `ac-db-import` + worldserver restart, from a local merge of the nine branches. Recapture the spelldump,
+   `gen_serverdata` (must reproduce the hand-edited serverdata), `spellmods`; re-record the moved simval records
+   (goldchar, talent sweep, spell mods, strikes, fights) and remove their drops.
+4. ff master; show the user the PR texts; P6.
+
+Open findings: presetgen doesn't carry a phase's racial traits into the next phase's seed (bis-optimizer's;
+Shadow's P5 BiS); further Demonic Pact gaps (self-feeding spell power, recast replaces); the server's Lightning
+Overload double-dips done/taken percents (sim matches).
 
 ## Context
 
