@@ -5,7 +5,7 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "9a9ccc6cd",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p1_bis_frost": {
@@ -13,8 +13,8 @@
 		"build": "DK Frost",
 		"phase": 1,
 		"effort": "Normal",
-		"racialTraits": "RaceOrc",
-		"simCommit": "9a9ccc6cd",
+		"racialTraits": "RaceTroll",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p1_bis_unholy": {
@@ -23,7 +23,7 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "9a9ccc6cd",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p1_bis_unholy_2h": {
@@ -32,7 +32,7 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "d61bbed61",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_blood": {
@@ -41,7 +41,7 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "9a9ccc6cd",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_frost": {
@@ -49,8 +49,8 @@
 		"build": "DK Frost",
 		"phase": 2,
 		"effort": "Normal",
-		"racialTraits": "RaceDraenei",
-		"simCommit": "9a9ccc6cd",
+		"racialTraits": "RaceTroll",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_unholy": {
@@ -59,7 +59,7 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "9a9ccc6cd",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_unholy_2h": {
@@ -68,7 +68,7 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "d61bbed61",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_blood": {
@@ -76,8 +76,8 @@
 		"build": "DK Blood",
 		"phase": 3,
 		"effort": "Normal",
-		"racialTraits": "RaceTroll",
-		"simCommit": "9a9ccc6cd",
+		"racialTraits": "RaceOrc",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_frost": {
@@ -85,8 +85,8 @@
 		"build": "DK Frost",
 		"phase": 3,
 		"effort": "Normal",
-		"racialTraits": "RaceOrc",
-		"simCommit": "9a9ccc6cd",
+		"racialTraits": "RaceTroll",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_unholy": {
@@ -95,7 +95,7 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "9a9ccc6cd",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_unholy_2h": {
@@ -104,7 +104,7 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "d61bbed61",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_blood": {
@@ -113,7 +113,7 @@
 		"phase": 4,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "9a9ccc6cd",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_frost": {
@@ -121,8 +121,8 @@
 		"build": "DK Frost",
 		"phase": 4,
 		"effort": "Normal",
-		"racialTraits": "RaceTroll",
-		"simCommit": "9a9ccc6cd",
+		"racialTraits": "RaceBloodElf",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_unholy": {
@@ -130,8 +130,8 @@
 		"build": "DK Unholy",
 		"phase": 4,
 		"effort": "Normal",
-		"racialTraits": "RaceOrc",
-		"simCommit": "9a9ccc6cd",
+		"racialTraits": "RaceBloodElf",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_unholy_2h": {
@@ -140,7 +140,7 @@
 		"phase": 4,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "d61bbed61",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_blood": {
@@ -149,7 +149,7 @@
 		"phase": 5,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "9a9ccc6cd",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_frost": {
@@ -157,8 +157,8 @@
 		"build": "DK Frost",
 		"phase": 5,
 		"effort": "Normal",
-		"racialTraits": "RaceOrc",
-		"simCommit": "9a9ccc6cd",
+		"racialTraits": "RaceTroll",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_unholy": {
@@ -167,7 +167,7 @@
 		"phase": 5,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "9a9ccc6cd",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_unholy_2h": {
@@ -176,7 +176,7 @@
 		"phase": 5,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "d61bbed61",
+		"simCommit": "0ddf696d9",
 		"catalogDate": "2026-10-14"
 	}
 }
