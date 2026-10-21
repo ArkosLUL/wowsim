@@ -37,6 +37,8 @@ func (paladin *Paladin) registerConsecrationSpell() {
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
+		// mod-spell-tweaks gives Swift Retribution a second effect: a flat SPELLMOD_EFFECT1 of 400 a rank
+		Mods: []core.SpellMod{{Op: core.SpellModEffect1, Flat: 400 * paladin.Talents.SwiftRetribution}},
 
 		Dot: core.DotConfig{
 			IsAOE: true,

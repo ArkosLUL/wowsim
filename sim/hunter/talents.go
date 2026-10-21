@@ -111,8 +111,33 @@ func (hunter *Hunter) ApplyTalents() {
 	hunter.applyMasterTactician()
 	hunter.applySniperTraining()
 	hunter.applyHuntingParty()
+	hunter.applyMarkedForDeathIgnoreArmor()
 
 	hunter.registerReadinessCD()
+}
+
+// markedForDeathIgnoreArmorPerRank has to match mod-spell-tweaks' Marked for Death rows (53241, 53243-53246):
+// EffectBasePoints_3 + 1 is -15 a rank.
+const markedForDeathIgnoreArmorPerRank = 0.15
+
+// applyMarkedForDeathIgnoreArmor is mod-spell-tweaks' third effect on Marked for Death: aura 108,
+// SPELLMOD_IGNORE_ARMOR, on the shots in its class mask. No pet spell is in it, and Zod's Quick Shot is
+// family 0.
+func (hunter *Hunter) applyMarkedForDeathIgnoreArmor() {
+	if hunter.Talents.MarkedForDeath == 0 {
+		return
+	}
+	pct := -markedForDeathIgnoreArmorPerRank * float64(hunter.Talents.MarkedForDeath)
+	hunter.OnSpellRegistered(func(spell *core.Spell) {
+		if spell.ActionID.OtherID == proto.OtherAction_OtherActionShoot {
+			spell.IgnoreArmorPct += pct
+			return
+		}
+		switch spell.ActionID.SpellID {
+		case 49048, 49050, 34490, 49052, 61006: // Multi-Shot, Aimed Shot, Silencing Shot, Steady Shot, Kill Shot
+			spell.IgnoreArmorPct += pct
+		}
+	})
 }
 
 // applyRangedWeaponSpecialization is 19507-19509's aura 79 on every school, which needs a bow, gun or crossbow.

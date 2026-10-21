@@ -80,6 +80,9 @@ and replays with those its record wears until a rerun replaces it.
 | DruidBalance, DruidBalancePhase3 | info | arcane spell crit % | spell specific crit in the sim (Improved Moonfire; Nature's Majesty and Dreamwalker 4pc on Starfire), spell mods on the server |
 | MageFire, MageFrostFire | info | arcane spell crit % | spell specific crit in the sim (Khadgar's Regalia 4pc, World in Flames), spell mods on the server |
 | WarlockDestruction | info | fire spell crit % | Devastation: spell specific crit in the sim, a spell mod on the server |
+| WarriorArms | info | armor penetration % | recorded before mod-spell-tweaks' Endless Rage armor pen (29623 aura 280); a rerun after the server applies it agrees |
+| RogueCombat | info | mainhand and offhand hasted speed ms | recorded before mod-spell-tweaks' Lightning Reflexes 23% (stock 10%) reached the server; rerun once it's applied |
+| PriestShadow | info | holy through arcane spell power | captured before mod-spell-tweaks' `spell_dbc` row for 51167 (Twisted Faith 5/5: 53% of Spirit, stock 20%), which the sim has; goes with the rerun |
 
 `talents.jsonl`, each in `droppedSweep` (`tools/simval/talents_test.go`). Records stay; a dropped step (empty field)
 or field is only logged. A path in `sweepRerecord` changed its items, auras or talent ranks after the capture and
@@ -93,6 +96,9 @@ replays as its records stood until a rerun replaces them.
 | PriestDiscipline | holySpecialization | holy spell crit % | the sheet field is the aura's raw sum; Penance is holy but outside its class mask, so the sim's lowest holy spell stays at 0 |
 | RogueCombat | maceSpecialization | armor penetration % | the sheet field counts the aura without a mace; the server's damage applies it only with one (`HasItemFitToSpellRequirements`), as the sim does, and the path carries two daggers |
 | DeathknightBlood | bloodGorged | armor penetration % | the sheet field is the aura's raw sum; the sim applies it per spell by the server's class mask (white swings, Plague, Blood, Heart and Death Strike, Rune Strike) |
+| WarriorArms | endlessRage | armor penetration % | recorded before mod-spell-tweaks' Endless Rage armor pen (29623 aura 280); a rerun after the server applies it agrees |
+| RogueCombat | lightningReflexes | melee haste | recorded before mod-spell-tweaks' 23% (stock 10%) reached the server; rerun once it's applied |
+| PriestShadow | twistedFaith | spell power | as PriestShadow's `goldchar.jsonl` row |
 
 `spellmods.jsonl`, each in `droppedSpellMods` (`tools/simval/spellmods_test.go`). Lines stay; a dropped step (spell 0),
 spell (empty check) or check is only logged.

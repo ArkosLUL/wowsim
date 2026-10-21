@@ -26,7 +26,7 @@ func (mage *Mage) registerArcaneMissilesSpell() {
 
 		Direct: core.SpellEffect{Effect: 0, Min: 361, Max: 361, SP: 0.2857},
 		Mods: []core.SpellMod{
-			{Op: core.SpellModBonusMultiplier, Flat: 3 * mage.Talents.ArcaneEmpowerment},
+			{Op: core.SpellModBonusMultiplier, Flat: 5 * mage.Talents.ArcaneEmpowerment},
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

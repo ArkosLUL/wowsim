@@ -75,3 +75,12 @@ by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `en
 
 | Setup | Subject | Check | Why |
 |---|---|---|---|
+| WarriorArms | melee | hit mean | recorded before mod-spell-tweaks' Endless Rage armor pen and larger Wrecking Crew Enrage; re-record after the server applies them |
+| WarriorArms | melee | crit mean | as above |
+| WarriorArms | melee | glance mean | as above |
+| WarriorArms | 7384 | crit mean | as above |
+| WarriorArms | 47486 | hit mean | as above |
+| WarriorArms | 47486 | crit mean | as above |
+| WarriorArms | 50783 | hit mean | as above |
+| WarriorArms | 50783 | crit mean | as above |
+| RogueCombat | 48672 | tick spacing | recorded before mod-spell-tweaks' Lightning Reflexes 23% (stock 10%) reached the server; rerun once it's applied |

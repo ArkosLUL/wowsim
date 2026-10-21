@@ -95,31 +95,7 @@ var ItemSetLightswornBattlegear = core.NewItemSet(core.ItemSet{
 	Name: "Lightsworn Battlegear",
 	Bonuses: map[int32]core.ApplyEffect{
 		2: core.ClassEffect(func(agent PaladinAgent) {
-			paladin := agent.GetPaladin()
-
-			procSpell := paladin.RegisterSpell(core.SpellConfig{
-				ActionID: core.ActionID{SpellID: 70765},
-				ApplyEffects: func(_ *core.Simulation, _ *core.Unit, _ *core.Spell) {
-					paladin.DivineStorm.CD.Reset()
-				},
-			})
-
-			paladin.RegisterAura(core.Aura{
-				Label:    "Lightsworn Battlegear 2pc",
-				Duration: core.NeverExpires,
-				OnReset: func(aura *core.Aura, sim *core.Simulation) {
-					aura.Activate(sim)
-				},
-				OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-					if !spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) {
-						return
-					}
-					if sim.RandomFloat("lightsworn 2pc") > 0.4 {
-						return
-					}
-					procSpell.Cast(sim, &paladin.Unit)
-				},
-			})
+			agent.GetPaladin().registerDivineStormReset("Lightsworn Battlegear 2pc", core.ServerProcFor(70765).Chance)
 		}),
 		4: func(agent core.Agent) {
 			// Implemented in soc.go, sor.go, sov.go

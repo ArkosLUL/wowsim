@@ -474,12 +474,15 @@ Roll details the tables above don't show:
     - Righteous Vengeance
     - Deadly Poison (Murder)
     - Rend (Trauma, crit snapshotted)
+    - Rake (Primal Gore)
   - **Ability changes:**
     - Crusader Strike and Divine Storm apply a seal stack.
+    - Improved Judgements: landed swings reset Divine Storm at 20/40% (T10 2pc's 70769), never with the T10 2pc.
     - Glyph of Reckoning is unimplemented, so Hand of Reckoning never deals damage (67485).
     - Titan's Grip has no damage penalty.
     - Faerie Fire (Feral) on NPCs always grants Clearcasting with Omen.
     - Explosive Trap works via Trap Launcher.
+    - Explosive Shot's base damage is doubled, every rank.
   - **Pets:**
     - Hunter pets inherit owner ranged haste and ArP.
     - Feral Spirits inherit melee haste and ignore other melee haste auras.
@@ -488,9 +491,23 @@ Roll details the tables above don't show:
     - Virulence 2/4/6% spell hit
     - Nerves of Cold Steel 2/4/6% DW hit
     - Rage of Rivendare 2–10 expertise
+    - Endless Rage also ignores 36% armor
+    - Wrecking Crew's Enrage 5/10/14/19/24% physical
     - Hunter's Mark off GCD
     - Beast Mastery +6 pet talent points
     - Ghoul/Pet Avoidance reduce all damage
+    - Empowered Corruption +14% a point Shadow Bolt crit damage bonus
+    - Nemesis +10% a point Shadow Bolt, Incinerate and Soul Fire crit damage bonus
+    - Pyroclasm's buff 7/13/20% fire and shadow damage
+    - Swift Retribution +400/800/1200 Consecration tick base
+    - Lightning Reflexes 9/16/23% melee speed (stock 4/7/10%)
+    - Marked for Death: Auto, Multi-, Aimed, Silencing, Scatter, Steady and Kill Shot ignore 15% armor a rank
+    - Arcane Empowerment 5/10/15% of spell power to Arcane Blast and each Arcane Missiles missile (stock 3/6/9%)
+    - Weapon Mastery 12/24/36% physical damage
+    - Call of Thunder +70% crit damage bonus on Lightning Bolt and Chain Lightning, overloads included
+    - Twisted Faith 5/5: 53% of Spirit as spell power (stock 20%)
+    - Rend and Tear 10–50% Ferocious Bite crit on bleeding targets
+  - **Item values:** Idol of the Ravenous Beast, Shred +304 (60773 effect 1: 135, stock 90)
 - mod-reforging (`modules/mod-reforging/src/item_reforge.cpp:254-373`, `npc_reforger.cpp:103,141-146`):
   - Moves 40% (floored, at least 1) of one base template stat to another.
   - Both stats must be in {6 Spirit, 13 Dodge, 14 Parry, 31 Hit, 32 Crit, 36 Haste, 37 Expertise}, and the target can't already be on the item.
@@ -1886,7 +1903,7 @@ gofmt-clean.
     (58791) deals 60 per second of weapon speed, where retail's level scaling gave about 64. Its spell
     power share is 0.03811 per second, not 0.1/2.6.
   - `spell_sha_lightning_overload` casts 45284/45297 for half the proc's damage, halved again on a crit.
-    The sim recasts a half-damage bolt with its own roll and crit.
+    The sim recasts a half-damage bolt with its own roll and crit. Fixed: [caster mechanics](../guide/caster-mechanics.md#shaman).
   - Clearcasting (16246), Elemental Mastery (16166) and Maelstrom Weapon (53817) have `spell_proc` rows, so
     `Player::RemoveSpellMods` leaves their charges to the cast-phase proc, which needs the cast to have used
     the mod (`PROC_ATTR_REQ_SPELLMOD`). With travel, a Lightning Bolt or Lava Burst crit's Clearcasting

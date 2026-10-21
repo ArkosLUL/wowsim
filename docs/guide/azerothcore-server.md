@@ -77,7 +77,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
 | mod-racial-trait-swap | swaps racial abilities, not base stats or faction | `Player.racial_traits` |
 | mod-shared-professions | shares profession skills and spells per account, applied at login | any number of professions |
 | mod-dungeon-scale | raid creature stat multipliers; live boss health ×1.2 | server setting ([ADR 0004](../adr/0004-server-config-as-settings.md)), applied to targets ([server-parity](server-parity.md#other-measured-server-behaviour)) |
-| mod-spell-tweaks | spell and talent changes, listed in the parity INVESTIGATION; swaps two hunter talent tiers | toggles become server settings; talents keep stock tree positions |
+| mod-spell-tweaks | spell, talent and item-effect changes, listed in the parity INVESTIGATION; swaps two hunter talent tiers | toggles become server settings; talents keep stock tree positions |
 | mod-playerbots | bots fill the raid; strategies in `acore_playerbots.playerbots_db_store` | none |
 | mod-chronicle | combat logs, inside instances only. The server deletes its copy after upload, so download from the app API | recorded runs |
 | mod-sim-validation | ours, and its own git repo. `.simval` GM commands, test dummies 999000–999008 (mod-dungeon-scale's `DisabledID`, so never scaled), output in `[ac]/env/dist/logs/simval/`. `Enable = 0` by default; `configurationOverrides/SimValidation.env` turns it on live. Every `.simval` command refuses while it's off | validation ([server-validation.md](server-validation.md)) |

@@ -349,6 +349,7 @@ var threats = []Threat{
 	{SpellID: 53515, Targets: ThreatTargetsCaster},                                         // Owl's Focus
 	{SpellID: 53530, Targets: ThreatTargetsCaster},                                         // Divine Guardian (Rank 2)
 	{SpellID: 53598, Targets: ThreatTargetsEnemyArea},                                      // Spore Cloud (Rank 6)
+	{SpellID: 53646, Targets: ThreatTargetsCaster},                                         // Demonic Pact (Rank 1)
 	{SpellID: 53696, Targets: ThreatTargetsCaster},                                         // Judgements of the Just (Rank 2)
 	{SpellID: 53817, Targets: ThreatTargetsCaster},                                         // Maelstrom Weapon
 	{SpellID: 54043, Row: 7294, FlatMod: 0, PctMod: 2, Targets: ThreatTargetsCaster},       // Retribution Aura (Rank 7)

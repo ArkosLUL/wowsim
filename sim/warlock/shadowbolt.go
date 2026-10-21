@@ -45,7 +45,9 @@ func (warlock *Warlock) registerShadowBoltSpell() {
 			0.02*float64(warlock.Talents.ImprovedShadowBolt),
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetMaleficRaiment, 4), 0.06, 0),
 		),
-		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
+		// mod-spell-tweaks' spell_dbc rows for 32381-32383: Empowered Corruption adds 14% a point too
+		CritMultiplier: warlock.SpellCritMultiplier(1,
+			warlock.nukeCritDamageBonus()+0.14*float64(warlock.Talents.EmpoweredCorruption)),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
 		Direct: core.SpellEffect{Effect: 0, Min: 694, Max: 774, SP: 0.857},

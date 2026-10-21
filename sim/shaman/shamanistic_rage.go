@@ -66,11 +66,16 @@ func (shaman *Shaman) registerShamanisticRageCD() {
 		},
 	})
 
+	// with the T10 2pc it's +12% damage for 15 s a minute, so on cooldown, as the playerbots' T10 trigger casts it
+	cdType := core.CooldownTypeMana
+	if t10Bonus {
+		cdType = core.CooldownTypeDPS
+	}
 	shaman.AddMajorCooldown(core.MajorCooldown{
 		Spell: spell,
-		Type:  core.CooldownTypeMana,
+		Type:  cdType,
 		ShouldActivate: func(sim *core.Simulation, character *core.Character) bool {
-			return character.CurrentManaPercent() <= 0.2
+			return t10Bonus || character.CurrentManaPercent() <= 0.2
 		},
 	})
 }

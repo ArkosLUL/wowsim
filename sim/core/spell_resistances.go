@@ -132,9 +132,11 @@ func (unit *Unit) schoolResistance(school SpellSchool) float64 {
 
 // GetArmorDamageModifier is CalcArmorReducedDamage. Note the two levels: how much
 // a given amount of armor mitigates comes from the attacker's level, but how far
-// armor penetration can reach through it comes from the target's.
+// armor penetration can reach through it comes from the target's. A spell's
+// SPELLMOD_IGNORE_ARMOR scales the armor first, so the armor pen cap is taken
+// off what's left.
 func (at *AttackTable) GetArmorDamageModifier(spell *Spell) float64 {
-	defenderArmor := at.Defender.Armor()
+	defenderArmor := at.Defender.Armor() * max(1+spell.IgnoreArmorPct, 0)
 	armorPenRating := at.Attacker.stats[stats.ArmorPenetration] + spell.BonusArmorPenRating
 	reducibleArmor := ArmorPenetrationCap(defenderArmor, at.Defender.Level)
 	effectiveArmor := defenderArmor - reducibleArmor*at.Attacker.ArmorPenetrationPercentage(armorPenRating)

@@ -29,6 +29,9 @@ rounding, caps and crit damage. Everything else the server does differently is i
     int32(max))`). Manifest Anger is `ApplyPct` 50% of a whole strike.
   - A script's AP share keeps the server's float32 order: Eviscerate `int32(ap × combo × 0.07f)`, Envenom
     `int32(ap × 0.09f × combo)`.
+- **Armor:** `SPELLMOD_IGNORE_ARMOR` percents add up and scale the target's armor before armor pen, whose
+  cap then comes off what's left (`Unit::CalcArmorReducedDamage`; `Spell.IgnoreArmorPct`). A white melee
+  swing has no spell, so no mod reaches it; Auto Shot is spell 75 and does.
 - **Crit damage:** spells and specials add up the aura 163 bonuses (meta gem, Predatory Instincts, Prey on the
   Weak, Poleaxe) before `SPELLMOD_CRIT_DAMAGE_BONUS` scales the part over 1; white swings multiply them
   (`Character.WhiteCritMultiplier`). Magic-class spells crit from 1.5, the DK's Icy Touch, Death Coil, Blood Boil,

@@ -23,6 +23,10 @@ const (
 	CastTagLightningOverload int32 = 6
 )
 
+// mod-spell-tweaks' second effect on Call of Thunder (16041): aura 108 SPELLMOD_CRIT_DAMAGE_BONUS on
+// Lightning Bolt and Chain Lightning, whose class mask the overloads share
+const callOfThunderCritDamage = 0.7
+
 // Shared precomputation logic for LB and CL.
 func (shaman *Shaman) newElectricSpellConfig(actionID core.ActionID, baseCost float64, baseCastTime time.Duration, isLightningOverload bool) core.SpellConfig {
 	mask := core.ProcMaskSpellDamage
@@ -59,7 +63,7 @@ func (shaman *Shaman) newElectricSpellConfig(actionID core.ActionID, baseCost fl
 			float64(shaman.Talents.TidalMastery)*core.CritRatingPerCritChance +
 			core.TernaryFloat64(shaman.Talents.CallOfThunder, 5*core.CritRatingPerCritChance, 0),
 		DamageMultiplier: 1 + 0.01*float64(shaman.Talents.Concussion),
-		CritMultiplier:   shaman.ElementalCritMultiplier(0),
+		CritMultiplier:   shaman.ElementalCritMultiplier(core.TernaryFloat64(shaman.Talents.CallOfThunder, callOfThunderCritDamage, 0)),
 		ThreatMultiplier: 1,
 	}
 
@@ -70,7 +74,6 @@ func (shaman *Shaman) newElectricSpellConfig(actionID core.ActionID, baseCost fl
 		spell.Cast.DefaultCast.Cost = 0
 		spell.Cast.ModifyCast = nil
 		spell.MetricSplits = 0
-		spell.DamageMultiplier *= 0.5
 		spell.ThreatMultiplier = 0
 	}
 

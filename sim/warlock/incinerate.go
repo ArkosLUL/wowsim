@@ -36,7 +36,7 @@ func (warlock *Warlock) registerIncinerateSpell() {
 			core.TernaryFloat64(warlock.HasMajorGlyph(proto.WarlockMajorGlyph_GlyphOfIncinerate), 0.05, 0),
 			core.TernaryFloat64(warlock.HasSetBonus(ItemSetMaleficRaiment, 4), 0.06, 0),
 		),
-		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
+		CritMultiplier:   warlock.SpellCritMultiplier(1, warlock.nukeCritDamageBonus()),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
 		Direct: core.SpellEffect{Effect: 0, Min: 582, Max: 676, SP: 0.714},

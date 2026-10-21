@@ -64,7 +64,7 @@ func (mage *Mage) registerArcaneBlastSpell() {
 
 		Direct: core.SpellEffect{Effect: 0, Min: 1185, Max: 1377, SP: 0.714},
 		Mods: []core.SpellMod{
-			{Op: core.SpellModBonusMultiplier, Flat: 3 * mage.Talents.ArcaneEmpowerment},
+			{Op: core.SpellModBonusMultiplier, Flat: 5 * mage.Talents.ArcaneEmpowerment},
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

@@ -30,7 +30,7 @@ func (druid *Druid) registerFerociousBiteSpell() {
 
 		BonusCritRating: 0 +
 			core.TernaryFloat64(druid.HasSetBonus(ItemSetMalfurionsBattlegear, 4), 5*core.CritRatingPerCritChance, 0.0) +
-			core.TernaryFloat64(druid.AssumeBleedActive, 5*float64(druid.Talents.RendAndTear)*core.CritRatingPerCritChance, 0),
+			core.TernaryFloat64(druid.AssumeBleedActive, rendAndTearBiteCrit(druid.Talents.RendAndTear)*core.CritRatingPerCritChance, 0),
 		DamageMultiplier: (1 + 0.03*float64(druid.Talents.FeralAggression)) *
 			core.TernaryFloat64(druid.HasSetBonus(ItemSetThunderheartHarness, 4), 1.15, 1.0),
 		CritMultiplier:   druid.MeleeCritMultiplier(Cat),

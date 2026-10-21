@@ -18,11 +18,12 @@ func (hunter *Hunter) registerExplosiveShotSpell(timer *core.Timer) {
 }
 
 func (hunter *Hunter) makeExplosiveShotSpell(timer *core.Timer, downrank bool) *core.Spell {
+	// mod-spell-tweaks doubles both ends of every rank's tick roll
 	actionID := core.ActionID{SpellID: 60053}
-	tick := core.SpellEffect{Effect: 0, Min: 386, Max: 464}
+	tick := core.SpellEffect{Effect: 0, Min: 772, Max: 928}
 	if downrank {
 		actionID = core.ActionID{SpellID: 60052}
-		tick = core.SpellEffect{Effect: 0, Min: 325, Max: 391}
+		tick = core.SpellEffect{Effect: 0, Min: 650, Max: 782}
 	}
 
 	return hunter.RegisterSpell(core.SpellConfig{

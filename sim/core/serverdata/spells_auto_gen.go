@@ -3241,6 +3241,26 @@ var spells = []Spell{
 			{Effect: 6, Aura: 308},
 		},
 	},
+	// Lightning Bolt (Rank 1)
+	{
+		ID: 45284, Family: 11, FamilyFlags: [3]uint32{0x1}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
+		Attributes: [8]uint32{0x10000, 0x400, 0, 0, 0x80, 0, 0x20000000}, AttributesCu: 0x1100,
+		ProcChance: 101, Speed: 20, SpellLevel: 1, BaseLevel: 1, MaxLevel: 6,
+		CastMods: ModBounds{FlatMin: -500},
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 6, DieSides: 1, PointsPerLevel: 0.2, DamageMultiplier: 1, BonusMultiplier: 0.0625},
+		},
+	},
+	// Chain Lightning (Rank 1)
+	{
+		ID: 45297, Family: 11, FamilyFlags: [3]uint32{0x2}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack,
+		Attributes: [8]uint32{0x10000, 0x400, 0, 0, 0x80, 0, 0x20000000}, AttributesCu: 0x1100,
+		ProcChance: 101, SpellLevel: 32, BaseLevel: 32, MaxLevel: 37,
+		CastMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -2500},
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 95, DieSides: 13, PointsPerLevel: 0.95, DamageMultiplier: 0.7, BonusMultiplier: 0.2855, ChainTargets: 3},
+		},
+	},
 	// Death Strike
 	{
 		ID: 45470, Family: 15, FamilyFlags: [3]uint32{0, 0, 0x4}, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -6263,6 +6283,15 @@ var spells = []Spell{
 			{Effect: 27, Aura: 101, BasePoints: -4, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 		},
 	},
+	// Demonic Pact (Rank 1)
+	{
+		ID: 53646, Family: 5, FamilyFlags: [3]uint32{0, 0x100000}, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0, 0, 0, 0x4000000},
+		ProcFlags:  0x11154,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 48090, ClassMask: [3]uint32{0x4000000}},
+		},
+	},
 	// Judgements of the Just (Rank 2)
 	{
 		ID: 53696, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
@@ -6944,7 +6973,7 @@ var spells = []Spell{
 		Category: 21, DurationMs: 12000, MaxDurationMs: 12000,
 		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
 		Effects: [3]Effect{
-			{Effect: 6, Aura: 79, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+			{Effect: 6, Aura: 79, BasePoints: 4, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 		},
 	},
 	// Horn of Winter (Rank 2)
@@ -7709,7 +7738,7 @@ var spells = []Spell{
 		BaseCastMs: -1000000, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 1173, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101, ManaCostPct: 7, Speed: 40, SpellLevel: 75, BaseLevel: 75,
 		Effects: [3]Effect{
-			{Effect: 6, Aura: 226, AmplitudeMs: 1000, BasePoints: 324, DieSides: 67, DamageMultiplier: 1},
+			{Effect: 6, Aura: 226, AmplitudeMs: 1000, BasePoints: 649, DieSides: 133, DamageMultiplier: 1},
 		},
 	},
 	// Explosive Shot (Rank 4)
@@ -7719,7 +7748,7 @@ var spells = []Spell{
 		BaseCastMs: -1000000, GCDMs: 1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 1173, DurationMs: 2000, MaxDurationMs: 2000,
 		ProcChance: 101, ManaCostPct: 7, Speed: 40, SpellLevel: 80, BaseLevel: 80,
 		Effects: [3]Effect{
-			{Effect: 6, Aura: 226, AmplitudeMs: 1000, BasePoints: 385, DieSides: 79, DamageMultiplier: 1},
+			{Effect: 6, Aura: 226, AmplitudeMs: 1000, BasePoints: 771, DieSides: 157, DamageMultiplier: 1},
 		},
 	},
 	// Essence of Life
@@ -8655,7 +8684,7 @@ var spells = []Spell{
 		DurationMs:   10000, MaxDurationMs: 10000,
 		ProcChance: 101,
 		Effects: [3]Effect{
-			{Effect: 6, Aura: 79, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 36},
+			{Effect: 6, Aura: 79, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 36},
 		},
 	},
 	// Jouster's Fury

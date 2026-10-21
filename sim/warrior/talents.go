@@ -9,6 +9,14 @@ import (
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
+// EndlessRageArmorPenPct is the armor pen aura (280) mod-spell-tweaks' spell_dbc row adds to Endless Rage
+// (29623). Sums with Battle Stance's and the rating's, all under one cap (Unit::CalcArmorReducedDamage).
+const EndlessRageArmorPenPct = 36
+
+// WreckingCrewEnragePct is Wrecking Crew's Enrage, physical damage % by talent rank, from mod-spell-tweaks'
+// spell_dbc rows for 57518-57522 (stock 2% a rank).
+var WreckingCrewEnragePct = [6]float64{0, 5, 10, 14, 19, 24}
+
 func (warrior *Warrior) ToughnessArmorMultiplier() float64 {
 	return 1.0 + 0.02*float64(warrior.Talents.Toughness)
 }
@@ -32,6 +40,10 @@ func (warrior *Warrior) ApplyTalents() {
 		warrior.MultiplyStat(stats.Strength, 1.0+0.02*float64(warrior.Talents.StrengthOfArms))
 		warrior.MultiplyStat(stats.Stamina, 1.0+0.02*float64(warrior.Talents.StrengthOfArms))
 		warrior.AddStat(stats.Expertise, core.ExpertisePerQuarterPercentReduction*2*float64(warrior.Talents.StrengthOfArms))
+	}
+
+	if warrior.Talents.EndlessRage {
+		warrior.PseudoStats.BonusArmorPenPct += EndlessRageArmorPenPct
 	}
 
 	// Shield Mastery, Shield Block, Glyph of Blocking, Eternal Earthsiege treated as additive sources
@@ -554,7 +566,7 @@ func (warrior *Warrior) applyWreckingCrew() {
 		return
 	}
 
-	bonus := 1 + 0.02*float64(warrior.Talents.WreckingCrew)
+	bonus := 1 + WreckingCrewEnragePct[warrior.Talents.WreckingCrew]/100
 
 	procAura := warrior.RegisterAura(core.Aura{
 		Label:    "Enrage",

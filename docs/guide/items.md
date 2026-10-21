@@ -43,7 +43,8 @@ checks it and the Go effects.
     decides.
   - A landing of the wrong kind uses the proc up and casts nothing (`SPELL_FAILED_BAD_TARGETS`).
 - Class relics, sigils, totems, idols and a few class set bonuses still carry Classic values until their
-  class's P7 item. Totem of the Third Wind also buffs Healing Wave.
+  class's P7 item, except Idol of the Ravenous Beast ([caster mechanics](caster-mechanics.md#druid)). Totem of
+  the Third Wind also buffs Healing Wave.
 
 ## Gems and enchants
 

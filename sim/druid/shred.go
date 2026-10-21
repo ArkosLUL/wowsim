@@ -9,7 +9,7 @@ import (
 
 func (druid *Druid) registerShredSpell() {
 	idolBonus := core.TernaryInt32(druid.Ranged().ID == 29390, 39, 0) + // Everbloom Idol
-		core.TernaryInt32(druid.Ranged().ID == 40713, 90, 0) // Idol of the Ravenous Beast
+		core.TernaryInt32(druid.Ranged().ID == 40713, 135, 0) // Idol of the Ravenous Beast, 60773: 90 stock, 135 with mod-spell-tweaks
 
 	hasGlyphofShred := druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfShred)
 	maxRipTicks := druid.MaxRipTicks()

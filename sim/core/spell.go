@@ -134,6 +134,7 @@ type Spell struct {
 	BonusSpellPower          float64
 	BonusExpertiseRating     float64
 	BonusArmorPenRating      float64
+	IgnoreArmorPct           float64 // summed SPELLMOD_IGNORE_ARMOR percents as a fraction, -0.75 leaves a quarter of the armor
 	CastTimeMultiplier       float64
 	CostMultiplier           float64 // 1 plus the summed SPELLMOD_COST percents of this spell
 	CostFlat                 float64 // summed SPELLMOD_COST flat mods, in the spell's resource units

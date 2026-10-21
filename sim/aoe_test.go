@@ -88,8 +88,10 @@ var aoeSpells = map[aoeKey]aoeSpell{
 	{42945, byPlayer}: {capped: true},  // Blast Wave
 	{42950, byPlayer}: {capped: true},  // Dragon's Breath
 	{44949, byPlayer}: {maxTargets: 4}, // Whirlwind's off-hand, Bladestorm's too
-	{46968, byPlayer}: {capped: true},  // Shockwave
-	{47502, byPlayer}: {capped: true},  // Thunder Clap
+	// Chain Lightning's overload, Glyph of Chain Lightning, Tidefury Raiment's 2 pieces
+	{45297, byPlayer}: {chain: 3, perJump: 0.7, mods: map[int32]aoeValues{55449: {chain: 4}, 37207: {perJump: 0.833}}},
+	{46968, byPlayer}: {capped: true}, // Shockwave
+	{47502, byPlayer}: {capped: true}, // Thunder Clap
 	// Cleave, Glyph of Cleaving
 	{47520, byPlayer}: {chain: 2, mods: map[int32]aoeValues{58366: {chain: 3}}},
 	{47834, byPlayer}: {capped: true}, // Seed of Corruption
@@ -158,6 +160,7 @@ type aoeDiff struct {
 // is a follow-up.
 var aoeAllowances = map[aoeDiff]string{
 	{aoeKey{47994, byPet}, 58366, "mod"}:    "Glyph of Cleaving is a warrior glyph: a pet's spell mods come from its owner (Unit::GetSpellModOwner), and no warlock has it.",
+	{aoeKey{45297, byPlayer}, 26123, "mod"}: "Gift of the Gathering Storm's 3 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
 	{aoeKey{49271, byPlayer}, 26123, "mod"}: "Gift of the Gathering Storm's 3 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
 	{aoeKey{55459, byPlayer}, 21899, "mod"}: "The Ten Storms' 3 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",
 	{aoeKey{49273, byPlayer}, 23573, "mod"}: "The Earthfury's 8 pieces: the sim doesn't model the set. Follow-up: sim mismatch.",

@@ -7,7 +7,8 @@ import (
 )
 
 func (druid *Druid) registerRakeSpell() {
-	dotCanCrit := druid.HasSetBonus(ItemSetLasherweaveBattlegear, 4)
+	// Primal Gore covers Rake only through mod-spell-tweaks' row for 63503, stock it's Rip and Lacerate
+	dotCanCrit := druid.HasSetBonus(ItemSetLasherweaveBattlegear, 4) || druid.Talents.PrimalGore
 
 	druid.Rake = druid.RegisterSpell(Cat, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 48574},

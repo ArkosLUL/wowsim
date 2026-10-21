@@ -106,6 +106,9 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   crit spends a charge before the talent refreshes, unless it was the last.
 - **Titan's Grip**'s -10% (49152) needs both hands full and a two-hander in either; a shield or held item fills
   the off hand like a weapon.
+- **Endless Rage** also ignores armor: mod-spell-tweaks gives 29623 a percent-ArP aura (280,
+  `EndlessRageArmorPenPct`), summed like [Battle Stance's](server-parity.md#base-stats-and-ratings).
+- **Wrecking Crew**'s Enrage (57518–57522) takes mod-spell-tweaks' sizes, by rank in `WreckingCrewEnragePct`.
 - **Sweeping Strikes** copies the hit's damage before armor (`GetUnmitigatedDamage`;
   `SpellResult.ArmorReduced`). Execute's copy outside the execute phase is a whole normalized weapon roll, and
   only a Whirlwind's first hit is copied (0.5 s lockout).
@@ -120,6 +123,12 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 - **Crusader Strike** refreshes no judgement.
 - **Seal of Vengeance**'s DoT stacks off white hits and Hammer of the Righteous; off Crusader Strike and Divine
   Storm only with `SpellTweaks.Enable` (`spell_tweaks_seal_dot_on_strikes` has no switch of its own).
+- **Divine Storm resets** (70769, `registerDivineStormReset`) roll on landed white swings only (spell_proc's
+  default done hit mask): the T10 2pc's 70765 at 40%; with mod-spell-tweaks' SQL (no switch), Improved
+  Judgements at 20/40%, Divine Storm known or not. A conditions row on 70765 blocks the talent's under the
+  2pc. 70769 is triggered and suppresses caster procs, so it raises no cast procs.
+- **Swift Retribution** (mod-spell-tweaks SQL) adds 400 a point to Consecration's 113 tick base
+  (`SPELLMOD_EFFECT1`), before spell power and attack power.
 - **Improved Devotion Aura:** 3 points is the raid buff's improved state; 1–2 give every raider and pet under
   the best paladin's aura +204 / +409 armor (`improveDevotionAura`). Its 63514 adds 2% healing taken a point.
 - **Crusade:** its first percent is aura 79 on all damage (`DamageDealtMultiplier`), its second DONE_VERSUS on
@@ -150,6 +159,8 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 
 ## Rogue
 
+- **Lightning Reflexes** is 9/16/23% melee speed (stock 4/7/10%), from mod-spell-tweaks' `spell_dbc` rows; the
+  sim's table in `sim/rogue/talents.go` holds it, not serverdata.
 - **Prey on the Weak:** a 2 s check puts on the 10 s 58670 while the rogue's health percent beats the target's,
   and only once it's gone, so it's down one check in six.
 - **Hack and Slash** procs 1% a point with no ICD (spell_proc -13960), queuing an
@@ -182,6 +193,10 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   multiplier only below 1 (`SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS`), so a bonus counts once and a reduction
   twice. Flat damage taken (Gift of Arthas) joins the tick at the sting's dot coefficient, ahead of the taken
   percents (`Spell.PeriodicFlatDamageTaken`).
+- **Marked for Death** (mod-spell-tweaks' effect 3, aura 108 `SPELLMOD_IGNORE_ARMOR`) makes Auto, Multi-,
+  Aimed, Silencing, Steady and Kill Shot ignore 15% of the armor a rank (`Spell.IgnoreArmorPct`,
+  `markedForDeathIgnoreArmorPerRank`; [armor](damage-and-healing.md#damage)). No pet spell is in its mask.
+- **Explosive Shot**'s base is doubled, every rank (mod-spell-tweaks): 772–928 a tick at rank 4, 650–782 at 3.
 - **Hunting Party** rolls on each crit tick of Explosive Shot (53352, in spell_proc -53290's mask with
   `TRIGGERED_CAN_PROC`), never on its cast, at 33/66/100%.
 - **Thrill of the Hunt** returns 40% of the shot's truncated base cost, a free Lock and Load shot's too.

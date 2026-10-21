@@ -230,6 +230,15 @@ var droppedGoldchar = []goldcharDrop{
 	{"MageFire", 0, "arcane spell crit %"},
 	{"MageFrostFire", 0, "arcane spell crit %"},
 	{"WarlockDestruction", 0, "fire spell crit %"},
+	{"WarriorArms", 0, "armor penetration %"},
+	{"RogueCombat", 0, "mainhand hasted speed ms"},
+	{"RogueCombat", 0, "offhand hasted speed ms"},
+	{"PriestShadow", 0, "holy spell power"},
+	{"PriestShadow", 0, "fire spell power"},
+	{"PriestShadow", 0, "nature spell power"},
+	{"PriestShadow", 0, "frost spell power"},
+	{"PriestShadow", 0, "shadow spell power"},
+	{"PriestShadow", 0, "arcane spell power"},
 }
 
 // goldcharRerecord are setups whose enchants changed after goldcharFixture was recorded. Until a rerun replaces

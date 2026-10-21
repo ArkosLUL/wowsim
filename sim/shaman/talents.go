@@ -23,7 +23,8 @@ func (shaman *Shaman) ApplyTalents() {
 	shaman.AddStat(stats.MeleeCrit, core.CritRatingPerCritChance*1*float64(shaman.Talents.ThunderingStrikes))
 	shaman.AddStat(stats.SpellCrit, core.CritRatingPerCritChance*1*float64(shaman.Talents.ThunderingStrikes))
 	shaman.PseudoStats.BaseDodge += 0.01 * float64(shaman.Talents.Anticipation)
-	shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= []float64{1, 1.04, 1.07, 1.1}[shaman.Talents.WeaponMastery]
+	// Weapon Mastery (29082, 29084, 29086) is 12/24/36% with mod-spell-tweaks
+	shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= []float64{1, 1.12, 1.24, 1.36}[shaman.Talents.WeaponMastery]
 
 	shaman.AddStat(stats.Expertise, 3*core.ExpertisePerQuarterPercentReduction*float64(shaman.Talents.UnleashedRage))
 	// Purification is a healing done percent: the hots' ticks take it from here, the direct heals in their multipliers
@@ -115,6 +116,7 @@ func (shaman *Shaman) applyElementalFocus() {
 				shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexNature] *= oathBonus
 				shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFire] *= oathBonus
 				shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] *= oathBonus
+				shaman.overloadDoneMultiplier *= oathBonus
 			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
@@ -125,6 +127,7 @@ func (shaman *Shaman) applyElementalFocus() {
 				shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexNature] /= oathBonus
 				shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFire] /= oathBonus
 				shaman.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexFrost] /= oathBonus
+				shaman.overloadDoneMultiplier /= oathBonus
 			}
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {

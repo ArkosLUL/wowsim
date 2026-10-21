@@ -30,9 +30,23 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 		spellConfig.DamageMultiplier *= 1.05
 	}
 
+	relicSpellPower := shaman.electricSpellRelicSpellPower()
+
+	if isLightningOverload {
+		spellConfig.Direct = core.SpellEffect{Effect: 0, FromSpellID: overloadBoltSpellID, Min: 8, Max: 8, SP: 0.0625}
+		bolt := newOverloadBolt(overloadBoltSpellID)
+		spellConfig.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+			result := bolt.calcDamage(sim, shaman, spell, target, shaman.overloadAmount, relicSpellPower, 1)
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) {
+				spell.DealDamage(sim, result)
+			})
+		}
+		return spellConfig
+	}
+
 	var lbDotSpell *core.Spell
 	var electrifiedDelay *core.DelayedPeriodicApplier
-	if !isLightningOverload && shaman.HasSetBonus(ItemSetWorldbreakerGarb, 4) {
+	if shaman.HasSetBonus(ItemSetWorldbreakerGarb, 4) {
 		electrifiedDelay = core.NewDelayedPeriodicApplier(&shaman.Unit)
 		lbDotSpell = shaman.RegisterSpell(core.SpellConfig{
 			ActionID:         core.ActionID{SpellID: 64930},
@@ -63,9 +77,7 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 		})
 	}
 
-	relicSpellPower := shaman.electricSpellRelicSpellPower()
-
-	canLO := !isLightningOverload && shaman.Talents.LightningOverload > 0
+	canLO := shaman.Talents.LightningOverload > 0
 	lightningOverloadChance := float64(shaman.Talents.LightningOverload) * 0.11
 	spellConfig.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 		baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, (spell.SpellPower()+relicSpellPower))
@@ -73,7 +85,7 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 
 		// Electrified and Lightning Overload proc off the hit, so they wait for the bolt too
 		spell.WaitTravelTime(sim, func(sim *core.Simulation) {
-			if !isLightningOverload && lbDotSpell != nil && result.DidCrit() {
+			if lbDotSpell != nil && result.DidCrit() {
 				lbDot := lbDotSpell.Dot(target)
 
 				newDamage := result.Damage * 0.08
@@ -87,11 +99,14 @@ func (shaman *Shaman) newLightningBoltSpellConfig(isLightningOverload bool) core
 				})
 			}
 
+			spell.DealDamage(sim, result)
+
+			// after the hit: auras proc in spell id order, Elemental Focus (16164) ahead of Lightning Overload,
+			// so a crit's Clearcasting already counts for its own overload
 			if canLO && result.Landed() && sim.RandomFloat("LB Lightning Overload") < lightningOverloadChance {
+				shaman.overloadAmount = overloadBasePoints(result)
 				shaman.LightningBoltLO.Cast(sim, target)
 			}
-
-			spell.DealDamage(sim, result)
 		})
 	}
 

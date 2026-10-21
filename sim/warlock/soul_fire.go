@@ -32,7 +32,7 @@ func (warlock *Warlock) registerSoulFireSpell() {
 			warlock.GrandFirestoneBonus(),
 			0.03*float64(warlock.Talents.Emberstorm),
 		),
-		CritMultiplier:   warlock.SpellCritMultiplier(1, float64(warlock.Talents.Ruin)/5),
+		CritMultiplier:   warlock.SpellCritMultiplier(1, warlock.nukeCritDamageBonus()),
 		ThreatMultiplier: 1 - 0.1*float64(warlock.Talents.DestructiveReach),
 
 		Direct: core.SpellEffect{Effect: 0, Min: 1323, Max: 1657, SP: 1.15},

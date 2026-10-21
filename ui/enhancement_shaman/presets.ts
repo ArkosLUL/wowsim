@@ -68,7 +68,7 @@ export const StandardTalents = {
 		talentsString: '053030152-30405003105021333031131031051',
 		glyphs: Glyphs.create({
 			major1: ShamanMajorGlyph.GlyphOfFireNova,
-			major2: ShamanMajorGlyph.GlyphOfFlametongueWeapon,
+			major2: ShamanMajorGlyph.GlyphOfStormstrike,
 			major3: ShamanMajorGlyph.GlyphOfFeralSpirit,
 			//minor glyphs dont affect damage done, all convenience/QoL
 		})
@@ -81,7 +81,7 @@ export const Phase3Talents = {
 		talentsString: '053030152-30505003105001333031131131051',
 		glyphs: Glyphs.create({
 			major1: ShamanMajorGlyph.GlyphOfFireNova,
-			major2: ShamanMajorGlyph.GlyphOfFlametongueWeapon,
+			major2: ShamanMajorGlyph.GlyphOfStormstrike,
 			major3: ShamanMajorGlyph.GlyphOfFeralSpirit,
 			//minor glyphs dont affect damage done, all convenience/QoL
 		})

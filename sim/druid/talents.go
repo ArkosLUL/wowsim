@@ -284,13 +284,19 @@ func (druid *Druid) applyPrimalFury() {
 	})
 }
 
+// Rend and Tear's Ferocious Bite crit on a bleeding target, in percent: effect 2 of its ranks, which
+// mod-spell-tweaks raises to 10 a rank (stock 5)
+func rendAndTearBiteCrit(rank int32) float64 {
+	return 10 * float64(rank)
+}
+
 // Modifies the Bleed aura to apply the bonus.
 func (druid *Druid) applyRendAndTear(aura core.Aura) core.Aura {
 	if druid.FerociousBite == nil || druid.Talents.RendAndTear == 0 || druid.AssumeBleedActive {
 		return aura
 	}
 
-	bonusCrit := 5.0 * float64(druid.Talents.RendAndTear) * core.CritRatingPerCritChance
+	bonusCrit := rendAndTearBiteCrit(druid.Talents.RendAndTear) * core.CritRatingPerCritChance
 
 	aura.ApplyOnGain(func(aura *core.Aura, sim *core.Simulation) {
 		if druid.BleedsActive == 0 {

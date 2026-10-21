@@ -97,7 +97,7 @@ export const ROTATION_PRESET_AOE = PresetUtils.makePresetAPLRotation('Fan AOE', 
 export const CombatHackTalents = {
 	name: 'Combat Axes/Swords',
 	data: SavedTalents.create({
-		talentsString: '00532010414-0252051000035015223100501251',
+		talentsString: '00532000514-0252051000035015223100501251',
 		glyphs: Glyphs.create({
 			major1: RogueMajorGlyph.GlyphOfKillingSpree,
 			major2: RogueMajorGlyph.GlyphOfTricksOfTheTrade,
@@ -109,7 +109,7 @@ export const CombatHackTalents = {
 export const CombatCQCTalents = {
 	name: 'Combat Fists',
 	data: SavedTalents.create({
-		talentsString: '00532010414-0252051050035010223100501251',
+		talentsString: '00532000514-0252051050035010223100501251',
 		glyphs: Glyphs.create({
 			major1: RogueMajorGlyph.GlyphOfKillingSpree,
 			major2: RogueMajorGlyph.GlyphOfTricksOfTheTrade,

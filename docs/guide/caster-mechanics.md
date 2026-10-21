@@ -11,7 +11,11 @@ pets and guardians in [pets](pets.md).
 - **Eclipse** procs only on crits (spell_proc -48516 HitMask 2): `spell_dru_eclipse` rolls the ProcChance (×0.6
   for Wrath), then spell_proc's chance; never while either eclipse is up.
 - **Vengeance** covers Wrath, Moonfire, Starfire and Starfall, not Insect Swarm.
-- **Rake**'s first hit takes armor.
+- **Rake**'s first hit takes armor. Its ticks crit with Primal Gore (mod-spell-tweaks adds Rake to 63503's
+  mask; stock it's Rip and Lacerate) or the T10 4-piece.
+- **Rend and Tear** gives Ferocious Bite 10% crit a rank on a bleeding target (mod-spell-tweaks; stock 5).
+- **Idol of the Ravenous Beast** adds 135 to Shred's base, 304 after its 225% (mod-spell-tweaks' 60773; stock
+  90, 203).
 - A missed cat or bear strike pays the [miss cost](class-mechanics.md#miss-cost), Primal Precision's cut
   included.
 - **Forms:** cat and bear weapon damage is min(level, 60) × 0.85 / 1.25 × the unhasted attack time; a weapon's feral
@@ -60,6 +64,22 @@ pets and guardians in [pets](pets.md).
 
 ## Shaman
 
+- **Lightning Overload** (`spell_sha_lightning_overload`; `sim/shaman/lightning_overload.go`) casts 45284 or
+  45297 at the hit's target with base points int32(dealt [/ 2 on a crit]) / 2, resist and crit included; the
+  bolt's level scaling and die add 1 (45284) or 4 to 16 (45297). It rolls its own hit and crit and takes again:
+  - its spell power share, 0.0625 (45284) or 0.2855 (45297) plus Shamanism, at the level penalty (level 1:
+    0.0252; level 32: 0.475);
+  - the spell mods (Concussion, Glyph of Lightning Bolt, Skyshatter 4-piece, crit damage) and the target's
+    taken percents;
+  - of done percents only the shaman's own shaman-family ones (Elemental Oath's):
+    `SPELL_ATTR6_IGNORE_CASTER_DAMAGE_MODIFIERS` (`SpellInfoCorrections`) drops the raid's 3%, Tricks and
+    creature-type bonuses.
+
+  It goes after the hit's Elemental Focus proc (auras proc in spell id order, 16164 first), so a crit's
+  Clearcasting counts for its own overload. Chain Lightning's chance is the aura's 11% a rank × the script's
+  33%; 45297 jumps like the cast from its hit's target.
+- **Call of Thunder** (mod-spell-tweaks): +70% crit damage bonus on Lightning Bolt and Chain Lightning,
+  overloads included, adding to Elemental Fury's.
 - **Lava Lash** takes the whole off hand and, a melee-class spell, crits ×2, outside Elemental Fury's mask.
 - **Enhancing Totems:** Flametongue Totem's 58655 is a raid area aura, so its int32(144 × 1.15) = 165 reaches every
   raid member and pet.
@@ -119,6 +139,8 @@ pets and guardians in [pets](pets.md).
     lands, over the fixed 12 s: 5 ticks from 25% haste, 6 from 50%.
   - The cast owns the DoT and deals it under tag 1, which no rotation can name.
 - **Ignite** takes any fire crit, a tick's too (spell_proc -11119): Living Bomb's with its glyph, Pyroblast's.
+- **Arcane Empowerment** adds 5 a point to Arcane Blast's and the Arcane Missiles missile's (42845) spell
+  power coefficient, in hundredths (mod-spell-tweaks' `spell_dbc` rows; stock 3).
 - **Arcane Blast's buff** (36032) lasts 6 s. An Arcane Barrage or Arcane Explosion cast ends it (spell_proc
   36032, cast phase) after the launch, so that cast still hits with the stacks.
   - A stack adds 175% to the cost; with Netherwind Presence and `ArcaneBlastHasteCost`, int32(175 × min(cast
@@ -141,6 +163,8 @@ pets and guardians in [pets](pets.md).
   - Each bolt, 53000 or the heal's 52985, is a missile at 40 yd/s, rolled at the tick and dealt after its
     flight (`sim/priest/penance.go`; a KeepSim allowance on 53007's speed), a heal's to a friend or the priest
     as [missiles](missiles.md#flight-and-reach) give it.
+- **Twisted Faith** at 5/5 gives 53% of Spirit as spell power, damage and healing (mod-spell-tweaks'
+  `spell_dbc` row for 51167; stock 20%). Ranks 1–4 stay 4% a rank.
 - **Silent Resolve** cuts holy and arcane threat ([threat](threat.md)), so not Mind Blast's.
 - **Improved Devouring Plague**'s burst comes off the applied aura (`Aura::HandleAuraSpecificMods`), so a
   resisted cast has none. It counts the dot's `GetTotalTicks`: 8 on a new dot without `ShadowDotHaste`. A
@@ -157,3 +181,10 @@ pets and guardians in [pets](pets.md).
 - **Improved Demonic Tactics** gives the demon int32(int32(the warlock's sheet crit %) × 10 a point / 100),
   spell crit for spell and melee for melee, reworked every 10 s from a drawn phase; a demon summoned later
   takes the current value at once (`sim/warlock/pet.go`).
+- **Crit damage** of Shadow Bolt, Incinerate and Soul Fire: mod-spell-tweaks adds Nemesis' 10% a point, and
+  on Shadow Bolt Empowered Corruption's 14%, to Ruin's 20% (`SPELLMOD_CRIT_DAMAGE_BONUS`, percents add;
+  `nukeCritDamageBonus`).
+- **Pyroclasm**'s buff is 7/13/20% fire and shadow damage (mod-spell-tweaks; stock 2/4/6%).
+- **Demonic Pact** procs off the demon's crits at most every 20 s (spell_proc 53646, the passive demons learn
+  from their family's skill line; `ServerProcFor`). The entry's chance is 0; the talent's
+  `SPELLMOD_CHANCE_OF_SUCCESS` +100 makes it certain.

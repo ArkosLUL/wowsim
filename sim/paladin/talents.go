@@ -79,6 +79,45 @@ func (paladin *Paladin) ApplyTalents() {
 	paladin.applyMinorGlyphOfSenseUndead()
 	paladin.applyGuardedByTheLight()
 	paladin.applyFanaticism()
+	paladin.applyImprovedJudgementsDivineStormReset()
+}
+
+// mod-spell-tweaks gives Improved Judgements the T10 2pc's Divine Storm reset at 20% a rank (spell_proc -25956).
+// A conditions row (source 24) blocks it while the 2pc's 70765 is up.
+func (paladin *Paladin) applyImprovedJudgementsDivineStormReset() {
+	if paladin.Talents.ImprovedJudgements == 0 || paladin.HasSetBonus(ItemSetLightswornBattlegear, 2) {
+		return
+	}
+	paladin.registerDivineStormReset("Improved Judgements Divine Storm Reset", 0.2*float64(paladin.Talents.ImprovedJudgements))
+}
+
+// registerDivineStormReset casts 70769, which ends Divine Storm's cooldown, off landed white swings at procChance
+// (the default done hit mask). 70769 is triggered and suppresses caster procs, so its cast procs nothing.
+func (paladin *Paladin) registerDivineStormReset(label string, procChance float64) {
+	procSpell := paladin.RegisterSpell(core.SpellConfig{
+		ActionID: core.ActionID{SpellID: 70769},
+		ProcMask: core.ProcMaskEmpty,
+		Flags:    core.SpellFlagNoOnCastComplete,
+		ApplyEffects: func(_ *core.Simulation, _ *core.Unit, _ *core.Spell) {
+			paladin.DivineStorm.CD.Reset()
+		},
+	})
+
+	paladin.RegisterAura(core.Aura{
+		Label:    label,
+		Duration: core.NeverExpires,
+		OnReset: func(aura *core.Aura, sim *core.Simulation) {
+			aura.Activate(sim)
+		},
+		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if !spell.ProcMask.Matches(core.ProcMaskMeleeWhiteHit) || !result.Landed() {
+				return
+			}
+			if sim.RandomFloat(label) < procChance {
+				procSpell.Cast(sim, &paladin.Unit)
+			}
+		},
+	})
 }
 
 func (paladin *Paladin) getTalentSealsOfThePureBonus() float64 {

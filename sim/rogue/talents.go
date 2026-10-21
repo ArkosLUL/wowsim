@@ -19,7 +19,8 @@ func (rogue *Rogue) ApplyTalents() {
 	rogue.applyTurnTheTables()
 
 	rogue.PseudoStats.BaseDodge += 0.02 * float64(rogue.Talents.LightningReflexes)
-	rogue.PseudoStats.MeleeSpeedMultiplier *= []float64{1, 1.03, 1.06, 1.10}[rogue.Talents.LightningReflexes]
+	// mod-spell-tweaks' spell_dbc rows for 13712/13788/13789, stock gives 4/7/10%
+	rogue.PseudoStats.MeleeSpeedMultiplier *= []float64{1, 1.09, 1.16, 1.23}[rogue.Talents.LightningReflexes]
 	rogue.PseudoStats.BaseParry += 0.02 * float64(rogue.Talents.Deflection)
 	rogue.AddStat(stats.MeleeCrit, core.CritRatingPerCritChance*1*float64(rogue.Talents.Malice))
 	rogue.AddStat(stats.MeleeHit, core.MeleeHitRatingPerHitChance*1*float64(rogue.Talents.Precision))

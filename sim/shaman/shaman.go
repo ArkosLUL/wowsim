@@ -23,11 +23,12 @@ const (
 
 func NewShaman(character *core.Character, talents string, totems *proto.ShamanTotems, selfBuffs SelfBuffs, thunderstormRange bool) *Shaman {
 	shaman := &Shaman{
-		Character:           *character,
-		Talents:             &proto.ShamanTalents{},
-		Totems:              totems,
-		SelfBuffs:           selfBuffs,
-		thunderstormInRange: thunderstormRange,
+		Character:              *character,
+		Talents:                &proto.ShamanTalents{},
+		Totems:                 totems,
+		SelfBuffs:              selfBuffs,
+		thunderstormInRange:    thunderstormRange,
+		overloadDoneMultiplier: 1,
 	}
 	shaman.waterShieldManaMetrics = shaman.NewManaMetrics(core.ActionID{SpellID: 57960}).EnergizeThreat(core.EnergizeBySpell)
 
@@ -85,7 +86,11 @@ type Shaman struct {
 
 	ChainLightning     *core.Spell
 	ChainLightningHits []*core.Spell
-	ChainLightningLOs  []*core.Spell
+	ChainLightningLO   *core.Spell
+
+	overloadAmount int32 // base points handed to the next overload cast
+	// the shaman's own nature MOD_DAMAGE_PERCENT_DONE auras, the only done percents an overload takes
+	overloadDoneMultiplier float64
 
 	LavaBurst   *core.Spell
 	FireNova    *core.Spell

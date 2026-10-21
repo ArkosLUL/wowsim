@@ -278,3 +278,36 @@ func TestDamageReductionFromArmor(t *testing.T) {
 	}
 
 }
+
+// CalcArmorReducedDamage applies SPELLMOD_IGNORE_ARMOR to the armor before armor pen, so the cap is taken
+// from what's left: 75% ignored with 50% armor pen leaves 1330 armor, where pen first would leave 1524.
+func TestIgnoreArmorComesBeforeArmorPen(t *testing.T) {
+	target := Unit{
+		Type:         EnemyUnit,
+		Level:        83,
+		auraTracker:  newAuraTracker(),
+		initialStats: stats.Stats{stats.Armor: 10643},
+		PseudoStats:  newPseudoStats(),
+	}
+	target.stats = target.initialStats
+	attacker := Unit{Type: PlayerUnit, Level: 80, PseudoStats: newPseudoStats()}
+	attacker.PseudoStats.ArmorPenRatingPerPercent = RatingPerPercent(proto.Class_ClassHunter, CRArmorPenetration)
+	attackTable := NewAttackTable(&attacker, &target)
+
+	for _, tc := range []struct {
+		ignore, armorPenPct, want float64
+	}{
+		{0, 0, 0.588684},
+		{-0.75, 0, 0.851299},
+		{-0.75, 50, 0.919677},
+		// 9046.55 armor left: past 8317.5 the cap binds, (9046.55 + 16635) / 3
+		{-0.15, 50, 0.761671},
+		{-0.15, 100, 0.969079},
+	} {
+		attacker.PseudoStats.BonusArmorPenPct = tc.armorPenPct
+		spell := &Spell{IgnoreArmorPct: tc.ignore}
+		if got := attackTable.GetArmorDamageModifier(spell); !WithinToleranceFloat64(tc.want, got, 0.00001) {
+			t.Errorf("ignoring %.0f%% with %.0f%% armor pen: damage x%.6f, want x%.6f", -100*tc.ignore, tc.armorPenPct, got, tc.want)
+		}
+	}
+}

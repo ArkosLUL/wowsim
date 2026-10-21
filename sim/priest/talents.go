@@ -80,7 +80,9 @@ func (priest *Priest) ApplyTalents() {
 	}
 
 	if priest.Talents.TwistedFaith > 0 {
-		priest.AddStatDependency(stats.Spirit, stats.SpellPower, 0.04*float64(priest.Talents.TwistedFaith))
+		// mod-spell-tweaks' spell_dbc row for 51167: 53% at rank 5, where stock gives 20%
+		spiritToSpellPower := []float64{0, .04, .08, .12, .16, .53}[priest.Talents.TwistedFaith]
+		priest.AddStatDependency(stats.Spirit, stats.SpellPower, spiritToSpellPower)
 	}
 }
 

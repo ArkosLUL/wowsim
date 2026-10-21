@@ -209,12 +209,20 @@ func (warlock *Warlock) setupDecimation() {
 	})
 }
 
+// nukeCritDamageBonus is Shadow Bolt's, Incinerate's and Soul Fire's SPELLMOD_CRIT_DAMAGE_BONUS, whose percents
+// add up: Ruin's 20% a point, and Nemesis' 10% a point from mod-spell-tweaks' spell_dbc rows for 63117, 63121
+// and 63123.
+func (warlock *Warlock) nukeCritDamageBonus() float64 {
+	return float64(warlock.Talents.Ruin)/5 + 0.1*float64(warlock.Talents.Nemesis)
+}
+
 func (warlock *Warlock) setupPyroclasm() {
 	if warlock.Talents.Pyroclasm <= 0 {
 		return
 	}
 
-	pyroclasmDamageBonus := 1 + 0.02*float64(warlock.Talents.Pyroclasm)
+	// mod-spell-tweaks' spell_dbc rows for the buffs 18093, 63243 and 63244: 7/13/20%, stock gives 2/4/6%
+	pyroclasmDamageBonus := 1 + []float64{0, 0.07, 0.13, 0.20}[warlock.Talents.Pyroclasm]
 
 	warlock.PyroclasmAura = warlock.RegisterAura(core.Aura{
 		Label:    "Pyroclasm",
@@ -540,6 +548,10 @@ func (warlock *Warlock) updateDPASP(sim *core.Simulation) {
 	warlock.PreviousTime = sim.CurrentTime
 }
 
+// demonicPactPetAuraID is the passive every demon learns from its family's skill line, procing Demonic Pact
+// on its crits. 54909 has the same script and spell_proc row, but no demon learns it.
+const demonicPactPetAuraID = 53646
+
 func (warlock *Warlock) setupDemonicPact() {
 	if warlock.Talents.DemonicPact == 0 {
 		return
@@ -558,7 +570,7 @@ func (warlock *Warlock) setupDemonicPact() {
 
 	icd := core.Cooldown{
 		Timer:    warlock.NewTimer(),
-		Duration: 1 * time.Second,
+		Duration: core.ServerProcFor(demonicPactPetAuraID).ICD,
 	}
 
 	var demonicPactAuras []*core.Aura
