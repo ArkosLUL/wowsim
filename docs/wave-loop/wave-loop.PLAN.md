@@ -186,8 +186,7 @@ chain waits for Z12.
 
 - Wave: Z15 (e2e-coverage PLAN; the user's go, 2026-10-19), landed with master's `4eb04d015` merged in
   (`8f2a9adb0`). Base `0127441aa`; run `wf_22003b88-2d4` (Z14's script). Next: Z16 (Z15's follow-ups, specs in the
-  e2e-coverage PLAN) on the user's go; the BiS chain (Deferred, below; reruns fresh) stays on hold (the user,
-  2026-10-19).
+  e2e-coverage PLAN) on the user's go. The BiS chain ran 2026-10-21 (BiS chain, below).
   spec-balance's P0b is on master (`73ae11a98`): the `Player.playerbot` switch (`docs/guide/playerbot-rules.md`),
   which presetgen, statweights' capture and the rankings turn on, so the BiS chain optimizes under bot rules. While
   spec-balance's P1 is open (the APLs, presets and `sim.ts` defaults of its in-scope DPS builds), the wave's items
@@ -226,21 +225,17 @@ chain waits for Z12.
   noise loses tanks' Stamina twins, Bulwark P1 Quick 3 hit gems, Felesta P1 Quick Agility and hit in the figurine).
   Closed as not sim gaps: the sheet fields the server shows raw (per-school crit, Blood-Gorged, Mace and Holy
   Specialization), which the fixture README explains.
-- Deferred (the user's calls, 2026-10-02, 10-03, 10-05 and 10-07; go-ahead 2026-10-14): right after Z12 (the user's
-  call, 2026-10-15), whose BIS-TANK-HEALTH changes every raider's picks:
-  - Rerun all 30 presets (master `85d65c4c5` added `hunter_bm` and `dk_unholy_2h`, and party Heroic Presence for
-    every build while optimizing), tanks included, on the final HEAD: BIS-caps-race changes every racial search,
-    `ff0920a96` the 16 builds `mage_*`, `rogue_*`, `warlock_*`, `warrior_arms`, `warrior_fury`,
-    `protection_warrior`, `shadow_priest`, `smite_priest`, `dk_blood`, `elemental_shaman`, and BIS-outclassed
-    every build's old picks. A fresh `--out`, from P1: later phases seed from the earlier pick, and the worn
-    exemption would carry an old pick down. Check prot paladin and feral tank P1 for crit-immunity warnings
-    (Ring of Hardened Resolve gave Defense).
-  - Then the BiS tooltip dataset (acbis driver, both stages, fresh `--out`, then `acbis`; the import needs
-    the OK), the changed builds' stat weights, and the perf harness's `opt_*` scenarios (`update.sh`, a new
-    baseline; the raid25 dumps in `_dump/optimizer_dump_test.go` still build uncut pools).
-  - Then the DPS rankings ([tools/rankings/README.md](../../tools/rankings/README.md): a fresh work dir, the
-    runner, `merge.py`) and a new `assets/rankings/rankings.json`; the committed one was simmed at `85d65c4c5`,
-    before Z13.
+- BiS chain (the user's go, 2026-10-21), on integration fast-forwarded to master `0ddf696d9`, catalog 2026-10-14,
+  work dir `.wave-loop\bis-chain-1021`:
+  - Presets `5756270a2`: all 30 builds × 5 phases at Normal, from P1; no crit-immunity warnings.
+  - Rankings `3b28d98dc` (spec-balance's check flags 97 cells, 112 before); stat weights
+    `[int]\tmp\statweights-bis-chain-1021\weights.json` for playerbots' `generate_weights.py`.
+  - Dataset `e1d97013` imported (the user's OK): 21 raiders × 5 phases, live parties, Deathsong's phases 3-5
+    from his 2H pass; its SQL and merged batch in `[int]\tmp\bis-chain-1021`. `docs/bis-tooltip-addon/`'s PLAN
+    still names `5942107f`: its effort updates it.
+  - Perf scenarios refreshed `56a295570`, baseline on the 9950X3D `77b061b0c`.
+  - Next time: [tools/bischain/README.md](../../tools/bischain/README.md) runs the whole chain; a narrowed run
+    takes `--from-work bis-chain-1021`.
 - Workflow runIds: Z15's `wf_22003b88-2d4` (all four, base `0127441aa`; the cross-review, the specs and the guides ran as plain agents); Z14's `wf_05383cd2-e97` (all four, base `36e678932`; the cross-review, the specs and the guides ran as plain agents); Z13's `wf_6395e35a-086` (all four, base `d61bbed61`; the cross-review, the specs and the guides ran as plain agents); Z12's `wf_661e4362-520` and `wf_ce509f13-550` (base `9a5d8fb6a`; the cross-review, the picks, the specs and the guides ran as plain agents); Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and

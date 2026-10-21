@@ -64,6 +64,7 @@ Before starting, read every doc whose trigger matches the task.
 | [accatalog README](tools/database/accatalog/README.md) | regenerating the server item catalog, or changing its tier rules |
 | [acbis README](tools/database/acbis/README.md) | exporting the BiS tooltip dataset |
 | [acbis driver README](tools/database/acbis/driver/README.md) | running the optimizer batch the dataset is built from |
+| [bischain README](tools/bischain/README.md) | running the whole BiS chain: presets, tooltip dataset, stat weights, rankings |
 | [presetgen README](tools/presetgen/README.md) | regenerating the BiS gear presets |
 | [statweights README](tools/statweights/README.md) | regenerating the stat slopes behind the playerbots' stat weights |
 | [rankings README](tools/rankings/README.md) | regenerating the DPS rankings |
