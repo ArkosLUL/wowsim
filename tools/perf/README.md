@@ -120,10 +120,10 @@ cp tmp/perf/bench-<time>/report.json tools/perf/baseline.json
 ```
 
 Its numbers fill the [INVESTIGATION](../../docs/sim-performance/sim-performance.INVESTIGATION.md)'s baseline
-tables. About 50 min on the idle 7800X3D, going by per-point times: the optimizer at Normal 9, Quick's
-sweep 13, the raid25 scenarios at Quick 22, the rest 4. The defaults and why:
-- `-procs 1,2,4,8,12,16` for everything but Normal and the raid25 scenarios: each scenario's full curve, 8
-  being the core count.
+tables. 56 min on the idle 9950X3D: the optimizer at Normal 6, Quick's sweep 21, the raid25 scenarios at
+Quick 26, the rest 3. The defaults and why:
+- `-procs 1,2,4,8,12,16` for everything but Normal and the raid25 scenarios: each scenario's curve up to the
+  16 physical cores; the SMT threads above them aren't swept.
 - `-raid-procs 8,16` for the raid25 scenarios at Quick: raid DPS's full curve took 97 min, 39 at one proc.
 - `-skip '^optimizer/normal/raid25_raiddps_p1$'`: raid DPS at Normal takes about 55 min alone. `-skip ''`
   runs it too.

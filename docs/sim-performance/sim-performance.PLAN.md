@@ -5,9 +5,9 @@
 The user asked (2026-09-22) for a thorough performance pass over the sim and the BiS optimizer: check that
 they use the machine, find the bottlenecks, and add tooling that keeps finding them.
 
-- **Machine:** Ryzen 7 7800X3D, 8 cores and 16 threads; Docker Desktop's VM has all 16 and 32 GB. The prod web
-  server (container `wowsims-wotlk`, `/wowsimwotlk --launch=false --host=:3333`) has no CPU limit, so Go runs
-  with GOMAXPROCS 16. The worldserver shares the machine: its playerbots took up to 1.5 threads in earlier
+- **Machine:** Ryzen 9 9950X3D, 16 cores and 32 threads (a Ryzen 7 7800X3D, 8 and 16, through wave Z15);
+  Docker Desktop's VM has all 32 and 30 GB. The prod web server (container `wowsims-wotlk`,
+  `/wowsimwotlk --launch=false --host=:3333`) has no CPU limit, so Go runs with GOMAXPROCS 32. The worldserver shares the machine: its playerbots took up to 1.5 threads in earlier
   measurements.
 - **Earlier passes:** PAR-PERF and PAR-PERF-2 ([parity PLAN](../azerothcore-parity/azerothcore-parity.PLAN.md),
   findings and leftovers in the [parity INVESTIGATION](../azerothcore-parity/azerothcore-parity.INVESTIGATION.md)'s
@@ -244,7 +244,7 @@ floor (`slopeBox` gives the floor's stat ub +Inf), so `racialBounds` cost nothin
 `OptimizerResult` bit-identical: the surrogate kernel skips zero stats and reads each curve once per pass; a
 state-aware `moveBound` lets `bestItem` and `bestPartner` skip moves that can't win (arms search CPU 2014 → 26 s);
 gem kinds group once per pool. Captured P2 Normal jobs: Mighty 136 → 56 s, Stormweaver 52 → 40 s. The harness
-runs raid25 Quick at `-raid-procs 8,16` and skips raid DPS at Normal (55 min) by default, kept by the user (2026-10-02): 46 min idle at O.
+runs raid25 Quick at `-raid-procs 8,16` and skips raid DPS at Normal (55 min) by default, kept by the user (2026-10-02): 56 min idle on the 9950X3D.
 
 ### PERF-COST: the cost check off the hot path (wave V, done)
 

@@ -753,3 +753,17 @@ At GOMAXPROCS 16, I3 → O (util, busy):
   workers: not traced.
 - New since I3, raid25 at Quick: raid DPS 366 s at 8, 292 s at 16 (reps 280 to 364 s); tank 15.0 s at 8, 10.9 s
   at 16. Tank at Normal: 74.1 s.
+
+## Re-timing on the 9950X3D (2026-10-21, idle machine)
+
+The [full baseline](../../tools/perf/README.md#full-baseline) at `56a295570`, on the new Ryzen 9 9950X3D (16 cores,
+32 threads), worldserver off, Wallpaper Engine at 0.7 of a thread: 56 min. Its report replaced
+`tools/perf/baseline.json`. The scenario requests were refreshed just before (catalog 2026-10-14, spec-balance's
+rotations and talents, the tank boss's inputs; 40 to 60% more allocation per optimizer run), so it doesn't compare
+with O's.
+
+At GOMAXPROCS 16 (wall, util): sims 0.01 to 0.23 s, the raid 0.81 s (90%); stat weights 4.1 s (68%); bulk 1.7 s.
+Optimizer at Quick: Combat Rogue 13.9 s, Feral Tank 7.1, Fire Mage 3.9, Fury 7.2, Prot Pal 7.6, Ret 6.3 (87 to 93%);
+raid25 raid DPS 555 s at 8 and 315 s at 16, tank 11.7 and 7.1 s. At Normal: Combat Rogue 97.0 s, Feral Tank 59.1,
+Fire Mage 25.4, Fury 53.7, Prot Pal 43.1, Ret 47.2, raid25 tank 59.8 (86 to 98%). The sweep stops at 16, the
+physical cores; the web server's optimizer runs 31 workers.
