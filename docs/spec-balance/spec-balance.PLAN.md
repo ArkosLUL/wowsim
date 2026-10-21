@@ -5,7 +5,7 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a, P0b, P1, P2, P3 and the baseline landed, with the user's P1 decisions. Results, later-phase notes, P2/P3's per-build bot findings and each build's remaining gap in `spec-balance.INVESTIGATION.md`. Next: P4's proposal round (design agents running, `tmp/p4/`).
+Status: P0a, P0b, P1, P2, P3 and the baseline landed, with the user's P1 decisions. Results, later-phase notes, P2/P3's per-build bot findings and each build's remaining gap in `spec-balance.INVESTIGATION.md`. Next: the user's review of P4's `spec-balance.PROPOSAL.md`.
 
 ## Context
 
