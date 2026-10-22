@@ -55,7 +55,9 @@ WarriorProtectionWarrior again on 2026-10-11 against that day's image (module 8a
 2026-10-12 against the same image with module bc1d35e's working tree `fight_test.go`, from the hub's outer floor with
 Starfall cast first: 109 KB. DruidBalancePhase3 the same way on 2026-10-13, with the critters near the floor killed
 first; DruidBalance re-trimmed on 2026-10-14, losing two critters' deaths. DeathknightFrost and DeathknightFrostUH again on
-2026-10-18 against that day's image (rev 62fb09c68, module 86f62a3).
+2026-10-18 against that day's image (rev 62fb09c68, module 86f62a3). DruidFeralApl, HunterMM, HunterSV,
+PaladinRetribution, RogueCombat, ShamanEnhancement and WarriorArms again on 2026-10-22 against the image of 2026-10-21
+with mod-spell-tweaks b957aa5 (spec-balance's SQL).
 
 ## Left out
 
@@ -71,16 +73,5 @@ Representation gaps, not mismatches, each with its reason in `tools/simval/fight
 ## Dropped checks
 
 Real sim or cycle mismatches, each a follow-up, in `droppedFightChecks` (`tools/simval/fight.go`); a check is named
-by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name.
-
-| Setup | Subject | Check | Why |
-|---|---|---|---|
-| WarriorArms | melee | hit mean | recorded before mod-spell-tweaks' Endless Rage armor pen and larger Wrecking Crew Enrage; re-record after the server applies them |
-| WarriorArms | melee | crit mean | as above |
-| WarriorArms | melee | glance mean | as above |
-| WarriorArms | 7384 | crit mean | as above |
-| WarriorArms | 47486 | hit mean | as above |
-| WarriorArms | 47486 | crit mean | as above |
-| WarriorArms | 50783 | hit mean | as above |
-| WarriorArms | 50783 | crit mean | as above |
-| RogueCombat | 48672 | tick spacing | recorded before mod-spell-tweaks' Lightning Reflexes 23% (stock 10%) reached the server; rerun once it's applied |
+by its subject (`47809`, `melee`, `Bloodworm melee`, `aura 17800 on target`, `energize 57946 mana`) and name. None
+now.

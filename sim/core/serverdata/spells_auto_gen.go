@@ -4017,6 +4017,17 @@ var spells = []Spell{
 			{Effect: 10, BasePoints: 957, DieSides: 101, PointsPerLevel: 3, DamageMultiplier: 1, BonusMultiplier: 0.402},
 		},
 	},
+	// Demonic Pact
+	{
+		ID: 48090, SchoolMask: 1, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
+		Attributes: [8]uint32{0, 0, 0x4, 0, 0, 0, 0x4000000, 0x10000000}, AttributesCu: 0x100000,
+		DurationMs: 45000, MaxDurationMs: 45000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 13, DieSides: 1, DamageMultiplier: 1, MiscValue: 126, ClassMask: [3]uint32{0x4000000}},
+			{Effect: 6, Aura: 135, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
+		},
+	},
 	// Prayer of Mending (Rank 3)
 	{
 		ID: 48111, Family: 6, FamilyFlags: [3]uint32{0, 0x20, 0x400}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagPositive,

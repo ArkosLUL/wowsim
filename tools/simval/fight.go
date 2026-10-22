@@ -181,17 +181,7 @@ type fightDrop struct {
 	Setup, Subject, Check string
 }
 
-var droppedFightChecks = []fightDrop{
-	{"WarriorArms", "melee", "hit mean"},
-	{"WarriorArms", "melee", "crit mean"},
-	{"WarriorArms", "melee", "glance mean"},
-	{"WarriorArms", "7384", "crit mean"},
-	{"WarriorArms", "47486", "hit mean"},
-	{"WarriorArms", "47486", "crit mean"},
-	{"WarriorArms", "50783", "hit mean"},
-	{"WarriorArms", "50783", "crit mean"},
-	{"RogueCombat", "48672", "tick spacing"},
-}
+var droppedFightChecks = []fightDrop{}
 
 // fightLeftOut is a server aura by the log's id, where it sits ("self", "target", a minion's name), "" for
 // anywhere.

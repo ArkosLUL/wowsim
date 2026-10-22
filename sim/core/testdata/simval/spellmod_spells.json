@@ -430,13 +430,17 @@
   ]}
 ]},
 {"class":"hunter","tree":"Marksmanship","talent":"markedForDeath","passive":true,"groups": [
- {"ranks":[53241,53243,53244,53245,53246],"mods":[{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[133120,8388609,1]}],
+ {"ranks":[53241,53243,53244,53245,53246],"mods":[{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[133120,8388609,1]},{"effect":2,"type":"pct","op":"IGNORE_ARMOR","classMask":[397313,8388609,0]}],
   "spells": [
+    {"id":75,"name":"Auto Shot","ops":["IGNORE_ARMOR"]},
+    {"id":34490,"name":"Silencing Shot","ops":["IGNORE_ARMOR"]},
     {"id":49045,"name":"Arcane Shot","ops":["CRIT_DAMAGE_BONUS"]},
-    {"id":49050,"name":"Aimed Shot","ops":["CRIT_DAMAGE_BONUS"]},
-    {"id":49052,"name":"Steady Shot","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":49048,"name":"Multi-Shot","ops":["IGNORE_ARMOR"]},
+    {"id":49050,"name":"Aimed Shot","ops":["IGNORE_ARMOR","CRIT_DAMAGE_BONUS"]},
+    {"id":49052,"name":"Steady Shot","ops":["IGNORE_ARMOR","CRIT_DAMAGE_BONUS"]},
     {"id":53209,"name":"Chimera Shot","ops":["CRIT_DAMAGE_BONUS"]},
-    {"id":61006,"name":"Kill Shot","ops":["CRIT_DAMAGE_BONUS"]}
+    {"id":53254,"name":"Wild Quiver Auto Shot","ops":["IGNORE_ARMOR"]},
+    {"id":61006,"name":"Kill Shot","ops":["IGNORE_ARMOR","CRIT_DAMAGE_BONUS"]}
   ]}
 ]},
 {"class":"hunter","tree":"Survival","talent":"improvedTracking","passive":true,"groups": [
@@ -981,8 +985,10 @@
   ]}
 ]},
 {"class":"paladin","tree":"Retribution","talent":"swiftRetribution","passive":true,"groups": [
- {"ranks":[53379,53484,53648],"mods":[{"effect":0,"type":"flat","op":"EFFECT3","classMask":[0,0,134217728]}],
-  "spells": []}
+ {"ranks":[53379,53484,53648],"mods":[{"effect":0,"type":"flat","op":"EFFECT3","classMask":[0,0,134217728]},{"effect":1,"type":"flat","op":"EFFECT1","classMask":[32,0,0]}],
+  "spells": [
+    {"id":48819,"name":"Consecration","ops":["EFFECT1"]}
+  ]}
 ]},
 {"class":"priest","tree":"Discipline","talent":"twinDisciplines","passive":true,"groups": [
  {"ranks":[47586,47587,47588,52802],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[2581594112,622642,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[35684416,0,0]}],
@@ -1513,6 +1519,8 @@
 {"class":"shaman","tree":"Elemental","talent":"convection","passive":true,"groups": [
  {"ranks":[16039,16110,16111,16112],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[2416967683,134221824,0]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["COST"]},
+    {"id":45297,"name":"Chain Lightning","ops":["COST"]},
     {"id":49231,"name":"Earth Shock","ops":["COST"]},
     {"id":49233,"name":"Flame Shock","ops":["COST"]},
     {"id":49236,"name":"Frost Shock","ops":["COST"]},
@@ -1522,6 +1530,8 @@
   ]},
  {"ranks":[16109],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[2416967683,134230016,0]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["COST"]},
+    {"id":45297,"name":"Chain Lightning","ops":["COST"]},
     {"id":49231,"name":"Earth Shock","ops":["COST"]},
     {"id":49233,"name":"Flame Shock","ops":["COST"]},
     {"id":49236,"name":"Frost Shock","ops":["COST"]},
@@ -1534,6 +1544,8 @@
 {"class":"shaman","tree":"Elemental","talent":"concussion","passive":true,"groups": [
  {"ranks":[16035,16105,16106,16107,16108],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[2416967683,12288,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[268435456,0,0]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["DAMAGE"]},
+    {"id":45297,"name":"Chain Lightning","ops":["DAMAGE"]},
     {"id":49231,"name":"Earth Shock","ops":["DAMAGE"]},
     {"id":49233,"name":"Flame Shock","ops":["DAMAGE","DOT"]},
     {"id":49236,"name":"Frost Shock","ops":["DAMAGE"]},
@@ -1564,6 +1576,8 @@
  {"ranks":[16089,60184,60185,60187,60188],"mods":[{"effect":0,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[3509583875,274432,0]}],
   "spells": [
     {"id":10444,"name":"Flametongue Attack","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":45284,"name":"Lightning Bolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":45297,"name":"Chain Lightning","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":49231,"name":"Earth Shock","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":49233,"name":"Flame Shock","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":49236,"name":"Frost Shock","ops":["CRIT_DAMAGE_BONUS"]},
@@ -1585,16 +1599,20 @@
   ]}
 ]},
 {"class":"shaman","tree":"Elemental","talent":"callOfThunder","passive":true,"groups": [
- {"ranks":[16041],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[3,8192,0]}],
+ {"ranks":[16041],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[3,8192,0]},{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[3,0,0]}],
   "spells": [
-    {"id":49238,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE"]},
-    {"id":49271,"name":"Chain Lightning","ops":["CRITICAL_CHANCE"]},
+    {"id":45284,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
+    {"id":45297,"name":"Chain Lightning","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
+    {"id":49238,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
+    {"id":49271,"name":"Chain Lightning","ops":["CRITICAL_CHANCE","CRIT_DAMAGE_BONUS"]},
     {"id":59159,"name":"Thunderstorm","ops":["CRITICAL_CHANCE"]}
   ]}
 ]},
 {"class":"shaman","tree":"Elemental","talent":"lightningMastery","passive":true,"groups": [
  {"ranks":[16578,16579,16580,16581,16582],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[3,4096,0]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
+    {"id":45297,"name":"Chain Lightning","ops":["CASTING_TIME"]},
     {"id":49238,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
     {"id":49271,"name":"Chain Lightning","ops":["CASTING_TIME"]},
     {"id":60043,"name":"Lava Burst","ops":["CASTING_TIME"]}
@@ -1603,6 +1621,8 @@
 {"class":"shaman","tree":"Elemental","talent":"elementalMastery","passive":false,"groups": [
  {"ranks":[16166],"mods":[{"effect":0,"type":"pct","op":"CASTING_TIME","classMask":[3,4096,0]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
+    {"id":45297,"name":"Chain Lightning","ops":["CASTING_TIME"]},
     {"id":49238,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
     {"id":49271,"name":"Chain Lightning","ops":["CASTING_TIME"]},
     {"id":60043,"name":"Lava Burst","ops":["CASTING_TIME"]}
@@ -1611,6 +1631,7 @@
 {"class":"shaman","tree":"Elemental","talent":"stormEarthAndFire","passive":true,"groups": [
  {"ranks":[51483,51485,51486],"mods":[{"effect":0,"type":"flat","op":"COOLDOWN","classMask":[2,0,0]},{"effect":2,"type":"pct","op":"DOT","classMask":[268435456,0,0]}],
   "spells": [
+    {"id":45297,"name":"Chain Lightning","ops":["COOLDOWN"]},
     {"id":49233,"name":"Flame Shock","ops":["DOT"]},
     {"id":49271,"name":"Chain Lightning","ops":["COOLDOWN"]}
   ]}
@@ -1638,6 +1659,8 @@
 {"class":"shaman","tree":"Elemental","talent":"shamanism","passive":true,"groups": [
  {"ranks":[62097,62098,62099,62100,62101],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[1,0,0]},{"effect":1,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[0,4096,0]},{"effect":2,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[2,0,0]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["BONUS_MULTIPLIER"]},
+    {"id":45297,"name":"Chain Lightning","ops":["BONUS_MULTIPLIER"]},
     {"id":49238,"name":"Lightning Bolt","ops":["BONUS_MULTIPLIER"]},
     {"id":49271,"name":"Chain Lightning","ops":["BONUS_MULTIPLIER"]},
     {"id":60043,"name":"Lava Burst","ops":["BONUS_MULTIPLIER"]}
@@ -1793,6 +1816,8 @@
 {"class":"shaman","tree":"Restoration","talent":"tidalMastery","passive":true,"groups": [
  {"ranks":[16194,16218,16219],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[1475,8192,16]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE"]},
+    {"id":45297,"name":"Chain Lightning","ops":["CRITICAL_CHANCE"]},
     {"id":49238,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE"]},
     {"id":49271,"name":"Chain Lightning","ops":["CRITICAL_CHANCE"]},
     {"id":49273,"name":"Healing Wave","ops":["CRITICAL_CHANCE"]},
@@ -1805,6 +1830,8 @@
   ]},
  {"ranks":[16220,16221],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[1475,8192,80]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE"]},
+    {"id":45297,"name":"Chain Lightning","ops":["CRITICAL_CHANCE"]},
     {"id":49238,"name":"Lightning Bolt","ops":["CRITICAL_CHANCE"]},
     {"id":49271,"name":"Chain Lightning","ops":["CRITICAL_CHANCE"]},
     {"id":49273,"name":"Healing Wave","ops":["CRITICAL_CHANCE"]},
@@ -1822,6 +1849,8 @@
 {"class":"shaman","tree":"Restoration","talent":"naturesSwiftness","passive":false,"groups": [
  {"ranks":[16188],"mods":[{"effect":0,"type":"pct","op":"CASTING_TIME","classMask":[2499,32768,0]}],
   "spells": [
+    {"id":45284,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
+    {"id":45297,"name":"Chain Lightning","ops":["CASTING_TIME"]},
     {"id":49238,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
     {"id":49271,"name":"Chain Lightning","ops":["CASTING_TIME"]},
     {"id":49273,"name":"Healing Wave","ops":["CASTING_TIME"]},
@@ -1932,8 +1961,9 @@
   ]}
 ]},
 {"class":"warlock","tree":"Affliction","talent":"empoweredCorruption","passive":true,"groups": [
- {"ranks":[32381,32382,32383],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[2,0,0]}],
+ {"ranks":[32381,32382,32383],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[2,0,0]},{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[1,0,0]}],
   "spells": [
+    {"id":47809,"name":"Shadow Bolt","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":47813,"name":"Corruption","ops":["BONUS_MULTIPLIER"]}
   ]}
 ]},
@@ -2057,15 +2087,20 @@
   "spells": []}
 ]},
 {"class":"warlock","tree":"Demonology","talent":"nemesis","passive":true,"groups": [
- {"ranks":[63117,63121,63123],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[0,0,12416]}],
+ {"ranks":[63117,63121,63123],"mods":[{"effect":0,"type":"pct","op":"COOLDOWN","classMask":[0,0,12416]},{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[1,192,0]}],
   "spells": [
     {"id":47193,"name":"Demonic Empowerment","ops":["COOLDOWN"]},
-    {"id":47241,"name":"Metamorphosis","ops":["COOLDOWN"]}
+    {"id":47241,"name":"Metamorphosis","ops":["COOLDOWN"]},
+    {"id":47809,"name":"Shadow Bolt","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47825,"name":"Soul Fire","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":47838,"name":"Incinerate","ops":["CRIT_DAMAGE_BONUS"]}
   ]}
 ]},
 {"class":"warlock","tree":"Demonology","talent":"demonicPact","passive":true,"groups": [
  {"ranks":[47236,47237,47238,47239,47240],"mods":[{"effect":1,"type":"flat","op":"CHANCE_OF_SUCCESS","classMask":[0,1048576,0]}],
-  "spells": []}
+  "spells": [
+    {"id":53646,"name":"Demonic Pact","ops":["CHANCE_OF_SUCCESS"]}
+  ]}
 ]},
 {"class":"warlock","tree":"Destruction","talent":"improvedShadowBolt","passive":true,"groups": [
  {"ranks":[17793,17796,17801,17802,17803],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[1,0,0]}],
