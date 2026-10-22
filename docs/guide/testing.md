@@ -9,7 +9,7 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - Add `-count=1` when results come back `(cached)`.
   - On a loaded machine `./tools/simval` can pass go's 10 min default: add `-timeout 45m`.
   - Ready to paste from Git Bash:
-    `MSYS_NO_PATHCONV=1 docker run --rm -v G:/DevStuff/GitHub/wowsimwotlk:/wotlk -v wotlk-gomod:/go/pkg/mod -v wotlk-gocache:/root/.cache/go-build -w /wotlk wowsims-wotlk-dev sh -c 'go test --tags=with_db $(go list ./sim/... | grep -v /sim/web$) ./tools/... ./cmd/...'`
+    `MSYS_NO_PATHCONV=1 docker compose run --rm toolchain sh -c 'go test --tags=with_db $(go list ./sim/... | grep -v /sim/web$) ./tools/... ./cmd/...'`
   - `dock.sh test [args]` runs `./sim/...` by default and generates `binary_dist` itself.
 - Vet: `go vet ./sim/... ./tools/... ./cmd/...`
 - Race: `go test --tags=with_db -race ./sim/optimizer/... ./sim/web/...`, plus

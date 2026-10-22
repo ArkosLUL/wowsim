@@ -1,0 +1,92 @@
+# /acoreRoster's wiring, shared by sim and dev. The server reads each --acore* flag from these env vars.
+x-acore-env: &acore-env
+  AC_DBC_DIR: /acdata/dbc
+  AC_RAID_NAMES_FILE: /wowsim/core-raid.txt
+  AC_RAID_LEADER: Deathsong
+  AC_WORLD_BUFF_MATRIX: /acconf/Playerbot.env
+
+# holds AC_DSN; without it /acoreRoster answers 503 and the rest of the sim works
+x-acore-env-file: &acore-env-file
+  - path: ${WOWSIM_DIR:-../.wowsim}/prod.env
+    required: false
+
+x-acore-volumes: &acore-volumes
+  - type: volume
+    source: ac-client-data
+    target: /acdata
+    read_only: true
+  # the dir, not the file: editors that replace the file would leave a file mount stale
+  - type: bind
+    source: ${WOWSIM_DIR:-../.wowsim}
+    target: /wowsim
+    read_only: true
+  # alone, since Chronicle.env sits next to it
+  - type: bind
+    source: ${AC_DIR:-../azerothcore-wotlk-pb}/configurationOverrides/Playerbot.env
+    target: /acconf/Playerbot.env
+    read_only: true
+
+services:
+  sim:
+    image: wowsims-wotlk
+    build:
+      context: .
+      args:
+        - SIM_COMMIT
+    container_name: wowsims-wotlk
+    restart: unless-stopped
+    ports:
+      - "3333:3333"
+    # not the AC network: a container on it can't start while AC is down
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    env_file: *acore-env-file
+    environment: *acore-env
+    volumes: *acore-volumes
+
+  toolchain:
+    profiles: [tools]
+    image: wowsims-wotlk-dev
+    build:
+      context: .
+      target: toolchain
+    working_dir: /wotlk
+    # default bridge: a network per worktree outlives run --rm and Docker only has ~30 address pools
+    network_mode: bridge
+    extra_hosts:
+      - host.docker.internal:host-gateway
+    environment:
+      - SIM_COMMIT
+    volumes:
+      - .:/wotlk
+      - gomod:/go/pkg/mod
+      - gocache:/root/.cache/go-build
+
+  dev:
+    extends: toolchain
+    profiles: !override [dev]
+    container_name: ${WOTLK_DEV_NAME:-wotlk-dev}
+    ports:
+      - "${WOTLK_DEV_PORT:-3334}:3333"
+    env_file: *acore-env-file
+    environment: *acore-env
+    volumes: *acore-volumes
+    command:
+      - sh
+      - -c
+      - make dist/wotlk/.dirstamp devserver && exec ./wowsimwotlk --usefs=true --launch=false --host=:3333
+    # the server only exits on SIGINT
+    stop_signal: SIGINT
+
+volumes:
+  # shared with the docker run callers and every worktree; on a new machine:
+  # docker volume create wotlk-gomod && docker volume create wotlk-gocache
+  gomod:
+    name: wotlk-gomod
+    external: true
+  gocache:
+    name: wotlk-gocache
+    external: true
+  ac-client-data:
+    name: azerothcore-wotlk-pb_ac-client-data
+    external: true

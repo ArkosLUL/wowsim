@@ -52,37 +52,21 @@ npm install
 ```
 
 ## Docker
-Alternatively, install Docker. To just host the sim, build the default image, which bundles the UI and the sim server:
+Alternatively, install Docker. `compose.yaml` defines three services:
+
 ```sh
-git clone https://github.com/wowsims/wotlk.git
-cd wotlk
+# The sim, UI included, at http://localhost:3333/wotlk/
+SIM_COMMIT=$(git rev-parse HEAD) docker compose up -d --build
 
-docker build --tag wowsims-wotlk .
-docker run -d --name wowsims-wotlk --restart unless-stopped -p 3333:3333 wowsims-wotlk
+# A dev server built from this checkout, at http://localhost:3334/wotlk/
+docker compose up -d dev
 
-# The sim is now available at http://localhost:3333/wotlk/
+# Any command from the Commands section, e.g. the tests; `make host` also needs `-p 8080:8080` after `run`
+docker compose run --rm toolchain make test
 ```
 
-For development, build only the `toolchain` stage and your workflow will look something like this:
-```sh
-# Build the docker image and install npm dependencies (only need to run these once).
-docker build --target toolchain --tag wowsims-wotlk-dev .
-docker run --rm -v $(pwd):/wotlk wowsims-wotlk-dev npm install
-
-# Now you can run the commands as shown in the Commands sections, preceding everything with, "docker run --rm -it -p 8080:8080 -v $(pwd):/wotlk wowsims-wotlk-dev".
-# For convenience, set this as an environment variable:
-WOTLK_CMD="docker run --rm -it -p 8080:8080 -v $(pwd):/wotlk wowsims-wotlk-dev"
-
-# ... do some coding on the sim ...
-
-# Run tests
-$(echo $WOTLK_CMD) make test
-
-# ... do some coding on the UI ...
-
-# Host a local site
-$(echo $WOTLK_CMD) make host
-```
+The services expect external volumes (Go caches, the AzerothCore server's client data) and the server's
+config next to this checkout; see [dev-environment](docs/guide/dev-environment.md).
 
 ## Windows
 If you want to develop on Windows, we recommend setting up a Ubuntu virtual machine (VM) or running Docker using [this guide](https://docs.docker.com/desktop/windows/wsl/ "https://docs.docker.com/desktop/windows/wsl/") and then following the Ubuntu or Docker instructions, respectively.
