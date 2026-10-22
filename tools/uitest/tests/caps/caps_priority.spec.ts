@@ -136,6 +136,8 @@ test('a healer page says its values come from a live run', async ({ page }) => {
 	await openCapsTab(page, 'holy_paladin');
 	await expect(page.locator('#caps-tab .priority-healer')).toBeVisible();
 	await expect(phaseSelect(page)).toHaveCount(0);
+	// the tab asks for the file right as it opens, so a fetch would have landed by now
+	await expect(page.locator('#caps-tab tr.caps-row').first()).toBeVisible();
 	expect(fetched).toBe(false);
 });
 

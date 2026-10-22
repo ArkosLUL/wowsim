@@ -106,7 +106,7 @@ test("Heroic Presence moves Fury's needed hit by 33", async ({ page }) => {
 	await expect(details.locator('tr.caps-source', { hasText: 'Heroic Presence' })).toContainText('−33');
 });
 
-test("Misery moves Shadow's needed spell hit by 79", async ({ page }) => {
+test("Misery moves Shadow's needed spell hit by 78 or 79", async ({ page }) => {
 	await openSpec(page, 'shadow_priest', 'settings-tab');
 	const debuffs = page.locator('#settings-tab .debuffs-settings');
 	const misery = icon(debuffs, 'spell', 33198);

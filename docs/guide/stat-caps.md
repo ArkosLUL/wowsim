@@ -29,8 +29,8 @@ There is no crit cap.
   - Main- and off-hand rows only when the hands' own expertise differs: a one-hand racial lands on that hand's
     spells (Orc axe main hand, sword off hand).
   - A target that never parries gets no parry row.
-- **ArP:** `ArmorPenPercent` at 100 after percent auras. Warrior stance auras aren't active when the sheet is
-  built, so Fury reads a flat 1400.
+- **ArP:** `ArmorPenPercent` at 100 after percent auras, stances included: Arms (Battle Stance 10%, Endless Rage
+  14%) needs 1064, Fury (Berserker Stance) 1400.
 
 ### Gear-side frame
 
@@ -140,3 +140,5 @@ loads it.
 - "Import from roster…" calls `IndividualSimUI.openAcoreImporter()`, as the Import menu does; it shows only on a
   sim server (`simServerAvailable()`).
 - Tests: `sim/statcaps/statcaps_test.go`, `sim/statslopes/statslopes_test.go`, `tools/uitest/tests/caps/`.
+  `TestRequestsSideBySide` runs both RPCs beside `/computeStats` and `/raidSimAsync`, as the sim server does;
+  after a concurrency change run `dock.sh test -race ./sim/statcaps/ ./sim/statslopes/`.

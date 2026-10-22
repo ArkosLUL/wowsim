@@ -34,8 +34,8 @@ Deathsong's live parties (`--allow-party-mismatch` overrides). Then two branches
 - **Presets**, then stat weights, rankings and the stat values ([publish.py](../statweights/README.md#running)),
   last since the rankings merge would read a new file under `assets/` as a dirty sim. Each ui folder goes
   whole to the next free server, slowest first by `--times`, with its own `presets/<folder>/` output and a
-  1200 s Normal timeout. **Stop 1:** once written, the presets wait for the orchestrator to check and commit them (`ui/` clean), so stat weights and
-  rankings stamp a clean commit.
+  1200 s Normal timeout. **Stop 1:** once written, the presets wait for the orchestrator to check and
+  commit them (`ui/` clean), so stat weights and rankings stamp a clean commit.
 - **Dataset**: one batch per `--dataset-split` group (default `1,2,3:4,5`) on its own server, both stages,
   plus the switches; a pass missing any job's entry reruns its failed jobs once, then fails. Then the merge,
   `check_sources.py` and acbis. **Stop 2:** importing replaces the live dataset and needs the user's OK; the

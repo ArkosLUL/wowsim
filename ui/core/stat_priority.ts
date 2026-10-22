@@ -122,8 +122,6 @@ export interface PriorityRow {
 	gearStat: GearStat;
 	// per point, after the cap rule; a live run's gain
 	value: number;
-	// per point as shipped or measured
-	shipped: number;
 	// a live run's cost of one point fewer, null for shipped values or a stat the player has none of
 	loss: number | null;
 	// value over the reference stat's, null when that isn't above zero
@@ -182,7 +180,6 @@ export function priority(phase: ShippedPhase, metric: Metric, caps: Array<StatCa
 		rows.push({
 			gearStat: stat,
 			value,
-			shipped: parts.reduce((sum, part) => sum + part.raw, 0),
 			loss: null,
 			ratio: reference > 0 ? value / reference : null,
 			note: capped.length > 0 ? capNote(capped, capped.length == parts.length) : '',
@@ -222,7 +219,6 @@ export function livePriority(live: LiveValues, metric: Metric, referenceStat: St
 		rows.push({
 			gearStat: stat,
 			value,
-			shipped: value,
 			loss,
 			ratio: reference > 0 ? value / reference : null,
 			note: '',

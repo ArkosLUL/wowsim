@@ -274,6 +274,22 @@ func TestBareHitIs262(t *testing.T) {
 	}
 }
 
+// Battle Stance's 10% and Endless Rage's 14% leave Arms 76% to find on gear, 1064 rating. Fury's
+// Berserker Stance has none, so Fury needs the full 1400.
+func TestArmsArmorPenCountsBattleStance(t *testing.T) {
+	arms := furyPlayer()
+	arms.Equipment = core.GetGearSet("../../ui/warrior/gear_sets", "p1_arms").GearSet
+	arms.Rotation = core.GetAplRotation("../../ui/warrior/apls", "arms").Rotation
+	arms.TalentsString = "3022032023335100102012213231251-305-2033"
+	arp := findCap(t, compute(t, arms, setup{}), "Armor penetration", proto.StatCapHand_StatCapHandBoth)
+	if arp.Needed != 1064 || !near(findSource(t, arp, "Stances and talents").Percent, -24, 0.05) {
+		t.Errorf("want 1064 needed and about -24%% from stances and talents: %s", describe(arp))
+	}
+	if fury := findCap(t, compute(t, furyPlayer(), setup{}), "Armor penetration", proto.StatCapHand_StatCapHandBoth); fury.Needed != 1400 {
+		t.Errorf("want 1400 for Fury: %s", describe(fury))
+	}
+}
+
 // Precision's 3% and Heroic Presence's 1% leave Fury 4% to find on gear, about 131 rating, and
 // Heroic Presence alone is worth 33 of it.
 func TestFuryWithPrecisionAndHeroicPresence(t *testing.T) {

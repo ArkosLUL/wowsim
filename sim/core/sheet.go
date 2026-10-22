@@ -51,8 +51,8 @@ type PlayerSheet struct {
 	// reduction, in front. The level gap the caps start from.
 	BareTable MeleeTableInput
 	// The snapshots ComputeStats reports along the way: after race, gear (bonus stats included),
-	// talents, buffs and consumes.
-	BaseStats, GearStats, TalentsStats, BuffsStats, ConsumesStats stats.Stats
+	// talents and buffs.
+	BaseStats, GearStats, TalentsStats, BuffsStats stats.Stats
 }
 
 // HandSheet is one weapon hand's dodge and parry against a target, parry as if in front.
@@ -102,7 +102,6 @@ func ComputePlayerSheet(raidProto *proto.Raid, encounterProto *proto.Encounter, 
 	sheet.GearStats = stats.FromFloatArray(playerStats.GetGearStats().GetStats())
 	sheet.TalentsStats = stats.FromFloatArray(playerStats.GetTalentsStats().GetStats())
 	sheet.BuffsStats = stats.FromFloatArray(playerStats.GetBuffsStats().GetStats())
-	sheet.ConsumesStats = stats.FromFloatArray(playerStats.GetConsumesStats().GetStats())
 
 	var defender *Unit
 	for _, unit := range env.Raid.AllPlayerUnits {

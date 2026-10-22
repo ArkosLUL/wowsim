@@ -3,12 +3,15 @@ package statslopes
 import (
 	"math"
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/wowsims/wotlk/sim"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	"github.com/wowsims/wotlk/sim/statcaps"
+	googleProto "google.golang.org/protobuf/proto"
 )
 
 func init() {
@@ -271,6 +274,60 @@ func TestMeasureAsyncReportsEachSimThenTheResult(t *testing.T) {
 		}
 		done, total = p.CompletedSims, p.TotalSims
 	}
+}
+
+// The sim server runs these side by side, each on a request of its own. Under -race this catches
+// anything they share.
+func TestRequestsSideBySide(t *testing.T) {
+	needDB(t)
+	// decoded requests share nothing, request() shares core's FullRaidBuffs
+	own := func(player *proto.Player, iterations int32) *proto.StatSlopesRequest {
+		return googleProto.Clone(request(player, iterations)).(*proto.StatSlopesRequest)
+	}
+	var wg sync.WaitGroup
+	run := func(name string, f func() string) {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			if err := f(); err != "" {
+				t.Errorf("%s: %s", name, err)
+			}
+		}()
+	}
+	for range 2 {
+		for _, player := range []func() *proto.Player{furyPlayer, plainMage} {
+			run("statCaps", func() string {
+				req := own(player(), 1)
+				return statcaps.ComputeRequest(&proto.StatCapsRequest{Raid: req.Raid, Encounter: req.Encounter}).ErrorResult
+			})
+		}
+		run("statSlopesAsync", func() string {
+			progress := make(chan *proto.ProgressMetrics, 100)
+			MeasureAsync(own(plainMage(), 3), progress)
+			for p := range progress {
+				if p.FinalSlopesResult != nil {
+					return p.FinalSlopesResult.ErrorResult
+				}
+			}
+			return "no result"
+		})
+		run("computeStats", func() string {
+			req := own(furyPlayer(), 1)
+			return core.ComputeStats(&proto.ComputeStatsRequest{Raid: req.Raid, Encounter: req.Encounter}).ErrorResult
+		})
+		run("raidSimAsync", func() string {
+			req := own(furyPlayer(), 20)
+			progress := make(chan *proto.ProgressMetrics, 100)
+			core.RunRaidSimAsync(&proto.RaidSimRequest{Raid: req.Raid, Encounter: req.Encounter, SimOptions: req.SimOptions}, progress)
+			for p := range progress {
+				if p.FinalRaidResult != nil {
+					return p.FinalRaidResult.ErrorResult
+				}
+			}
+			return "no result"
+		})
+	}
+	wg.Wait()
 }
 
 func TestMeasureRefusesARequestItCantRun(t *testing.T) {

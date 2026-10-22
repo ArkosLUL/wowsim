@@ -303,7 +303,8 @@ The tab, its packages and RPCs, the shipped values and the docs. Stages:
   Playwright test accepts either and checks the source row reads −79.
 - The default Fury page is Draenei and the default Shadow page has Improved Faerie Fire: the tests switch to
   Human and clear it first.
-- Warrior stance ArP auras aren't active at sheet time, so Fury's ArP cap is a flat 1400.
+- Not a deviation (cross-review): stance ArP auras count on the sheet. Arms' Battle Stance and Endless Rage
+  (24%) put its cap at 1064 (`TestArmsArmorPenCountsBattleStance`); Fury's Berserker Stance has none, so 1400.
 
 **Stage 2, values:**
 - `publish.py --out <work dir>` (`--dest` overrides the asset) carries `weights.json`'s `sim_commit` and
