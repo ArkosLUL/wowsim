@@ -8,28 +8,25 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 Status: P0a–P3 and the baseline landed; results, bot findings and each build's gap in
 `spec-balance.INVESTIGATION.md`. P4's `spec-balance.PROPOSAL.md` approved as recommended (user, 2026-10-21).
 P5 in progress:
-- Sim: `ca5062282` on `spec-balance` only (not master): every approved tweak (Call of Thunder +70%, re-sized after
+- Sim on `spec-balance` only (not master): `ca5062282` every approved tweak (Call of Thunder +70%, re-sized after
   the Lightning Overload fix), parity fixes (Lightning Overload, Demonic Pact ICD, T10 Ret 2pc), cap-exempt fixes
-  (Combat Lethality, Glyph of Stormstrike, Ret Consecration first, Enh Shamanistic Rage on cooldown with T10 2pc).
-  `tools/simval` replays of the buffed spells fail until re-recorded. Per-class work, staged SQL and reports:
-  `tmp/p4/trees/<class>/tmp/p5/`.
-- [tweaks]: `feature/balance-<class>` off `origin/master` (local master is 6 unpushed commits ahead), one commit
-  per tweak; Arms (both talents) and Marked for Death not yet committed (re-size first).
-- [bots] uncommitted: Ret Consecration first (`DpsPaladinStrategy.cpp`, reviewed), Enh T10 Shamanistic Rage
-  trigger (3 shaman files, unreviewed; `docs/classes/shaman.md` mana-kit row needs it). Close per its
-  `CLAUDE.local.md`.
+  (Combat Lethality, Glyph of Stormstrike, Ret Consecration first, Enh Shamanistic Rage on cooldown with T10 2pc);
+  `ca12bf424` Arms/MM/Destruction P1–5 or P4–5 re-geared, MM's Marked for Death 11% a rank, Arms' Endless Rage 14%
+  and Wrecking Crew 4/9/13/18/22% (closest fit under the cap; user: no follow-up). `tools/simval` replays of the
+  buffed spells fail until re-recorded. Per-class work, staged SQL and reports: `tmp/p4/trees/<class>/tmp/p5/`.
+- Final rankings: `tmp/p5/rk3/rankings.json` (committed `assets/rankings/rankings.json` stays the pre-buff
+  `--base` until P6). `balance_check.py` flags only accepted shortfalls: Fire, Fury P1/P2; Ret 4 cells; Demonology
+  P5; Destruction P4/P5 180 s; Arms P1/180, P2.
+- [tweaks]: no PRs (user, 2026-10-22). The nine `feature/balance-<class>` branches are merged into local master
+  (`b957aa5`), not pushed.
+- [bots]: committed on `Custom` (`467a9efb1` Ret, `a7e9177c1` Enh).
+- Bundle builds over [bal]: `sh tmp/p5/bundle.sh` (the root tsconfig's tsc runs out of heap on `tmp/p4/trees`).
 
 Next, in order:
-1. Dev server over [bal] (`wotlk-bal-p5`, :3337), presetgen Normal: `warrior_arms`, `hunter_mm` P1–5;
-   `warlock_destruction`, `enhancement_shaman` P4–5. Rebuild the bundle, capture those four plus
-   `retribution_paladin`, `rogue_combat` into `tmp/p5/rk` (other builds' baseline captures are there), runner,
-   merge, `balance_check.py`.
-2. Re-size Arms/MM if a cell leaves 86–94 (constants in `sim/warrior/talents.go`, `sim/hunter/talents.go`), commit
-   their SQL.
-3. Ask: `ac-db-import` + worldserver restart, from a local merge of the nine branches. Recapture the spelldump,
-   `gen_serverdata` (must reproduce the hand-edited serverdata), `spellmods`; re-record the moved simval records
-   (goldchar, talent sweep, spell mods, strikes, fights) and remove their drops.
-4. ff master; show the user the PR texts; P6.
+1. Ask: `ac-db-import` + worldserver restart from [tweaks] master. Recapture the spelldump (the tweaked ids
+   plus 45284, 45297, 53646), `gen_serverdata` (must reproduce the hand-edited serverdata), `spellmods`;
+   re-record the moved simval records (goldchar, talent sweep, spell mods, strikes, fights) and remove their drops.
+2. ff master; P6.
 
 Open findings: presetgen doesn't carry a phase's racial traits into the next phase's seed (bis-optimizer's;
 Shadow's P5 BiS); further Demonic Pact gaps (self-feeding spell power, recast replaces); the server's Lightning
@@ -115,8 +112,8 @@ which models the server exactly (ADR 0001).
 **Standing authorizations**
 - [sim]: create branch `spec-balance` and worktree [bal]; after each phase's review passes, commit on
   `spec-balance` and `git merge --ff-only` into master. No push.
-- [tweaks]: a `feature/balance-<class>` branch per class batch, one commit per tweak, push the branch and open a
-  PR to master; show the user the PR text first. The user runs `/code-review` and merges.
+- [tweaks]: a `feature/balance-<class>` branch per class batch, one commit per tweak, merged into master locally
+  (no PR, no push).
 - [bots]: commit on `Custom` (its `CLAUDE.md` asks for it). No push, no upstream PRs.
 - [simval]: commit, staging only this effort's files (other sessions keep edits open there). No push.
 - Commits in any repo need no asking (user, 2026-10-19); pushes and PRs stay as listed.
@@ -278,7 +275,7 @@ For each build still below B at the baseline:
   `SpellTweaks.Enable` off (`TestSpellTweaksEnableGatesScriptedTweaks`); a `.simval damage`/`timing` probe
   compared by `tools/simval`.
 - Goldens promoted suite by suite. Runner + merge, `balance_check.py` with every build the batch changed, spillover included, as `--buffed`.
-- Land: [sim] per the standing OK; [tweaks] branch, commits, push, PR (text shown first).
+- Land: [sim] per the standing OK; [tweaks] branch, commits, local merge into master.
 
 ## P6: Final check
 
