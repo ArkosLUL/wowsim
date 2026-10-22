@@ -118,7 +118,7 @@ func (hunter *Hunter) ApplyTalents() {
 
 // markedForDeathIgnoreArmorPerRank has to match mod-spell-tweaks' Marked for Death rows (53241, 53243-53246):
 // EffectBasePoints_3 + 1 is -15 a rank.
-const markedForDeathIgnoreArmorPerRank = 0.15
+const markedForDeathIgnoreArmorPerRank = 0.11
 
 // applyMarkedForDeathIgnoreArmor is mod-spell-tweaks' third effect on Marked for Death: aura 108,
 // SPELLMOD_IGNORE_ARMOR, on the shots in its class mask. No pet spell is in it, and Zod's Quick Shot is

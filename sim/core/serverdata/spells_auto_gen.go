@@ -6973,7 +6973,7 @@ var spells = []Spell{
 		Category: 21, DurationMs: 12000, MaxDurationMs: 12000,
 		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
 		Effects: [3]Effect{
-			{Effect: 6, Aura: 79, BasePoints: 4, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+			{Effect: 6, Aura: 79, BasePoints: 3, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 		},
 	},
 	// Horn of Winter (Rank 2)

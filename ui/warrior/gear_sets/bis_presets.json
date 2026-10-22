@@ -5,7 +5,7 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "0ddf696d9",
+		"simCommit": "edbae9210",
 		"catalogDate": "2026-10-14"
 	},
 	"p1_bis_fury": {
@@ -22,8 +22,8 @@
 		"build": "Warrior Arms",
 		"phase": 2,
 		"effort": "Normal",
-		"racialTraits": "RaceOrc",
-		"simCommit": "0ddf696d9",
+		"racialTraits": "RaceTroll",
+		"simCommit": "edbae9210",
 		"catalogDate": "2026-10-14"
 	},
 	"p2_bis_fury": {
@@ -41,7 +41,7 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceOrc",
-		"simCommit": "0ddf696d9",
+		"simCommit": "edbae9210",
 		"catalogDate": "2026-10-14"
 	},
 	"p3_bis_fury": {
@@ -58,8 +58,8 @@
 		"build": "Warrior Arms",
 		"phase": 4,
 		"effort": "Normal",
-		"racialTraits": "RaceTroll",
-		"simCommit": "0ddf696d9",
+		"racialTraits": "RaceOrc",
+		"simCommit": "edbae9210",
 		"catalogDate": "2026-10-14"
 	},
 	"p4_bis_fury": {
@@ -76,8 +76,8 @@
 		"build": "Warrior Arms",
 		"phase": 5,
 		"effort": "Normal",
-		"racialTraits": "RaceOrc",
-		"simCommit": "0ddf696d9",
+		"racialTraits": "RaceTroll",
+		"simCommit": "edbae9210",
 		"catalogDate": "2026-10-14"
 	},
 	"p5_bis_fury": {

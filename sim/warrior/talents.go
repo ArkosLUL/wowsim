@@ -11,11 +11,11 @@ import (
 
 // EndlessRageArmorPenPct is the armor pen aura (280) mod-spell-tweaks' spell_dbc row adds to Endless Rage
 // (29623). Sums with Battle Stance's and the rating's, all under one cap (Unit::CalcArmorReducedDamage).
-const EndlessRageArmorPenPct = 36
+const EndlessRageArmorPenPct = 14
 
 // WreckingCrewEnragePct is Wrecking Crew's Enrage, physical damage % by talent rank, from mod-spell-tweaks'
 // spell_dbc rows for 57518-57522 (stock 2% a rank).
-var WreckingCrewEnragePct = [6]float64{0, 5, 10, 14, 19, 24}
+var WreckingCrewEnragePct = [6]float64{0, 4, 9, 13, 18, 22}
 
 func (warrior *Warrior) ToughnessArmorMultiplier() float64 {
 	return 1.0 + 0.02*float64(warrior.Talents.Toughness)
