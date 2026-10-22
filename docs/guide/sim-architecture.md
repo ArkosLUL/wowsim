@@ -130,7 +130,9 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   (`raid_references.ts`), which keeps each reference on its raider as seats change.
 - `ui/raid/acore_importer.ts`: the AzerothCore roster import. `importRoster` serves both its dialog and the Raid
   tab's "Import from server" button (`raid_picker.ts`); `fetchServerRoster` (`acore_server.ts`) gets
-  `/acoreRoster`. The server buttons show only on a sim server (`simServerAvailable`), never under wasm.
+  `/acoreRoster`. The server buttons show only on a sim server (`simServerAvailable`), never under wasm. There,
+  the spec pages' AzerothCore importer (`IndividualAcoreImporter`, `ui/core/components/importers.ts`) fetches it
+  too, on open.
 - `ui/rankings/`: the DPS Rankings page, a non-sim page like `detailed_results`. `data.ts` fetches
   `assets/rankings/rankings.json` and rebuilds a build's sim link at the selected fight, `tiers.ts` grades
   and sorts, `phase_chart.ts` draws the across-phases chart. `PHASE_LABELS` lives in
