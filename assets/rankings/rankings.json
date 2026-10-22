@@ -1,6 +1,6 @@
 {
- "sim_commit": "5756270a2460e2c54435ca7e59f37450612d0105",
- "generated_at": "2026-10-21T14:12:11Z",
+ "sim_commit": "6e8271e328df933f7b3b405feb576b655e154c9f",
+ "generated_at": "2026-10-22T11:29:49Z",
  "catalog_date": "2026-10-14",
  "iterations": 10000,
  "seed": 424242,
@@ -412,121 +412,121 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9046.049531563285,
-       "stdev": 229.02422838456752,
-       "min": 8056.403124567049,
-       "max": 9821.411746344975
+       "dps": 9954.540218812515,
+       "stdev": 245.08258103438067,
+       "min": 9038.852067902737,
+       "max": 10975.694815739227
       },
       "300": {
-       "dps": 8747.28554355105,
-       "stdev": 178.7652637983427,
-       "min": 7994.701503716251,
-       "max": 9445.861203331277
+       "dps": 9633.213879500356,
+       "stdev": 191.53631476666385,
+       "min": 8922.740683748962,
+       "max": 10316.067564262432
       },
       "60": {
-       "dps": 10662.698673536246,
-       "stdev": 443.8271035333055,
-       "min": 9001.383446816451,
-       "max": 12417.00152456034
+       "dps": 11637.76121599834,
+       "stdev": 469.55471902566046,
+       "min": 9911.99651929769,
+       "max": 13392.02941179703
       }
      },
-     "link": "eJzslU9oI2UYxud5v0ny5WtDvwy6fH5saHbIaghUvskQaddDRkHYkwS8eFwFFw8eFj3pKewp7iIsy2rXIGxZERT3IF52SSPUZQ+p2D9UaJvW0mJptaJY0EOgaGQmQ9uDJ21vvoeZd37v9zzz/33FC5wkGRrHRdToZVzC67hCdaABugF8CnwBegDMAB1gEVgFtoCfgH1QD9QgbNEfzLENxqG7PHTTv0KMyM02qb2cmzx4SB//SELIzVusZPO8LIhhOd0mdZBz2WezJFLy5j2mbuaEI9fbpHoDXLL5eVkQj8u1Fql7OTd5f5fu74Z4VBaEIzfapG6dddkRS8vvWhQBMSJbbVJ1Hanm50hk5E6b1Adn4wtwZHeFVP/wTCHLyGY7ZLGbLWdaJGy50Q3Vj6ZJ/R6WCnJUWCIjv54mNRnbuZxTePs1+50MhyRFeVxBHbiKZO2NV95+7c1reKpiymPGq/h+xTOe8Y3x/LLvG79ifK9c8cYqxhjjl5uw1mD9AMWnFkjeXSD1yQ7lV5ao+M0SmeUlGjz5u/QniRmy/o//FM74v1U+pOsksiKpbUEq66ZEQrAx7y3H1nTBcox+WhQcV2TcIZH+Eklh8+Y1EtnSCGcOvWrpaL1nzuu49E+KyW0WKRJHCj9WTG4zR2ge5a336DCf/545Sp8Rw64QvBySvb9Ix3tHa3Ws8nmfNBfJPMLs0KF758i5eYzf7pMzzBEfvX+s8lGfFDrUQTf+HJ8MfiarR6mrbAjE7EQyxdNiqMFw4Vk9wUmO6jOcJIoI2EV2O2wtrBP1lXMD/X61iIm5b8P4pfpchII7gXudpaO8fjnIDhY+FjzR/DCM2eq5y1EsV8vrpBL5l0qn/G8U3w1OwqY+++hEfE4jJqLtV78Fg1dg9aqXMGDWYrWU4jdelAjw/DMcEgp5KiLsgQFqCKdI1P8awFQ0Qx6AVsNxgTqhQZgi/B0AAP//6tjNBw=="
+     "link": "eJzsVU9oHFUYn9/vTWbfviT0ZTDlOWTpdqi6BCJvdlhJ6mFHQehJAl48VsHiwUPRk56WntYUoRQ1dRESCgXBHsRL6maFqD3sim1DhLapLRZrF6tCC3pYEF2Z2W0SwZM2t/4OM9/3+77fD+bP+z71nKSm5SwOYZ4v4jBexVHWgDp4AvgI+AQ8B6wBbWAduArcBH4C7oE9sE7c5O/Cdy1mEazL1C34EWqP/r5Fc6cQeme+YrNLlde96wzFSpdqTK+2aP4oDLKcPnlWmJMFNalXWjS9QuitdLnS5bQr9+mimtTXmjRn/0kfUL6+0aJ5dyoUS537XF5/22RGqEn9yxWau4XQW+rw4oX7Zjl9u0Xz/pQa140WTb8wVI7rhc+20qJy9Y1NKqXXmtvC86s0vxWUo3L6i1WaxalQSqZPPe++NS6haVjEUdSAY/DmX3vpzVdeX8ATFVuesVEljiuRjWxsbRSX49jGFRtH5Uo0U7HW2rjcgHMNzg8wcvkS9elLNGdus3hlg6WvN2gvb3Dwwk/zT6o1Og/xv+DP/lfllzxONaG8wFU0E2FOjSgxE73huwEPOr4NnlQH/FCNh6Mq/yk85crGAtXE9B4pfL7sBFl/ZB8LhqV/UyzeEpliZFsRDxWLt4SvApnFzXe4FV+8LnwT7FVjoVKynDJ3/mIwvPtBYHZUPu4zkMorIo22HDaXtp0bO/hTffpjEsPsvR2VD/s0aLONzeHv+HjyM50ec8fEKCjcES8n82q0LnDw6WBOUu8L9kpqlJCIQ+JUOlFEOxsn+wf6e9US5i58k+LX6jMZlSwl4XGRz+LakWRi0PhI8mjjgxSd6v4jGS5Xy9/RjBRfmN7ls1F6O3kQNrXO+QfisxuYy66f300Gn8DpVQ9jwDnr1emcPPG8RoJnn5LQMCiyhHQGJphHujyy+VcHlrPVcQ68mm4J1Ig6sUz8HQAA//+B/82S"
     },
     {
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 10448.404185343408,
-       "stdev": 262.2645926933324,
-       "min": 9435.560676645766,
-       "max": 11379.455113672031
+       "dps": 11330.543691534347,
+       "stdev": 270.1138922721079,
+       "min": 10277.258717776518,
+       "max": 12474.40204850322
       },
       "300": {
-       "dps": 10104.58728322018,
-       "stdev": 205.24736303890936,
-       "min": 9415.59687718071,
-       "max": 10841.360593506868
+       "dps": 10968.664800833363,
+       "stdev": 213.44915043383142,
+       "min": 10234.618876440669,
+       "max": 11721.35618600924
       },
       "60": {
-       "dps": 12319.45736412218,
-       "stdev": 503.3740855767688,
-       "min": 10190.600222930569,
-       "max": 14383.380585415067
+       "dps": 13195.395819854384,
+       "stdev": 510.00306389828546,
+       "min": 11106.318014730434,
+       "max": 14931.63733518248
       }
      },
-     "link": "eJzsVUFoHFUYnu+byeTtS0NfBlOej4RMh6jLQuTNDitJPewoCD1JwIvHKlg8eCh60tMSPKwtYhFrahQSCkKjFkTBFkEo6iErpi1BaqseorNGq4IFewiKRmZmm2zFk7a3foeZ/33//33zmDfz//IhQUXLaezHLB/FATyJQ2wBbfAocBJ4FzwDnAVWgAvAJWAd+BG4Cm6CbWKd19zAs5iGWazkbuZ9ylH1Vpf6ynjkf/AJz62y5okJNSkrajVj5J7eoAzUtW+p/xgvVjVPhGpSBupYRv3yNjehQjmqvsioN8cj//QGr9OTclSd2qB+55+0Vs9n1K+MRZWS3skE6vWM+qWx/udptZ5Rt8yN1WFh/3tG/epYn325wfUfqLdu2GCgTnZLbrlzvU6qn7c1nlruUu5Wp7rUv41H/nKHyx1KRw6ruS71/Fi5wUgI5i9x1ntuWEBRM8QhtIA5+LNPPfbsE08fxj0NW5+ycSNJGrGNbWJtnNSTxCYNm8T1RjzVsNbapL4A5ys430GLpfNUJ85Tv/k9wy/XWP1sjfbiGsvzO8E/Kc/SuY3/hWD6vyo/5hHKEekbT1KPRINyQLpT8TOBZ7jPCay5V04GkRyOhmTlPfjSEwuHKUdqu4Ub8HHHFPWxvcv0Uv+mmM/cQjGwo0h6ivnMDaQRRfzhi9yOz33jBtrskbsiKUU9Z678RdO7B8bovszbWzRC+iHyaNvh8uKO80Iff3yLwS6B3upYX+aNLWqscAWXe5/j3elPdDY5OOcOga434A+Kihxqu9h3v5kRVBNmj6BCFam73z2eNyh3pehOe0v91WYVM6uf5/il+UBBpYtpdMStFHHrYDpSFt6R3rnwWo5Oc+/BAheb9a+pB8JHarf436i+kN4Mm1bn05vicyswU1w/+jUtj8DZbB5AyTkXmrVBcfRhxRQP3iegoBGyirwHpphFPouK/tcGlopJdAa8lA8dtIg2sUT8HQAA//8hJ+PK"
+     "link": "eJzslU9oHFUcx+f7ncnk7UtDXgZTno+ETIdUl0DkzQ4rST3sKAg9ScCLxypYPHgoetLTEjysLUIRNW0QEgpCtRbEgy1iof45JGLakENs1UN01yYVwYoeAqIrM7NNB/Gkza2/w+7vfX7v+32PeTO/Jx8XVLScxmHM8ikcwXM4xibQAk8CZ4EPwIvAZWAZWAOuAZvANnAL3AFbxCZ/dwPPYhrmdCVzM+cpR9R7HeqbY5H/0ee8sspJT4yrCVlRq21G7oUblIH6dJv6j7F8lJdDOaLWtqhfH4v8CzdY4FBNyBF1aZt6p4zHc3yuQ/1+GR9UodTqlTb1G6NRpcCLK7cFQ+rXNm/jbA9abbapm6bEdpf85Hvqt0b/sWSgNreou6VNZ+xsp8wyuafe7VB6amOLckid71D/Nhb5iyvZZqQjB9Vch3p+tHCIhGD2+Ga9lwcFFDVDHEMTmIM/+/zTLz37wnE8WLe1KRvXk6Qe29gm1sZJLUlsUrdJXKvHU3VrrU1qC3C+gfMDtFi6SnXmKvU7PzL8ep3VL9dpN9ZZnNwZ/kl5mc69+F8RTP9X5Wc8QTksfeNJ6uGoX/ZJdyp+MfAMDzmBNQ/JiSCSg9GArHwIX3pi4Tjl8OSQcAM+45h8fmwPml7p3xTzbTdX9N1RJD3FfNsNpBF5/vFr3M2vfOcG2uyX+yIpRS0jN/+i6f0HxuhS5VyXRkg/RJbtOlxfvOO8UOKnugz2CfRGb5Yqb3epscxlXO+9jg+kP9HZYf+cOwC6Xp/fLypyoOXi0CNmRlCNm/2CClWk7mH3VNaa3OW8Lx0o9LcaVcysfpXFz41Hc5QuptEJt5LnzaPpcDHxvvT+hdNZrDQOHM1jo1H7lrovfHJyj7+N6qvp3bBprnxxV3z2Imby30u/pMURODuNIyiYs9aY7Bcnn1BM8djDAgoaIavIemCKWWS3UN7/WsBSfgddBK9l1w2aRItYIv4OAAD//wxq5q0="
     },
     {
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 13672.563552802789,
-       "stdev": 310.1747514673408,
-       "min": 12533.055102560744,
-       "max": 14796.726265997066
+       "dps": 14453.679607093829,
+       "stdev": 305.5650619393876,
+       "min": 13326.598569350672,
+       "max": 15701.279246149064
       },
       "300": {
-       "dps": 13342.517332316747,
-       "stdev": 238.3638975055104,
-       "min": 12500.13953446251,
-       "max": 14288.032145285648
+       "dps": 14119.832607433513,
+       "stdev": 229.8150421448207,
+       "min": 13222.80016810916,
+       "max": 15033.3045808145
       },
       "60": {
-       "dps": 16024.914846680242,
-       "stdev": 582.4410286998962,
-       "min": 13802.186068914512,
-       "max": 18085.103845399033
+       "dps": 16836.239045287733,
+       "stdev": 569.0392160764115,
+       "min": 14404.27630052852,
+       "max": 19332.594583891798
       }
      },
-     "link": "eJzsVU9oHFUcnu+byeTty5a8DFqej4ROh6hLIPJmh5WkHnYUhJ4k4MVjFSwePBQ96Wkp/lkbhCLVxlVoLAiWelCh0giVoh4Sqbbk0D/qoTQIVoQMREqC6MrMbDcreNLm1u/w5jff7/d9M8yb9/vJxwUVLWewH3N8CgfwHA6xBbTBo8BHwCfgWeA8sAxcAq4C14FfgAzcBNvEdf7uBp7FDEyrkruZY5Sj6rUt6psTkf/51zy3lBOnbzFyzyxxyhOhmpSBemWL+o+J29weNSmrammD+q2Sk/eq9hb15kTkn1nidtGourFO/XGflqPq9S3qY+ORf2qFpfDTjFHl1ApLohCGMlBXMuqWiSqlsCx9NaN+Z/wfz8hLv7xF3R14uVBW1dp6n5Oems/y9b0sN+lk1BsTkX/htsmkCqUjq+qDDeqF8UISCcH8K815L+8SUNQMcQgt4DD8ueeffunZF47gwYatT9u4kSSN2MY2sTZO6klik4ZN4nojnm5Ya21S78D5Ac4NaLF4kerkReoPf2Z4ZZW1b1dpL6+y3KCT/JPyPJ27+F8IZv6r8ivOU45J33iSeiwalkPSnY5fDDzDfU5gzUNyMojkrmhEVj6DLz3ROUI5NjUq3IDPOKaoj+39ppf6N8XxNbdQDG0rkp7i+JobSCOK+Is32Y+//8kNtNktq5GUop4zN/+i6V0DY/RA5nSXRkg/RB71Ha6d2HbuDPALXQZVgd7d2wOZ97vUWOYyrvV+xwfSX+lscviwOwK63pA/LCpypO1i3yNmVlDtMbsFFWpI3f3uQt6B3OWi/ewt9VmzhtnvLuT4rfloQaUn0mjerRRx62A6Vhbek97XeTfHSnPvwQKXm/UfqYfCJ6d2+GzU3kjvhE1r5Zs74rMTmC3Wc+tpuQXOZvMASs651JwaFkefUG6Kxx4WUNAIWUPeA1PMIR82Rf9rA4vFqDkLXs2nClpEm1gk/g4AAP//bxje6Q=="
+     "link": "eJzsVU9oHFUcnu97m8nbly15GWx5Dlm6fURdApG3O6wk9bCjIPQkAS8eq2Dx4KHoSU9L8c/aoBRRU1chsSAIeogepCtUinpIRG1JZNuqh9IgWBEyEJFE0ZWZ2aY5eNLm1u/w5ve+3+/7Zpg38/uphyQ1HadxBLN8FEfxJI6zBbTBU8D7wBJ4FjgPLAMXgcvAVeBnIAG3wDZxlb+JoOAwjfAPmbqFr1KN6he3aa6Xrf/JFzzXpSrq7zZoxVKXKtDPb9P8Wc52kwV5UE+oku5u0rxWtmJhhWq/bm/TbJWtv9Rlb6doVF/boPmwbP1el6nTqH5pm+b1cesvrDAXfpTQFtey9A33igr0pYSmFdri0o2M2q9fSGjeHLf+Wpdru0o/+52mX7ait8OV9PpGzqXCgn47Sde5JDXpJDSb+YPm95vQFeWpkn53k2Z+3Ipen1ZKpu9ntvDcPglNwwqOowWcgD/71GPPPvH0SdzTcPUpV2tEUaPmai5yrhbVo8hFDRfV6o3aVMM556J6B9738K7ByMUL1Gcu0Lz3EyuXVln9apWut8r8aM7wL6rz9G7jfyGY/q/KzzlHNab8sKBoxuywGlJiqvZMUAh52AtceK+aCKzaZ0dU8WP4qiA7J6nGJkelCPi4F2b1NXdXOEj9m2J+XWSKoZuKaKCYXxeBCmUWf/oKd+JvfxSBCQ+oklVK1lPm+t8MB9cgDM2uzAd9hlL5FaTRjsOVhZvOnV386T6DksRg98auzDt9GixzGVcGn+Pd8S/0tjh8QoyAojDkD8uiGmkLHL4/nJHUB8MDkhpVxOKIOJ32HrGcNZ5DuT5pVjHzzdcpfm0+kFHxQmznRDGLW8fisbzwjvjOzlspVpqHjmXoNes/0AxVHpnc43+j+nJ8K2xaK1/eEp+9wEy2ntuI8yPwtppHkXPexebksDz1sBYxHrxPQsOgwirSHhhjFumYyfpfG1jMhsxZ8HI6T9Ai2sQi8U8AAAD//8V036A="
     },
     {
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 18099.731453854696,
-       "stdev": 477.07378106339587,
-       "min": 16418.799506522482,
-       "max": 20044.519751372653
+       "dps": 18208.66559391341,
+       "stdev": 456.53553126057164,
+       "min": 16576.583587290967,
+       "max": 19767.74636073882
       },
       "300": {
-       "dps": 17551.07498427297,
-       "stdev": 360.0427965110238,
-       "min": 16307.13075198314,
-       "max": 18865.03558470874
+       "dps": 17681.381670714258,
+       "stdev": 341.52368156723696,
+       "min": 16346.511918067199,
+       "max": 19052.570084396113
       },
       "60": {
-       "dps": 21723.362604440576,
-       "stdev": 970.1906822763444,
-       "min": 18274.819512054473,
-       "max": 25435.596539648275
+       "dps": 21774.082212458914,
+       "stdev": 938.7946199942049,
+       "min": 18537.016499765286,
+       "max": 26155.010064093905
       }
      },
-     "link": "eJzsVUGIG1UYnu9/k9k3b1P2ZbDl+WjYdKgaAitvMkR26yGjIPQkAS8eq2Dx4KHoSU+hp6SJEMSaGoQuBdFFRRGqTaVQ1EMiastC464KlhbFimChHgKikZlJs1E8affmxzDzz/f/3zfDvHn/Lx7hJMnQKg6jRo/jCJ7GMaoDDVAHeBN4D3QOuAgMgMvAFnAV+BG4CRqDGoSr9CvzbINV6JNu7KY3SCzJUYepG3nf+eAT2hiScOWwxXwWh57c6jD1W95nZ/tUsnlBHhRZ2b9F6qWUE0tyu8PUOO87H/5AowmJvfK7FlNv533nbJ92VHvllQ5TL++fo5cTut5mvptyG8Pb1UpeaTFV17cz8z7dNlOv/N3Hk+dbTE3+8qKevNZMudGszpYfNZkQ8o0mmz3q3TZTt/K+e6FP6ZFkloUlsvKdNlPd/YmrzznFn65mv7CHQ5KiAo6hDhyHU3vmieefevYE7quY8ooJKmFYCUxgQmOCsByGJqyYMChXgpWKMcaE5R6sr2Fdg+Lrl0ieuUTq9e+p8NUmFT/bJDPapHTVztDvJC6S9T/+E7zVf6v8mFokcsLRtiCV8xdERrCV4DnP1nTI8oy+Xxz0fLHHXxTu+3CEzXsnSORKS5x59KSlk/rA3KOnqX9SdK+zRJHZUYRTRfc684TmSXz+RZrFX37LPKX3iawvBC/HzI0/SE+vntZqLvPWhDQXTgFxNHPYPr3j3JvjT03Iy3JM707OZV6bkMKABtie/o73Rj+RNSb3OFsEMTvjLHBXLDYYDj2o1zjJZb2Pk0QRETvMTsVtiQ2SnnQg1d+sFrH2xecxfq4+lFDR6chvMTeJ60ejXFp4V3R379UYw+qBowlG1fI3pDKFx0q7vDeKzehO2NSHn94Rn93AWnK+8EuULoE1rh5BylmXq6UF3nlU2hEefoBDQqFARcQ9MEIN8QRK+l8DWE/mzznQVjxqUCc0COuEPwMAAP//Cjbejg=="
+     "link": "eJzsVU+IG1UYn9/3ZmffvN3St4Nbno8Nmw6rhoWVNxkiu/WQURB6koAXj1WwePBQ9KSn0FPSRAhiTQ1CloKoqBg8SNMiFPWQiNqyhnTXP1haBCuCBT0ERCMzk2T34Enbmz9C5pvf9/1+fMyb+T7xGCdJhjZxHCV6EifwLE5RGaiAGsDbQAd0AbgM9ICrwC5wHfgJuA0agSqE6/Q782yDTeizbuym3yGxLIcNpm5lfOejT6nTpXWbZ+WaOCz7NeazlFiTWeHJ3QZTf2SmXFy0KL+vMfVKxmeDbuy012BqlPGdTpeG42nRsvyhxtR7Kb2v9eSlGlOvrvju1wndSRzKdea7gykx6+Vag6mynjqIZdmsM/Xaiu8MujRI6lYTyxtVpsZpO7MWL9ZSLhYK+VaVJZlVYctLVSY8+UGdqd8yvtvpUrsf/4QlPPl+nanmis/a/YmTzznFj65kv3SIQ5KiLE6hDJyGU3ruqRefef4MHiiY/IYJCmFYCExgQmOCMB+GJiyYMMgXgo2CMcaE+Rasb2DdgOLbV0iev0LqzR8pe22Hcp/vkBnuUHpq5+lPEpfJ+h//Cd7mv1V+QjUSS8LRtiC15M+LOcE2ghc8W9MxyzP6QbHm+eKQvyDcD+EIm7fOkFhaP8yZR09bOqkPzH16kvonRfMmSxRz+4pwomjeZJ7QPIkvvkyz+KvvmKf0EbHoC8HzMXPrL9KTq6e1OpB5d0yaCyeLOJo57LX3nVsH+HNj8hY5JndnD2TeGJNCj3rYm7yO90c/kzUi9zRbADF7zpnnrlioMBx7WG9xkqv6CCeJHCJ2nJ2LxxLrJTPpaKq/Xcxh68svYvxSfCShonbk15ibxOWT0VJaeE90b+v1GP3i0ZMJhsX8t6Tmsk+s3+VvI1eN7oRNuf/ZHfG5G9hK/j/+NUqPwBoVTyDlrKvF9XneeFzaER59iENCIUs5xDMwQgnxBkrmXwXYTvbPBdBuvGpQJlQI24S/AwAA///pe94i"
     },
     {
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 18562.878598226856,
-       "stdev": 486.05906500172193,
-       "min": 16655.998131959128,
-       "max": 20378.720875882587
+       "dps": 18587.75128785906,
+       "stdev": 487.7795998098582,
+       "min": 16785.731169208317,
+       "max": 20425.465023289355
       },
       "300": {
-       "dps": 18024.208792845566,
-       "stdev": 367.80676309597135,
-       "min": 16807.968740990815,
-       "max": 19621.42546270183
+       "dps": 18037.982631108738,
+       "stdev": 366.92378811856713,
+       "min": 16769.45062257478,
+       "max": 19629.983050839055
       },
       "60": {
-       "dps": 22028.666172444442,
-       "stdev": 976.2707253278303,
-       "min": 18536.625483439766,
-       "max": 26163.55129708882
+       "dps": 22097.732459584106,
+       "stdev": 983.1661295841077,
+       "min": 18563.78293594829,
+       "max": 26347.145945405027
       }
      },
-     "link": "eJzsVU+IG1UYn9/3TbIvb7f07eCW56Nh02HVEFh5kyGyWw8ZBaEnWfDisQoWDx6KnvQUekqbFYKoW1dhl4IiUekqrjSVSlEPiagtC427/oFiEawIFvQQEI3MTNLk4EnbW3+EzDe/7/1+38y8me+TjwhSZGkJR7BCj+MonsZxqgF1UBN4G9gCnQMuAh3gMrALXAV+Bm6A+qA64Sr9wZ5rsQTzei52M2dJzqlek/X1vJ/96DPablPJFQW1IHOq22CfN7okPbXbZP1n3udx2lM/NFi/lPf5QsItqHk5p/aarPt5P7vdpt5gtHS/+rDF+t2U3m7HFa80Wb98cESUXDGvFuScqq2yn0u5UaV5qdWVBuua8XNbbUp/Q+M59X6L9auTPumlbbVYD/I+v9UdeXvqfCPlxnJXfXySpas+abHU6uwq69/zoyIb3VF5R86o91ZZrx1Mbt8XguIHuOK+sE9AkaYCjqMGnEB25Zknnn/q2VO4r2LLizaohGElsIENrQ3CchjasGLDoFwJFivWWhuW1+F8C+dHaLF5idSZS6Tf/IkK3+xQ8Ysdsr0dSvfuDP1F8iI5d/C/4C39V+Wn1CA5K7PGlaRn/SmZkbwYPOe5hg47njX3ywXPl/v8aZn7AFnpivVTJGdL+wV79KRjkvWBvccMU/+mWLvGiSIzVoRDxdo19qQRSXz+RboZf/09e9ockDO+lKIcM9f/JjM8esboicw7AzJCZguIo5sOextj5/UJ/vSAvBmB4dkrE5k3BqTRoQ72hq/jvdEv5PRp6gRPg9jNZKdETk7XGYcfNMuC1Lw5IEihiIiP8Om4OXEn6UyHUv2NahHLX30Z49fqQwkVbUR+g3NJXDsWzaYL74ruXn8tRrd66FiCXrX8HelM4bHSbf42iiejW2FT635+S3xuB5aT/wu/RekWOP3qUaScc7lamhLNR1UmwsMPCChoFKiIuAdGWEE8h5L+Vwc2kyl0DrQbDxzUCHXCJuGfAAAA//9SQN6f"
+     "link": "eJzsVUGIG1UYnu9/k8nL25Z9GdzyfDRsOkQNgZU3GSK79ZBREHqSgBePVbB48FD0pKfQU7ZZIYi6NQq7FASNSqNYaZRKUQ+JqC0LjbvqobQIVgQL9RAQjcxMzEbxpLs3P0Lmf9//f98b5s38v3iIkyRDyziGGj2K43gSJ6kONEAt4A2gC7oAXAL6wBVgG7gG/ADcAo1ADcI1+oW5tsEy9KuZyE2fI7Eghy2mbuY854NP6c0BlWyelwWRkYMm89j5HglXbreY+jUXryZpV/Zuk3rhL9y83GkxNcp5zvle5CTm5fsdpt7OeU63RxuDaK+rLaZePBxXJMJFWRALsr7GvMxwTFM68lPyapOpuvYy3R4lvzizKBbkux2mXk58hjM3dX2VqXHOY8Optyu7nYTbNbblxx0mbPnRKhNKnltj6nbu75sUhCVc+c4aU+uHPXbxT9bjnKIHWLOfO8ghSVEeJ1EHTsGpPfXYs088fRr3VEx5yfiVIKj4xjeBMX5QDgITVEzglyv+UsUYY4JyG9Y3sK5D8c3LJM9eJvX695T/eouKn2+RGW5RcnZn6TcSl8j6H/8J7vK/VX5CTRJZ4WhbkMp6aZESbMl/xrU1HbVco+8VBdcTB705kXkPjrB5+zSJbGmeM5cet3Rc75u79CT1T4r1GyxWpHYVwUSxfoO5QvM4/vB5msZffcdcpQ+JA54QvBwxN38nPbm6WquZzFtj0lw4eUTR1GFnY9e5PcOfGZN7gGOyemkm89qYFPrUx87kdbw7/JGsEaVPsTkQs1NOmmfEXIPh6P16hZNc1Ic4SRQRsmPsTNScWD/uTEcS/a1qEStffhHhp+oDMRVuhF6TZeK4fiLMJoV3hHe2X4kwqB45EWNYLX9LKpV/pLTP30ZxNdwLm/rgsz3x2Q+sxP8Xfw6TI7BG1eNIOOtKtZTmrYdlKsSD93FIKOSpiKgHhqghmkNx/2sAm/EUugDajgYO6oQGYZPwRwAAAP//PSnfWA=="
     }
    ]
   },
@@ -542,22 +542,22 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9286.508962427342,
-       "stdev": 183.19086282097473,
-       "min": 8532.222123289865,
-       "max": 9935.526157239172
+       "dps": 9948.350904899806,
+       "stdev": 208.1605219023959,
+       "min": 9088.669615835917,
+       "max": 10678.986627647755
       },
       "300": {
-       "dps": 9072.552104693004,
-       "stdev": 151.5248219460486,
-       "min": 8472.018693611219,
-       "max": 9555.321462680698
+       "dps": 9730.259419366685,
+       "stdev": 171.40172080582258,
+       "min": 9031.352719552458,
+       "max": 10255.24979350731
       },
       "60": {
-       "dps": 10545.054290549435,
-       "stdev": 355.89340433163113,
-       "min": 9217.086506901334,
-       "max": 11783.265966824503
+       "dps": 11204.344073456614,
+       "stdev": 395.7818301600787,
+       "min": 9675.294694354818,
+       "max": 12614.51960084337
       }
      },
      "link": "eJzsVU1oXGUUfed8k5k3Nx375dGUz48OmT6iDoMp7+UxJamLeQpCcSEBNy6rYHHhotiVroasxrgppdI4CAmiINiFuJmYjBBLF4nYWiJt2tpisSTYVmhFFwNFR96baRPFlbY7z2K+O+fec7jv71553qVmwAkcxBRfxiG8jiOsAw3wGPAJ8Bm4ACwDK8B54BJwHfgJuAt2wAZxnb8pLxNgAnY6n7jZW5Cd+oc2zc2in713mrcXKHnduUpftTYpO/RSm+Ze0Vdzq5ScPn5KmeNFGdatNk2n6Gdbm2xtspJxR3RJhvWVRZpTf6VHxdPX2jQn9qSWfS6vv1tkz3VY316nuVP0s3OrPHf2vllOb7Rp1nNS0M02TbfYVxb0zBcP/pZE9PLifUlGX7tMKegzSzS/JgWjekQcyemvlmhm9/iuy+TapzJvF1xoGpZwBHVgGtmpN15567U3Z/DUWBBUo6AaBuFYNQiCIBpPjiiKoqAahWFUjYIwisImnCtwfoRx57+l/niD5qMNltbXWP56jcHFNfZu+4f8nbJM53/8J3gT/1Z5mi3KkGRtRmiG/JwMiBoLj3oZywOOF9h9Mur5UvAHJf85spJxmzOUocpOV3l81bFpfRg8Yfupf1KcvKFSxcCWIuorTt5Qnlg3jc9dVZ6xu2WHL+KOJ8x7F5Ttn94u6/2NPXFBedaabfWfdmldyZaQRN4++7T4Xmlb/uYfFF15LGnkBSfxEO4/avuZB30s/LLVU7O7xc9uiz/o0mCFK7jcf3WfjG/R6TA3rQZBlRnI5ty8DDYUDjxjJ13qEbvbpUYZsTqoZpMZpFbSAbS3p79bK2Py7DcJfq49m1LxXOy/q/JpXD8cD/UKd8WPN99PsFrbezjFxdr49zQDpZcqj/g7Kr8TPwyb+uqZh+LzKDCZ/n55J+49AqdTO4Qe55yvVXLusRc1Yjy334WGQYllJPMyxhSSdZPOygYwny6bBfBSsldQJxrEPPFnAAAA///3L9T5"
@@ -566,22 +566,22 @@
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 10632.905176401075,
-       "stdev": 197.52706440992543,
-       "min": 9868.832788142392,
-       "max": 11423.897895860166
+       "dps": 11347.59705061382,
+       "stdev": 222.76776543108218,
+       "min": 10495.902637970863,
+       "max": 12226.602210998006
       },
       "300": {
-       "dps": 10379.337384628325,
-       "stdev": 168.57608954255943,
-       "min": 9711.188295573082,
-       "max": 10925.441035991978
+       "dps": 11088.838460446364,
+       "stdev": 189.2402797377692,
+       "min": 10348.661181502228,
+       "max": 11683.461646661435
       },
       "60": {
-       "dps": 12090.421178340608,
-       "stdev": 387.99847564158944,
-       "min": 10565.66972158203,
-       "max": 13615.246565400601
+       "dps": 12804.240132522904,
+       "stdev": 427.78892242182314,
+       "min": 11007.564948922007,
+       "max": 14440.772374703774
       }
      },
      "link": "eJzsVU1oHGUYnueZye7sF2O/fNTy+ZEl0yHVZTFlJsOWpB52FITiQQJePFbB4sFDsSc9LcHDWi9VWhqjkCiKxR8QDyaXYlEPiZhaAv3zB6KTrlaFVvQQFI18Mxt3FU/a3nwP+7087/M8+zLfzPuK+3xKRpzEAUzzIRzEYzjMFtAGjwGngHfAJeAMsAycAy4B68C3wHVwE2wT6/zZVV6ESZj3K9bNvE5xm3xjg/pqNSy99yHPrrLu+aNyTFTkasbQXexYxumvqH+thqXFDhc7lrFHBkLJExn189WclKss9nJGvVkNKwW1kL/doX6rX27/QMunM+rjI33UbkXJFzPq50a2jQM5KpRcz6iv/cV4h/wlo75Y3jYWSp7aoN6q9oTWbP2bAptf2e7Sk993KDz55eW8uw3qn6phaX6FBWVMBsIRQ3Jmg3p2pGgq9H3aBzftPTXkQ1IzwGG0gBmUph9/+MlHnziKO8ejqJFEjTiKxxtRFEXJhD2SJEmiRhLHSSOJ4iSJ5+B8BudraH/hU8rXrlC/eoXBxTXWPl5jdGGNxZ29wt8oztD5P/5TqMl/q/yAixTDomQ8QT0clsWAcMfjI8oz3O+oyOwVYyoUQ+GgqLyLkvD8uaMUw/Udvqv4iGNyfhztMd3SPylOZm6uGOgpkq7iZOYqYfw8P/uFq7TZJW4JhfAnLHLivGu6p9pp1N/Q4+ddZYzu47+5ReOLUgCbqb3mLhGqoK9+9XcKWb/VNnK/Yz0E9x0x3cqffSz92OtpbquHz/blL21RY5nLuNx9de9Iv6OzyfKMOwi63kCp7FfEYNvF/rvNlE85anb5lKghdQ+4s3aAucv59Npd6K83a5ha/cTGD817ciidT8Nn3Uqetw6lwwVxZ3r73As2Vpq7D+VxoTnxOfVA8GD9Jn9HtWfSG2HTWvnohvjcjJjKf09fS4srcDabB1Fgzrlmvewfe0Ayxb37fEhoBKzBzssU07C7Kp+VbWAh31RL4CW7lNAi2sQC8UcAAAD///Tl7FE="
@@ -590,22 +590,22 @@
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 13503.518850724126,
-       "stdev": 216.64517449527838,
-       "min": 12616.860916660953,
-       "max": 14235.123259524711
+       "dps": 14265.9459248445,
+       "stdev": 242.57133051707686,
+       "min": 13242.759609669705,
+       "max": 15084.533038048601
       },
       "300": {
-       "dps": 13273.360361336327,
-       "stdev": 163.68108053662917,
-       "min": 12609.208644146602,
-       "max": 13845.085665986035
+       "dps": 14033.200866143703,
+       "stdev": 183.26709494032556,
+       "min": 13305.507549279739,
+       "max": 14662.38098756954
       },
       "60": {
-       "dps": 15382.25208173218,
-       "stdev": 424.60415780551483,
-       "min": 13721.566770579235,
-       "max": 16848.665020800527
+       "dps": 16146.74943323452,
+       "stdev": 466.9307543688632,
+       "min": 14295.234641331954,
+       "max": 17707.155359212295
       }
      },
      "link": "eJzsVU1oXFUYfefcl5k7N6m5eTTleumQ6aPqMJjyXh5TkrqYpyAUFxJw47IKFhcuil3paij+jC1IkUpjFBpFRdBFdKHJolLURSL+lNQm9WdRGgpWhEyJSILoyH1vzARxpc3Ow3DvN+ee8/Hx7nvfp+6X1Iw4jsOY5MM4gsdxjE2gBZ4G3gFmwTngArAAXASuAFeBH4E2uAG2iKv8RQR+hHHYt0sum32Ralg/t0lzoxwWPvyU5+dZ82VFj6iS/maNoZidpwr0M5s0v5WzfzVfjuj9akDPr9O8lHNqWLc2aTbKYWF2npe2RIP62hrNezntdIP6+U2aM3u3iGH9fpthabnDc4vulxkrKtArbZqmDUu5Lpc+26ZZKf7l3ZJ+/CtNpxyKnn1Ar67lnDP6+tW2W0+1swJu0qyXw8KlPKunBvTr6zRTezNxKCXd85n0n94loWlYwTE0gRMoTD7xyFOPPXkSd41GUT2J6nEUj9ajKIqSMbclSZJE9SSOk3oSxUkST8P7Dt41GDnzNfVb12nevM7KyhKrny8xWl5ifjVv8HeqC/T+x39CMP5vnZ/wI6ohVbC+ohkKi6pPidH4eOBbHvKCyB5Q+4NQ7Qr7VekDFJQvp09SDdUGpQj4qGczfRzdYbtH/+Q4uyoyR1/PkXQdZ1dFoKzM4q9+EIGxe9RAqJQcc8zLl4Xt7sFuG/yNPXNZBNaabfp3O7RSFSpwUXDA3q3CoLLt/MYfVLp2myvkAc/lUDx43HZPtuqYu9mrabrT46e2xa91aLDABXzbfXXvTH+it8HiCdEPCr+vUJQl1d8SOHSPnZDUI3aPpEYVqTgsplyfEgtZk9qX+9uNKia+/MLh58a9GZWeS8NTopTFzaPpUC7cnd4+/YrDYmPf0QzLjbHvafoqD9V2+DuqvpDeijTNxc9uSZ6dwES2nl9L8yvwNhpHkHPexUatKE8/qEWK+w5KaBhUWIXrlykm4UZS1itbwEw2kObAK272oEm0iBnizwAAAP//NdrlaA=="
@@ -614,22 +614,22 @@
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 17108.4188245483,
-       "stdev": 397.6096199571709,
-       "min": 15697.405664047381,
-       "max": 18776.56091298539
+       "dps": 17905.089764028104,
+       "stdev": 418.34989589156953,
+       "min": 16396.71411898991,
+       "max": 19668.67519320104
       },
       "300": {
-       "dps": 16695.794685122502,
-       "stdev": 297.0906317855097,
-       "min": 15727.214143278876,
-       "max": 17990.66812869288
+       "dps": 17487.08098865911,
+       "stdev": 312.83116132643,
+       "min": 16469.20329149149,
+       "max": 18849.46651458441
       },
       "60": {
-       "dps": 20095.55944991167,
-       "stdev": 815.6208331748154,
-       "min": 17516.901830144463,
-       "max": 23350.30782562236
+       "dps": 20901.87632126285,
+       "stdev": 848.5549427618437,
+       "min": 18150.354728831004,
+       "max": 24173.9492978965
       }
      },
      "link": "eJzsVU9oHFUYn9/3JpPZL6l5eTT1+eiS6RB1WUyZybAlqYcdBaF4kIAXj1WwePBQ7ElPS0+bbg6LVBqjYBAFg0qDUM1aAvXPISv+KcEmqXooLQUV0Ug8BERX3szGLOJJ21s/HvM+fu/3++Y382a+x4/4JCmiSRzDND2B43gGJ6kG1EFN4C1gCbQMXAJWgcvAJnAN+B7YAu2A6oRr9JtQboRJmI8KtppZJB6R602hL94deu9/QhdaVHb9QI7ykGw3RChyYEwGPCg3m0L/XswwVrK1TfrF4i4jkGM8Iq82hd4pht5Si9Y7u5VG5M8Nod8pht6FFu2xtdxuCH32YFjI4cX27p2GZG1WZPBi2w4ekRtNoWsm9FZatNJ1ZC2ebwi90b8Ls5LXZ4TuFEPxdUYalWM8KD9s5Ji17cqLM4Jd+coWsZbnZ4XeLoaFpRblo2vNYSXfnRV67mDP44W+T/bVTbsv7PMhSVOAk6gBp+FNP/vk808/dwb3j0dRJYkqcRSPV6IoipIJOyVJkkSVJI6TShLFSRLPw/kGznVof+Erkm/eJP3GTQo21qj02RpF62uU79rr9AfxJXLuxP8KNflflR/TB8TD7BmXSQ+H/dzHYjw+pVxDRx0VmcM8pkLeFw5w4T147PrzZ4iHy0O+UPSUYzJ+HN1rukv/pjh3Q2SKvj1F0lWcuyEUGz/Lv/xOKG0O8GDI7E9Y5KUrwnRntd+of6BnrwhljO7hv90h47MXwGbqsHmAQxX0rP/wJ7Es32WNPOrYGkxHTpnuyt8+ln/d8zTf2cPnevJXO6SxSqu42v1070t/JGeHCqfFAEi4fV6/X+CBusDRB82UT3LUHPBJooRUHBNztoWJ1ax/Hcr1W9USpr743MZP1YcyKH0tDRuikOW1E+lwTtyf3jP/so129dCJLNarE9+S7gseL9/m/6g0k96KMrX2p7ekzu2Iqey68kuab4GzUz2OHHMuV8v9fvMx6aZ4+IgPCY2ASrD9MsU07GmV9co6sJCdVcugTXssoUaoExYIfwUAAP//innlrA=="
@@ -638,22 +638,22 @@
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 17739.238815311433,
-       "stdev": 413.4938591150969,
-       "min": 16283.730090227291,
-       "max": 19508.117065037637
+       "dps": 18532.951552518953,
+       "stdev": 434.1222356993287,
+       "min": 16997.031023579035,
+       "max": 20407.67451197295
       },
       "300": {
-       "dps": 17284.90626167974,
-       "stdev": 312.0281926253155,
-       "min": 16100.151089191275,
-       "max": 18550.279661335888
+       "dps": 18073.381237511934,
+       "stdev": 327.6839130059954,
+       "min": 16794.2463199541,
+       "max": 19413.239033761827
       },
       "60": {
-       "dps": 20902.530881374918,
-       "stdev": 856.4322833743969,
-       "min": 17906.035357774075,
-       "max": 25191.042566125056
+       "dps": 21702.97388360525,
+       "stdev": 890.1331446107893,
+       "min": 18495.262837228285,
+       "max": 26071.4507886559
       }
      },
      "link": "eJzsVV1oHFUUnu+c2c2dG6s3l6ZcL12yHaIuiykzGbYk9WFHQSg+SMAXH6tg8cGHYp/0aenTtpuHRSqpQWgQBRsVo1BNLJWiPmTFnxLJmvqDxVKwIlh/HhZEV2ZmzQ7qk7ZvPSx7D9/5vu8e5s6cK+8XpCigGRzAHD2Mg3gch6kBNEFt4GVgBbQKnAfWgQvAFnAJ+A64BuqBmoRL9CtrN8AM7Gde4mbPkhxX3TabqyW/+Nb7dKpDVVeU1aT0VKfFPp/ukNRqq83mt5LPZ9ay8oTU6usWm2dKPp/bxsbVxTabXskvrqzRX9RJOa6+abF5teQXu3063RmyN9tsTuzOsSdSdmOefe9Mig1NjNpssWlY31tZo+y3bf/GMpufs127uQbfabHp55qelFqtLOexZD9XnT3G0lXvLrM06vV5Nr+U/rmJI7V6bZ7Nwu6cny8EJQ9zzn16h4AiQ2UcRgM4iuLcE4889diTx3HXVBDUoqAWBuFULQiCIJpOliiKoqAWhWFUi4IwisJFOF/A+RZGLH1K6qUrZF68QuXPN6jy4QYF3Q3KzvEF+p3keXJuxv8KPfNfle/R2yTHZNG6ksyYPyILkqfCI9q1tN/Rgd0rJ7Uvd/ij0nsTRemKxeMkx6q3Cdb0qGNTfhjcYQelf1MsXOZUURgqooFi4TJraUWaf/IVa2N3yVt8KcV0gjy7yXaw6p1W/w09scnaWpPjv9InK2SxjCTTe+3d0tflXP3qHyRV9dakkQecxEPSviN2UNnuY/WnYU+L/SF+Mpc/3yeDdVrHxcGre2f8PTk98o7yKIjdQnFEeHK0ydh/j50VpCbsLkEKFcR8gE8mQ43X04m2J9Nfq1cw+/FHSfxQvzeF4lOx32IvzRuH4rGMuDO+ffG5JDr1PYfS6NanvyRTKD9UvcHfUeVYfD1sGp0ProvPjYjZ9P/cj3F2BE6vfhAZ5lyoV0dE+0FViHHfPgEFgzJVkMzLGHNI7q90VjaBpfT2WgVtJRcVGoQmYYnwZwAAAP//GIrnHg=="
@@ -672,22 +672,22 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9423.305997447123,
-       "stdev": 229.25315063027824,
-       "min": 8583.23533963723,
-       "max": 10215.248291841097
+       "dps": 10132.56286996223,
+       "stdev": 245.97350027638672,
+       "min": 9232.373479581895,
+       "max": 10979.229215386424
       },
       "300": {
-       "dps": 8970.60748165741,
-       "stdev": 198.17143726695295,
-       "min": 8280.541876213227,
-       "max": 9622.416492280723
+       "dps": 9642.858010861137,
+       "stdev": 215.0876382306942,
+       "min": 8899.046957346638,
+       "max": 10344.168953174107
       },
       "60": {
-       "dps": 11492.496165682447,
-       "stdev": 473.0721957989295,
-       "min": 9639.77249254283,
-       "max": 13260.397233844424
+       "dps": 12337.090425842078,
+       "stdev": 505.8741231029228,
+       "min": 10328.659476215467,
+       "max": 14251.163152198216
       }
      },
      "link": "eJzsVU2IHEUY7fdVT0/Nt1lS09lZKuWO0zYqy8BCTXdGVi/TBgRPMuDFk2wUgwcPwZz0NOTiJApGDULiZfAQAkoIOcgkvdFlUdwB18QcNK6SrFGWIGKMKMzFH7pnBqLgJWRvvkNT3/vee1XQRX38mCRFlhbxONr0FJbwPA5QB+iCjgKngDOgPrACrAGXgCvAJnAD+AU0BHUJm/Sb8F2LRZhPpSQlzGvEFfXrMumfqqH3ySqlW1R3pafu553q928pFBv9jKipgHeo71PSf1ZDcXJAXFTH3hf6SJUr6npKelgNvXSLTg4m9oq68RXp0yN6khpwRV1LSR+bu42u5ZvdWqZQ3K77LiX9SjX0egM6dW5yhmn18zLpt+dyVY2L6mJKunMvT6vXP8wWY7erLpwlZvXR+ckG0+qzlPRgd92Vgaoxqy/OTzJZ9T4Yr0MpYafa7hJenpZQpCnAAXSAQ/DaL+x76bkXj6AexdbaZiOOG9bGsW00bRzFDRs1bTOOFmy8YKM4trG1jRNwNuBch5bvXCN1c530X+sU/HCZ5jcvkx1epdG/OUxOjj3Ju/QH8cq4/B93Cn/xTp2r1CHexdJ47MrTZ0RY5AKLheggl9kzLpMuj6nGQd819IjjazPLO0JmeRYFFrK/L/eeW8d/dLbeE/6smflXJ4/2QxPwbH1GCr+0iky8cpxMgQVjT+594yL5FbOLS2+KrLy1QTl99XPy54zhcn2ndH16xjH5GaPmA5lZvvW0XzX35N3CP7uTTDZyEqSxRmv4enwHH0x+JGdIpUNiCiTcgleUJZ7qCuyVxpOknw2d8FVRyrWd/Ul55JpJdp84nmHQum9/ji9b0TekC8GT9W2+3fOHk7sR0xl8fFdytgMP598LN5NHR/WwtYQR51xq1Yvy6BMKCfY+JKGgEdA8sgc/QRvZzMifsy7QyydGH3QlGw7oELqEHuHvAAAA///218NY"
@@ -696,22 +696,22 @@
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 10853.398552864472,
-       "stdev": 248.19268587773405,
-       "min": 9852.21779754409,
-       "max": 11873.459248171479
+       "dps": 11706.184695334761,
+       "stdev": 267.5482400050534,
+       "min": 10598.046474443194,
+       "max": 12804.897641809528
       },
       "300": {
-       "dps": 10377.259905467154,
-       "stdev": 200.27160899148063,
-       "min": 9493.93664441349,
-       "max": 11055.890329988284
+       "dps": 11189.326135584435,
+       "stdev": 217.91056379526472,
+       "min": 10235.851675328437,
+       "max": 11904.883769356113
       },
       "60": {
-       "dps": 13432.13636602634,
-       "stdev": 536.1280572354467,
-       "min": 11269.560131025217,
-       "max": 15283.003667712816
+       "dps": 14466.512670193959,
+       "stdev": 578.2253486168597,
+       "min": 12109.12563435481,
+       "max": 16531.129538650872
       }
      },
      "link": "eJzsVU9oHFUc3u97s5O3L5W+TJPw+szqOkQJC4G3M12JXjIWBE8S8OJJUsXiwUOxJz0tPei2Hqx/EBovxUMoCCVtRVOCEIJC9pC29iCxQty4yxpEWgUPe/EPM5PFVPBSmlu/w7K/7/t93/we85ifelZS03EGz2GOL2Ier+EEG0ATPAtcAJbAZWAVWAduAJtAG9gBfgP7YJNo8w8ReA4zsLelpBb2CtWYvrRD82s59L9Z40qPVU8+qidVSW+0GYpvl6kC/cUOzV/lUOSyrysq0Je7NGfu4g7ozW2afjkUi6009+0OzcVy6K/0uNe43aX5aCIs5fRKj8roK12a9/ZyWfekMnqpQ/NOOVMWW7xwdTDfmL7epvl4IotfbP0b/2WHpvFIKPLWfK6tn3MufZjS1zqpUtGTytMLnfR8n3dpWocHZ0njlb7UHfw/qG9vc48YSgk3POfN462HJDQNKziBBnAK/tzrx9589Y0zqEaxc65ei+Oac3HsanUXR3HNRXVXj6NpF0+7KI5d7FxtAYVbKPwEIz/5kfrOBs3fG6x0b3KqfZOuv8X8FZ5mIcOR5FP+SbW6Wz7AvSKYuVfnGhtUh5S0vvLkxSURDqmiEtPRSTWifOspmpFdqnYy8CyfLgTGjqsDoVLyMopKyOVjmffqBv5H6X0mgnE7+h8liw5CW1Hj1VEpgtIa0ubVc7RFJRSOZN73rzMYs4dU6QORlr/fYkZvXWMwYa0aqR6UXsCXCzabMao/nprlhy8FZftwphbvVgeZyspBkME61/H97h18IvmFhT5Lp8QwKLyiPyRLargpcFRaX9K8EhbCd0Up620cT0Zy12hyeOFcitbsY8czfDcb/UBTrLxQ3efbPXU6uR8xjdbX9yVnP/BU9vvVneSZvO7PziPnCjdmq0Py7POaCY4+KaFhUOEU0r2QYA7pask+Z03gfLZYlsHNdIegQTSJ88Q/AQAA//9JftZ0"
@@ -720,22 +720,22 @@
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 13079.138409706196,
-       "stdev": 261.81084790764896,
-       "min": 11904.925909970096,
-       "max": 14027.013282077769
+       "dps": 14074.36468160208,
+       "stdev": 280.67485865805963,
+       "min": 12777.49577962507,
+       "max": 15069.899457754169
       },
       "300": {
-       "dps": 12646.696885947842,
-       "stdev": 194.52665127439244,
-       "min": 11758.026855565775,
-       "max": 13400.802864029927
+       "dps": 13606.356405187005,
+       "stdev": 208.68201876557012,
+       "min": 12654.157391797891,
+       "max": 14376.022272612152
       },
       "60": {
-       "dps": 15631.112332631137,
-       "stdev": 543.0591566993979,
-       "min": 13406.338384340772,
-       "max": 17517.815190229052
+       "dps": 16794.755902748722,
+       "stdev": 581.6302227661049,
+       "min": 14382.438414790144,
+       "max": 18858.917587748354
       }
      },
      "link": "eJzsVUFoHFUYnu9/s5O3L5W8nWbD6zPbrkOUsBB4O9OV6GXHguBJFrx4klSxePBQ7ElPS0HYVpC0ipCKsHiqKKV42j0IS3Ahe0gtRUptoEYpUkSSDXHDeojKvN3VRPASkls/hoHv+//vm3+Yx/ziRU6SDM3jJVToVSzgLZynKlADLQLXgZugBtACVoDbwD1gHXgEdEF9UI2wTr8z3zWYh37IOUmmvyCRlVd6pH7LBV57mdpNKrj8lMyLtLzepYCtNUkckx/2SP2ZG7HWNqnLQ6bkUpdUPxek201as9cwICsfdUndyAXeP7In82JCXu2R+njayvVO8vzdDdpv96x9sUeqfnKffUZk5R+bpD6ZDrz23m5fNnZIVU8GrN4ZDDAjfPn+1kD71+7KW10Srvy+m7zIZ9ukOicC9lWHxIS8u0Oj1lN20I2f9ggzAecw4xV3Ae89wSFJUR7nUQUuwqu8ffbdN9+5jEIYGWNKxSgqGhNFplgyURgVTVgypSicM9GcCaPIRMYUr8G5D+dnKP7pjyQ3V0n9tUr5h3dodv0Omf4DGny4S+RYnI4/p10SrSF9jIPCnz+oc5mqJI4Lrj3h8hs3WTAmUoLNhRdERnjaFaQyQ6l4wXc1Pe/4Sk+JY4EQ/GukBOONs9bbXMX/VH75kvlTevI/FRvtBzovpgqTnPnpZSTNrSXSKcEETlvvle/Iz+rjIn2VJXTrPln5wS3yp7UWmcIEd3163dF2xrD0dGLmH73m5/STtpraXx1lCs1HQQortIIfhmfwmfhXcvqUvsjGQcxNeWM8LcZrDGe49jipNwIn+IClbW/1XJwZuCbjE9eWEnTKT52zuFsO10il8q8Ujvh0z16KDyOm2vn2UHKOAs/Z+zeb8QsD3i8vYKA5t8uFMb74smQxzjzLIaGQp1kk2yBGBclCsb+zGlC366QBupdsDlQJNUKd8HcAAAD///t61lA="
@@ -744,22 +744,22 @@
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 16745.607388029013,
-       "stdev": 328.52953796608284,
-       "min": 15479.124079637608,
-       "max": 17880.101892699207
+       "dps": 18118.37736001027,
+       "stdev": 361.04825303162266,
+       "min": 16724.080020656627,
+       "max": 19357.77583219401
       },
       "300": {
-       "dps": 16116.372956173447,
-       "stdev": 238.3627435027331,
-       "min": 15202.098742174569,
-       "max": 16965.505693189287
+       "dps": 17433.133499470365,
+       "stdev": 261.9561623424234,
+       "min": 16399.058803520827,
+       "max": 18346.519366045344
       },
       "60": {
-       "dps": 20844.32544019091,
-       "stdev": 742.9097405377609,
-       "min": 18458.92931295895,
-       "max": 23527.402558185688
+       "dps": 22524.81567982371,
+       "stdev": 812.265502053549,
+       "min": 19932.742226420134,
+       "max": 25510.35946243331
       }
      },
      "link": "eJzsVU1oXFUYfee7b97cuan0zmsm3F477fioEgYCd97rSHQzz4LgSgbcuJJUsbhwUexKV0NXM51ZjD+b1oVDcSFYSiIImYUwhAYyi2iNRWoDMYhIUCFRXMzCP959M5IIbkKy8ywefOd85/Bx3+V+4llOkgzN4znU6UUs4DVcoQbQBHWBj4BF0DIwANaAe8ADYBvYAfZAI1CTsE2/Md81mIf+iXOSTC+SKMgvu0z9XAy81RVa7VPZ5eelJ3Lyww4L2KBPwpf3u0z9WQxYbziRT8i7baauF9OOgvyqy9SoGHhL/X0ZBbnZZupOMfAGfVqy9Dl5Xih5q8PUe2eC3JKlU8WT50RBftpmQW51H53mbHSZ6p218ekMSc5J2e4w9WsyuaWFL7daTDXOBmziLQlf7rQPcp4Q8naLjXVX3t9LnLc7TA1PH+z6oMP+OY3f2+lpBJzDTNXdBbz1CIckRSVcQQO4Bq/++qU3X33jOsphZIypVqKoYkwUmUrVRGFUMWHVVKNwzkRzJowiExlTuQnnIZzvoPj735LcXSf11zqVvt+g2e0NMqMtSv9fixyLC/Et+oPEYFz+j8PCnz+sc4UaJE4Jrj3h8juLLMiKjGBz4VWRF552Ban8mKpc9V1NTzu+0jPiRCAE/wQZwfjyJevtr+M/lB8+Zv6Mnv6XYqP9QJfETHmaMz+3gqR5cIN0RjCBC9b79hfkF/QpkXuHJeUvD8nSW5+Tf0ZrkS+f5K5PLzvazhhWH0/M/N2X/KJ+1KqZg+okU2g+CVJYozV8M76DT8Q/kjOi7DU2BWJuxsvynJhqMlzk2uOkXgmcoM1ytrdxOc6nrun49M0bCYa1xy5bfF0LN0llSi+Uj/l2z7bio4hpDO8eSc5x4Cn7/Ww3fiatR7UFpJxzr1bO8u7z0o1x8UkOCYUSzSJZCjHqSPaKfc6aQM9ulWXQg2SBoEFoEnqEvwMAAP//ryzN+A=="
@@ -768,22 +768,22 @@
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 17005.226598222693,
-       "stdev": 323.4589837468145,
-       "min": 15717.497961333536,
-       "max": 18300.150881491652
+       "dps": 18441.53559792974,
+       "stdev": 357.26773743954857,
+       "min": 17025.359719120373,
+       "max": 19866.98999488185
       },
       "300": {
-       "dps": 16432.274123100848,
-       "stdev": 235.56575645671543,
-       "min": 15491.231777475812,
-       "max": 17299.985154256294
+       "dps": 17816.289735884595,
+       "stdev": 260.2507820149709,
+       "min": 16778.808463076202,
+       "max": 18768.267063433424
       },
       "60": {
-       "dps": 21445.26667392596,
-       "stdev": 758.1026521679213,
-       "min": 18348.846283525785,
-       "max": 24148.803052371568
+       "dps": 23226.196075535383,
+       "stdev": 830.1178898506843,
+       "min": 19941.428684816885,
+       "max": 26252.414757538798
       }
      },
      "link": "eJzsVU1oHFUcn9//zU7e/BPpyzQbXp/ZOg5VwkLg7UxXopeMBcGTBLx4klSxePBQ7ElPS0+73T2sHwitiIuISCylFawJKITgQvYQjUGkVohBRIoIteBhD34xs7u6FbyU5uaPYZj3++IN85g/PyZJkaVFPI5legoreB6nqQbUQW3gfeAyaA3YALaAHeAasA/cAH4B9UF1wj79KgLXYhHmlpSkhLlKXFRftoX+uRR53U3qrlPZlceUx756tyUi0ekRT6mv2kL/UYrEez3iQH28KvS5UiSu/G3W6q2W0P1S5F9Zp8GVKyEX1dVVoS+VIm+M9riodtpCvz43RofqGBfVR00R+d3bSjL3blvoztEx93053WwJ/cZc5HXH3YHaawhdO/rPBkMO1I3mgOv0Rj5Wn6yKoc7qYmP0PKUutoTuHcnz7Kq3W4IPqd+aYuyNIylhJ5fdFbx8j4QiTSFOowachbf8wsmXnnvxHMpxYq2tVpKkYm2S2ErVJnFSsXHVVpN4wSYLNk4Sm1hbuQDnOpzvoeWb35G6uU36z20Kf9il+f1dsv09GnzFBjk5jqfv0O/EG8Pl/7hTBIt3mtykGvFhlsZjV166LKIJLrBYiM/wNHvGZdLTQ6pyJnANPeIE2szyVMQsP0SBhVw7mWfXt/Efyo8fiGDWzPxLyauDyIQ8W56RIvA3kZk3zpMpsGAcz7OvfEFB0Rxm/1WRLW9dp5ze+5yCOWN4unxIugE945h8j3H1gSwsX3s6KJl7c7VwuzrqZCNHRRpbtIVvhmfwwfQncvrknxWTIOEWvAnp82Rd4IQ0niT9bORETeHn3tqpdHqQmkmPXDifobd0/6kcXy/F35IuhE+WD/h0zzfSu1FT6312V3oOAg/n909vpo8O1v2lFQw4Z2epPCHbT6hCihMPSShohDSPbDSkWEY2XfLfWR3o5LNlDXQtGyOoEeqEDuGvAAAA//+IHc2Z"
@@ -1186,127 +1186,127 @@
    "class": "ClassRogue",
    "spec": "SpecRogue",
    "dir": "rogue",
-   "talents": "00532010414-0252051050035010223100501251",
+   "talents": "00532000514-0252051050035010223100501251",
    "phases": [
     {
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9174.874473560783,
-       "stdev": 242.19691326813572,
-       "min": 8257.842796353549,
-       "max": 10064.958646642162
+       "dps": 9987.76400813755,
+       "stdev": 253.82361296972724,
+       "min": 8839.489221859705,
+       "max": 11139.79656851253
       },
       "300": {
-       "dps": 8894.76364502184,
-       "stdev": 179.9708546224639,
-       "min": 8237.374613938306,
-       "max": 9592.061177053816
+       "dps": 9709.897450691731,
+       "stdev": 190.7439577509948,
+       "min": 8944.03677645225,
+       "max": 10494.688894532357
       },
       "60": {
-       "dps": 10480.002926297511,
-       "stdev": 464.1796014806232,
-       "min": 8895.843200403364,
-       "max": 12380.024721021175
+       "dps": 11267.555335581748,
+       "stdev": 486.52512277501927,
+       "min": 9560.192468410833,
+       "max": 12940.44204309283
       }
      },
-     "link": "eJzsVl1oHNUX33NmdvbmtEnu3nx0ev8J2c4/ielo9M7sTkyqkrUSKC2VgKLVF9MHQzEplK6I9inkKVaE2IpokDZUUKkFa0qTmqZYa8EEmtoXtfEDgtCoVaigSKD1g/nYZDeJAbV98zwsM+fc3+93Pu7uHupgyFFhK2yBTtwBXbAL9mAfwADgIMDbAMcBTwGcBZgEuARwGWAW4DuAnwDnAQcQZvEXTegKWkG+V840bsiXkKr4iQk0v6+1jNGP8OI02jpL8Xoq5/NfoaUdOpx3CD46geb1Wksbmwt9dVTKDxzTzAO1ts7qeQOV83cn0JyvtYyxOTx0GKmcfzqK5rHQMTbnix2fQPPlGst4cwrzPL7Yi+NYSFzFf/gczWsLQFtndbyBBD8xjuYrNZb2xre+ryHIYf/7aP6Rz6GUD01EryneQMR/PJNX0fnXM0gJ/sFpNKdrKcFn3woeSvmHp9F8tSY8ZhFDFe/Ud+hd+r5SBhxNTMEe6APoB6Ozd+dzT+7dD01KeWlXOSrjZJqV67nKc5SnVNpTjnLdtKOUpxzXc4Yg9gXEvoG17NwV5B9fQXPmEwyHcgR/QzqLsf/sX5lo/afIc/gzoyQZUic0k1aC4qQ1OzmhS9wUEy0yQ7eLjVRlVzBdsHGIk8Z+zcg4aQQOcbuMGQK3xqRBOqGbk2FcdMgH6A5hU7VdWYQLjjm55UBRIZj/zH6/jiKRp3lWPkO7RQ812vVFNNUjWMFAsKd8xPANDPNxI1qtH2KhJ03MjY5Qg/V/2mDXMV0kR7CMQVHaRZX5yo/JR2m72BYUYCwtIBMWAAVKHq21qEAtaZezeCARdNRRORmFxNNyL+0S3eQKtTK9mwv82l/IFhaYWSLrx+OLlbUuqrpSUaOoX4HB9+iLmEyIef0Git2yh3aKJ1ZtQjHX/+z1zBCl40CRLPJ4eLwlV0wz2rNM7hH5MG0VW/6GXI0tl8sVNdznrZBJYiOFAz7ZK+6RbXSXbM4HTvZGl8Pvw7oRrPSv19EoVNTMuXc04ck0bRS3hc0/kidYZ1f5eS+ggkS8uxdh98pNpOSdBZqWnYo0zRGsKtIsLIMfHEdRI2V+VvuiWXkq4L54XlslevWgJtLSoSbRSMLm0f1gZJDutLXkVkCF8xHb5TbaLLIBSF8CMu1qZoiSoxApROl6q9CRXPiGmzCJkzAT/ew3Zq9ibB4T/doaQE2PGwlWQmsGNHicyzIOJqYq1aDWMX3hwn3WC1pJgOnrziZDdGV2/dBrvk21b+gO7LN290s046mH7Fv8x9L0fPZm0PRNnb8pPLfC2oLPM9ey94fv8+1dEPpil9rtBBt8kEMWNrcw4GBCCpvAX62y0An+dhZsDAMAw8Fudgrwsr+GQR/CAMIwwp8BAAD//zv9Pnw="
+     "link": "eJzsVl1oHNUX33NmdvbmtEnu3nx0ev8J2c4/ielo9M7sTkyqkrUSKC2VgKLVF9MHQzEplK6I9inkKVaE2IpokDZUUKkFa0qTmqZYa8EEmtoXtfEDgtCoVaigSKD1g/nYZDeJAbV98zwsM+fc3+93Pu7uHupgyFFhK2yBTtwBXbAL9mAfwADgIMDbAMcBTwGcBZgEuARwGWAW4DuAnwDnAQcQZvEXTegKWkG+V840bsiXkKr4iQk0v6+1jNGP8OI02jpL8Xoq5/NfoaUdOpx3CD46geb1Wksbmwt9dVTKDxzTzAO1ts7qeQOV83cn0JyvtYyxOTx0GKmcfzqK5rHQMTbnix2fQPPlGst4cwrzPL7Yi+NYSFzFf/gczWsLQFtndbyBBD8xjuYrNZb2xre+ryHIYf/7aP6Rz6GUD01EryneQMR/PJNX0fnXM0gJ/sFpNKdrKcFn3woeSvmHp9F8tSY8ZhFDFe/Ud+hd+r5SBhxNTMEe6APoB6Ozd+dzT+7dD01KeWlXKeU5mWbleq7yHOUplfaUo1w37SjlKcf1nCGIfQGxb2AtO3cF+cdX0Jz5BMOhHMHfkM5i7D/7VyZa/ynyHP7MKEmG1AnNpJWgOGnNTk7oEjfFRIvM0O1iI1XZFUwXbBzipLFfMzJOGoFD3C5jhsCtMWmQTujmZBgXHfIBukPYVG1XFuGCY05uOVBUCOY/s9+vo0jkaZ6Vz9Bu0UONdn0RTfUIVjAQ7CkfMXwDw3zciFbrh1joSRNzoyPUYP2fNth1TBfJESxjUJR2UWW+8mPyUdoutgUFGEsLyIQFQIGSR2stKlBL2uUsHkgEHXVUTkYh8bTcS7tEN7lCrUzv5gK/9heyhQVmlsj68fhiZa2Lqq5U1CjqV2DwPfoiJhNiXr+BYrfsoZ3iiVWbUMz1P3s9M0TpOFAkizweHm/JFdOM9iyTe0Q+TFvFlr8hV2PL5XJFDfd5K2SS2EjhgE/2intkG90lm/OBk73R5fD7sG4EK/3rdTQKFTVz7h1NeDJNG8VtYfOP5AnW2VV+3guoIBHv7kXYvXITKXlngaZlpyJNcwSrijQLy+AHx1HUSJmf1b5oVp4KuC+e11aJXj2oibR0qEk0krB5dD8YGaQ7bS25FVDhfMR2uY02i2wA0peATLuaGaLkKEQKUbreKnQkF77hJkziJMxEP/uN2asYm8dEv7YGUNPjRoKV0JoBDR7nsoyDialKNah1TF+4cJ/1glYSYPq6s8kQXZldP/Sab1PtG7oD+6zd/RLNeOoh+xb/sTQ9n70ZNH1T528Kz62wtuDzzLXs/eH7fHsXhL7YpXY7wQYf5JCFzS0MOJiQwibwV6ssdIK/nQUbwwDAcLCbnQK87K9h0IcwgDCM8GcAAAD//zv7Pnw="
     },
     {
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 10664.72493658278,
-       "stdev": 254.69626554403442,
-       "min": 9643.798297432833,
-       "max": 11574.74532390515
+       "dps": 11618.091285209483,
+       "stdev": 267.43023547020874,
+       "min": 10555.989248619133,
+       "max": 12627.381467120837
       },
       "300": {
-       "dps": 10354.725924749302,
-       "stdev": 190.62667985031354,
-       "min": 9621.699327554294,
-       "max": 11131.433191056964
+       "dps": 11310.822912875636,
+       "stdev": 199.69820326285068,
+       "min": 10650.136339779743,
+       "max": 12099.44034617686
       },
       "60": {
-       "dps": 12253.474876661512,
-       "stdev": 499.9238362278765,
-       "min": 10511.628297767582,
-       "max": 14245.633264098518
+       "dps": 13193.37673651781,
+       "stdev": 525.9915489523678,
+       "min": 11135.942079264742,
+       "max": 15366.582341328638
       }
      },
-     "link": "eJzsVk1sVFUUnnPem9fbQ6F3bjvwuDLp8GxreYre92ZebVHTEdOEQDBNNIpuLAsbYktCGGOUVdNV1YWN6EJitEJi+FuYJkDThASBxDZpkRUB2bRO6SAbiBrThPqT99N2pq1NVNh5M5nM+879vu+cc+/MHGpnyFFhC+yADtwDnbAPDmAvQD/gAMBxgG8AhwEuAIwCXAW4DjAJcBvgHuAsYD/CJP6qCV1BC8ipaqZxQ36LlOQnimj+lLKMs5fw0jDaOkvzBqrmEwW0tHMzIVBHSX5+Cs37Kcu4MoFffOnDDbyeqvinBTQ/Tlna12NIJv+qgOZsyqo8N4Pha4F+ahrN0ynLOFaM4AZeR4LfLKL5yaaAEEYoyT+6jeUKvpPJJwto3l2mXU9JPldA8+eUZZTBgh+fRvPPlKWF6YbYZDHEwn11vJ50fmIaSefXikhVfHwSzYmUpR0rIgl+uhA+LRZSze9NYQndIoYq3qHv0Tv1Q2sZcDQxDQegF6APjI6eve+9efADaFLKy7jKUVknu1W5nqs8R3lKZTzlKNfNOEp5ynE95wjEfoDYj1DFLt5C/t0tNG98j+EhHsXfkS5g7P/1n5Zo+bfMi/gLowQZUic0E1YFxUnb6uSFLnFbTDTLLD0utlDSrmG6YCMQJ439lpVx0ggc4vY6ZgjcGZMG6YRuXoZx0S5foCeETevt2jJesM3JLyeKGsH8z+yP+ygq5mXele/QftFNjXZ9mcz6IaxhINhbPmNwDsN83EhW64NYiGSIudEWarAepc12HdNFYgjXMShLu6wy3/k1+SrtFruCAoylBWTDAqDEyaMqi0rcEnY1iwcWQUcdlZdRSLwtD9I+0UWuUCvLu/kA1/7GtrTA7BJbPx5frKxl0dWVihpF/QoKPqIvcrIh5/M5FPtlN+0Vb6zahHKtR+yNzBBrR4AiW+TxcHtzvlzmbPcyu1fky7RT7PgHdptsudyurOG+bo1MEBsqPeAzPeIZ2UpPya3zgTM90eXw+7BhCGv963UyCpU1c+aUJjyZoS3isbD5R+cFNthJP+8FVpCI9/Qi7Vm5jZR8ssTTstORpzmEyTLP0jL44REUm6ScP6tD0Vl5KtC+cllbJXrnsCYy0qEm0UjC5tH9YGSQ7rQ251dghecjdstdtF3kApK+hGTa65khKk9C5BCl660iR3LhG27CKI7CjehnvzF3B2OzWNGnrQHU9LhRwSppTb8Gr3O5joOJ6Vo1oLVPjI8/Z32oVQac3q5cImTX5jYe+cxfY22bu4J1rc29iWY8/ZL9kP9Ymt7PPQiZ3rHLD0TnYazW4P383dzz4fNsWyeEWOxqm13BBl7kmIPtzQw4mJDGJvBHsRx0gD/NBRNDP8BgMMsNA173xzboRehHGET4KwAA///JlFcB"
+     "link": "eJzsVk1sVFUUnnPem9fbQ6F3bjvwuDLp8GxreYre92ZebVHTEdOEQDBNNIpuLAsbYktCGGOUVdNV1YWN6EJitEJi+FuYJkDThASBxDZpkRUB2bRO6SAbiBrThPqT99N2pq1NVNh5M5nM+879vu+cc+/MHGpnyFFhC+yADtwDnbAPDmAvQD/gAMBxgG8AhwEuAIwCXAW4DjAJcBvgHuAsYD/CJP6qCV1BC8ipaqZxQ36LlOQnimj+lLKMs5fw0jDaOkvzBqrmEwW0tHMzIVBHSX5+Cs37Kcu4MoFffOnDDbyeqvinBTQ/Tlna12NIJv+qgOZsyqo8N4Pha4F+ahrN0ynLOFaM4AZeR4LfLKL5yaaAEEYoyT+6jeUKvpPJJwto3l2mXU9JPldA8+eUZZTBgh+fRvPPlKWF6YbYZDHEwn11vJ50fmIaSefXikhVfHwSzYmUpR0rIgl+uhA+LRZSze9NYQndIoYq3qHv0Tv1Q2sZcDQxDQegF6APjI6eve+9efADaFLKy7hKKc/JblWu5yrPUZ5SGU85ynUzjlKeclzPOQKxHyD2I1Sxi7eQf3cLzRvfY3iIR/F3pAsY+3/9pyVa/i3zIv7CKEGG1AnNhFVBcdK2OnmhS9wWE80yS4+LLZS0a5gu2AjESWO/ZWWcNAKHuL2OGQJ3xqRBOqGbl2FctMsX6Alh03q7towXbHPyy4miRjD/M/vjPoqKeZl35Tu0X3RTo11fJrN+CGsYCPaWzxicwzAfN5LV+iAWIhlibrSFGqxHabNdx3SRGMJ1DMrSLqvMd35Nvkq7xa6gAGNpAdmwAChx8qjKohK3hF3N4oFF0FFH5WUUEm/Lg7RPdJEr1Mrybj7Atb+xLS0wu8TWj8cXK2tZdHWlokZRv4KCj+iLnGzI+XwOxX7ZTXvFG6s2oVzrEXsjM8TaEaDIFnk83N6cL5c5273M7hX5Mu0UO/6B3SZbLrcra7ivWyMTxIZKD/hMj3hGttJTcut84ExPdDn8PmwYwlr/ep2MQmXNnDmlCU9maIt4LGz+0XmBDXbSz3uBFSTiPb1Ie1ZuIyWfLPG07HTkaQ5hssyztAx+eATFJinnz+pQdFaeCrSvXNZWid45rImMdKhJNJKweXQ/GBmkO63N+RVY4fmI3XIXbRe5gKQvIZn2emaIypMQOUTpeqvIkVz4hpswiqNwI/rZb8zdwdgsVvRpawA1PW5UsEpa06/B61yu42BiulYNaO0T4+PPWR9qlQGntyuXCNm1uY1HPvPXWNvmrmBda3NvohlPv2Q/5D+WpvdzD0Kmd+zyA9F5GKs1eD9/N/d8+Dzb1gkhFrvaZlewgRc55mB7MwMOJqSxCfxRLAcd4E9zwcTQDzAYzHLDgNf9sQ16EfoRBhH+CgAA///JklcB"
     },
     {
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 12759.735912698623,
-       "stdev": 286.088540934606,
-       "min": 11688.89790449918,
-       "max": 14051.742486293057
+       "dps": 13907.002787246702,
+       "stdev": 303.50250699154384,
+       "min": 12687.581805884236,
+       "max": 15110.528410010165
       },
       "300": {
-       "dps": 12393.189227226816,
-       "stdev": 217.55075300351186,
-       "min": 11552.996300030405,
-       "max": 13264.015270000267
+       "dps": 13550.340309111225,
+       "stdev": 230.68506769871001,
+       "min": 12613.09875457165,
+       "max": 14423.086195731299
       },
       "60": {
-       "dps": 14788.950801616666,
-       "stdev": 559.0755062018483,
-       "min": 12766.136896786853,
-       "max": 17539.68279295886
+       "dps": 15916.454746613115,
+       "stdev": 580.0703295370012,
+       "min": 13780.059526517744,
+       "max": 18162.39299799691
       }
      },
-     "link": "eJzsVl9sFNUX3nNmdnr38Kd3b/8w3F/312Xc1jJanZndqS1qumKaEAimiUbRF8uDDbElIawxylNTX1Z5acQX0UDlyaAPZg0N20RCkMSSFOXBENDENmoReaCNNWQNaM382Xa3rU1UePM+bHa+c7/vO+fcuzuHehhytLATdkAv7oE+2AcHcAggDzgC8CHAJ4CnAc4CTABcArgCMA1wHWAOsASYR5jGXxWhWtAJ8rtapnBNnkFq4NdKqP+cMLSxz7FQRFNlLTxFtfzrWTSUAEjyZhL8xxLqtxNlzNskeHEe9bcThnLseLAvRQ38egn1UsLQCkUs01Ok80/nUP84YcQKRTx2HCsJP5VQf6dpGaGW5+fQiE35WKGIJPjCTdRnE0bs8oIHTBW95GdmUf8lYWhTZW6zn9eZW6gvJAxlqgL7YTbAxnwsxVtI5e/NIan88BzSej45jfrFgEOC/3Zz8SnMSPAP5lF/4/9LWLNBDK1or7pH7VMPbWDAUcckHIAhgGHQegf3vv7SwbegzbLctGPZVsbOtFuO61iubbmWlXYt23KctG1ZrmU7rn0UIt9A5HtYz87NIP9iBvWrX2Fwgifwd6SzGPlv/aslOv8p8xzOM4qTJlVCPW7UUJSUdjsnVInbIqJDZugBsZUazDqmCjYOUVLYrYyMkkJgEzc3Mk3gzojUSCV0cjKIix75JD0oTGo066t4/jY7t5Io6gTzvrM/bqOoKcu8Jl+l/WKAWs1UlUxjAesYCPayxxi9g0E+TiirDEMkQNLEnHALtRj30RazmakiXsCNDKrSrqrMc35ePke7xS6/AG15AZmgAKhwcmm9QRVucbOWRX0Lv6O2lZNhSLwiD9I+0U+OsFaXd3I+rvyFbWWBmWW2Xjy6VFnnkqsjLWoVqVUUPERd4mQCzvt3UOyXA7RXvLhmE6q1/mduZprYMA4U2iKPBts7ctUyYwMr7J6Vz9BOseNv2DWZcqVdVcM93ToZJ1aoPOBTg+JR2UUPy/Zy4NRgeDm8PmwqYL13vU6GoapmXvtIEa5M01Zxf9D8E2WBTWaDl/ciy0/EfWSJ9pjcRpZ8qMLTMJOhp17AhirPyjL4kXEUTVKWz+pQeFau5Wt/eV5ZI3rjiCLS0qY20UrC5OH9YKSRand15FZhBecjdstdtF1kfZK6jKSbjUwTsZMQOoTpumvIkVz8heswgRNwNfzbb83ewEgJa4aVdYCKGtVqWIzW5RV4gcuNHHRM1lsjSs/FycnHjcNKzOcM9WfjAbs+u/nou9660L2l31+Xu51vUY8mnzbv8Yul7c3s3ZAZunD+rujci9Xlf342m30ieC5190GARS51mzVs5CmuZGF7BwMOOiSxDbw5LAu94I1y/sSQBxj1B7nTgFe8mQ2GEPIIowh/BgAA//+IJ1O7"
+     "link": "eJzsVk9sVNUXnnPem9c7hz+9c9vC4/6YX4fnUMtT9L4382pBTUcMCYFgmmgU3QgLCbElIYwxyqqpm1E2jbgRDVRWBl2YMTRMEwlBEktSlIUhoIlt1CKyoI01ZAxozfsz7Uxbm6iw8y4m875zv+8759w78w5tZchRYSdsg27cBbthHxzAPoAi4ADAhwCfAJ4GOAswAnAJ4ArAOMB1gCnACmARYRx/1YSuoBPkd41M44Y8g9TCr1XQ/DllGUOfY6mMts7W8ww18q8n0dJCIM1bSfAfK2jeTlUxf5Pg5Wk0305Z2rHj4b4MtfDrFTQrKcsolbFKz5DJP51C8+OUlSiV8dhxrCX8VEHznbXzCI28OIVWYizASmUkwWduojmZshKXZ3xgrOwnPzGJ5i8pyxircluDvM7cQnMmZWljNdgPkyE2FGAZvp50/t4Uks4PTyEt56PjaF4MOST4bzdnn6KMBP9gGs03/j+HtVrEUMW79V36bv3QCgYcTUzDAegD6Aeju3fP6y8dfAvalfKyrlLKc3Ibleu5ynOUp1TWU45y3ayjlKcc13OOQuwbiH0Py9m5CeRfTKB59SsMT/AE/o50FmP/rX+1ROc/ZZ7DaUZJMqROaCatBoqTttEpCF3i5pjokDl6QGygFruJ6YINQ5w0disn46QROMTtlcwQuD0mDdIJ3YIM42KrfJIeFDatspvreME2p7CQKJoE87+zP26jaKjKvCZfpf2ih9rsTJ3MqhI2MRDsZZ8xeAfDfNxIVuuHWIhkibnRFlpv3Ufr7Fami2QJVzKoS7uuMt/5efkc7RQ7ggKM+QXkwgKgxsmj5RbVuCXtRhYPLIKOOqogo5B4RR6kfWIvuUItLu8WAlz7C9vaAnPzbP14fK6yzjlXVypqE5lFFHxEn+PkQs77d1Dslz20R7y4ZBPqtf5nr2GGWDEMFNkij4fbOwr1MkM9C+yelc/QdrHtb9itteVCu7qG+7pNMkmsVHvAp3rFo3ITPSw3VgOneqPL4fdhdQmb/et1MgrVNfPaR5rwZJY2iPvD5p+oCqy2W/y8Z1lBIt4jc7TH5GZS8qEaT8tOR55mCVvqPGvL4EeGUayVsnpWh6Kz8lSg/eV5bYnojSOayEqH2kUbCZtH94ORQbqzqaOwCCs8H7FT7qAtIh+Q9Hkk017FDJE4CZFDlK63hBzJ2V+4CSM4Alejv/22/A2MVbChX1sGqOlxo4ElaFlRgxe4XMnBxHSzGtC2Xhwdfdw6rCUCTt/efDJkN+fXHH3XXxe61u0N1uUu91s04+mn7Xv8Yml/M383ZPounL8rOvdibQo+P5vMPxE+V7p2Q4jFLnXZDWzgKa7lYUsHAw4mpLEd/DksD93gj3LBxFAEGAwGudOAV/yZDfoQigiDCH8GAAD//4glU7s="
     },
     {
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 16248.603469047543,
-       "stdev": 415.0369916559235,
-       "min": 14670.042050205113,
-       "max": 17937.053775523807
+       "dps": 17639.776644966852,
+       "stdev": 431.9609562688814,
+       "min": 15995.227478748266,
+       "max": 19391.165752028843
       },
       "300": {
-       "dps": 15700.775912445777,
-       "stdev": 307.78784161314485,
-       "min": 14569.688868751095,
-       "max": 16926.586256663053
+       "dps": 17097.24854919018,
+       "stdev": 324.8022995335829,
+       "min": 15992.4170733802,
+       "max": 18285.138570860534
       },
       "60": {
-       "dps": 19343.34961845561,
-       "stdev": 866.594621763327,
-       "min": 16346.165282792717,
-       "max": 22509.28640836319
+       "dps": 20804.99807472917,
+       "stdev": 901.2462800600604,
+       "min": 17857.878678845565,
+       "max": 24165.467541025948
       }
      },
-     "link": "eJzsVl1oHNUX33Pu7OTu6dfdm2w7vf8s3c4/jelodWZ2J6ZVyVoplJZKQNHqi+mDoZgUSldE+7QEHxI3D9EIYvEh9MGPqiiLCd1IINSCCbSap9AqQilUtA9ajEig1cp8JLubxIDavnkZQuac8/v9zsfd3UP7OAq0sQP2Qxcehm44CsexCDAAOAzwPsCngGcBpgCmAWYBLgFcAfgB4AbgAuAAwhX8lUnNhg5QNzZxJnQ1i5QSnw0z48e0qY9/gWMVtDSeES2UEDMlZrKxih8xV2LGzbSpT1bwuyhiG0lRmUfjjXQQFKFSojzMjIW0qY9Vlsi2UUr8VGLGR/XmFjLEfIkZbzabibnb+MGM/1gabxE7yBAjQ8x4vdlMhIBazOAQM4rKTIxXMHyWtD8pMeOX5SJSXB1kxu20yRZDd5AUE6XQVo3TxOeDjEi8N8giy3rx6hAzLqZNNlVBkmKyFL69O1Pl/niIGW811/CYxNGOd2mHtW7t5AYOAg3MwHEoAvSD3tV35JXnT7wGbbbtZV3bsXNObpfteq7tObZn21nPdmzXzTq27dmO6zmnIPYNxK7Cen7uGoovr6Fx+WsMZ3oaf0eawth/518d2fFPkedwnlOSdKURGkmzgeLEdjkFqSncE5PtKkf3yp2Ushq5JvkExInx33IqTozAIWFt5LrEAzGlk0boFlTol/vUY3SftGiz1VSHC8KcwkqgbJTc/5//cRNlwyLNy+olOiZ7qdVqqaPZXMZGDpK/4CNGb2GYjxvRsn6IhZYscTcKoR3m/2m7tY1rMlnGjRzq0q6rzFd+Rj1Nh+TBoAB9eQG5sACoUfJovUk1aklrE48HEkFHHbugIpd8UZ2go7KHXGmvTu8WAjv7C9naAnPLZH1/vFpZR1XVVTa1ypZVGHyLVsXkQsw7t1AeU710RD63ZhPquf5nbeW63DABFMmiiIfh7YV6mvHeFXJPqSfpgNz/N+SaLbVSrq7hPm+jShIv1w54rE8+pHbTA2rXomOsL7ocfh+2lLHJv15nIlddM7//kElPZWmnvCds/ulFgi1Wys97CRUk4j1YhT2s9pCt7q/RNK1MpGmUMVWnWVuGGJlA2azU4qxORrPy7ID7q/NsDe/1ESazyqE22UrSEtH94KST5uxuL6yCCucjD6mDtFfmA5C2DGRYm7kuE2cgUojS9dagI7X0CTdgGqfhcvS135q/jrEFTPSzdYBMi+sNPEHrBhg8K9RGAQZmmuxhtu/ihQuPmCWWCDDFnnwyRDflt5562z8zndt7gjPX6X6LRjzzhHWXf1jaBvN3gqY4c/6O8NyNszv4O/lz/tHwfaGzG0JbbLbTauDDjwstD3vbOQgwIINt4G9meegCf7kLNoYBgNFgtTsLeMnf4qCIMIAwivBnAAAA//8p+09L"
+     "link": "eJzsVl1oHNUX33Pu7OTu6dfdm2w7vf8s3c4/jelo9c7sTkyrkrVSKC2VgKLVF9sHS7EtlK6I9mkpPiRuHqIVxOJD6YMfVVEWU7qRQKgFE2g1T6FVhFKoaB+0GJFAq5X5SHY3iQG1ffMyhMw55/f7nY+7u4e2cRSosQe2Qx/uhj2wHw5jGaAfcAjgfYBPAc8CjAGMA0wCXAK4AvADwA3AGcB+hCv4K5OGhh5QN1ZxJkw1iZQRnw0x68esbZ75Aodr6Bg8JzooJSYqzGbDtSBiqsKsm1nbHK3hd3HEOpKiNo3WG9kwKEZlRHWIWTNZ2xyuzZGto4z4qcKsj5rNHWSJ6Qqz3my3U1O38YOJ4HEM3iE2kCWODzLr9XY7FQEaMQODzCorO3WmhtEzp/1JhVm/zBeR4uoAs25nbTYbuoGkGKlEtnqcIT4fYETivQEWW5aLVweZdTFrs7EakhSjlejt3Yk698eDzHqrvYHHJo462WfsNvYYR1dwEGhhDg5DGeAYmH0H977y/JHXoEtrP+9prX23sEl7vqd9V/ta533tas/Lu1r72vV89wQkvoHEVVjOz11D8eU1tC5/jdFMT+HvSGOY+O/8qyN7/inyHE5zSpOpDEIrbbdQktgmtyQNhVsSslsV6F65kTJOKzckH4EkMf5bQSWJEbgknJXclLgjoUwyCL2Sivxym3qM7pMOrXbamnBhmFtaCJStkgf/8z9uomyZpXlZvUSH5AHqdDqaaFZXsZWD5C8EiJO3MMrHi2nZMUhEljxxLw6hDfb/ab2zjhsyXcWVHJrSbqosUH5GPU275M6wAHN+AYWoAGhQ8mm5TQ1qaWcVT4YSYUddXVKxS76ojtB+uY88qRen90qhnf2FbGOBhXmygT9Zr6ynruopTZ2yYxGGwGLUMYUI884tlIfUAdorn1uyCc1c/3PWclOuGAGKZVEko/DuUjPNmQML5J5ST9IOuf1vyLU7aqFcU8MD3laVJl5tHPDwQfmQ2kwPqE2zjuGD8eUI+rCmim3B9Todu5qa+f2HTPoqTxvlPVHzT80SrHEyQd5zqDAR/8E67GG1hbS6v0HTdnKxplXFTJNmYxni+AjKdqVmZ3U0npWvQ+6vzrMlvNePM5lXLnXJTpKOiO8HJ5MMd3N3aRFUNB+5S+2krbIYgox5IMtZzU2ZOg2xQpyuvwQdqblPuAXjOA6X46/9zuJ1TMxg6hhbBsiMpNnCU7Ssn8GzQq0UYGGuTQ+xbRcvXHjErrBUiCnvK6YjdFtx7Ym3gzPRu35feKZ6vW/RSuaecO7yD0vXQPFO0JQnzt8RnrtxNod/R38uPhq9z/TugciWmOx1WvjQ48IowtZuDgIsyGEXBJtZEfogWO7CjaEf4GS42p0FvBRscVBG6Ec4ifBnAAAA//8p+U9L"
     },
     {
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 16582.504955084794,
-       "stdev": 401.0044797991357,
-       "min": 15062.122398367621,
-       "max": 18416.327617032428
+       "dps": 18035.870430194962,
+       "stdev": 423.41428452155884,
+       "min": 16370.547146867586,
+       "max": 20034.481391651407
       },
       "300": {
-       "dps": 16014.52454262667,
-       "stdev": 296.6653389057785,
-       "min": 14926.827326738632,
-       "max": 17257.85293227075
+       "dps": 17471.94222026377,
+       "stdev": 315.6503357055153,
+       "min": 16216.488703006793,
+       "max": 18738.60464843851
       },
       "60": {
-       "dps": 19866.935896898176,
-       "stdev": 854.9574216021867,
-       "min": 16650.956484152848,
-       "max": 23436.697814252686
+       "dps": 21422.303311384163,
+       "stdev": 903.5992762970343,
+       "min": 18374.087758644957,
+       "max": 24891.953765804876
       }
      },
-     "link": "eJzsVk1oXFUUnnPum5eb0787N5n29Zqh02cS06fV+97Mi2lVMlYKpaUSULS6MV0YikmhdES0qyG4SJwsgnGhxUXoQjQqSjChiVRKLTSBVLuSVhFCof50o1iRQOsP7yeZmSQG1HbnYRjmnXO/7zs/d2YO7eUoUGMH7IMuPATdcASOYQlgAHAY4F2AjwFPA5wFmAG4BHAZYB7gB4CfARcABxDm8VcmDQ0doL7fxJkw1QWktPhkmFk/Zmxz8nN8bxYdg2fFNtokZsvMZhNTgaNZtJAUk8PMupmx2dxUdKiZpPi2zKzXMzabjH0tZIn5MrMWMnb9xBRGL8fgLaI5UBpj1gcZ21xyB0pS3Cgz642mKgClxcgQq2UI9CwxOMSskloZSYuPysz6pZY7SPDqILP+zNjsndmKb7oc+So5GOKzMUaG+HSQ0Xrx6hCzLkZxkuJMeelpieHDIWa92VTFYBNHnewyDhndxokNHARamIVjUALoB7Or7/Arzx9/Ddq09nOednXeze/Unu9p39W+1jlfu9rzcq7WvnY93z0Jia8hcRXW83PXUFy4htaVLzEa5Sn8HeksJv63/2Sy498iz+ENTikylUFopew6ShLb6RaloXB3QrarPN0rd1DaaeCG5NOQJMZ/y6skMQKXhLORmxL3J5RJBqFXVFFc7lWP0X3Soc1OYw0uPOYWVwJlg+TBZ/7HTZR1izQvq5foqOylVqe5hmbzODZwkPyFADF6C6N8vJiW9UMi8uSIe/ERarHvpu3ONm7I1Dhu5FCTdk1lgfIz6mk6KA+EBZjLC8hHBUCVkk/rbapSSzmbeDKUCDvq6qKKQ/JFdZyOyB7ypF6d3iuGfvY3stUF5pfJBvFkpbKOiqqnNLXK5lUYAo9RweQjzNu3UB5VvXRYPrdmE2q57nK2clNumAaKZVEko+PtxVqayd4Vck+pJ2m/3PcP5JoctVKupuEBb4NKER+vHvBEn3xI7aIH1M7FwERffDmCPmwZx8bgeo3FoZpmfvc+k77K0Q55T9T8U4sEW5x0kPcSKkzEf7ACe1jtJq3ur9K0nWysaY1jukazugwxMo2ySanFWZ2IZ+XrkPuL82yN6PURJnPKpTbZStIR8f3gZJLh7movroKK5iMPqgO0RxZCkLEMZDmbuSnrxyBWiNP116AjtfQNt2AGZ+BK/LPfWriOiQWs72frAJmRNOt4Pa0bYPCsUBsFWJht1MNs78W5uUfsMqsPMaWeQipCNxa2nnwrsNnO7T2hfdXpfYNWMvuEc4f/WNoGC7eDpjR7/rbw3AnbFb6f+anwaPS80NkNkS9xqdOp48OPi2QB9rRzEGBBFtsgWMgK0AXBThduDAMAo+FGdxrwcrC8QQlhAGEU4a8AAAD//6zJTTQ="
+     "link": "eJzsVk1oXFUUnnPum5eb0787N5n29Zqh02cS06fV+97Mi2lVMlYKpaUSULS6MV0YikmhdES0qyG4SJwsgnGhxUXoQjQqSjChiVRKLTSBVLuSVhFCof50o1iRQOsP7yeZmSQG1HbnYRjmnXO/7zs/d2YO7eUoUGMH7IMuPATdcASOYQlgAHAY4F2AjwFPA5wFmAG4BHAZYB7gB4CfARcABxDm8VcmDQ0doL7fxJkw1QWktPhkmFk/Zmxz8nN8bxYdg2fFNtokZsvMZhNTgaNZtJAUk8PMupmx2dxUdKiZpPi2zKzXMzabjH0tZIn5MrMWMnb9xBRGL8fgLaI5UBpj1gcZ21xyB0pS3Cgz642mKgClxcgQq2UI9CwxOMSskloZSYuPysz6pZY7SPDqILP+zNjsndmKb7oc+So5GOKzMUaG+HSQ0Xrx6hCzLkZxkuJMeelpieHDIWa92VTFYBNHnewyDhndxokNHARamIVjUALoB7Or7/Arzx9/Ddq09nOe1tp38zu153vad7Wvdc7Xrva8nKu1r13Pd09C4mtIXIX1/Nw1FBeuoXXlS4xGeQp/RzqLif/tP5ns+LfIc3iDU4pMZRBaKbuOksR2ukVpKNydkO0qT/fKHZR2Grgh+TQkifHf8ipJjMAl4WzkpsT9CWWSQegVVRSXe9VjdJ90aLPTWIMLj7nFlUDZIHnwmf9xE2XdIs3L6iU6Knup1Wmuodk8jg0cJH8hQIzewigfL6Zl/ZCIPDniXnyEWuy7abuzjRsyNY4bOdSkXVNZoPyMepoOygNhAebyAvJRAVCl5NN6m6rUUs4mngwlwo66uqjikHxRHacjsoc8qVen94qhn/2NbHWB+WWyQTxZqayjouopTa2yeRWGwGNUMPkI8/YtlEdVLx2Wz63ZhFquu5yt3JQbpoFiWRTJ6Hh7sZZmsneF3FPqSdov9/0DuSZHrZSraXjA26BSxMerBzzRJx9Su+gBtXMxMNEXX46gD1vGsTG4XmNxqKaZ373PpK9ytEPeEzX/1CLBFicd5L2EChPxH6zAHla7Sav7qzRtJxtrWuOYrtGsLkOMTKNsUmpxVifiWfk65P7iPFsjen2EyZxyqU22knREfD84mWS4u9qLq6Ci+ciD6gDtkYUQZCwDWc5mbsr6MYgV4nT9NehILX3DLZjBGbgS/+y3Fq5jYgHr+9k6QGYkzTpeT+sGGDwr1EYBFmYb9TDbe3Fu7hG7zOpDTKmnkIrQjYWtJ98KbLZze09oX3V636CVzD7h3OE/lrbBwu2gKc2evy08d8J2he9nfio8Gj0vdHZD5Etc6nTq+PDjIlmAPe0cBFiQxTYIFrICdEGw04UbwwDAaLjRnQa8HCxvUEIYQBhF+CsAAP//rMdNNA=="
     }
    ]
   },
@@ -1452,22 +1452,22 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9941.652147063065,
-       "stdev": 246.76661412093313,
-       "min": 9047.488779203077,
-       "max": 10849.407827402114
+       "dps": 10093.444869857589,
+       "stdev": 265.62362804440005,
+       "min": 9146.664933968676,
+       "max": 11105.296983248629
       },
       "300": {
-       "dps": 9742.309027451858,
-       "stdev": 192.2668729318051,
-       "min": 8993.758314629375,
-       "max": 10552.31428501797
+       "dps": 9891.97364640103,
+       "stdev": 206.87844718952329,
+       "min": 9080.07871106501,
+       "max": 10747.661922285703
       },
       "60": {
-       "dps": 10596.569191460248,
-       "stdev": 474.4529756422827,
-       "min": 9101.848868627214,
-       "max": 12324.471898713762
+       "dps": 10782.367714165079,
+       "stdev": 510.3234284192184,
+       "min": 9165.807398325105,
+       "max": 12682.43518909334
       }
      },
      "link": "eJzsl11sVEUUgPecuXt39uDS6bQLl5GlyypQNi7e3e32B3+6mpj4k5AqPhATI0iKggSbFh/0qTYmbfHBmhATG02qT6hETANaWVQkxVBTECjFtmLSUIvEmILGJsUfNPfuvZe1rGkg8OY8bGa/OX9zzpnJXHqAo0ATa+FBaMB1sB6ehSZsBegA7ALYBfARYB/AQYAjAMcBRgDGAc4DXAScAexAGMffmNRMqAXVHuaa4KodKSwmc2j8HInphw/hrk8xrnFdRKlETJ/BGBvrs0CFiJIU53NoXI7EWO6cywJi525m7IhQWPyYQ2OGx/TcOXTXb6ewOP8tGh9GCrBlOyx+yKGxc3FM7xnAngELR0UFSfHLATReXxxjeabbHi4eQKM9QiExdQCNXyM2r6CQeO1zNFqXOGIh8U3O+WtZ0sTFHBKJL/a7kQTEYA6N3yNE4vTHrnESbXudeYw4WIlp8K/zvxTiINDAKDRBK0Ab6A1bN7zY2LwDVqTSGdM0U2baNFPpTNJMZSyQTieTmWQikbEWTTOT7AbfGPjOgsHfbmdidBKNoUmMtg1h5eWTaL48hPmqdKLPHnXZd/EvpIPO3//H9Q5Ze72ah/DgfAoTf0InjZ/ao8WCFCB/ImlmWqjcweP7tBgnnbREdQEd7mVF6ImjrmymgA5ccmUz5hU6OFKM9gwXo5NFLRwramG4S7uait2ds2SVJTvW79JUuihNFqPJuqK0pijNFKVFvSWTLVRWQAPkJ5aoKwZrWqyyeTBftqpVtjNdaYRGaYyIk55IrrIKtMAR/nIaC7lcpm6jkniI6xJX+5SfGIGpBM2P/u0O4J0LpKZwtU9WqyoK9oJlp+89Ta4gfXvz5o3PtcgyVUolhSpH+5m0HYqhDmYv+79G5CzOPZ1yJWc7Glwjw6qswIVnYamqIGupNF7C/RIf9ik7Dcl0rS3SPYFziPB32ucSEWfG5xQ5+eecIvs6mYyqJVSuJIn4fEdEJ42wxrRDOfcBk9+DGgNqB/UKUJPclk8PUqPa6G5/4BJzplbvuvTUHs2dDo54tGfYm056atbxcKfDXZ7aiaOaHZd2Ja5URq4h/vTmZ6It2zY0OYWzcsq91HEvcu7linsp4d7Ond6TVSolTdKfb2rc1tjsaB+edu28dcyxwyc8NjONcgLUONAwyJNAn4DaC7Q6XsuZDO63Q9+5R1Mre3E5BxnsRseQWtiL5RZ53yN2G6f+rfvVCLtu3ak/rknXqaV1rPLFt3nG2/lT6klaKx+le+N3cyZD+4GcBRT+a/Hznw4eUQ9RvbyHVqoVFIrNcys/OsVoQbz8yr5Gpzxbszo1VeNeLbJEhYidZT6vhHepOrpTJmhRfCFnkm9xyqickCemcba1pOnV+la1aHb3VVdZQfCzXK5Sd1BMRukW64pKOU1xVWgpr13qVA1F5RL7JDKJjzknMVWzjILWPWnXQZZRYOvmTY3b3c62d2XdPWyM+dqAk8YvTKPyycVKOTptIBxqX8yPN7/QKEl5N6g3H+tnBhzBI3Ac34BR5x2zPPsT+mYw2MbmATLNrwd4kOZ1MNhCinMQmgGVEHuVBW3p1k3Z0rxeeXZR95vWGKhfuskep+tT36Hhj66N3+Q3UmVn9kaYaR3ovyF2bsaos38/u5C9L/9/pn495JnveH08wLvWCMjC/dUcBBgQxUr7XZyFBrC+OewXcQdAj/3F0Qc4Yn1cQCtCB0IPwj8BAAD//74v3cc="
@@ -1476,22 +1476,22 @@
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 11340.689300381277,
-       "stdev": 278.60129554754786,
-       "min": 10189.949490511324,
-       "max": 12442.498464849268
+       "dps": 11529.273980610753,
+       "stdev": 299.3627273414027,
+       "min": 10298.490819204295,
+       "max": 12751.529834297251
       },
       "300": {
-       "dps": 11041.986709696226,
-       "stdev": 212.29541950526357,
-       "min": 10249.503071392552,
-       "max": 11939.137827466155
+       "dps": 11228.577433306307,
+       "stdev": 228.60236959525793,
+       "min": 10387.270217547542,
+       "max": 12150.484036261825
       },
       "60": {
-       "dps": 12231.749086182637,
-       "stdev": 535.5022113306215,
-       "min": 10287.569400322967,
-       "max": 14168.14521882567
+       "dps": 12465.995136477664,
+       "stdev": 576.2572511172541,
+       "min": 10384.500645716202,
+       "max": 14544.404463731542
       }
      },
      "link": "eJzsl1tsVMUbwPf75ux29oPS6bSFw/xbuuyfS9m4ePZstxe8dDUx8ZKQKj4QEyNIioIEmxYf9Kk2xrb4YB8IiY0m1SdvEawQKmBEUgw1FIFS09ZLFrZFYkwx0SbFC5pzbSlrGhp4cx42s7/5rvN9M5lDD3AUaGANPAj1uBE2wbPQiC0A7YCdAO8C7AfsBTgGcBLgDMAwQAbgMsAvgFOA7QgZ/I1JzYAaUEdLuCa4OopUIj7Nov5zWTR04jgeuYQxjYfECioQAxmMMgeUiwgtFL2XUb9WZjOSomcM9d1lUTba66iUW5Yuoz7Fo6Ejl/DXXkdxBZWIV7Oof1RmY89BhKS4MIb6ntJouLsfnRXSxSdjqL9eGg07YDocXezPot5Wdv2KY/7rDOp7S68zX05SHMqi3rJsOkArhR9+dFh3PxKJzw97RjTRlbWSOjCG+u9l02mvIBIfj3nzAjFxAW1lB0SJg7Wb9cGNwZfyOQjUMQKN0ALQCqH6HZtfbGjaDavNZMowDNNIGoaZTCUMM2WBZDKRSCXi8ZS1aBipRBcERiFwEXT+VhsTI+OoD45jpHUQK66dQ+PlQXRK2YEBe9Sm38G/kI65f/8b8x2yZr6ax/HYIioh/kSINH5+nxYNUx4F4wkj1UzFLs4c1KKcQqTFq2bQoR6Wg54d8GRTM2j/VU82ZUzTU8O5aPdQLjqe08LpnBaGOrUbqfiwY5assmRH+zxqJnPSRC6aqM1Jq3PSVE6a01si0UxFM2geBYnFa3PB6marbD50yla51nYWUhqhXhgl4hSKJ9ZaBVrsCn8xiTO5XKn+TwWxfB6SuC6ggsQIDCVoUeRvbwDvWCw1hesCskpVUrgHLDu972lyNYV2NW3b8lyzLFKFVDBTZaCPSduhGGxn9nLwK0TOYtzXKVZytqNT62WJKprhwrewXJWTtVQYK+BBiQ8HlL0NiWSNLdKVxTlE+Nttc4mI7zJzipz7c06Rgx1MRtQyKlaSRGyRKxIijbDasEO59AGT34MaBWoD9QpQo9zpbA9Sg9ripd9/lblTq3c9en6f5k1PDfu0e8ifjvtq1vHwpkOdvtrZAc2OS5uOy0zJ9cSf3vZMpHnn5ka3cNaecn/ruB859/eK+1vC/czd3pOVypQGhZ5vbNjZ0ORqn5j07Lx52rXDsz6bmkSZBZUBGgJ5DugQqANA62I1nMnwYTv0Pfs0taYHV3GQ4S50DaklPVhskfd9Yrexeb3ul8Ns3roTf9yUrltL61g5xbd5ys/8KfUkbZCP0r2xuzmT+YeB3AUUwZvx868OHlEPUZ28h9ao1ZQfXeBVfmSC0eJY8XReIxO+rVmdalZ7V4ssUPnELrKAX8K7VC3dKeO0NLaEM8m3u2VUbsjZSZxtLWH4tf6fWjq7+6oqrSD4RS7XqjsoKiO00LqiTLcpbgjN9NulVlVTRC6zTyKT+Jh7Es3qlRS27km7DrKI8nZs29qwy+tsOyvr7mGjLNAKnDR+ZRJVQJYq5eq0gnCpfTE/3vRCgyTl36D+fLSP6XAST8IZ3Asj7jtmVfonDExhuJUtAGRaMJTHw7SgncF2UpyD0HSogOhrLGxLt2xNFzp6xemlXW9Yo79u+VZ7fFNnfot6MLIhdpvfSBUd6VthpqW/75bYuR2j1v797Er6Puf/VN0mcFjgTF0sj3euF5iG+6s4CNAhghX2uzgN9WB9qNgv4naAbvszpRdw2PoigRaEdoRuhH8CAAD//2de9as="
@@ -1500,22 +1500,22 @@
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 13264.66839196967,
-       "stdev": 317.7794521328102,
-       "min": 12125.126106288963,
-       "max": 14436.033402836192
+       "dps": 13509.855093384123,
+       "stdev": 341.10032547577276,
+       "min": 12256.587569030145,
+       "max": 14766.417451428813
       },
       "300": {
-       "dps": 12924.011240873215,
-       "stdev": 242.04375784041827,
-       "min": 12020.574107078099,
-       "max": 13912.309016386795
+       "dps": 13164.300177306333,
+       "stdev": 260.04082667941526,
+       "min": 12218.71409544842,
+       "max": 14199.13348318167
       },
       "60": {
-       "dps": 14022.914992561138,
-       "stdev": 617.2899839893262,
-       "min": 12012.740266181967,
-       "max": 16401.119731993193
+       "dps": 14316.037521063405,
+       "stdev": 662.9235705704352,
+       "min": 12102.143811718917,
+       "max": 16910.75559679739
       }
      },
      "link": "eJzsl21sFFUXx/ecOzu9e6D09rYLw30oXebhpWye5Znd7fYFX7qamPiSkCp+ICZGkBQFCTYtftBPtcG0xS/9QEhoNKl+QkVeGgkUYqykNdQAAUpJWzSpNDXEmFKja4oKmpmdGdaypoHAN++Hzd3fPed/zr3nzM0MPcFRoIU18CTU4wbYCK9CI7YAtAN2AuwHOAx4HKAP4DTAeYARgHGAawDTgDOA7Qjj+AuTmgU1oE6GuSa4OokUFp9m0PixzNQHTuFAL0Y1rovlFBL7p9FkV3qRpDicQeNWmfPPXZ4v+n5GY3eZyY70Ihli3zQaM9wMDfTilV484tiViwiFxbVpNA6WmfoRD+uinMLiQAaNPUtycLlYTmFxcwodkRzrCBWJgxk02spMvXvQlqewmJxGY+8SUx/oxe5BL5gU7/yERsvS3ESlODaRZVk7W4/EFye8kJromrC3uOs6Gr9lt+OqFYnLv6InlQVT3+WA5SZxsA+zPrgh+FYhB4EGRqARWgBaQa/fvunNhqbdsCqRTFmWlbCSlpVIpuJWImWDZDIeT8VjsZS9aFmpeBcExiBwFQz+fhsTo5NoDE1ipHUIK25dROvtIcxWsgMDzqhNf4g3kfrcv/+Oex2y5l49T2HfAgoTf0EnjV86pJkhKqBgLG6lmqnUxeNHNZOTTlqsKocO97A89MJZzzaVQwdveLYp6zY9M5KPdg/no5N5Fc7lVRju1O6k4kDHLFtl2471ezSRzEvj+Wi8Ni+tzktTeWneaPF4M5Xk0AIKEovV5oPVzXbZfJgtW+UaJ5iuNEKj2CTipMfia+wCLXSNv8xgLpcr1H+pKFrIdYlrAypIjMBSghZE/vQG8I6FUlO4NiCrVCWFesDWOf6RJleRvrNp6+bXmmWJKqaiXJez/Uw6AcVQO3OWg18jchblvk+pkrMDnVknw6okJ4SvsEyVk71UHC3iQYlPB5RzDPFkjWPSNYFzmPAP2uYyEd+Mz2ly8Y85TY52MBlRS6lUSRLRBa6JThphteWk8v0nTH4LagyoDdQuoEa5I3s8SA1qs7f9wRvMndq969FLhzRvembEp93D/nTSd7MfD2863Om7XTirOXlpt/NKpOQ64i9vfSXSvGNTo1s4+0y5f3Tcz5z7Z8X9I+H+zt3ek5UqIS3SX29s2NHQ5HoPZDyd9865OnzCZzMZlBOgxoGGQV4EOgbqM6C10RrOZOiEk/qeQ5pa3YMrOchQF7pCalEPltrkY584bZz4u+9XI+yefad+vytft5b2Y5UtvsNT/s5fUi/SevksPRp9mDNZeALIXUARvJs4/xjgGfUU1clHaLVaRYXmPK/yo1OMFkZLb+9rdMrXmtWpiWrvapFFqpDYVRbwS/iQqqX/yxgtji7iTPJtbhmVm/JEBmerxS2/1v9Ri2d3X1WlnQS/yuUa9T8yZYTm21dUwm2KO1JL+O1Sq6opIpc6TyKT+Jz7JCaqV1DIviedOsgSKti+dUvDTq+znV3Zdw8bY4FW4KTx6xlUAblEKdenFYRLnYv5+aY3GiQp/wb152P9zIDTeBrO414Ydd9jVqZ/wMAMFrSyeYBMC+oFPETz2hlsI8U5CM2ACjDfZSHHumVLujjrV5pe3LXPHoN1y7Y443Jd4goawcj66AN+R6roSN8PmZbB/vui8yBGrfP7+fX0Y9n/M3UbIcsC5+uiBbxznWBpeLyKgwADIljhvBenoR7s7xTnjbgdoNv5SjkOOGJ/kEALQjtCN8JfAQAA//+jPPLQ"
@@ -1524,22 +1524,22 @@
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 16811.059044400965,
-       "stdev": 436.49874725099215,
-       "min": 15053.555708493048,
-       "max": 18353.846892902362
+       "dps": 17253.685490244505,
+       "stdev": 466.7458726163334,
+       "min": 15388.937207574803,
+       "max": 18941.603207668104
       },
       "300": {
-       "dps": 16504.482423983787,
-       "stdev": 328.1181430646057,
-       "min": 15265.119719856115,
-       "max": 18020.11224981105
+       "dps": 16936.44502025695,
+       "stdev": 350.61875910704134,
+       "min": 15634.068903989128,
+       "max": 18587.264383254314
       },
       "60": {
-       "dps": 17937.39214887979,
-       "stdev": 820.3396506417611,
-       "min": 15169.130574839985,
-       "max": 20971.62279846929
+       "dps": 18461.99387210797,
+       "stdev": 881.0345916248311,
+       "min": 15463.131588010885,
+       "max": 21703.534136976734
       }
      },
      "link": "eJzsl11sVEUUx/ecuXs7e6DsdNrCZaSwXAuUjcW7u91+4EdXExM/ElLFB2JiBElRkGDT4oM+1cakXbYP+0AINhoK8cEPItKIUhISJK1SAwQoNW1R09BUjTHgg01KVDT37r2XpaxpIPDmPGxmf3PO/5yZMzOZS09wFGhhPTwJTbgBNsKr0ILtAF2AWYAPAT4DPApwAuAUwDmAUYAJgF8AfgecAexCmMA/mNQsqAe1t5xrgqu9SGGxL8uM3ypMffAkDvYjhcQH3cxkh/uRpDiQZcb1CpNd6seoxiNiGc0XAxlm7MoxCov9WWbMcFM/3I82KBfXM8z4tMIBhx0vXVSSIX7OMGP3EjM06ODcyDIRobA4kmF5mMpFb5YZnTmF3qGcXSWFRaabGXuWmPqgg0mKH9PMaF/qJWeLSfFFJse8AJWkiYNpRiSOp5k/hYPdzDhbYTJbRxP7uhmFxTcZ5knpotIkDvZKNQU3BN8q5iDQwAi0QDtAB+hN2ze92dy6C1bFE0nLsuJWwrLiiWTMiidtkEjEYslYdXXSHrSsZKwHAuMQuAwGf7+TibEpNIanMNIxjFXXL6D19jDmypTGgNMaUgfwb6QT7t//2502WX+nnifxxAIqJ/6CThq/eEgzQ1REweqYlWyjMhdPHNFMTjpp1bV5dKSPFaDnz3i2yTw6dM2zTVo36OnRQrR3pBCdKqhwtqDCSFa7ldqn42aqbNvxAY/GEwVprBCNNRSkdQVpsiAtGC0Wa6PSPFpEQWLVDYVgXZtdNh/mylazxgmmK43QKDGJOOnVsTV2gRa6xl9NYz6XK9T9FI4Wc13i2oAKEiOwlKAFkX+8Bjy9UGoK1wZkraqhUB/YOkc/0uQq0ne2bt38WpssVSUUznc5M8CkE1AMdzFnOPgtImdR7vuUKTk70Ol1slyV5oXwFZarZWQPlUTDPCjx6YByliGWqHdMeiZxDhO+v3MuE/H9xJwmF/6a0+RImsmIWkplSpKILnBNdNII6ywnlZ8+YfIHUONAnaDeAWqRO3LLg9SsNnvTH7rG3K5zs7v04iHN654e9WnviN+d8t3s4+F1R7K+2/kzmpOXdiOveFKuI/7y1lcibTs2tbiFs9eU+0vH/cy5v1bcXxLuz9zde7JGxaVF+ustzTuaW13vwWlP572zrg6f9NnMNMpJUBNAIyAvAH0J6nOgtdF6zmTomJP67kOaWt2HKznIUA+6QmpRH5bZ5GOfONs4frPv16Psjn2v/Hlbvm4t7WOVK77Dk/7MX1Iv0nr5LD0afZgzWXwMyB1AEbydOP8Z4Bn1FDXKR2i1WkXF5jyv8mNXGC2Mlt2Y19gVX2vWTo3XeVeLDKtiYpdZwC/hQ6qBHpTVtDi6iDPJt7llVG7Kk9M4Wy1m+bW+Ty2evftqa+wk+GUu16gHyJQRmm9fUXF3U9ySWtzfLg2qjiJyqXMSmcTn3JMYr1tBIfuedOogS6lo+9YtzTu9ne3Myr572DgLdAAnjV+dRhWQS5RyfTpAuNS5mJ9vfaNZkvJvUL8/PsAMOIWn4BzugTH3HbMy9SsGZrCog80DZFpQL+IhmtfFYBspzkFoBlSBmWEhx7p9S6ok51eWWtzzrt2GGpdvcdp3jfFLaAQj66P3+I1UlU7dDZn2oYG7onMvWoPze/xq6rHc/5nGjZBjgXON0SKeXSe0FDxey0GAARGsct7FKWgC+yPEeRF3AfQ6nyBHAUftrw1oR+hC6EX4NwAA//99FueM"
@@ -1548,22 +1548,22 @@
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 17004.90101973149,
-       "stdev": 431.90532223577196,
-       "min": 15351.117958967177,
-       "max": 18886.438062169127
+       "dps": 17457.395882341032,
+       "stdev": 462.6845126753176,
+       "min": 15675.8945478218,
+       "max": 19470.53814038441
       },
       "300": {
-       "dps": 16717.25028994174,
-       "stdev": 325.7009266138401,
-       "min": 15511.930408693766,
-       "max": 18182.903560849518
+       "dps": 17157.635977636117,
+       "stdev": 348.6701946456526,
+       "min": 15924.770560186462,
+       "max": 18743.189688992323
       },
       "60": {
-       "dps": 18061.89438284297,
-       "stdev": 810.7945912499479,
-       "min": 15196.112770732892,
-       "max": 21160.7105226431
+       "dps": 18595.62506792717,
+       "stdev": 871.4353066048607,
+       "min": 15472.99739382199,
+       "max": 21898.016488592566
       }
      },
      "link": "eJzsl11sVEUbx/d55uzp7AOl02kLh3kpLPvyUTbv8p7d7faD99WuJiZ+JKSKF8TECJKiIMGmxQu9qo1Ju7QXa0JILBoW4oVWIraRjxJJkLSGNUCAUtPWjzQ0VWMMeGGTEhHNOXvO6VrWNBC4cy42c37zf555Zp5nJrP0GEeBJtbB49CIm2ELvAzN2AbQCZgG+ADgE8CTAGcAzgFcAhgFmAD4EeAXwBnAToQJ/JVJzYQ6UAcquCa4OoBUIg6mmfFzZUgfOotDA0gB8X43C7G+AaSF4nCaGbcr3a8TvczY63yViENpZsxUhvS+AcyB473M+LgypGeymMkiGeKHLmbsWxYKDNmKvgEMa3yVCJIUx7qY8Xb+CFWITJoZHVYcAzhmS1eIVVQhurqZsX+ZjTPZnAedpPguxYy25SE2luf1eFeO9XnmJE6nWFjjQbGKNPFZLyMpjnQz42KlqwqKFaSJg92MSsStLjbrUA8RB2uzGv2b/W8UcxBoYBCaoQ2gHfTGXVtfb2rZC2tj8YRpmjEzbpqxeCJqxhIWiMej0UQ0EklYg6aZiPaAbxx818Dg73UwMTaFxvAUBtuHser2FTTfHMZcplLos1t98jD+jnTG+fyn3WuTdfdqeRbPLKIK4s/ppPGrR7VQgIrIH4maiVYqd/DEMS3ESSctUpNHR/pZAXr5gqtN5NHsTVebMGfp+dFCNDNSiE4V9HCxoIeRtHYnFUdSc7TK0o4PujQWL0ijhWi0viCtLUgTBWnB2aLRVirLo0XkJxapLwRrW620eTCXtur19mS60giN0hARJz0SXW8laLEj/nwa87lcrf5NJeFirkvc4FN+YgSmErQo+IfbgKcWS03hBp+sUdUU6AfLz8kPNbmW9D0tO7a90irLVCmV5JtcGGTSnlAMdzJ72P8lImdh7tmUKzl3ovMbZYUqy5vC87BSrSBrqDRcwv0Sn/Qpexui8Tpb0jOJ80j4oY75JOKbiXklV27NKzmWYjKollO5kiTCixyJThphrWmH8v1HTH4LahyoA9RbQM1yd257kJrUNnf52ZvM6Vq169KrRzW3e37Uo5kRrzvlmVnHw+2OpD2zyxc0Oy5tNq5YQm4k/uKOl4Ktu7c2O4mz9pR7W8e9yLm3V9zbEu6t3Kk9Wa1i0iT91eam3U0tjvXQtOvn3YuOHz7psZlplJOgJoBGQF4BOgHqU6AN4TrOZOCUHfq+o5pa149rOMhADzqO1JJ+LLdIr0fsMo791faLUXbPttd/uytbJ5fWscol3+YJb+UvqOdpk3yaHg7/nzNZfArIGUDhv5t5/naCp9QT1CAfonVqLRWHFriZH7vOaHG4fHZdY9c9X3MqNVbrXi2yRBUTu8Z8Xgr/p+rpvzJCS8NLOJN8p5NG5YQ8OY1zvUVNL9f/UkvnVl9NtRUEv8blevUfCskgLbSuqJhTFHeEFvPKpV7VUlAut08ik/iMcxJjtaspYN2Tdh5kGRXt2rG9aY9b2faqrLuHjTNfO3DS+I1pVD65TCnHph2EQ+2L+dmW15okKe8G9frjg8yAc3gOLuF+GHPeMWuSP6FvBova2QJApvn1Ih6gBZ0MdpLiHIRmQBWEuljAVrdtT5bm7MqTS3vesVq2YeV2u33VEPsaDX9wU/gBv5GqUsn74aYtO3hf/DyIVm//nr6RfCT3PdOwBXLMd6khXMTTG4U/CY/WcBBgQBCr7HdxEhrB+h9iv4g7ATL2v5CTgKPWHw5oQ+hEyCD8GQAA//+6/uiI"
@@ -1582,22 +1582,22 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9963.653377286046,
-       "stdev": 286.19264530313797,
-       "min": 8891.687003517536,
-       "max": 11104.709280718573
+       "dps": 10234.969346947362,
+       "stdev": 318.90043656801464,
+       "min": 9023.069778262236,
+       "max": 11506.877437260533
       },
       "300": {
-       "dps": 9655.003326715098,
-       "stdev": 215.82695748037474,
-       "min": 8877.184840941862,
-       "max": 10635.426101216035
+       "dps": 9916.483501583587,
+       "stdev": 240.40247499620946,
+       "min": 9067.500645054633,
+       "max": 11002.263240673326
       },
       "60": {
-       "dps": 11040.321160480134,
-       "stdev": 540.4787673781843,
-       "min": 9045.486062118654,
-       "max": 13129.175543866399
+       "dps": 11346.725932969473,
+       "stdev": 598.4117212175775,
+       "min": 9142.174610488624,
+       "max": 13693.062592810622
       }
      },
      "link": "eJzsVV1oHFUU3u/c2dm7J128mbjkZuiadYgSFhPvzrqSRiVjQRAfJOBLH+uDRYpCcZ/0ac2D3baIVVQwUAg+FRQREYmd1P6lkKBgaqE2qUgRG0PRWsWFRWmRuTMtqY+lffN7GO75zvnOx73DvYefkqTI0ASexjTtwE68iD3UBjqgg8Bh4FPQPHAcWAJWgPPARWADuArqgTqEi/SX8ByDCfhnitJR0n+TuKwuxaR/rQTu6ZN0+EuqOdJVVS6q7g8UiLV54i1qIyZ9vRKIeJ24pN77WOj9FVs3zGX1S0y6VwnceJ3i9VQ+wmW18T3pT26lq1xWP8ek390auHPLNLec0FU1zJ76Y4H021sDkXJJ45K6ukB6b+IzrKpcUlcWSP9ZuZl96yvS7fuyvgX1bZyEzOrYEbKSEWZ1+WjqMMIl9U1M+u9KZsjq3Bc3jFjNfJ6tA5ZIjmc6vyP/WklCkaYq9qANzMCdfun5V194ZT8eGAtNIzSNhqmbRtPUw2bD1BvNMPnUx5rN0BhjmrPIrSH3E7RcvUTq0F6hL3xN1ZmzNHr9OzKvn6X0z+yjnMW26EO6Rnw8C//H7cKbuF3lSXpD8ABL32VHri2KoMB5FmOPtHiAXd9h0v1BkQucHwvHmy0uZ5UnurSJ9hyfJnMe+2ny0AHhDfmDXKr1ybxHz+R88Y6Ts6l/uuSV/YHt/ezI011S8K2febnlPeE/xnXvYd4SMMswK94U9brE/bV7so5WFoYtP0t5k/4Ej3sP8WCtLIVXPIIksXpFJAVMjdZ/tXXTurFn73F/ko03zkO1QSk8uTvhT3XJL85StrRqd5M6cz6V7oeLn1m/Y79ZP3nmVvraR46lf+zSzUM6sWm9tig0lmgJK/Q+VrPb8GB0mXI9KsyIPpBw8m5BFrmvI7CbfSmh8hqjCA6Ioq1u74r6U9290dDsBwmWp+7fZXFuKrxAOl99rnaXb9rovuhOtGkvL96RPncD2+z36O/Rk2ncm9qJlMutTNUK8uCzChG2PyqhoFGlUfu2RphGMr3sq9oB5uzsmgedT8YU2oQOYY7wbwAAAP//y//big=="
@@ -1606,22 +1606,22 @@
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 11187.693385093355,
-       "stdev": 319.84509036955467,
-       "min": 9908.149806040095,
-       "max": 12370.90668724506
+       "dps": 11507.858001587369,
+       "stdev": 356.6005085420071,
+       "min": 10083.311893377502,
+       "max": 12837.624873194745
       },
       "300": {
-       "dps": 10805.262408259052,
-       "stdev": 242.7637654986923,
-       "min": 9975.920319816427,
-       "max": 11832.974546592268
+       "dps": 11113.77953931262,
+       "stdev": 269.8902432335434,
+       "min": 10161.980556499688,
+       "max": 12227.613459619215
       },
       "60": {
-       "dps": 12324.829573435432,
-       "stdev": 611.2610272077648,
-       "min": 9854.4788567738,
-       "max": 14552.246769033143
+       "dps": 12677.21530713727,
+       "stdev": 676.6581397273752,
+       "min": 9965.776589255243,
+       "max": 15189.24434159553
       }
      },
      "link": "eJzslU9oXNUXx+d77ps3d05acnPzG3LzyLTze1QJg4lv3jiSRiVjQRAXEnDTZV1YpCgUZ6WrMYs6bV1UkYKBwqAbQZBaBWOD9F8KCaJGC9KkUFJnTINodeHAoLTIu+9NO3VZ2p1n8bj3c873e959j3svPyNJUUBTeBaztBf78DIOUh1ogI4BHwEnQQvAWWAZWAUuAxvAFvAHqAtqEDboT6GdAFPw3mbpKOktE+fUly0yv+Z99+J5WtykoiNdtYsH1Tcb5IsY7FQua7WwReZWvscKyuVt6lSbzJG8L9YXrNMWmW7edxc36cPrcVHkdKhF5pMYL24SG3WtTea9MT/bXKGYJX5GfdYm886Yn43xndcx6mSLTHPH3ZnIPqe+2yBzfKxnbwU7WasvWmTqO+yr3WZXr8fsTktW37Z6VqzOnI6Xu4u1+rxN5q+8L5orPcbq03ZvPKhuXKO+pM8S0ZedTe9Nv7FdQpGhAg6iDszBnX3lxddfeu0IHpoIg3IYlMtBKShXglJYKQelciWMHqWJSiUMgiCozCO1jtRPMHLtZ1In3hLmytdUmLtE47d+oODNSxT/1MOUsrG7+gHdJD6bTP+Lew09da/K83RI8DBLz2VHri8JP8NpFhOP1XiYXc9hMkN+ljOcnggnKzXOJZXnOtSHtePRdEqzFydPHBV61Bvh7cUBmdb0XMoT7zopm/q7QzrnDe8ZYkde7JCCZ/sFr9b0U94TXNKP8jafWYZJcd+s2yEeKg4mjlYWhjUvSelpb4on9SM8UsxJobOnESXWboiogKlc+7e2FNR6a9ZPetMc6EkeLY5IoeWBiF/okJedp2Ro1W6fOul8IV4PZ0/Zfmd+s/3k93fjmx87Fl/t0O2PdK5vvL4kDJZpGat0HGvJbni4+gulupSZEwMg4aTdjMzyQEPgAHtSQqUNxuEfFVlbXd9fHYp1/6uOzr8fxcrM//fb+HEmvEImXXih+IB32vjh6v2wqa8s3RefBxG77fOr36tPx/PuzD7ELLU6U8zIY88rqmLP4xIKBgUat2drFbOILj57qjaApr32FkCXoxsOdUKD0CT8EwAA///tB/O9"
@@ -1630,22 +1630,22 @@
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 12939.213215166257,
-       "stdev": 343.6550503544024,
-       "min": 11592.179923601725,
-       "max": 14173.058262026816
+       "dps": 13352.635475870191,
+       "stdev": 382.9250022174282,
+       "min": 11863.909778630848,
+       "max": 14740.997833426758
       },
       "300": {
-       "dps": 12530.150786449693,
-       "stdev": 262.8000426246389,
-       "min": 11533.198555154246,
-       "max": 13493.724367505098
+       "dps": 12932.835276235768,
+       "stdev": 292.72417131889085,
+       "min": 11849.010188664492,
+       "max": 13996.91349993855
       },
       "60": {
-       "dps": 14191.799332833016,
-       "stdev": 634.3163519068708,
-       "min": 11989.57760104307,
-       "max": 16559.533426710943
+       "dps": 14624.856351001497,
+       "stdev": 704.6125859792337,
+       "min": 12235.208665280672,
+       "max": 17283.704214828955
       }
      },
      "link": "eJzsVV1oXEUU3u/M3buzpy2dTFwyuWTNeokSFhPv3nUljUrWgiA+SMCXPtYHixSF4j7p0xrUbtqXKlJooBB8Kqil8cVuQZq2WUgQSrQg+QGplkKR2qzohQVpkTt7t64+lvbNw2WY853vfOfMXGaGX5akKKApvIJZOoCDeAtHqA40QCeAM8A50HlgGVgF1oEN4DpwC2iDOqAG4Tr9KbQTYArePEtHSa9FnFNfRWRu5323dZlaTSo60lVjnFVn2uSL7SaxVuciMvfy1kvCu9XyH2SO5X2x1CQ26lSbTCfvZ1tN2m7SkuWNqgLn1K02mbOxeg92LfxlROazEd9d+oc9xkbd3iHzyYjVWVyLv6IjC2qMc+psROZo3ncX16jbRkGNck7dbJM5OdInH1fV6qPfydQf7+9Yq29udLHW/TZYXb3Rq8Dq4oVeH1p9uEPmar7HHbXcjZ1efK+68zP1xEfVmM8S8bbOpg+k398jochQAUdQB+bgzr79xntvvnsMT06EQTkMyuWgFJQrQSmslINSuRLGQ2miUgmDIAgqC0htIfULjNy8Ser0UWG2v6PC3DUav/cDBR9co+4fnaeUtX3Vz+ku8XLi/m8PanrqQTMv08eCB1l6Ljtya0X4GU6zmHi2xoPseg6TGfCznOH0RDhZqXEuYV6KqA/WjkfTKc1eN3j6uNDD3hDvKe6SaU2vpjzxqZOyob8i0jlvcP8AO7IVkYJn6wXv1PSL3vNc0s/wbp9Zhgm5z+tExAPFvYmiTQvDmpeE9LQ3xZP6aR4q5qTQ2QuIA5t3RExgKtf+m1sKar016xe8aQ70JA8Xh6TQ8nCMX4nIyy5QMrXZbl92UvlKdz2c/drWu/ibrSe//zd89wvHwj9FdH+TLvXNt1aEwSqtYp1OYjM5DU9Vf6VUhzJzYhdIOGk3I7O8qyFwmD0podIG4/CPi6xl1w9VB7p5j1WHF07FtjbzxCFrP86E22TShdeLj/ikjc9XH4ZMfW3loeg8Cttnx293qi91/c7MQXSx1PpMMSNPvKZEFfufk1AwKNC4vVurmEX86tlbtQEs2jfvPGgjft5QJzQIi4S/AwAA///LhfA8"
@@ -1654,22 +1654,22 @@
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 16391.817958053598,
-       "stdev": 431.04995932457166,
-       "min": 14368.912684303426,
-       "max": 17872.79962467599
+       "dps": 17047.315276288962,
+       "stdev": 474.10540158717254,
+       "min": 14701.235363276212,
+       "max": 18620.23398392437
       },
       "300": {
-       "dps": 15859.555688730696,
-       "stdev": 330.1823055457429,
-       "min": 14539.87338020146,
-       "max": 17177.87096536252
+       "dps": 16491.95654559314,
+       "stdev": 363.25431797789855,
+       "min": 15059.554990879804,
+       "max": 17780.047261689626
       },
       "60": {
-       "dps": 18085.65090505585,
-       "stdev": 764.6897048138167,
-       "min": 15494.807310437704,
-       "max": 21352.663864678805
+       "dps": 18799.18294068775,
+       "stdev": 841.015927302071,
+       "min": 15896.336914505626,
+       "max": 22423.156608175366
       }
      },
      "link": "eJzsVU9oHFUY39/3ZmfffEnJy8QlL0PXrkOUsJg4O+tKGpWsBUE8SMBLj/VgkaJQ3JOe1hzsbieHpUjBQO3qSbCIEYRGKPZPAlm8RCOlyUIpBUHEfwcXFrVF5s20rB5Le+t3GN73+36/7/feG957/KIkRQHN4yUs0WEcwRs4Tg2gCWoDnwJfgM4DF4EtYBu4BtwAfgL+AA1ATcIN+lO4VoB5eFcdaSnpnSLOq7NtoX8p+PbmZdpcp5Ilp9UBHlM3I+GLngEOqCLn1U4k9O2Yt05rd+FRtREJfbJgqDymPm4LPSj49to6JUAvEvrzgm/3jIrH1EdtoT/Yf6cN59VXkfCdJFtL/W3Oq05b6BMF3+50qdNN7KY5r6IVoU/vH5pFzB5V11tCNx5NZuGqH6IkS4S2mmZLnWsJttSFluBRdW5F6L8KvognYKmzK4Id9U+6Xp8l4j1ayh7OvrtPQpGmIo6jASzDXnrztXdef/skHp8Ng0oYVCpBOahUg3JYrQTlSjWMP+XZajUMgiCoriKzh8xNaLn7I6kzJ4TufUvF5R2auf09Be/tUPJ7WpQxcbD2Cd0ivpimD+New52/V+Vlel/wBEvPZkvubQg/x1kWs0/XeYJtz2LS477DOc7OhnPVOudT5qU+DcGu5dFCxmUvKZ6JhDvlTfK+0ojMuvRyxhOnrIwp/d0nN+9NHBpnS272ScEzfsFbdfd571kuu0/xqM8sw5Q8lA36xOOlsbSjkYVh3UtL7oI3z3PukzxZykvhOl8jLuz+JmICU6X+f205qN9Zs/uct8CBO8dTpUkpXHksxq/0yXNWKR0atT2kTp2vJOth50vj982vxk9+91/41meWga/36e4mXRoa720IjS3awjadxm56Gp6o/UyZAeWWxQhIWFk7Jx0eaQocY09KqKzGDPxIOIbdOFobT3SP1KZWP4yju/jYURNXF8Me6Wzx1dIDPmkzrdr9aNPobtyXPg8iDprvhd9rLyT5YPEIEiyzvVjKyfYryqrh0DMSChpFmjF3aw1LiJ8wc6s2gY55wM6DrsVvFRqEJqFD+DcAAP//g2XlAQ=="
@@ -1678,22 +1678,22 @@
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 16387.79892086014,
-       "stdev": 419.719856838235,
-       "min": 14373.63781357824,
-       "max": 17816.811307817483
+       "dps": 17080.598494635906,
+       "stdev": 462.0987865714366,
+       "min": 14679.030679691312,
+       "max": 18641.07244588882
       },
       "300": {
-       "dps": 15854.7193978338,
-       "stdev": 325.3450652338568,
-       "min": 14576.633247139687,
-       "max": 16986.801161000698
+       "dps": 16522.67138292131,
+       "stdev": 358.1060266349448,
+       "min": 15128.917184616366,
+       "max": 17801.415009267632
       },
       "60": {
-       "dps": 18081.733120178647,
-       "stdev": 750.8074313490582,
-       "min": 15331.539279709918,
-       "max": 21068.03677177721
+       "dps": 18848.567607587705,
+       "stdev": 827.3817771767547,
+       "min": 15769.527166457774,
+       "max": 22175.03980150187
       }
      },
      "link": "eJzsVU9oHFUY39/3ZmbffEnJy8QlL0NX1yFKWEycnXUljUrWgiAeJOClx3qwSFEo7klPaw52081hESkaqF09SRWxgtgVg2mbQhYv0YgkWSmlIIj47+DCorbIvNmG1WNpbv0Ow/t+3+/3+957w3uPn5KkKKRZPI0FOoKjeBEnqArUQA3gA+AT0AVgDdgANoFt4BrwE/AHqAeqEa7Rn8KzQszC/8GVlpL+28Qj6mxD6F+ygXPlEq22YuB6XQRirUV5S96ncpxRW3Whb8aMFp3fgz31+TmhT2UD0THYpHJ4RL3XELqXDZxOi9aMWacu9MfZwNluUccA7zaEfuvgLTPOqM/qInCT7PyeU0Y1G0KfzAZOs03NdtJ0kjOqviz06YMDc4nZw+rqktDVe81c2FPf1ZMsETpqkll9eU4Ydo4ttbokeFh9tCz0X9lAxNOw1Nllwa76J157p0UBS8Q7tWAfsV87IKFIUw4nUAUW4Sy89PyrL7xyCg9MR2ExCovFsBAWS2EhKhXDQrEUxZ/CdKkUhWEYllaQ2kXqOrTc+ZHUmZNCd76m3OIWTd38lsLXtyj5SUuUMnGo/D7dIF7rp3fjdsObvV3lJXpD8BhL32FL7q6LIM02i+lHKjzGjm8x6dHA5TTb09FMqcKZPvNilwZgz/JpLuWxnxTP1IU34Y/zgfyQtD16JuWLN62UKf3dJS/jjx0eZUte6ZKCb/qFL1e8J/zHuOA9zMMBs4z65IGs1yUezY/0HY0siip+v+TN+bM84z3E4/mMFJ77BeLCzm8iJjAVK//XFsLKrTV7j/tzHHozPJEfl8KTx2P8cpd8d4X6Q6N2BtT9zpeT9bD7qen31a+mn/zmv/CNDy0DX+3S3iZdHBjvrguNDdrAJp3GTv80PFj+mVI9Si+KIZCwbCctXR6qCRxnX0ooW2MKQV24hl09Vh5NdPeUJ1beiaM9f/8xE9/PRx3Sdu65/D6ftKml8p2wqbbX74jPfsQh8139vfxkkvfmjyLBUpvz+bRsPKvsMg4/KqGgkaMpc7eWsYD4ITO3ag1ommfsAmg7frFQJdQITcK/AQAA//+IeOXb"
@@ -1712,22 +1712,22 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9421.365071908016,
-       "stdev": 254.33591981860513,
-       "min": 8458.318264963711,
-       "max": 10357.97197717242
+       "dps": 9996.806415109299,
+       "stdev": 323.9002665977328,
+       "min": 8710.072620806266,
+       "max": 11192.300365659097
       },
       "300": {
-       "dps": 9335.63651524586,
-       "stdev": 198.100476081259,
-       "min": 8563.288300064918,
-       "max": 10302.654225277896
+       "dps": 9906.717953909729,
+       "stdev": 252.805554995022,
+       "min": 8990.790255501151,
+       "max": 11223.349896654989
       },
       "60": {
-       "dps": 9485.99126550342,
-       "stdev": 436.66745313918886,
-       "min": 7788.052078346174,
-       "max": 11060.647892680074
+       "dps": 10075.534365080748,
+       "stdev": 558.9367140044805,
+       "min": 7900.913383600947,
+       "max": 12099.591750631142
       }
      },
      "link": "eJzsVU9oHFUc3u97s7tvf3XJy9Slr2PWrGPVsJg6u8OWtCJZBUE8SMBLj/VgkeKhuCc9rbm4rR56KAFzWsRDERFBDzETsdQIWSo1WqzJ+odSbA0iNYILC2KQnZ2E2GNpb/0OM+/3vd/vex/z5r2fPKtpGHAKz2GGR3EMr+Akm0ALPAOcAz4GF4DzwAqwCqwBV4ENYBPsgy3iKv9WrhNgCt5cTjtGe1uQgrke0f5R9DNfXeC5z1h29AFTkhHT+4m+6i4MiHFTEtdsRLRbRV9FN7a5vDn7obKni3HNuBTMbxFtX/uZ6AaHWRlzQApm4wfaj4r/o8dlxPwa0Z4d8zPtDtsdyoj5a4m+aneGGSXJms0l2reKkjc3l2jnxhI+b76JaJsPJsvmzc+f7IQlccxmRHHMF4uUrPk6or1UFDHNxW0/YmY/TZbwRWPwPWbSR9Nv5DUMLUs4iSYwi8zMqy+9/vJrp/HYZBCGlSAIgyAIJ4NaNQirQa1aidlaJQxr1TAIa5V5pLpIXYPVVy7SrF+n/f4iS7OXObH1HYM3L3O4GaeYinG4/h7/pZxPwnu4XbhTt1t5gWuUvaK9jDi6u6z8rKRFTdYaslcyniO0o35OspKeDA/WGlJIMr/tcRftOh6PpFzxhpMfvAO36D0go+URnXb5fMqLRQ8FjXj6nx7dR7yHZX95n1auPjHgvuzRy81ze5i83THPi1XULpVKw0uL0te0e8SbkoPu47KvXNDKzS1iULZ+Uw3KhWHjVgOVxEB3We14ff+Scp/ynpSK+4Tc54voamJxV9Tv8VapanUo1e9xR+qXXePusrJY4QpWOYf15P9+tP47U31mZ9UeUDnpTFbnZE9L4YR4WsPAcgL+2yoXZzeP10eHdffX98+/O0Bn+qHjMa5MV3+kTZdeLN/lszNxqn4nZJqd5TuiczdwOH5+/mf96WHcnz6GIZdanS5n9ZkXDOp45lC8QShxIr4v65jBoAXFN2ULaMcNaAFcG/QaNIkW0Sb+CwAA///GYdCD"
@@ -1736,22 +1736,22 @@
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 10862.898751690445,
-       "stdev": 286.07426014684586,
-       "min": 9846.73761113534,
-       "max": 11969.567142767024
+       "dps": 11595.777885887204,
+       "stdev": 363.3200067088825,
+       "min": 10301.768656656162,
+       "max": 12951.457798098825
       },
       "300": {
-       "dps": 10745.706828460976,
-       "stdev": 219.23294345214873,
-       "min": 9939.657863504377,
-       "max": 11636.410102439491
+       "dps": 11467.648875878323,
+       "stdev": 277.64792863959184,
+       "min": 10389.970445298724,
+       "max": 12553.935353694933
       },
       "60": {
-       "dps": 11052.661740829424,
-       "stdev": 495.4606579592255,
-       "min": 9075.071248632188,
-       "max": 13049.717130722207
+       "dps": 11796.971442318343,
+       "stdev": 627.9878785191836,
+       "min": 9418.038691180482,
+       "max": 14226.173522785983
       }
      },
      "link": "eJzslU9oXFUUxuf73sybO6eR3twaevvM2PFZNQymvpnHlLQiGQVBXEjATZd1YZHiojgrXY1Z6LS6qAgFswriQlxIRcGYKJYaIaFYo9WSjFCSToxBpLpwYFAs8v5MO3RZ2l3PYuae75zze+e9+9498rSiZsAJPIMpHsYRvITjbAIt8BTwIXAGnAPOAkvACrAKrAPbwF9gD2wR6/zbMdkAE/B+KqisVt6XlBH9RYf2j6LvfnuOC1ssZ5Wr90pBf7dO31nYogzpuW3aa8XEM3p+g/Zk4pWzaq/eFzG2aXvKdxe2UkYplt/o0H5cHJBdXRKjNzZp3x31C4kcUa3+dJP2nUEtzt4nVp/p0L5Z7Edml29c9ft12tOjvju7nMoRfkhf/o22eX+/3c87idee62eIvtDp9yj66/k+0OjPNmn/Kd7IjeKfbPbjO/XVDQ7cty8K0dOcyh3OvXaPgqZlCcfRBKbhTr38wqsvvnISj4wHYVgJgjAIgnA8qFWDsBrUqpVYrVXCsFYNg7BWmUGmjcwVWHXpPPXar7Q/n2dp+iLHrv3I4PWLTLbyBDOxHay/z/8oZ1P3rt2qmYlbrTzHVcouUZ4rWdVedPy85MQZrzVkl7heVmiH/YLkJTce7q81ZCTN/KHLAdlkPR7KGPGS4EdvwxS9+2S4vFPlDJ/NeDH0QNCIw/92aR7yHpQ95d3KMepYpH3TpVeYYX+Z/ptRz4spzgCl0vBy4qgryhzyJmS/eVR2l0eUYwrziMrWrjpRuTBs3NxAJW2gvehc7/WDC455wntcKuYxGfJFVDVtccDrdXkzqlpNUL0ur6MuD6zbi47FEpewwtNYS9/vh+u/M9NjftrZATrZnJtXBdnRcnBMPKWgYTkG/y2nEGc3j9aHk7p763tm3otsefKBo7Fdmqz+QpsrPV++w9/O2In67cA0lxdvC+dO2MH496s/608mfm/yCBItszJZzqtTz2nW8dSBeINQ4lh8XtYxhWiAxSdlC5iNx9ccuBpNKjSJFjFL/B8AAP//m5jp8Q=="
@@ -1760,22 +1760,22 @@
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 12645.638111138498,
-       "stdev": 307.39982343426186,
-       "min": 11330.401142341885,
-       "max": 13768.376077122963
+       "dps": 13591.516967424333,
+       "stdev": 389.7563777742644,
+       "min": 11845.311429567262,
+       "max": 15012.171116432384
       },
       "300": {
-       "dps": 12615.886494719674,
-       "stdev": 235.1794696040567,
-       "min": 11644.626929359281,
-       "max": 13629.925528532358
+       "dps": 13561.87426006943,
+       "stdev": 299.47924594768085,
+       "min": 12343.546019849142,
+       "max": 14853.227746089702
       },
       "60": {
-       "dps": 12695.773567009193,
-       "stdev": 527.0172965490813,
-       "min": 10541.4646695901,
-       "max": 14495.927077848426
+       "dps": 13666.954200762159,
+       "stdev": 672.7751099379483,
+       "min": 10954.37325063535,
+       "max": 15949.085383686268
       }
      },
      "link": "eJzslV9oHFUUxvd8d3Zy57SSm1uX3l6zZh2jhsXU2R22pBXJKAjigwR86WN9sEjxobhP+rQGxG31oYIIDQhBBEvR0uJLVgiEmkJCIESrJX9AakEQKc1qHVkRi8yftGkfS/PmeZi59zv3/Phm7sw9/KKEQoAxeokmcJiO0Bt0HC2iNuEU0Rmi84QZojmiBaIVolWiq0S/EnUJPUIbdBV/Cu0ENEZ2yZOOkvZrcEl9FcNcL/vupYuY7aDqSFcNsafOdOGL2Q5Yq/MxzK2yLzby9DBrNXcT5mTZFxdSbVgNsVGnuzA96XuXOljtIMsMqQqX1BddmHNl393oYHoxk4e5pL6MYT4e9N0Ld1YPs1HXN2E+Gkw5d2X61bkY5v1yWrDRScz/vQnzR9l3pxdzcGJeq/d+h2k9erfjmb8y7Q7PUctdsKN+6IJ3q09vwixnT8mszna3KvvVjZ+xhRpSFZ8lJS9xoni4+M5DkhQMKnScWkST5E68+drbr791kp4aDcKwFgRhEAThaNCoB2E9aNRrqdqohWGjHgZhozZFhXUqXCMjryxBrf0C8+MSKpOXMXLrewTvXka2gydQSONg9Bn+Bc/l0//jfkOP3W/lRayC97C0LjtyfV74fVxkMdpo8h52rcMwA77HfVwcDfc3mlzKV34XY5usHYtDBc02S579kHTZPsID1X5Z1Hi5YFPogaCZpv+JoZ+wj/O+6l4ptDyWaN/GsN4Utob5XQ9am1LENkqtaYss5DWpD9kx3q+f5r3VkhTa+4aSsrUbIilnhM17DdRyA+vz4rbXz5eFfs4+yzX9DO/2mWU9t7ht1otxL6pez1C9GLdRP20br88LQwtYoBV8Qmv59/1k9BsKPXiTYhdBOEW3T3q8qy3oGFspSZHBCPkfCC9d3ToaDWR1D0f7pk4nsTj+2NE0rozXN2CKlVerO/zvjJyIHgSmtTj/QDg7EQfT6+xm9Hw2740foUwrrIxX++SpV5SI6IUD6QZRBSPpeRnRBCV9Kz0p20TTadeaIawmDYpaoDZoGvRfAAAA//+2E+YF"
@@ -1784,49 +1784,49 @@
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 14688.82652869687,
-       "stdev": 297.9586742080815,
-       "min": 13534.260534190404,
-       "max": 15754.8187378429
+       "dps": 16836.971714879386,
+       "stdev": 413.9683973170204,
+       "min": 15367.138979705396,
+       "max": 18274.745616656553
       },
       "300": {
-       "dps": 14507.587109279602,
-       "stdev": 222.30772587361,
-       "min": 13666.469478152549,
-       "max": 15333.22310058453
+       "dps": 16651.44940289218,
+       "stdev": 318.323612590465,
+       "min": 15278.846518118862,
+       "max": 17795.082750961767
       },
       "60": {
-       "dps": 15031.260812180173,
-       "stdev": 523.8172814919108,
-       "min": 12973.746893132986,
-       "max": 16764.491797666073
+       "dps": 17326.12743375136,
+       "stdev": 732.8539167923182,
+       "min": 14334.530381276949,
+       "max": 20067.27784730318
       }
      },
-     "link": "eJzsVU9oHFUY39/3ZmfffI3k5dXQ12fWrmPUsJg6O8OWtCIZBUE8SMBLj/VgkeKhuCc9rbm46S4SEArm0kV6EAnS3BqxUOoGEgoSLZZNCqUEhCKiHlxY/FNkZjbL2mNpb/0ddr/v977fbz7em3kfvy5JUUBzeAMLdBKn8B7OUh1ogJaBL4FLoMvAVWAT2Aa6wB3gLvAHqA9qEO7Qn0I7AeZgv/Wko6S9SDyuLiwL82vRdzeu0cZ6Quw1hS+661R25BFVYq0u9cjcK+5zrprmMdVpCnMu49iojaYwfel7a+uJx752mifVraYwXxd9t7tOayP0ao/MZ1O+2976H/1pS/heVro2fNikai8L80nRd9dGTcZVsyXM+Snf3UhpHlN3m8LUn/ZFe4tYq9tLWZa1M61KzGp1SQzjK2lcUkd4TK22hPmrmCkddaEl2FP/DPbBZ4lk1xbyJ/MfPSGhyFAJZ1EHFuEuvP/Oh+9+cA4vzAZRVAmCKAiCaDaohkEUBtWwkrLVShRVwyiIqpUV5HaR24ORN6+T2vmZzE/XqbR4g2bu/UjBxzcoO7IlyqU4Hn9B/xJfHaSP8aDQcw+qvEZd4oMsrcuO3O0Iv8B5FrPVGh9k1zpMZsL3uMD52ehotcaTg8ofejRCa8fSiZxmmy1+1YIu2qd4ojwu85rezNnU9FhQS5f/7pF+zj7Lh8uHpNDyTMJ91yPrrdB+OPjXU9amLmLEpVKzeRZyT+oTdo6P6hf5UHlSCu19g0S285tI5ExR7f4GKoMGdjti2OvF74V+xb7MFf0Sj/nMMhy0OJL1e3S/VRhmVv0eDa1uj8S7HWGwSZvYpvPYGbzfz8e/UK5PhUVxACScvFuQHh9oCJxhKyUUDM3Abwovra6fjicy3ZPx4ZXPE2zNP3M6xc358BaZfOnt8iP+dmaW4odhU9/qPBSfR4Hj6e+V3+NXs7w/fwoZl9ueLxfk8lvKifHasfSAUKKZ9L6MsYBkUKU3ZQNop2PqMqibTCTUCQ1Cm/BfAAAA//97L950"
+     "link": "eJzsVU2IW1UUznfOS3Lf6cjcuXXo7XPSxmfVITj1JY+UaUUmCoK4kAE3XdaFRYqLYla6irNKmllEkIKzsLG4ECniLJRGKJSawISCjBbL/EApA4KIqAsDwZ8i773MELosnV2/RXLPd+/57nfefe8eeUWRpoDm8SoW6TTO4G2cpxpQB7WAz4GvQFeB68AasA5sAHeBX4A/QUNQnXCX/mLjBJiH13GVo5X3Kcm0vtRi+1vOz/RuUK9DBUcd00dlUu802eftmDiq8zKhL7fY3svFnEzobpPthVFkda/Jdqh8d7UTaexmHZNpvd1k+2XOz2x3aHWM/qTF9qMZP9Mbp43+usn2wxnfTejVTuSv3WLbPuJn2n1q93eXTurmMtuLiUK7T2L0nQbb2pFxz0Z/00y43t4ejr7WYBF9pcFxqVFlV5bZ/p3zOdrP0ZeWWVz976h8XxSiR7aYPp1+/zEFTZbyOI8asITM4jtvvvfWuxfw7FwQhsUgCIMgCOeCcikIS0G5VIzZcjEMy6UwCMvFFaS2kNqBVbdvkt78mexPNym/dItm7/1IwQe3KDmvBqVinKxcpv9Iro/CR3hQmPkHzbxBGyQHRXkZcdRWl/2spIXnylU5KBnPEbJTvitZSc+Fx8tVmR6t/GFAY7RxPDqVMuIlk18sw+S8J2SqMKnShl5LebHoiaAaT/8zIPO095QcLhxSbNS5iPtuQJ67QrvD0b+Z8bxYhcdUilUvLax2lDnlzctx85wcKkwrNu63iNI2f+coXSis3m+gODKw1eU9r599z+ZF7wUpmudlwhdRpZHFsWg4oPulSqVEajigPak7Y+OtLlus0RrW6SI2R+/3M5VfKTWk7BIfALGTzmSVKwfqjHPiKQUNS7Pwm+zGq2tnK1NJ3uOVwysfR+gvPHk2xu2F0jbZdP6Nwj5/O7ONysOQqfW7D0VnP3Ay/r32R+WlJB4unEHCpdYXClnVel07Fbx8Ij4g5Gk2vi8rWETUpeKbsg604x51FbQRtSPUCHVCm/B/AAAA//+yFt4t"
     },
     {
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 15588.297108132765,
-       "stdev": 353.5313325302896,
-       "min": 14155.733696501626,
-       "max": 16862.60730814393
+       "dps": 17016.67777239642,
+       "stdev": 412.6350438421862,
+       "min": 15305.903198869382,
+       "max": 18413.521842690094
       },
       "300": {
-       "dps": 15392.89312400603,
-       "stdev": 270.42387934956014,
-       "min": 14382.630102867963,
-       "max": 16393.704698119232
+       "dps": 16805.011964189933,
+       "stdev": 316.5582645484074,
+       "min": 15584.273328169533,
+       "max": 17933.99798101377
       },
       "60": {
-       "dps": 15930.771273059696,
-       "stdev": 617.5447581117402,
-       "min": 13788.536312272225,
-       "max": 18258.4660876241
+       "dps": 17448.116602757516,
+       "stdev": 725.9899832480149,
+       "min": 14501.540320622647,
+       "max": 20074.045107246526
       }
      },
-     "link": "eJzsVU9oHFUc3u/3m9l982slL1NDX8emXceqYTF1doctaUUyCoJ4kICXHuvBIsVDcU96WnPaNHvYgxTNwa6lB1lEmot2xUKpCWQpSDRYkhRKKQgioh5cWPxTZN6sce2xtLd+h933vvf9Pr43b+b95CVFmiKawcuYo+M4gTdxmupAA9QCPgEugi4BV4A1YB3YBG4BPwK/gQagBuEW/c6+E2EGwUVPOVoFH5BM6HMtNj9PhvnVq7TapZKjDumD4ukLTQ55tZsqNhbZ3EkVXVq2ioO6KLv1Fx02ZyZDXu6SjOmPW2wGKswvd+mGJT7vsPls0hLL1uajFpv39//P5pCM6fMdDr1MlOnaLTbtA2G+3aN27z/dYpPN2ay83SPx9c0FNvUDIW/uZPL1UjPjVnc4R19eYBH9VYft3lLVp002f2TJh/t19Lkmi6f/WmRrGIpC+qTm3OPuu48oaDJUxGnUgXnk5956/Z033j6Dp6ejOC5HURxFUTwdVStRXImqlbJlq+U4rlbiKK6Wl5DbRu42jLp+jfTWD2S+v0bF+Q2auvMdRe9tUHZMC5SzOJqcp79JrgynD3Gv8GfutfIqbZLsERXkxVHbKxwWxBWertZkj+QDR8iMh54UxJ2OD1drMjFUftunEdp3AjqW8yXIFjtN+JPBYzJeGlOuT6/kAmt6JKrZ5T/75D8ZPCH7SnsV++pUyn3dp8Bbon+Hw39/fxBYFx5xKdcCV1jdVv6xYEYO+8/I3tKEYt/7EmnZ1i+clgvFtbsDlIcBtld4J+uFb9h/PnhOyv6zsjsUUZVhxJHZoE93W1UqmdWgTztWN0fG2ytssEZrWKez2Bq+308lP1FuQIV53gVix80XlCe7GoxTEigFDUNTCBfZs+r6yWQ8q3s02bf0YYre7OMnLa7PVm6QcYuvlR7wtzO1kNwPm3pv5b74PAgctb+Xf01eyOaD2RPIuNz6bKmgWq9qN8GLR+wBoUhT9r5MMIe0OdmbsgG0bWu6BNpMuxDqhAahTfgnAAD//8493BE="
+     "link": "eJzsVU9oHFUc3u/3m9m8+TWSl1dDX8esXceqYTF1doctaUWyCoJ4kICXHuvBIsVDcU96WnNx0w24By2Yg12KBwkq5qB2xUCpWUgoSLRYkhRKCQhFRD24sPinyPxpXXos7c2PYea97/2+j+/Nm3lPnlekKaQZvIA5OobjeA2nqAE0QW3gY+Bz0HngArAObAJbwHXgBvA7aABqEq7TH2ycEDPwP/WUo5X/PsmYPttm+0shyPcuUq8bE7stDnirSyVHHdBFMfpcm+3NQsCrCXdQH5BR/dUy29OFgFe6JFb3WmwHKvBWurHH1Ux7UMb0l8tsPysE+ZUudTZi9w/bbN+bDPK9lDD6ixbbdycDr9elleSSCd1ps32nkBQNm7UW2Z5JtXGd0TdabBsPB9zZuJXM6GsLKfffDER/s8zJeFEcvbrAMqo/WWT7Z5bf0WcXWTz9dzbxQBTi1zTnHnPfekBBk6UiTqEBzCM/9/orb776xmk8MR1GUTkMozAMo+mwWgmjSlitlBO2Wo6iaiUKo2p5Cbkd5HZh1ZVLpLd/IvvjJSrOX6apmz9Q+PZlStdogXIJjtTO0T8kF7Lu/7hbmJm7VV6kLZK9ovy8OGpnjYMRcYWnq3XZK3nfEbLjgScj4k5Hh6p1mcgqv+/TEG0cn47mjPjp4PIiTMF/SMZLY8o19GLOT0wPh/Vk+K8+mcf8R2V/aZ9io07G3Ld98r0lutXMnmbS9xMXHnIp131XWO0qc9SfkUPmSdlXmlBsvK8Ry7Z/5VguFNXvDFDOAuys8e2sH33H5hn/aSmbp2Q0EFGVLOJQb9CnO60qldRq0KfbVteG2jtrbLFO69ikM9jOvu/Haz9TbkAj87wHxI6bH1Ge7GkyToqvFDQsTSFosZdUN07UxlPdg7X9Sx/E2Jh95ESCK7OVq2Td4sul+/zvTC3U7oVNY2PtnvjcDxxJ7qu/1Z5N+4PZ40i53OZsaUS1X9JuDc8dThYIRZpK9ssa5hCfTMlO2QQ6ybl0HrQVH0FoEJqEDuHfAAAA///UItz6"
     }
    ]
   },
@@ -1842,121 +1842,121 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 7879.719761597945,
-       "stdev": 258.71126705972625,
-       "min": 6889.5229772057155,
-       "max": 8928.539120780446
+       "dps": 9123.213310383262,
+       "stdev": 300.42766516943124,
+       "min": 7938.410574198749,
+       "max": 10297.098587724067
       },
       "300": {
-       "dps": 7827.542382395184,
-       "stdev": 200.66802638660997,
-       "min": 7097.37670400949,
-       "max": 8629.465031039328
+       "dps": 9061.935157852233,
+       "stdev": 230.87823602469228,
+       "min": 8184.4295294795465,
+       "max": 9915.82511258843
       },
       "60": {
-       "dps": 8395.986455557768,
-       "stdev": 449.0056708521108,
-       "min": 6355.4814490565805,
-       "max": 10194.312006844832
+       "dps": 9665.832893792889,
+       "stdev": 517.6581110897225,
+       "min": 7912.570850141969,
+       "max": 11908.61577932463
       }
      },
-     "link": "eJzsVU1oXGUUfee+N+99c5tJvnxJ4PVzxoyPpIaBKe/H0TSbjIpSXEjATZd1YXGhUDIrXQ3dOFa0pYq0BWtwUVx0IdlYmqnEIJiI1eBgmyYKpYtiTTEycTEgGnnvTQjS1IW2O+9i4J57zpnDHea7/IwgST6N4yCm6BAO42UcpTrQAJ0EPgY+AV0E5oFFYBlYAW4APwG/gjqgBuEG/WYqy8c49B0WJLP6DrhPLjfJvV3w7LUFOrdEnJWdH8gzz98i7pHfNcn9vZB2jjx1wXRPFVjJtSa5nRQuWWJUDvOQPD5H7oWCZ5+/RSk8LEdYyR+b5L6X36YOy1EeklcvkXsi/zdqkYfk+jVyNwqefW6JvrmyDTvyxGVy389zj7x+jdytgmfGKR359mdxxyznL207W3L9W+KcnJ8j90qhZIkROcwGO/LzOXJP5z0hyLenzEPW6zkBSS4VcRR14BjsqVdefO2l6eMYi/ww9KPQD6MoqgS+H/ihH4RhEIVREFaCcuRXyqEfRWdhrMK4iUHxYYvkBy1yT7eo+EaLxppblG79I/qDeJ6M/+s/lRr/t8oF+t7iAXZ0hk2xNegJttkqB36NVRf8NOc5nGGzHO1gZwa6WFjjAba1xeT2e1l2OFP29wc1ZWmaMFRWb9PVQ3ovy1KvMBVNG9pmiyn0u1+q+nSOM18RCaRO6qB+lifUeKKwdxRRhVVJCkuZC2ToJEHwai1hZZR5E0ZsyAi0YLsIMbNJ93J6zL+nE3ZxWm2TinTAj6pR7l+lXrbEepu6oWosvV7umUWWTfHl04pkJp7EjB2R18e5WTBb4nabYko3NT3XTfRELRHF00GtODuLuG29ayVLWjmgHtb5JHNG0YShk98p2l9JVV//Qiqv9V378pPpn+1dp0ElmW60SYXa531q5G7GLruNNe9s/pPjZptcLNIirnf/2PuqP5PRIeeYuQdkWhnbEVne0zAxLbQtET8y3ltmNuHWj1T7U9Vgde/ZM3EtTT5yJKmrk+EauZniC6UH/GSMvVm9Hzb1pS/ui8+DqAPJ5+WN6pNp35k8jBQzlidLjjj5vEQVTz0uIOGiSGOIr2IVU4gPa3ITGsBMclYvglbiC4o6oUGYIfwVAAD//0EL50I="
+     "link": "eJzsVU9oHGUUn9+b2ZlvX/Pny5cEpp9ZXYe2hoUt38y4muaSVVGKBwl46bEeLB4USvakp6UX1wq2VA82IAYPwUIFycXQbCFWwUQUg4ttmiqUFoM1YGTjYUE0MrNTAjb1oO3Ndxjme+/3+73HG+b78dOCJBkaw2FM0hEcxUs4TnWgAToNfAh8DJoHFoElYAVYBa4DPwG/gjqgBuE6/WYrx2AM+iYLknl9E9wvV5rk3yoE7kef0ew6cV52vqfATl6V/LZJ/u+FwP5xnkqOKMr97Mkz523/TIF75LUm+Z1CYJ9bJh6WJxfIP18I3Nl1OrecoB+S+7hH/tAk/52Rrt6wvHyB/FMjKWh2vQsq8rDcuEL+ZuFvaU+eukh+O+l09Qr521mnXjndTE5ZB5aLF24zHLnxDbEnFxfI/7rAFjvy0wUKhCDjTtpHnNd6BST5VMRx1IETcCdffuHVF6dOYjQ2UWTiyERxHFdCY0ITmTCKwjiKw6gSlmNTKUcmjqdhrcG6gSHxfovkey3y321R8fUWjTa3qbvsD+gP4kWy/o//FGrs3zIv0XcOD7Knc2yL7aFAsMtOOTQ1Vlnyk97A4xzb5Xgnd3Ywy0U1HmRXO0z+QJBnj3NlczCsKUfTuKXy+jZcPaD3siz1CVvRlKVddpgikzVV/bqXc18SCXSV1GH9DI+rsZTh7jDiCquSFI6yL5Gl0wnCV2opKqfsG7ASQUaoBbtFiJktupvSo+auSthFaa1NKtYhP6L288Aa9bEjNtqUDVVjGfRxzxzybIsvnlIkc0klQeyQgn7unQOzI261KYFkU9Oz2USP11JSUh3SivNzSI6tt510SauH1IN6JJ05p2jc0ul3ig9WuqyvfiE1ovUd+zJp9c/2rtWwklY326QibfiA2ncnYpfdJpy3tv5JcatNPpZoCVezH/tA9WeyOuSdsPeAbCfneiLPexo2poR2JZJLJnjTzqfY+rHqQJc1VN07fTaJ5YmHj6VxeSK6Rn6u+HzpPl8Zo29U74VMffnze6JzP+JQ+ry4WX2ie+5MHEU3Z61MlDxx+jmJKp58TEDCR5FGkZhhFZNI/DT1hAYwk7rpPGg1MU7UCQ3CDOGvAAAA//+91OYr"
     },
     {
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 9064.351325006419,
-       "stdev": 284.1148050417969,
-       "min": 8032.441742344822,
-       "max": 10213.285008119708
+       "dps": 10244.900486590115,
+       "stdev": 318.9215174030955,
+       "min": 9029.231255496688,
+       "max": 11582.697787196856
       },
       "300": {
-       "dps": 8992.330180480913,
-       "stdev": 220.22245906544464,
-       "min": 8198.500883362096,
-       "max": 9877.353462105946
+       "dps": 10162.373703115003,
+       "stdev": 247.4556353022523,
+       "min": 9247.398404478288,
+       "max": 11114.32976280015
       },
       "60": {
-       "dps": 9593.905577538952,
-       "stdev": 464.1500512217357,
-       "min": 7815.953026439263,
-       "max": 11437.147912994624
+       "dps": 10807.326240615435,
+       "stdev": 541.3471063633739,
+       "min": 8573.896680830365,
+       "max": 13232.257680386403
       }
      },
-     "link": "eJzsVU9oHFUYn+83s7Nvvprsy0sK02ei65DUsLBl/ria5pJVUYoHCXjpsR4sHhRK9qSnpRdXBSkWxBZso4XQgwfJQSO0UFrBRIwEFkuMFJNuSKwFWzYeAqKRebM2gaYetL35MQy83/f7/d4332Pex88JSIQYoUM0jsN0hF6lY6gTNQgniM4TfUaYIbpENEu0QLRItEz0M9FtwiahAVrGb7ZyQhohfW6PgPT0OfBeOdmCf2MgcD+/gu/mUXLEo3KQPTnfQmBPraWMiyvwfx8I3Kk1nJnLGEUuyIV1+O9ncMrz5cct+JsDgZcBU2spdVAO8V750yr8T+9QO7CS1y7AP9lvtjGuQ1yQX67AOJyZSx9WcrkFv653uHJBnl2F/0H/na2VXF6HvzWw7VRkJc+vZtiVmRQryiF25NV1sCNvms+61oI/v7OoVGZxQd5ewQ6nQAiE7rh92HmzS5CEjyIdozrRcXLHX3v5jVcm3qHhJIzjMInDOEmSShSGURiHURxHSZxEcSUqJ2GlHIdJcpqsJbKuU58424T8qAn/wyaKbzUxfGEL2WF9gj/Al2D9H/8p1Mi/VV7G9w73cl7n2BZbfYFgl51yFNZYdcAvuoI859guJ9vYqd4OFte4l13tMPyewOM858rhgaimHI1RS3n6b7p6WO9jWeoWtsKEpV12GHHY2VQVdBfnvgEEZU7qkH6eR9WIUbjbiqTCqiSFo+zLsLSpIHq9Zlg5ZV8nKzVkirRgt0hicgP3cnoivKcT7eK01IZKdMSPqyHuWUI3O+JmG52iaiyDbn5omjy2xdfPKshcmkkZ26KgwF3TxOyIG22klE7VeKFT0VM1I0qzfVqxN03psnnSMU1aPKge0f2m5pzCqKXNOSUHKpnq21+h+rW+q1+hyf7Z3jUbVUz2Vhsq1iHvV4N3M3bpbap5b+OfHDfa8GkWs/RD58feX/0F1ibyx+09BNvJuXnh8Z6GTRNCu5LSSyZ41/YMt3602pOp+qr7Tp9KY27ssaMmro7FP8LPFV8qPeArY/jt6v2wqc99dV98HkQcNO+Lt6pPZ+vNsSOUYdbCWCkvTrwoUaVnnhQkyacihikdplUap3Qem5nQIJo003iGsJgOXqqDGqBJ0F8BAAD//3NI/SQ="
+     "link": "eJzsVU1oXFUYfd95b97c+dJkbm5SeL1mzPiYqWFgyvtxNM0mo6IUFxJw02VdWFwolMxKV0MRHBW0GBBbsA0uQgsuJBuzqFCCYCIKgaElpoixkyatBVMmLgJFI++9SdPS1IU2u36LgXe+c849917mfvySgISHYTpCYzhKx+hNOoE6UYNwiug80deEGaJLRHNEC0SLRMtEN4huEzYJDdAy/jSV5dEw6QtdAjKjL4D3y8kWnJs5174zi+szKFliUBY4KydacM2p1QTIc1ZeXoNzJ+fa12cwtQrOyoU1OJ/mXHtqNQaUvHoRzmbONc/OR6pirPp1Bc5XCensPNiR77XgTAy4mUS1vUCB98tPbuB+uCgL7MjlFpz13P2dvCxyVp5bgfPZwD0BltfgbOXujb1Pnl+5izHLWx35IFvyylq0/V9acH66u4uSJQqyyAZn5e3fsL2VQZl3hYBnj5lHrXe7BUk4yNMJqhOdJHvsrdffeWP8QxoKvSDwwsALwjCs+J7ne4HnB4EfBqEfVPxy6FXKgReGZ8hYIuMa9YtzTcgvmnA+byL/fhNDF7eQXNmX+At8Ccbj+l+lhv+rchaXLe7jtE6xKbb6XcE2W2Xfq7HqgN90u2lOsVkOd7DTfR0sqHEf29piOL1uhtOcKnuH/JqyNEYMldHbdPWEPsCy1CNMhXFD22wxAq+zqMrqbk79AAhKnNQR/TKPqOFYYe8owgqrkhSWMmdh6DiB/3YtZqWUeY2MyJDJ14LtPInJDTzM6RnvoU60i9NSGyrUPj+tity7hB62xK02OqFqLN0e3jdNGTbF9y8qyFTUiRg7IjfL3dPEbImbbUSUTmq80kn0XC0WRd1+rTgzTdFnc8KKD2nxsHpSD8SZUwojho7vKTxUSVQ//gE1oPUD5+XF3b/bu3b9Stxdb0MF2uODqvAgY5ezjTQfb/yb40YbDs1hjn7u/LEPVn+HsYnMSbOLYFopOy0y3NUwaVxoW1L0yLgfmZmYWz9e7U1U/dUDZ05HNT/61PG4rowGV+Gk8q+V9vjJGPqg+ihs6vPfPRKfvajD8e+369Xnk+/N0WOUYMbCaCktTr0qUaUXnhUkyaE8higaqVUao2gqxzOhQTQZz+QZwmI0fqkOaoAmQf8EAAD//63A/j4="
     },
     {
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 12048.425654956434,
-       "stdev": 357.14621377494865,
-       "min": 10702.199578313117,
-       "max": 13739.02199788501
+       "dps": 13369.346733588241,
+       "stdev": 393.26746115736506,
+       "min": 12078.521973042712,
+       "max": 14947.495047002312
       },
       "300": {
-       "dps": 12023.695993879426,
-       "stdev": 280.9059710204177,
-       "min": 10920.69593986875,
-       "max": 13146.742284247817
+       "dps": 13350.986190295445,
+       "stdev": 306.2857493518272,
+       "min": 12238.348233474499,
+       "max": 14613.670519411718
       },
       "60": {
-       "dps": 12689.718928336044,
-       "stdev": 605.7175519738323,
-       "min": 10435.219934381992,
-       "max": 15011.611131453132
+       "dps": 14062.382103165897,
+       "stdev": 656.5544293849468,
+       "min": 11487.84118984844,
+       "max": 16591.71585133172
       }
      },
-     "link": "eJzsVUFoHFUYnv+b2dm3f5rk5SWB6TMx67CpYWHLmxlX01yyKkrxIAEvPdaDxYNCyZ70tPbiakGKAbERMYgHAx40UG1ApVTBrCgUVkuMlxJRrIIbNyKJ0q7MzLYJNPWg7a3/YeB9//d97+M95v38iICEwSQdphkcoaP0NB1HjahOOEX0LtH7hLNE54hWiC4QrRJdIvqZaIOwRaiDLuEPWzmGJknP9wjInJ4HD8vONrzLo7774We42EHREWNynHPymxZ8+8wyWMkr2/D+Hk1WRUfkZYH3yeVNeK+mGA/LF/6CtzXqu2eWcY00xv1yvQXvveswK1n/Hd7ciJ9LgVT7wQZ2Acn+eR6WV7fh1bTvLja68LgscL/8sQXvtZFdlj+04HWuhyvIcVby0z93Y2OywI48uQF25Bsb4H75Uwve12muxQbYYiXnWvDeGfbtxUZqk/eFgHFn7CPO872CJDzk6TjViE6QO/PMk889NfsyTUQmDE0UmjCKonJgTGBCE4RhEIVREJaDUmTKpdBE0TxZa2St05B4qwn5ZhPe603kX2xi4uMO0jt6G1fA52Ddqf9VavK/Ks/jW4cHOaszbIvOkC/YZacUmCqrLvhRr5/lDNulaAc7PdjFwioPsqsdhjfg5zjLmZI5GFSVozFlqZy+Rld36f0si33CVpi1tMsOIzTdTVW/7uXMl4Cg1Ekd1o/ylJpMFO6OIiqzKkrhKPs8LJ0kCJ6tJqyMstfJig2ZAi3YzZNY2MTNnO4zN3WiPZzW2lCRDvheNc4Da+hjR/zaRjdUlaXfx/uWKMe2+OJhBZmJOzFjR+T3c+8SMTvichsxpZsaj3UTPVBNRHF3SCvOLVG8bM45ySGtHlJ365Ekc0ZhytLJPUUHy6nqq9+gRrS+4bxM0r3a3rMblJNuqw0VasMHVOFGxh5nG2te2fw3x802PFrBCn3X/bEPVH6BtYXsCbuHYDsZNyty3FO3aVZoV1L8yPgn7VzCrR2rDKSqocr++dNxNabvOZbUxenwe3iZ/BPF2/xkTLxUuRU2tcbnt8TndtSh5PtJq/Jgut6aPkopZl2YLmbFqcelXaGH7hckyaM8JiieoRWaoXgMJzOhTrSQDOGzhNV43lINVActgP4JAAD//+wu+SE="
+     "link": "eJzsVU1oXFUUfud7b97cd5qfm5sEXq8zdnwkNQxMeT+OptlkVJTiQgJuuqwLiwuFklnpauzG0YIUK2ojYnClIESzqA2olCCYiJbCaI3ppkQUq+AME5G0UkfeT4zQ1IW2O8/iwfnO+b77cS7vHn5IQMLHJB2iGRymI/QkHUODqEk4SfQO0fuEs0TniFaILhCtEV0m+pGoQ9giNEGX8aupLJ8mSc/tEZCOngOPyt5VuFeKnn1pGRd7KFtinxxjR37Vhme+uwruk9evwv29mGZKLm3CfTnNypYoyX08KJ+7Bner6NkLS1hYAg/KjTbc94qefT4FRmXjGtxXCttAdsqo/KADz0mxbbjErvymA7dd9JyFv1VKcpxH5fdtuK8WPPvMEs5khHHuk9+14faKnhkfpuQnv6XZ+b8kLXmiA7bkG53Y3Q9tuF/u2DVYyVNtuK8VEoGyJcZkyRMCvj1jHrae7Rck4aJEx6hBdJzsmacef+aJ2RdpIvLD0I9CP4yiqBr4fuCHfhCGQRRGQVgNKpFfrYR+FM2RsU7GBo2It1qQb7bgvt5C6fkWJj7qIb2jt3EdfA7G//GfQk3+W+YyvrZ4mPM6x6bojXiCbbYqgV9nlYEf9nt5zrFZiXaw08MZFtZ5mG1tMdwhz+E85yr+gaCuLI0pQzl6u13dofeyLA8IU2HW0DZbjNDPDlWDup9znwOCUiV1SD/MU2oyYdg7jKjKqiyFpcxlGDpxEDxdT7pyytwgIxZkCrRgu0RifhM3U7rHv6kS7aK03oWKdMB3q3EeWscAW+LnLjJTdZbeAPctksOm+OxBBZmLK3HHDskb5P5FYrbElS7ilsw1Hskc3VdPSHF1RCt2FilOW6esZEhrB9WdupB4zilMGTq5p+hANWV98QtUQesb5uUn1T+6u1aDalJtd6FC7fN+NXZjxy6zjTkvbf6T4mYXLq1ghb7Nfuz9tZ9gbCF/3NxDMK2cnRcO72maNCu0LSl+ZLwTppP0No7WhlLWSG3v3Ok4VqfvOprExenwEtxc6bHybX4yJl6o3QqZxuqnt0TndsTB5Ptxu3Z/mm9NH6EUMy5Ml/Pi5KPSrNED9wqS5FIJExTv0BrNULyGk53QJJpPlvBZwlq8b6kBaoLmQX8GAAD//wNJ+Yw="
     },
     {
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 15546.964786910063,
-       "stdev": 387.89320387083836,
-       "min": 14219.928332110709,
-       "max": 17172.160533999046
+       "dps": 17858.037200117655,
+       "stdev": 476.3406683532395,
+       "min": 16208.812666813357,
+       "max": 19772.48585524239
       },
       "300": {
-       "dps": 15446.460035813445,
-       "stdev": 304.8468029839634,
-       "min": 14355.325600606016,
-       "max": 16665.35400371468
+       "dps": 17783.79588687592,
+       "stdev": 376.8720660211694,
+       "min": 16237.150358305911,
+       "max": 19271.721756656756
       },
       "60": {
-       "dps": 16711.606710363933,
-       "stdev": 662.8481443318029,
-       "min": 14177.112612533932,
-       "max": 19961.883980794042
+       "dps": 18798.587533297272,
+       "stdev": 782.027349858043,
+       "min": 15943.535583058903,
+       "max": 22108.453709007834
       }
      },
-     "link": "eJzsVU1oXFUUfufcN2/uO/mZm5sUbq8ZHR9NDQNT7nvP0TSbjIpSXEjATZd1YXGhUDIrXQ114cQJkloRUygGXWhBrQRSO/5AqIIZ0VAYrDFuSlZWoZUZFwHRyLtvNIWmLrTZebg8uN/5vu8c7uXdQ49yFGhwAo7ANB6FY/AMnMAaQB1wHuBdgA8BLwKsAKwCXAZYB7gK8CPAL4BbgHWEq/grk66BCdCn+jgKX59C2icW5pi6lg+8C5/jlW0surwgxignWg0WsAvNBDggxqhfnJ1n6rd8wJabSP2i2UX1am+nxAcNprbygX++ien62+Z6g6n38oG3ZmFSottg6rXRwF9u4nITz7XSAgXKidNz7CYHkmKlwVRN34zlxPkGU6+PWr81S9qcZWo7H7A1W/Qe2+rHjRRLmnPFO7OMXPHJLCMpvnuRqW/ytvq5VrLIoX7x/hxTb++z/IBzNN40O+q+MMBBoMICnIAawEnwpp996vmnZ16G8dhEkYkjE8VxXA6NCU1kwigK4ygOo3JYik25FJk4PgPOBjibMMLfbKM420b1RhsLL7Vx/NNtTK/mLfwdaQWd/+M/hZz4t8pL+K1Lw5TVGWJ8eyTg5JFbCk2VZA/8aCDIUoZYKd7BFoZ7WFSlYfK0S6iGAp+ylCmZQ2FVuhonHenrv+jyLr2fRHGQM4kzjvbIJYxMr6jM6QHKfIXIIXWSR/RjNCknrMLbUcRlkkXBXckuoaNtB+FzVcvKSLYJTmJIEGpOXgH4Yhdv53S/ua0T7OK00UEZ65Duk2M0tIGD5PKfO9hrqkoiGKT+JfCJ8S8fkSgySSZh7IiCHA0sAZHLr3UwofS6xsd7HT1YtaIkO6Il+UuQbNunXXtI64fl3XrU9pyROOloe0/xoXKq+vo6ylGtbzkvY7N/dHbNhmWbvdFBGWlDB+WBWxm7nG2ieaX7T47dDipYxVX4vvdjH6z8hM4W+idZHyBzM16W+9RXZzDDtScgeWSCBvMtt3a8MpSqRir7zywk0Zq697iNK1PRD6gyhSeLe/xkjM9W7oRNrfXFHfHZizhsv5/dqDyU7remjkGKOZenilk+/4RwK/DwAxwEKCjgOCSjswLTkExfOxPqAIt29l4EXE/GLNQQ6giLCH8GAAD//8FJ9XA="
+     "link": "eJzsVU9oHFUYn+97M7Nvvvx7ecnh5blr1yHWsLDlzYyraS5ZFaV4kICXHuvB4kGhZE96WuvBjRvCakVMtTV40YNSyUG7aqFUwaxILCzWGBFKTlahlY2HgOjKzGwSoakHbW79WBa+3/f7/d6PN8x89ChHgQYn4QjM4FE4Bs/ACawC1AAbAO8DfAR4HuAiwArAZYA1gKsAPwP8BrgFWEO4ir8zaRuYBL3Qx1F4egFpSLzVYOpaznc//gLPtmKgVWc+u9DEgs3HRZ76xZkGU3/kfBaPpfipztRruW1GXhwgKV6cZ2or53vnmnili6vN2OZ6nakPcr672sRzTSQlNutMvZ71vRQ429o+QIpT80y9mk3k6Y+GxNsNpqrad3eAb+tMvZHd8esXn9aZ6uZ8FndSbMyl3WoS64AYJ1t8NseIxHtzbCfo9y8xtTj2z5Ms8sSH8yyx8TlH486wo/YLAxwEKszDCagCnAR35tmnnn969hWYiEwYmig0YRRFpcCYwIQmCMMgCqMgLAXFyJSKoYmi02Ctg7UBo/ydNoozbVRvtjH/chsnPu9i+lzexT+RLqJ1p/5Xycn/qryE39k0QhntEOPdUZ+TS3YxMBWSPfCTAT9DDrFitIstjvSwsEIj5GqbUA37HmXIKZpDQUXaGqcs6elturxLj5EoDHImcdbSLtmEoekdKof0ADlfI3JIneQR/RhNyclE4e4qohLJguC2ZJfQ0kmC4LlKwnIk2wArNiQINCc3D3xpE2/ldL+5pRPs4bTeQRnpgO6T99LwOg6SzX/tYC9UhYQ/SP3L4BHjXz0iUTjxJGbsivwhGlgGIptf62BM6aXGx3uJHqwkong6qiV5yxC37VN2cklrh+XdOptkdiROWTp5TtGhUqr65jrKrNY33ZdJpn919pwGpWR6o4My1IYOyvGbGXvcbaxZ2Pw3x80OKljBFfih92IfLP+C1hZmTrI+QGY7boZ71FdjMMu1KyD+yPh15iXc6vHycKoaLY+dXoyrNX3P8aSuTIc/onLyTxb2+ZMxMVe+HTbV1pe3xWc/6nDyf+FG+aG035o+BilmXZ4uZHjjCWGX4eEHOAhQkMcJiPdmGWYgXr3JTqgBLCWL9zzgWrxjoYpQQ1hC+DsAAP//YTTzJA=="
     },
     {
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 16214.734706532825,
-       "stdev": 430.2381922180024,
-       "min": 14526.731006512764,
-       "max": 17737.023675010492
+       "dps": 18416.26271227017,
+       "stdev": 502.28296965275786,
+       "min": 16585.192001035855,
+       "max": 20157.21137957921
       },
       "300": {
-       "dps": 16131.027530086205,
-       "stdev": 339.6024853867732,
-       "min": 14868.458970416323,
-       "max": 17383.136550994754
+       "dps": 18309.914052888682,
+       "stdev": 396.8178798382497,
+       "min": 16953.180164492504,
+       "max": 19747.13544392244
       },
       "60": {
-       "dps": 17154.13545058119,
-       "stdev": 720.904751997262,
-       "min": 14567.885621854812,
-       "max": 19917.402954401008
+       "dps": 19734.254997368284,
+       "stdev": 842.3296625279362,
+       "min": 16534.246804187358,
+       "max": 24292.15586222804
       }
      },
-     "link": "eJzsVUFoXEUYfv8/772d92eTnUxSmI5ZXR+xhoUt895zNc0lq6IUDxLw0mM9WDwolOxJT0s9uHGLpFbEVqpBLxKUlGC0i1ZKFUxEobC0xogQcrIKVjYeAqKRN29rDk09aHvrz2Nhvv/7vvmYYeenxzgKNDgOB2EKD8FheBaOYgOgCTgL8D7AWcBzABcAlgEuAawCrAP8BPAb4BZgE2Edf2fSNTAO+kQfRxHoE0gF8dYsU1eLof/xF7jUToGVFgvZUhvLLh8VJcqLM7NM/VEM2UIbKS9+bDH1WtEySIn1FlNbxTBYaONCG99eSVX3iBIVxEfzTH1QDP2sQ0pstph6fSQMzrcx+3obFMTJ4ywMrmz3HEiKyy2mGjoMltqYfbRHLM4z9cZI6GeA3WaUpNiYYWq7eD1wiuXF2fkMS81c8ekMI1d8Ps9Iiu9eYurbf+KmuRzKiw+PM/XeHusRco7Gn2KH3Bf7OQhUWIKj0AA4Bv7Uc0+/8Mz0KzCWmDg2SWziJEmqkTGRiU0Ux1ESJ1FcjSqJqVZikySnwVkDZwOG+TsdFGc6qN7sYOnlDo59to3Z1byLfyJdQOdO/a+S4/9VeREvuzREOe0R49vDISef3Epk6iR74Cf9YY48YpVkBzs11MPiOg2Rr11CNRgGlCOvYvZHdelqnHBkoK/T5V16L4nyAGcSpx3tk0sYm96msqD7yfsakUPmJA/qx2lCjluFv6NIqiTLgruSXURH2wTR83XL8iTbACc1JIg0J78EfG4Tb+b0gLmpE+zitNZFmeiI7pf30eAaDpDLf+liL1SdRDhA+UUIiPGvHpUovLSTMnZEYYH6F4HI5Ve7mFJ6qfGJXqKH6laUdoe1pGAR0mXnpGsPafWAvFuP2MyexAlH23tK9lcz1Te/ohzR+obzMrb7V3fXblS13WtdlLE2tE+O3sjY5WxTzaub/+a42UUFy7gM3/f+2PtqP6OzhbljrA+QuZ6f4wH1NRlMc+0LSB+ZsMUCy20cqQ1mquHa3tOn0lqZvPeIrSuT8Q+ovNJT5dv8ZIzN1G6FTWPly1viczvqgP09f632cLbemjwMGeZcmizn+OyTwqvBIw9yEKCghGOQjs4aTEE6fe1MaALM2dl7DnA1HbPQQGgizCH8HQAA//+eTvVX"
+     "link": "eJzsVU9oHFUYn+97M7NvvvzZl5cIr8+sXYekhoUtb2ZcTXPJqijFgwS89FgPFg8KJXvS01IPbkyQ1IrYSmvwJIuaErR2/UepgoloKSzWmF5KT1bByq6HgGhk3mzJoakHbW/9GBa+7/dnf7xh3kePcxRocBL2wwwegIPwHBzGOkADcBHgPYDTgGcBzgGsAlwEWAe4AvAzwO+Am4ANhCv4B5OugUnQR/s4ikAfRcqLtxeZulYI/TNf4XILKRAfN1nILrSQ+sXJRab+LIRs2XatLqrXe50SH84ztVkIgwstPLWGl7aw5PLdYpzy4qMmU+8XQn/ZIqREd56pN0Ytddk+JZePiSLlxbEFFgZnWpg9pMTcAlN1HQYZ79RaSi2KcbpHrDSZenPUumYOu8UYSXG6ydRWwQbuzfrFp/PZLA3qis/mGLniyyYjKX58manvCzfsU9yhfvHBAlOXhy0/5ByNP8MOuC8NcBCosAiHoQ5wBPyZ55958dnZV2EiMXFsktjESZJUImMiE5sojqMkTqK4EpUTUynHJklOgLMBzlUY4e+0UZxso3qrjcVX2jjx+RZmr+Zd/AvpHDp363+VnPyvyvP4g0vDlNMeMb41EnLyyS1HpkayN/xkIMyRR6ycbM+OD/dmcY2GydcuoRoKA8qRVzZ7o5p0NU45MtA36PJevYtEaZAzibOO9skljE3vT2VeD5D3LSKHzEnu10/QlJy0Cn9bkVRIlgR3JTuPjrYJohdqluVJdhWc1JAg0pz8IvClLt7K6UFzSyfYwWmjgzLRET0gx2loAwfJ5b92sBeqRiIcpP4VCIjxbx6TKLwUSRnbojBPAytA5PJrHUwpvdT4ZC/RwzUrStERLSlYgbRtH3PtIa3vk/fpUZvZkzjlaPuekr2VTPXdbyhHtb7pvIxF/+7siEYVi17voIy1oT1y7GbGDmebal7r/ptjt4MKVnEVfup92Huqv6CzicER1gfIXM/P8YD6GgxmufYFpJdMOM8Cy60fqg5lqpHqrhPH01qbvv+QrUvT8WVUXvHp0h2+MibmqrfDpr729W3xuRO1z/5+cb36SNZvTh+EbOZcnC7l+OJTwqvCow9xEKCgiBOQrs4qzEC6fe1OaAAs2d17FnA9XbNQR2ggLCH8EwAA///x+PVr"
     }
    ]
   },
@@ -2232,22 +2232,22 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 8903.69171484915,
-       "stdev": 263.41186901318224,
-       "min": 7958.719484927457,
-       "max": 10005.856759128126
+       "dps": 9567.073966005135,
+       "stdev": 269.7371222680077,
+       "min": 8578.474180295045,
+       "max": 10553.6493007649
       },
       "300": {
-       "dps": 8850.122980153857,
-       "stdev": 206.35377575828315,
-       "min": 8077.377803280598,
-       "max": 9653.03606772723
+       "dps": 9521.870886830337,
+       "stdev": 209.82392333033962,
+       "min": 8799.636728456266,
+       "max": 10337.224053661565
       },
       "60": {
-       "dps": 9975.095855859345,
-       "stdev": 481.15004597797525,
-       "min": 8345.716433962343,
-       "max": 12036.640282862312
+       "dps": 10612.623358322178,
+       "stdev": 492.3371808842307,
+       "min": 8962.241341482488,
+       "max": 12548.904745619402
       }
      },
      "link": "eJzsVMFLFG0cnuc3s7Pjq8v3fusnvN/g8s236Md+C8I7M21YEDsGQqdY6NJRISXCg+SpTotd1iISscA9hEiHBInokGKbilntgoYIpSaSREjZwQ4dFiSKmdX9A0pvPYeB38Pz/ObH+3vfh7UbxElSK84gQ+fRgYvopSyQAw0C94GHoClgDigCy8AasAV8BL6AyqAcYYu+qlFNohXmnm7oHOYO2B98pEDiUyyub8zT5DYxxt8Nq0nNsHgzi/IHBRJ7sbg6XqJ9LsKHJlQxFEtqRlMg2SiQKMfi6uS2L2nmFovysRkSE1VbE7dYHd8skBhuDHSsjt+cJnFrv2rgn1dJ7Mbi+niJXi35ln+4xSL89mMSdxqrw6yvkvhe/ZPPhXm+4HNM45vr/uxz0wfuMF94QmIpxhSm8YEZiusGyUhGuxoxwEmQhV5kgX7omZ7OK12Xr+P/ltQx15GO7Tqu40hbypRrO1K60rVlyrZbHOmmpCttJw/lLZT3EMaLWeL3PpB4PktW/jUlXq6QfLZClWMfo2/E5kj5jV9CtPVnnfPUxeqZcUlnmrF9DfEwCzG1xe7zSdMn7w6oVTKqmXRSiTaY9ayGhVmou7Onr+tAFTVNMYSG2NLi4qlmRSm2JYKH1K4oWU+gSEWs7+/5P2+HlDKF+9VakKqF9LBRw2pzKh5BNzV+wUL8hloTSLPd3p8V01/e3/kRH6X0v90B3qSdDRIh61zyiC9QYsA7jDbZ0sKh9DkKnAi+T3e9tkpdTnegwinL6WTYGDzL4eH0cQMcAhYl4O/WQwZ+zgYxkQNGg5SdAq35gYosIUcYJfwIAAD//5GRp+U="
@@ -2256,22 +2256,22 @@
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 10464.00109934086,
-       "stdev": 320.0993300698672,
-       "min": 9327.28005862999,
-       "max": 11874.146516278694
+       "dps": 11197.064506317602,
+       "stdev": 324.4116308199231,
+       "min": 9983.361032172652,
+       "max": 12470.352622216462
       },
       "300": {
-       "dps": 10386.912097477412,
-       "stdev": 253.46973736501556,
-       "min": 9496.487040035621,
-       "max": 11418.978858272032
+       "dps": 11130.06038070395,
+       "stdev": 256.5864210373369,
+       "min": 10138.258316929934,
+       "max": 12155.563910556295
       },
       "60": {
-       "dps": 11683.007502343089,
-       "stdev": 561.8886480610901,
-       "min": 9649.863096680203,
-       "max": 13868.006469333572
+       "dps": 12395.861428612032,
+       "stdev": 575.324749400711,
+       "min": 10568.01265238903,
+       "max": 14548.242052778744
       }
      },
      "link": "eJzslF9IFGsYxud5Z3Z29hPxO+NZ+M7g4pxBD3sEYf6cPXgOHHY8IHQVC910qZAS4YXkVV0tdrMWkUgEeRFSQQoJ0kV6Y0r2ZxdUTEisbtaU3a0u6qKLjYhidtqy29K7nouB+c37PvMO73wP69GIk01dOIQMHUUvjmOIskAONAZMAbOgeWAJyAPrwBZQBCrAG1AVlCMU6a2sKza6YMxHNZXDuEGsiT+qkHiRsNTbyzRXCsC7ElnyXIk6FK2VmyzOF7ZJvE9Y6toqhbidm6yJr5dJjCcsda5E18rE4vz8DolqCL7WxflMicTNvTh0XauQuNiyB7fV8IUKWbGQ1U3amODFHRJZ49snJm9lOp/dJnGppT5x8EqdF8skPib2foXOp3ZDNl2o9yp8s0xM4a9KwfQzuyRWE5Y6XaCwpI23MokpfPQOWapGdmNGOd2ogZMgE0PIAiNQM4N9p/pPnsWfnam/PNd2Hc/1XNd2bDvlOa5te7bn2CnH6XRtL2V7tuNOQHoK6TmE9mCR+PVdEvcXyZx4TMmHG2Qvb1C4s6v0gdgSST/1Q9K7vrfzLvWzZqadUJmilc7AirIIkzud4QAaAbwyKn+BumLQv5IeN5pZjEVZZKBvcLi/XqUbhhhHPLG6svJfuyTlu5O1U9gjSVlfIE95PPm85z/8lyRVCSNyA0hWImpUi7GGnIxbUA2FHzNhnZNjtdLsgP9L2PSr/9vE5UCF9O8DNW2m3WckIuaRjgP+gZKj/n7YZAv39sXnIPRP7brw2u8O76vpXoRMWk93RLWxw5x8/P+3Bg4Bk5IIdusjgyCkazGRAyZrET0P2grSGFlCjjBJ+BQAAP//BAzBjQ=="
@@ -2280,22 +2280,22 @@
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 13048.076340945452,
-       "stdev": 363.93537645377177,
-       "min": 11459.3798455567,
-       "max": 14345.757152072265
+       "dps": 13811.933555268839,
+       "stdev": 366.7128899450238,
+       "min": 12421.62066447336,
+       "max": 15304.823385464713
       },
       "300": {
-       "dps": 12973.868615941275,
-       "stdev": 281.64836454177583,
-       "min": 11950.128600687936,
-       "max": 14009.614026535957
+       "dps": 13749.110210855702,
+       "stdev": 283.6786936735475,
+       "min": 12766.5211014407,
+       "max": 14740.85293249409
       },
       "60": {
-       "dps": 14675.513858924347,
-       "stdev": 648.6886222892175,
-       "min": 12158.453200301026,
-       "max": 17366.20993965989
+       "dps": 15347.02051221028,
+       "stdev": 656.6202635862716,
+       "min": 12746.121470478838,
+       "max": 18029.655771382582
       }
      },
      "link": "eJzsVE1oFGcYnued2dmZLw18nXTh65Cl0yFbtguB+emWtFB2Ugj0VBZ66TGBJpSSQ2hO7WmJl40eDEEEV5AgHhQ9BDWSPWii8WcXEgwBl6iX4E/wB8yCYVkQicysWfWqyc2Hj4Hvmfd53hfemYcNaMTJoT78hjz9iUH8jTEqAEXQFHAamAXNA4tABVgF1oEN4AlQBzVBRcIGbcuG4qAP5tW4pnKYs8QSfLlJ4mnSVi8tUa1MGUVL8R6m87MNsuW5MjGD326SeJWMbhlF6+EWM3j5JYnpNmfxFDP4WoNEM2nrtTLNRYcJfqFO4lzS1ud2uYyifcN7mODVBokj3bZ+pkqtE/mEb4p1Eoe73/OJNBYTfOcFiYL5oVs4T4I/3iJxtNtWa+8E4UhXGiR22mOGjb/gD7faHFP48Toxxp9v7rZP8FKdxErSVms77Q4pJjGFX9wmW9XI6cwr/3dq4CTIwhgKwATU/OjQf8P/HsT3vdkffM/xXN/zPc9xHSfru57j+I7vOlnX7fUcP+v4juuVIN2D9ABCu7lA/NQjEjcWyCrdofStNXKW1qi1vJP0mtgiSZ/xSTD6PlZ5jYZZF9P+UZmibR6AHWcxJve64yFphuSJSblNGopJP0tGwuxiOouz2MjQ6PjwbpVhmmIaieTK8vIvKUmq9Kej33FAkgqBQIUquPt2z98Fz0hqkj4hd4BkJabGNZ11FGWch2oq/C8L9iFZj0oLI8GXLdFXwdelYyGquW9HItRy3n0SMeuPzD5/QOnJYC9sCtXre+KzH/gpel7eCvpb92ZuEC1OWs1l4trU71wO8OuPGjgELEoj3G2APMK0jmKiCMxEWT0PWg9jGQVCkTBDeBMAAP//vL/D6Q=="
@@ -2304,20 +2304,20 @@
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 18166.08596052947,
-       "stdev": 465.54043423946797,
+       "dps": 18166.54007192361,
+       "stdev": 465.54313460920116,
        "min": 16477.105527731917,
        "max": 20113.824923825083
       },
       "300": {
-       "dps": 17983.15244502116,
-       "stdev": 359.4063369265618,
+       "dps": 17983.64917585232,
+       "stdev": 359.4144187334267,
        "min": 16808.818992496585,
        "max": 19300.535593195873
       },
       "60": {
-       "dps": 20461.319424188692,
-       "stdev": 849.1847589012957,
+       "dps": 20461.85830762644,
+       "stdev": 849.4214971454261,
        "min": 16906.24297391841,
        "max": 23817.355893172484
       }
@@ -2328,20 +2328,20 @@
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 18444.361551932543,
-       "stdev": 463.1750522249492,
+       "dps": 18444.438023231385,
+       "stdev": 463.21435790420367,
        "min": 16759.253415323372,
        "max": 20277.294405610468
       },
       "300": {
-       "dps": 18262.463008205683,
-       "stdev": 358.14869100473794,
+       "dps": 18262.519830279234,
+       "stdev": 358.18345632751715,
        "min": 16759.53422484805,
        "max": 19715.39918085179
       },
       "60": {
-       "dps": 20789.157999311312,
-       "stdev": 854.9481370260555,
+       "dps": 20789.417927465413,
+       "stdev": 855.0939578492544,
        "min": 17813.075964083117,
        "max": 24643.49234698538
       }
@@ -2362,22 +2362,22 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9247.616998615436,
-       "stdev": 271.36487616206335,
-       "min": 8146.676792834271,
-       "max": 10401.162112791557
+       "dps": 10311.887052310625,
+       "stdev": 379.93222091238283,
+       "min": 8842.202173657868,
+       "max": 11796.215727982877
       },
       "300": {
-       "dps": 8711.742587237519,
-       "stdev": 202.54579674567583,
-       "min": 7801.215729940076,
-       "max": 9458.2565698588
+       "dps": 9745.914769875077,
+       "stdev": 286.68730423987984,
+       "min": 8467.416415102894,
+       "max": 10775.244218025111
       },
       "60": {
-       "dps": 10566.874578323052,
-       "stdev": 502.95505416931746,
-       "min": 8822.042581101756,
-       "max": 13029.168440829828
+       "dps": 11789.889601740018,
+       "stdev": 711.5380228587817,
+       "min": 9293.688968107748,
+       "max": 15222.889568129225
       }
      },
      "link": "eJzsVU1oXFUUnnPuzJubk05y58ZJby+Z5PkabTJaefNeJ0SlzFgQdSMBNy6rYBFRKM5KF+XRTWfahQVDwbiJWVTxDykIyUyiIURMDNFU7K+lhIIxFNEWFWP85f3MTMCuSrPzLN475zvnO3znPHiHHuUo0MZheBxG8Gk4CM/DYfQAKoAnAd4B+AhwEmAWYAFgBeAiwCrAOsANwA3ACsIq/sJk3IZh0JfbOYqk/hkoI76/gOqHrGV8NodvTmEuzg1hUqf49Qpa7NKkD/QJk1Liag3V39koTIrR95k6nqVO8W4N1UbWMuprOL6IlBHrF1B92ASihjvEjzVUoz0Wq68hdYqb02ixVjopbkyjOpallPh8GtWpnlycm6KPUuKrOiqvtxm+9kkU+iwS12cwSPUTiU9rodh+SomlOqpNX2y/6KOkOFtHtc4pLpZqaBkcbBhJvJriIFChCYfBAzgKxsiLz7zy3MvHYbddcF3bzhcc18m7biHvOo5r591Cfq9tF+yCbbv5MYhdhtg1UHx6HsXKd6hm59H84yoObH6N9vI5DDdfxVhg+0oT+BfSbBT+b7drcvh2mXP4QYIkJXWCGB/LWklKENs7VKYu4tqgOH/9CxaBhRZ4aqkB7muBm3MN0G2BK026U6Y0GTpOqNIRlC/Lot5Pg3IPiVwHNyQ+FPNZhE6ZuiZAUIf5T8OAV7v1fxA5qPdQr+y5RQM+Af5Q1W4dvqStH6CdMkNtE+BLm1qGRs3pI05DsI+G2zh9RD6hH6P98mFKWe1bWTssajHD5JkgOfM72xpOLUPQc+09Ju/Tg9Qns5TOdUY6gx3k7abQL7v9YjFaw6DY1L1RHx+6BU+HJEk6VP7WMWz44ubbLf/Kasv/5s+W/3GVyWE9RPfLXDjRmUhGGDnR59s6bSjRR2VGdx1IU5yf9ZhgoSb7pXJzTP9zJCS7BjFfJkG+sb/fPKajt7xH76Zdcidlcl08IfkLRtgvZDhB2YlzrDngeY8pWMAFuBT9MO4tXcfYBiaPsnZAFk8YSd5G7RUGzwrdwUETB8EUM8EG6wRrCzjeoVI6ZN9V2jX2hm+LxbsPBXa+6HyLKmE+ldvmX9JAtXQn2niL83ekz3bYg8Fz5qfSI2G8UTwIIRZbKeaS/OSTAkpwYIiDAAUmDoB/g0swAv4ZD45PBWA8OOKTgBf9ew0eQgVhHOHfAAAA//9sEQo1"
@@ -2386,22 +2386,22 @@
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 10784.451071300638,
-       "stdev": 296.3557429208749,
-       "min": 9774.590575361535,
-       "max": 11876.639415441237
+       "dps": 12142.815073427924,
+       "stdev": 425.1748590853552,
+       "min": 10597.394562791813,
+       "max": 13772.396694537032
       },
       "300": {
-       "dps": 10191.775424536572,
-       "stdev": 217.94315262967353,
-       "min": 9380.74696147293,
-       "max": 11113.64522440598
+       "dps": 11511.818192711427,
+       "stdev": 317.23094100744134,
+       "min": 10342.111219462535,
+       "max": 12881.401823709233
       },
       "60": {
-       "dps": 12366.086582987877,
-       "stdev": 555.117011846115,
-       "min": 10228.543699807453,
-       "max": 14555.758643278228
+       "dps": 13934.585458575866,
+       "stdev": 803.0936326171706,
+       "min": 11034.282788442968,
+       "max": 17333.93405776467
       }
      },
      "link": "eJzslV9oXEUUxvec2b07OU2T2YmbTodscr2tNlmt3L23G6JSdi2I+iIBX3ysgkVEobhP+lDWvnS39aFiKJgHiQGrIEopiGlqIYYIiSUlii2thrLp1iSKoKJgjFpl7r37B+xTad88LHtnfnO+c7+ZgXvoUY4CXRyBx2EUn4b98DwcxDJABfA4wPsApwCnAGYA5gGWAC4D1ADWAX4G3ACsINTwNybjLoyAfr2To0jqd5HS4rXvUf2YcazPZ/HXKczG+YDYSR1isYYOO7uK1C2W11DdyDjW2VU0QIrpFVRHM8FylJ8WN9ZRbTSTAmxTtxiro/qoXbtyHdVYn9MRAsOUOHUd1RvtLBvnlrDNSh3VkUywMrFgftH7usVKHdWJPseaWMArU6bwJ3VU5f6GKSOX4upaO7PFAJFYrjWKkLhQD/lOSorP1lBtZqhTvF1Htc4dZsrGxflpdCwOLowmXt3KQaBCGw5CGeAwWKMvPvPKcy8fhR1u3vddN5f3fC/n+/mc73m+m/Pzud2um3fzruvnxiH2DcSugeKfzqFY+g7VzBzaf17Fwc2v0F28iOFdVTEWxJ7iJP6NNBNN/49bDTlyq8pZ/DBBkpI6QYyPZ5wkJYjtHi5RD3FtUZy/+QWLYL4FT5xvwD0tuDnbgH4LLjXlXolSZOk4oUpFKFeSBb2XhuQuEtkubkl8KGZUhF6JeiZBUJf9TyOAV3v1f4gc0ruoX/bdpACfBLOpaq8OH9LVD9A2maaOSTDWzixCI+fkIa9h2NDwNE4ekk/ox2ivfJi2OlvaVZ0OtZTh4ulg8dwfrH16ZhGCmqsfMHmfHqIBmaFUtjvyGZxBzm0avdBrksXYNAbJtu6P6hh0E50ORZJ06PydI9gYi1/ea42Xa63x13+1xh9XmRzRw3S/zIY7Oh3ZCGdedH3tuw0tGirTumdfiuL8yzITLPTkvlRqbtNcR0KyaxAzNglyjfP7vcx09JT36B20XW6jdLaHJyR/wQrrhQovSDt2kTU3eKnMFMzjPFyJPhj3Fn/A2AYmD7MtgCyesJK8g7ZUGDwrdBcHTRwEU8wGF5xjrCPQlA8UU6H6ruL28bdMLBTuPhDEpYL3LaqE/VT2Dn+SBqvF21GmvDB3W+rciXgw+D/3U/GRcL5R2A8hiy0Vskl+/EmBRdg3zEGAAhsHwXTtIoyCafxB86kATARtfwrwsunwUEaoIEwg/BsAAP//+N4lEQ=="
@@ -2410,22 +2410,22 @@
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 12894.9369857869,
-       "stdev": 319.2772470628696,
-       "min": 11647.76323637494,
-       "max": 14029.475626953707
+       "dps": 14587.504077772448,
+       "stdev": 469.3154453534934,
+       "min": 12841.263224171142,
+       "max": 16265.836583439615
       },
       "300": {
-       "dps": 12387.510172588663,
-       "stdev": 244.56597653895489,
-       "min": 11446.334256675309,
-       "max": 13328.217047732565
+       "dps": 14037.126967795679,
+       "stdev": 359.6016199039832,
+       "min": 12761.726887129651,
+       "max": 15229.240655870788
       },
       "60": {
-       "dps": 14325.783542013469,
-       "stdev": 584.8536315610329,
-       "min": 12086.872573569799,
-       "max": 16526.407619270725
+       "dps": 16232.423244828698,
+       "stdev": 857.1744183986045,
+       "min": 13127.820875375392,
+       "max": 19566.504826093584
       }
      },
      "link": "eJzslV1om1UYx/M8582bk6ddd3JqurND08Z36tro5M37LqUqI3Eg6o0UvPFyCg4RhWGu9GKEoizZbgaOgfUm9mIbiGILQiMOas2gUTqqbGVakTJQhkyS4dCm84v3I03FXY31bs9Fcs7vPP+H/3MOvA89xVGgjePwDEzgC3AIXoEjWAIoA54EOAfwCeAcwDzAIsAywBWANYBrAC3AdcAywhreZNKwYRz0ZC9HEdPvIyXFl21U11OWeWEBV2uYMXhaDFNcnGuhxVZrSL3iizaqv1MWm/F387+hOp6yWLXhqS+0Ua2nLLPawLqvHhZpSoqzLVQfpyxztYYzIX6AkqLeRnVq8D/Yy77eRCte91k3W4qVFqpjKSs+0zmhneJWE9XpQcsMgRTv3EBVGvKtZgxu+sK53wNWbXSKGeJSC8kQF1ue5u0mqo2godBDr/i1ieoaD1o2xOxNtEwONkxE39rBQaDCNByBEsAkmBOvvfjmy28chz12znVtO5tzXCfrurms6ziunXVz2X22nbNztu1mpyDyPUSuguKf11Es/4Rqvo7pWz/iyMa3aC9dxuCFKhjxY39hGv9Cmg+39+JOQ47fqXIBP4qSpJiOEuNTKStGUWL7xorUT1ybZPB3v2IhzHXh6a87cH8Xbix0oNuFy5typ0gJMrVBqBIhyhZlXh+gUbmXRKaPmxIfj3gqQqdI/dMgqC/9TyeAVwb0/4gc1XtpSA7epgCfBq+pyoAO/qStH6VdMknxafCs1Zagk3PmqNMx7NHgNs4clc/qp+mAfIJ2WD1bVb0WdZXB4ax/eL7Ntm5rS+DX/PlDJh/WozQsU5TI7Ax9+neQtTeNXhzwksWpz9BPTuuhsI6HbqPTgUiSDpx/cAw7a3HjbHf9w1p3fenP7vrTCpPjeowekZmgo9nQRrBzwufb2m1g0aMyqfsPJsjg35SYYIEn+/XiZpvec0QluwoRzyZBtnN/f5SYDv/lg3oP7Za7KJnp51HJXzWDeoHC8dNOXGabDa6UmIJFXITvwg/GQ4VfMLKOsUnWA8iMqBnjceopM3hJ6D4OmjgIplgabLBOsLivKR0uJAL1fYXdU+950cjff9iPlbyziiqafj6zzZ+kkUrhbpQpNep3pc52xGP+7/lm4clgv54/BAGLLOczMX7yOcEKcHCMgwAFaRwBb1YXYAK8ce8PnzJA1R/2c4BXvLkOJYQyQhXh3wAAAP//JlcgWg=="
@@ -2434,22 +2434,22 @@
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 15070.955822664564,
-       "stdev": 381.8304846940423,
-       "min": 13667.353301343712,
-       "max": 16467.222991196377
+       "dps": 17425.609210992898,
+       "stdev": 563.5487833218953,
+       "min": 15221.433176666329,
+       "max": 19474.398625602083
       },
       "300": {
-       "dps": 14442.689707947156,
-       "stdev": 281.98783898636947,
-       "min": 13339.402634461476,
-       "max": 15535.840511762946
+       "dps": 16754.182087372643,
+       "stdev": 424.43645918475147,
+       "min": 15062.417206987444,
+       "max": 18316.5972738247
       },
       "60": {
-       "dps": 16845.253404422943,
-       "stdev": 690.6216991294326,
-       "min": 14316.985781429461,
-       "max": 19617.00381397909
+       "dps": 19414.56939050315,
+       "stdev": 1032.8336243220685,
+       "min": 15799.616741714963,
+       "max": 23936.8580676809
       }
      },
      "link": "eJzsVV9oHNUX3nPu7OzNyTa5ufltenvJJvObqk1WK7Mz3RCVsmtB1BcJ+OJjFSwiCsV90oey5EF3M3kIWArGl5iHVlCrLRQSMRDCCokSiX9a4h9KCKhBBBUEY/xTmbmz2YB5Ku2b52HnnG++7+x37oU59BBHgR6OwiMwhk/ASXgGTmMNoA44BfAmwHuAcwCLAMsAawDrABsAWwA/A24D1hE28FcmLQ9GQY9nOYqMfh0pJ96dYurHvGt/uISX5rFgcUcMUrfYDJnL1mNgUDiUE5+HTP2dd+3mfMKL4KxohkxN5GMqdYsLU0xt5137UkyibnEjZOpi3rXXDaDE9yFTZ/vdDsNod+oWV0LmdjRbMCnx8iRTjfx+1HCSqXP98d/MrCBlxVbIVG3AZVElxfWGqdr2SbzdYAWL3yEcssRCg1FWXJxkaidvNFkxFzK1xc0clpieYK7NwYOx9EsHOAhU6MBpqAGMgz323JMvPv3CBBz2SkHgecWSH/jFICgVA98PvGJQKh71vJJX8rygOA2pryC1CYp/0ESx9i2qxSY6f1zHoZ3P0Fu9iuaGGpiK41hlFv9CWkzK/+JmQ47erHIJ30mTpIxOE+PTeTdDaWJHR6rUS1zbZPFXP2IJWGqD5z5ugcfa4M5SCwza4Nqu3K9SD9naIlQ9CVSsyrI+TsPyCIlCF7cl3p+KVIR+lXpnQVCXc6MVwBt9+l+IHNZHaED279OAz0I0VKNPm4f09L10UOaoYxYia/Or0OKcP+O3DEeoOY3zZ+Sj+mE6Lh+gA27nXlXWpbbSvLwcv1z4ne0t51ch7vndW0zerYdpUOapp9Cd+IzPoOjtGv2kLyKLs+9jTHb0QNIngvbRaSOSpI3zN17BVi5+udDOv9lo51/82c6vNJgc1SN0jyyYiS4nNkzlJ9e3d1pjMUJlTvee6CGLf1pjghlP3vPV3TGj60hLtgmpyCZBsXV+v9WYTp7yTn2YDsmDlCv08rTkz9qmn1H4MS28ynYHvFZjCpZxGb5MPhh3VX7A1DZmxlknILPSdoZ3UGedwVNCd3HQxEEwxRzwwA1ZR6ypnar0GPX/KoemX4tipfz/U3FcK/tfo0o7jxdu8ydpqFG5FW1qK81b0ud2xH3x78JPlQdNvV0+CQZLrZULGT71mLAqcGKEgwAFDg5BtKsrMAbRuo+XTx1gJl72c4Dr0V6HGkIdYQbhnwAAAP//QZMbjg=="
@@ -2458,22 +2458,22 @@
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 15562.487923626995,
-       "stdev": 395.19693416897326,
-       "min": 14244.110093903393,
-       "max": 17076.134053194754
+       "dps": 17996.70110519434,
+       "stdev": 575.6589274678867,
+       "min": 16078.16587566197,
+       "max": 20159.72085556594
       },
       "300": {
-       "dps": 14817.590365899629,
-       "stdev": 287.7733408464187,
-       "min": 13712.254799168142,
-       "max": 15756.055829491077
+       "dps": 17190.322100618978,
+       "stdev": 428.8281666575485,
+       "min": 15457.203580294034,
+       "max": 18737.972211602275
       },
       "60": {
-       "dps": 17101.20060868517,
-       "stdev": 703.845548025061,
-       "min": 14599.906302063748,
-       "max": 20039.23498931142
+       "dps": 19708.66501526127,
+       "stdev": 1047.8572625055206,
+       "min": 16051.48641619319,
+       "max": 24429.684621838962
       }
      },
      "link": "eJzsVU1oXFUUnnPOzJubkzS5uTHp7SWTjq9qk9HKm/c6ISolY0HUjQTcuKyCRUShmJUuytCFzmQGDFiKzmoMGCViMQU1ow2EkEKiRKLYUo2UEFCKCCoIxvhTeX+ZoF2VdudZvHfPd8/38Z174R5+SKBEB0fgERjDJ+AYPAMnsARQBpwEeAfgfcA5gAWAZYA1gMsAGwBXAX4G3AIsI2zgr6SSDoyAudYuUKbN68hd8q1J0j9mbOvCIs42fWCzSjatNzGXFPtllrvkRI303xnbWmoGFR3yoxnSExmb/EzLC1XSWxm7bTbYno2Id3CX/HCG9NmMbYUw98rpSdKn+2MgqlPykxnSr/bbbeuxAmv5co10Y+Dfqr6dao30mf7ATmMFWcl6jXRpwKbGSlyk5JVKiLX6SMr5CnFSnp8h7pBna6S3MwGHO+RclfRVEVRzUtYnyLYEODCWemmPAIkas3ACSgCnwBp77skXn35hAg44Bc9znHzB9dy85xXynut6Tt4r5A85TsEpOI6Xr0PiG0hsghbnl1CufYd6YQmzf1zBwe0v0Vm9iOH1VDARxOHiFP6FvBCl/8eNhhq5UeYivpdixWmTYhL1jJ3mFNOh4XHuYWEsTorXPqUILLTAM5/F4OEWuL0Yg14LXNuhu+PczZZJMuruCMqPq1FzhIfUQZa5TmEpvD/hsxjdce6ZAsmd2WtxgKj0mf8gasgc5AHVfx0BMQV+U5U+E/6UY+7lvaqX26bAt9Zchbhm+qQbG/bR8DSmT6pHzcN8RD3Ae+z23awOm1vMcPNcsDn/O+1Om6sQaH7/Lqm7zRDvVxnuznVFPoMzyDs7Rj/v84vl6Y8xKM6agUjHh67DMyFJsQmdv/kKxmv5y9ut9bcbrfVXf7bWH1RIjZhhvkflwo7ORTbCzI2ub3e3oUUfVb2m52g3J8UXJZIUenKeH99p07+OlKJNSPg2GfLx+f1WIhP91Z3mAO9Te7k31yNSSjxrhXohww3Kqhdpp8FLJdKwjMvwdfRg3FX8ARNbmD5F7YCUTFlp0cbtZYKnpOkUYFiAJE1ZcMCuUlvAKR0vdofs24r76m/4sTJ6+/EgLo2666hT2cdzt/hJGqwUb4ZMaWXppujcirgv+M7/VHwwzLdGj0GIJdZGc2kx+ZhMFeHosAAJGrI4CP6gLsIY+LM+GD5lgEYw6ecAL/tDHUoIZYQGwj8BAAD//7A1G78="
@@ -2492,121 +2492,121 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9524.009007760336,
-       "stdev": 238.17675224738664,
-       "min": 8527.073413491398,
-       "max": 10512.207760834463
+       "dps": 10313.599899267221,
+       "stdev": 262.9044880863511,
+       "min": 9240.56677371606,
+       "max": 11376.703731445254
       },
       "300": {
-       "dps": 9034.419319954415,
-       "stdev": 175.8146764241762,
-       "min": 8397.827692876941,
-       "max": 9702.653531303624
+       "dps": 9802.186725779711,
+       "stdev": 195.1193478534761,
+       "min": 9064.260528884302,
+       "max": 10513.712935398282
       },
       "60": {
-       "dps": 11726.050230683233,
-       "stdev": 449.98047843849315,
-       "min": 10177.75872482349,
-       "max": 13377.486205109808
+       "dps": 12621.744300965182,
+       "stdev": 497.9083844298161,
+       "min": 10866.86339803001,
+       "max": 14448.88582006183
       }
      },
-     "link": "eJzsVU1oXFUUnu/cN2/unHTk5jqZ3lw7dHykMY4U7sxzNLrJWBBcSAm4cVkXFhGF4qx09ZqN07ipQQVnocWKuMhCgoQxHbEkAZPUpA3V0qhgFUrVRRVRCKhU3psfEV1pu/NbzNxz3ne+8937uO/ww5IUOZrEI5imx3EET+EYRUATdBJ4F3gP1AbOAmvABeAycAX4FvgRtAtqEq7Qz0J7DpOwv2UlqYx9lXhEfdUh810x8BdX6PQ1KnuypPZzVv3yJQXi9DVirT7pkPm1mERlTx5QY5xTc/PCzBZ77BF1rkNmtxj4b7xJW5t9llavLZKZLwbinfWu8AEeUWsdMq/sC/ztNm23+/20urhE5uV9f6VudMhENvBX2rTS7qdz6mqHzE/d3rGV82fI3OhbyalWZxCOMauPluLC/cl6Z4EGVRcXyWwWe5oZNf9+HLKnZs5Q4EtymPZeyEkoMlTCMUTADPzpZ554/snnZnGXq4UudJVa9WDo7nU158KKq7lqJQxDF1YqYSVJVFpIfY7UN9gjl1ZJdVbJnLtK3XfyFv1OfJZS/+M/QU/+28plagu+naX12ZOtWS/IcJrFwbDBw+xbj8kM91KVhmbb5W3OCZ232iq+rXSjD8gTBZ21GZtmES89Sw+mdGBLXCjnJXR2GXHtB2+LmMGoJVKXIqEP20f5kK4nPP9vvJDHy2NS6DsWyMQynOF06NyzDZttUU/CimVKDfT6Nj99EYP+npZPx7ntSMTPmFzD9uIB/3wkdNU6HtdjnC9rKXR6VpD0bHIAVdfgPQGzXEC8w61C/8gGm94q6Pttje/Rd/Noee+g5fUNYRPXldj1P2hc3/jTw87XQo/avZwLhji7kJzE8eOJ5fh/QPv4M2GwRmvY6d2d8fr3lNqlzIwYAgkv7WdkloeaAnMo2LwkI0qYoCondxklOAQviWxSGh2tD3dF8vXR1usx1qfuPJrg0lT1CzLp0mPlW3xJJ07Ub4ZMtL56U3RuBR5Ifj/8of5QN96dOoJuLnVhqpyRJw8r1HHoPgkFgxJNIJ5SdUwjHnTJx7cJnErGXBt0OZ5oiAhNwinCHwEAAP//b4Tf7A=="
+     "link": "eJzsVU1oXFUUnu/cN2/unHTk5jqZ3lw7dHykMY4U7sxzNLrJWBBcSAm4cVkXFhGF4qx09ZqN07ipQQVnocWKuMhCgoQxHbEkAZPUpA3V0qhgFUrVRRVRCKhU3psfEV1pu/NbzNxz3ne+8937uO/ww5IUOZrEI5imx3EET+EYRUATdBJ4F3gP1AbOAmvABeAycAX4FvgRtAtqEq7Qz0J7DpOwv2UlqYx9lXhEfdUh810x8BdX6PQ1KnuypPZzVv3yJQXi9DVirT7pkPm1mERlTx5QY5xTc/PCzBZ77BF1rkNmtxj4b7xJW5t9llavLZKZLwbinfWu8AEeUWsdMq/sC/ztNm23+/20urhE5uV9f6VudMhENvBX2rTS7qdz6mqHzE/d3rGV82fI3OhbyalWZxCOMauPluLC/cl6Z4EGVRcXyWwWe5oZNf9+HLKnZs5Q4EtymPZeyEkoMlTCMUTADPzpZ554/snnZnGXq4UudJVa9WDo7nU158KKq7lqJQxDF1YqYSVJVFpIfY7UN9gjl1ZJraySOXeVuu/kLfqd+Cyl/sd/gp78t5XL1BZ8O0vrsydbs16Q4TSLg2GDh9m3HpMZ7qUqDc22y9ucEzpvtVV8W+lGH5AnCjprMzbNIl56lh5M6cCWuFDOS+jsMuLaD94WMYNRS6QuRUIfto/yIV1PeP7feCGPl8ek0HcskIllOMPp0LlnGzbbop6EFcuUGuj1bX76Igb9PS2fjnPbkYifMbmG7cUD/vlI6Kp1PK7HOF/WUuj0rCDp2eQAqq7BewJmuYB4h1uF/pENNr1V0PfbGt+j7+bR8t5By+sbwiauK7Hrf9C4vvGnh52vhR61ezkXDHF2ITmJ48cTy/H/gPbxZ8Jgjdaw07s74/XvKbVLmRkxBBJe2s/ILA81BeZQsHlJRpQwQVVO7jJKcAheEtmkNDpaH+6K5OujrddjrE/deTTBpanqF2TSpcfKt/iSTpyo3wyZaH31pujcCjyQ/H74Q/2hbrw7dQTdXOrCVDkjTx5WqOPQfRIKBiWaQDyl6phGPOiSj28TOJWMuTbocjzREBGahFOEPwIAAP//lOXf8w=="
     },
     {
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 10850.459153850825,
-       "stdev": 251.36432510880329,
-       "min": 9997.52111511689,
-       "max": 11763.488918821407
+       "dps": 11948.278092660794,
+       "stdev": 287.9142644526606,
+       "min": 10890.055743521905,
+       "max": 12986.825992455271
       },
       "300": {
-       "dps": 10412.990345541342,
-       "stdev": 189.81983626882476,
-       "min": 9690.810083420181,
-       "max": 11091.547113433197
+       "dps": 11482.766735967118,
+       "stdev": 220.05129439755754,
+       "min": 10685.697454433892,
+       "max": 12317.126738149527
       },
       "60": {
-       "dps": 13262.7698091963,
-       "stdev": 477.6952438526633,
-       "min": 11560.146999654917,
-       "max": 14879.340197697564
+       "dps": 14499.296064082562,
+       "stdev": 542.398181194256,
+       "min": 12594.720661748961,
+       "max": 16336.760908953614
       }
      },
-     "link": "eJzsVU9sG8UX9vdmbY9f0t9vMrjuZEgUswohGFWa9WIIXGIqIXFAVSQuHMuBCiGQKnyC0zYX3HBpK0DCp4o/VflzQEEC80+q0kgkhYQGQdXCJZBAXA4FJA6Wqqpod20XCU7Q3ngHe+eb733vm1m9ffygJEWOZvAQ5uhRHMATOEQR0AQdBU4B74LawGlgBTgHXAA2gQ7wK6gLahI26XehPYcZ2BZLUnn7HvFu9dY2mUvjfu79M7S+RhVPltUk/1+tbZEvXttJgQnW6kqHzJVxX3zwU580rF7aIrMw7ouNdqx0tUOmO+7nNtq00b6u9PY2mXdS+ORqzOt2yLw45udOrsZAxZO3JwV+2yJzbMwvpOmpZHSJTGT/JDmhyrxbvbFD5uWxBE7tTKhJ1mpzh8y1gcUUO7WdYmcGjlh9tdXf99Sb28RafbFJZi09SK+IVsc6KZaqxR49Nf8x+TlJDnPec7skFBkq4xAiYB65uacee/bxZxZwh6uFLnRBrbo3dHe7mnNh4GquGoRh6MIgCIMECFrIfIvMDxiWHy2T+mSZzOc/UvrGXqWrxKcp81/8q9Az/zRzidqCb2Fpc+zJ1oLn5znLYm/Y4BHOWY/JjPSgoKHZpry140IXrbaK/1e+1g/IIyVdsHmbZRE/epbuz2jflrlUKUrowhLi3A9fFzGDUUukzkdC77cP8z5dT3i5v/BCnqpMSqFvXSQTy3Ces6FzTzdsoUU9CSuWKDPQ69v8+nkM6ntaPhljG5GI95hcw/bWA/6XkdBV63hKT3KxoqXQ2QVB0rPJBVRdg4d9ZrmI+ITrpf6VDQ69XtL32hrfpe/k0cqeQcnLZ4VNXAex67/RuHz2uoeL3ws9avfwLn+IC4vJTRw+nFiO/we0z74RBiu0gou93pmq/0yZLuXnxRBIeNlcXhZ4qClwHCVblGREGdNU5aSXUYaD/4IoJKnRwfpIKlKsj7ZeiWN19raDSZyfrX5HJlt+pHKTm3T6SP1GyESryzdE52bEfcnvp7/UH0jX3dkDSLHMudlKXh7dr6iOffdIKBiUaRrxDKtjDvEYTD6+TeBEMgTboAvxvENEaBJOEP4IAAD//1Fl8Zc="
+     "link": "eJzsVU1oXFUUnu/cNzN3TlO9uU6nN9eEjI8Y40jhvnmORjcZC4ILKQE3LuvCIqJQnJWuXrNxGjdtUcFZFX9K/VlIBB0VoSQBk2piI1pa3UQTzdRFVXAxUErlvTczFXSl7c6zmHn3u9/5znfv47zDD0tS5Ggaj2CWHsdBPIXDFAFN0DHgNPA+qA2cAVaAc8AFYBPoAL+BuqAmYZP+ENpzmIZtsSSVtx8Q71HvbJO5NObnPlyi9TWqeLKsJvhWtbZFvnhjJwXGWasrHTJXxnzx0c990pB6ZYvM/JgvNtqx0tUOme6Yn9to00b7utK722TeS+FTqzGv2yHz8qifO7UaAxVP3pkU+H2LzPFRv5Cmp5LRJTKR/YvkuCrzHvXWDplXRxM4tTOuJlirzR0y1wYWU+z0dootDRyx+nqrv++pt7eJtfpyk8xaepBeEa2Od1IsVYs9emruU/JzkhxmvRd2SygyVMZhRMAccrPPPPH8k8/N4y5XC13oglp1X+judTXnwsDVXDUIw9CFQRAGCRC0kPkOmR8xJD9ZJrW0TOaLnyh9Y6/TVeIzlPk//lPo6X+buUhtwbextDn2ZGve8/OcZbEvbPAw56zHZIZ7UNDQbFPe2gmhi1ZbxbeUr/UD8mhJF2zeZlnEj56lBzPat2UuVYoSurCIOPfjN0XMYNQSqfOR0Afso7xf1xNe7m+8kCcrE1Lo2xfIxDKc52zo3LMNW2hRT8KKRcoM9Po2v3kRg/qelk/H2EYk4j0m17C99YD/VSR01Tqe1BNcrGgpdHZekPRscgFV1+Ahn1kuID7heql/ZYNDr5f0/bbG9+i7eaSyd1Dy8llhE9dB7PofNC6fve7h4g9Cj9i9vNvfxYWF5CaOHEksx/8D2uffCoMVWsHFXu9M1n+hTJfyc2IXSHjZXF4WeFdT4ARKtijJiDKmqMpJL6MMB/8lUUhSo0P14VSkWB9pvRbH6swdh5I4P1P9nky2/FjlJjfp1NH6jZCJVpdviM7NiAeS389+rT+UrrszB5FimXMzlbw8dkBRHfvvk1AwKNMU4hlWxyziMZh8fJvAyWQItkEX4nmHiNAknCT8GQAA//92xvGe"
     },
     {
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 13202.199467449056,
-       "stdev": 293.34898050938574,
-       "min": 12146.87204601536,
-       "max": 14184.236484629933
+       "dps": 14647.496684658832,
+       "stdev": 339.2014978069655,
+       "min": 13440.846592045622,
+       "max": 15783.515554970778
       },
       "300": {
-       "dps": 12681.216114402465,
-       "stdev": 221.38564907392725,
-       "min": 11886.629354348746,
-       "max": 13488.522394693113
+       "dps": 14092.16508032945,
+       "stdev": 257.2444431032725,
+       "min": 13129.244617641712,
+       "max": 15011.190791782597
       },
       "60": {
-       "dps": 16105.640836280081,
-       "stdev": 552.5312637667884,
-       "min": 13985.164209981172,
-       "max": 18397.13118799327
+       "dps": 17752.69195076657,
+       "stdev": 634.5969701893686,
+       "min": 15343.11817976492,
+       "max": 20320.349935775743
       }
      },
-     "link": "eJzsVUFoXFUUnXPfn5k3N6m+PKfTl2eHjp9JjCOFN/MdjW4yFgQXUgJuXNaFRUShOCtd/RbEadzUIIJxU1TEhQsNIhmpMsSASaW1Qg2tLpJWBHWRDBhLgkjk/5+ZVtqVNrvexcx/55573nnvc//lJyQpcjSOJzFJz+AInscxCoEW6BTwEfAJaA7oAIvABeASsAr8CnRBm6AWYZU2hPYcxmHfZ0kqa88Q71VXtsj8VvQzn39NnTZVPFlSI3y3urhOvljpA1qtbJH5q+iLhHRAlVmr9h9kpovXeRH25xqZzaKfW2nT8nYkyXvV1XUyHxf9TKfd36McwVtk3tp/AzyiymzUp10yb+73c502rfQyB+KC1S0yob1J57Uumbdv1EncfXWNzPa/HA+qn9cT7MMlYlbXNnoZT73bJdbqsy6Zc0k+zpRugY2wp2Y3yM9Icpj0Xt0jochQCccQAieQmXzx2Veee3kK97t64AJXrdcOBu4hV3cuqLq6q1WDIHBBtRpUY6A6g9SPSF3FoPxigdSZBTLf/kLJq3uP/ibuUOpO/K/Q4/+1cp7mBN/D0mbYkzNTnp/lNIuDQZOHOGM9JjO0A1Wbmm3COzctdN5qq/iu0nYvIE8WdM5mbZpF9OhZeiylfVviQiUvoXPziGrbH4iIwajHUsuh0IftU3xIN2Je5iZewKOVshT63lkykQxnOR0491LT5mZoR8KKeUr19Xo2L76O/v6eli9E2PehiHJMrml31n3+d6HQNet4VJc5X9FS6PSUIOnZ+AJqrsmDPrOcRXTC84XelfUPfb6gH7F1flA/wMOVff0t184KG7uuRq5vobF29rqHy1eEHrb7eI8/wLnZ+CaOH48tR/992jc/CINFWsTlnd4ZbfxOqU3KnhADIOGlM1mZ44GWwDQKNi/JiBLGqMZxL6MEB/8NkYtLw6ONoUQk3xieeSeKpYn7jsaxPFH7iUy69HRll5t07GTjdsiESwu3RWc34tH498v1xuPJenPiCBIsdWGikpWnDivRwKGHJRQMSjSGaJg1MIloHsYf3xZwOp6Gc6BL0eBDSGgRThP+CQAA//8PE/UQ"
+     "link": "eJzsVUFoXFUUnXPfn5k3N6m+PKfTl2eHjp9JjCOFN/MdjW4yFgQXUgJuXNaFRUShOCtd/RbEadzUIIJxU1TEhQsNIhlRGdKASaW1Qg2tLpJWBHWRDBhLgkjk/5+ZVtqVNrvexcx/55573nnvc//lJyQpcjSOJzFJz+AInscxCoEW6BTwEfAJaA7oAIvABeASsAr8CnRBm6AWYZU2hPYcxmHfZ0kqa78k3quubJH5rehnPj9DnTZVPFlSI3y3urhOvljpA1qtbJH5q+iLhHRAlVmr9h9kpovXeRH25xqZzaKfW2nT8nYkyXvV1XUyHxf9TKfd36McwVtk3tp/AzyiymzUp10yb+73c502rfQyB+KC1S0yob1J57Uumbdv1EncfX2NzPa/HA+qn9cT7MMlYlbXNnoZT73bJdbqsy6Zc0k+zpRugY2wp2Y3yM9Icpj0Xt0jochQCccQAieQmXzx2Veee3kK97t64AJXrdcOBu4hV3cuqLq6q1WDIHBBtRpUY6A6g9SPSF3FoPxigdSZBTLf/kLJq3uP/ibuUOpO/K/Q4/+1cp7mBN/D0mbYkzNTnp/lNIuDQZOHOGM9JjO0A1Wbmm3COzctdN5qq/iu0nYvIE8WdM5mbZpF9OhZeiylfVviQiUvoXPziGrbH4iIwajHUsuh0IftU3xIN2Je5iZewKOVshT63lkykQxnOR0491LT5mZoR8KKeUr19Xo2L76O/v6eli9E2PehiHJMrml31n3+d6HQNet4VJc5X9FS6PSUIOnZ+AJqrsmDPrOcRXTC84XelfUPfb6gH7F1flA/wMOVff0t184KG7uuRq5vobF29rqHy1eEHrb7eI8/wLnZ+CaOH48tR/992jc/CINFWsTlnd4ZbfxOqU3KnhADIOGlM1mZ44GWwDQKNi/JiBLGqMZxL6MEB/8NkYtLw6ONoUQk3xieeSeKpYn7jsaxPFH7iUy69HRll5t07GTjdsiESwu3RWc34tH496v1xuPJenPiCBIsdWGikpWnDivRwKGHJRQMSjSGaJg1MIloHsYf3xZwOp6Gc6BL0eBDSGgRThP+CQAA//80dPUX"
     },
     {
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 15569.625212216628,
-       "stdev": 325.30156181151375,
-       "min": 14375.417212894039,
-       "max": 16800.358769444516
+       "dps": 18387.293640293963,
+       "stdev": 482.6211106606273,
+       "min": 16649.75708937385,
+       "max": 20210.24457281905
       },
       "300": {
-       "dps": 14975.07410291065,
-       "stdev": 247.80357693202907,
-       "min": 14076.870209919689,
-       "max": 15836.166873894446
+       "dps": 17734.340080060487,
+       "stdev": 363.6498388275329,
+       "min": 16285.377844430615,
+       "max": 19245.241896068113
       },
       "60": {
-       "dps": 19053.612116928012,
-       "stdev": 627.3818441430665,
-       "min": 16705.169691508283,
-       "max": 21779.386434193588
+       "dps": 22289.30756186482,
+       "stdev": 952.6769197264446,
+       "min": 19072.799536439466,
+       "max": 26061.212155809597
       }
      },
-     "link": "eJzslU9oXNUXx+d7zps3d06a/m7uL0lfrg4dH2mNo4U785w6uskoCOJCAm5c1oVFRKE4K129dONMJosYBDEgFJGqUEGzCB2rMNSImUprBQ2tIqkFQV3UP7gIiETem2RaS1fa7jyLmfu+93s+3HMf5x15WJEmRzU8ghl6AofwNI5QDDRBC8DbwHugk0AXWAPOAxeAS8APwC+gTVCTcIl+Z+M51GBfFkU6Zz8hGdPvtjn4sRD6Kx9Tt0MlTxX1pOR1r80hr3QSx69tDv4ohH63M3DsE6O/bXOwWAj5qhbo2XkONgthfqND61vX8Mb0RpuDE3+HTEqgT7U5eOX2MN/t0MbVnb0ypuN5vl5OOO8scBDb0L9OfnWeg98KoX+8R8d7O7LRl1scbBVCvlY70e5rK2n6Xr1PRL/V4u19T59qsRj9/jwHZwshbwyOdCPN00tzHPqKHGa8F4cVNAVUxBHEwFH4M88++cJTz8/hTleNXOTK1cqByN3rqs5FZVd1lXIURS4ql6NyKpSXkPkamcvYpT5YJf3hKgWffU/9d/gG/UnSpcx/8a/C1P5p5ml6neX/oqwvnlqa88KcZIUPRA0ZEd96QsHItlRuGLF939lFNqPWWC27i1s7AdUaN3mbs1nhZOlZeiBjavag3GNKMl4aVZ5RzyTpX8ScYIRcQ3Rpt/INPZrpK7WG3XaY0BbTLJj8aSRi501O2IJq6lmP2RTsbTIS/k+GlyHiqS9fgiGdTbeT9c55P4/ZVKyT/WZSRktGscnOMSnPppVVXEN2hSJqGcnRz43v3MWgmnPjA1SCvc9W5W5zl0yU9gxqunKGbV5yki0799yNeFfO8ABy8Ts2E3aPDIdDkl9Oi5udTe8k+R/YPv2KA6zRGi5uN8j++k+U2aTcUR4CsZf1cyovQ03GIsbtqKKAi5iiiqQNiyIcwjbn09T4cH2kDxmtTyy9lkRv+o7DaaxPV76hIFt8vHSLO3GqVb8ZmLi3elM4tyLuT38/+rn+YP95c/oQ+lrm/HQppxYe014dDx1U0AhQpCkko6uOGSTTL/3CNoFj6ew7CbqQjDnEhCbhGOGvAAAA///oMuqH"
+     "link": "eJzslU+IW9UXx/M95+Xl5sxMf3fuL5O+uTYYH2Mdo4WXPFOjm4mCIC5kwI3LurCIKBSz0tVrQUwmswiDKA4IRaT+m4XOYmgUIbQDTiqtFXRoFZlaENRFVXAxIDLyXiYZqq603XkWyX2f9z3fd899nHfkIUWaAqrhYczT4ziCp3CMIqAJ6gBvA++DTgM9YAO4CFwCrgDfAz+DtkFNwhX6lY0ToAb7oijSGdslmdLvdtj7oeC7a2dprUslRxX17ZLV/Tb7vJYofmmz91vBd0/1aXNnoLhVjP6mzd5SwedT/SGb0isd9rYLvtvrUq+7h7fa7K1cj2dkSr/XYe/lA7671h09OsbRIvvZXpe2rle/02Evsr77J/zqInuvHEi8hzuZEaOvttjbKfi8Jx3XK+0RE0d/1GIR/VaLRzkfLLJ3vuDzVnevyr8yRy8vsO8qCjDvvDChoMmjIo4hAk7AnX/mieeffG4BdwTVMAiDcrVyKAzuCapBEJaDalAph2EYhOVyWE5AeRmpr5C6inH14Trps+vkffodDd7bG/Q7SY9S/8W/ClP7p5ln6HWW/4uyrjhqecHxM5IWPhQ2ZFJc6wh5k7uo3DBiB7rzS2xy1lgt+4o7w4Bq5U3WZmxaOF46lu5PmZo9LHebkuRLOeUY9XSc/nnEsY1Q0BBd2qdcQ4+kBqTWsLsK49tikgWTPYMYdt/k2FtQTTSbEZuCvUUm/f/JxCpEHPXFSzCk08nteD3c72cRm4oN5KCZkVzJKDbpBSbl2KSyStCQcV9ErSLe+oX88CxG1VzIj6xi23ttVe4yd8p0af+opmvn2GYlI+lyEDz7d37XzvHI5PK3bKbtfpnwxyS7mhR3/HhyJvH/SPbJl+xhgzZwebdBDtZ/pNQ2ZU7wGIidtJtRWRlrMpaQtzlFHhcxSxVJGhZFBPDbnE1So6P1yYFJrj69/Foc/bnbjiaxOVf5mrx08bHSTe7E2Vb9RthE/fUb4nMz4r7k9+Of6g8MrrfnjmDAUhfnShnVeVQ7dTx4WEHDQ5FmEY+rOuYRT7zkC9sETibz7jToUjzaEBGahJOEPwIAAP//NPfmUA=="
     },
     {
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 15706.455679001408,
-       "stdev": 391.62728775397534,
-       "min": 14169.994691841932,
-       "max": 17193.388516541043
+       "dps": 18231.323911059855,
+       "stdev": 468.0277873429032,
+       "min": 16311.86320902749,
+       "max": 20046.380436827294
       },
       "300": {
-       "dps": 15071.279619683271,
-       "stdev": 299.2452423680343,
-       "min": 13927.82135247746,
-       "max": 16043.499261036035
+       "dps": 17550.194287823917,
+       "stdev": 357.2976780450036,
+       "min": 16158.132445803309,
+       "max": 18880.741045992065
       },
       "60": {
-       "dps": 19207.157816346597,
-       "stdev": 745.2530082544666,
-       "min": 16354.396789938675,
-       "max": 22482.624193902484
+       "dps": 22036.241249439056,
+       "stdev": 899.4308666943623,
+       "min": 18594.045167701574,
+       "max": 25681.0004428954
       }
      },
-     "link": "eJzsVU1oXFUUnu+cNzNvTlu9uSbTm2uHjo8xxpHCnXmORjcZC4ILKQE3LuvCIqJQnJWuXrpxkskiBjfOqoiIBhc2kJCpP5QYMGlprWBDq4i1IKiLKuoiIBJ5b36MrSttd57FzLvf/c53vnsf5x153CdFjibwBKboaRzFczhOEdAEzQPvAO+DVoEzwAZwEbgMXAW+B34GbYOahKv0G2vPYQJ2SXxSWXuOZEQtzrP5oRBkVj6hdzep7PlFdVDuVJstDrgLlNRBGVFvL7L5vRBklju03OnDWn3dYrNQCHil0829V4yanmOzXQhyXepyb6ckI+qbFpv3dovExYz6tcXm9QN/TyglO9Ecm9cOBLmtnRjuGyyJUZdabCJ7Y5HY6alFNr/EJ+rQygDW6nSLzc4upyXR6trMjZinPphh8dTHiyxanZpjc74Q8PIunZsxT7VnOcj45DDlvbLPhyJDRRxHBJxAZuqFZ15+9qVZ3OdqoQtdpVY9FLoHXc25sOJqrloJw9CFlUpYSYBKG6kvkbqGvf7pdVIfrpM59x113+Sb9AfJGUr9H/8p9MS/zVyjVZa7xLcZ8fz2rBdkJS18KGzIkGSsJ2SGelClocV2eecXWA9bbZXcUdzpB/yZvM7ZrE0Lx4+epUdTOrBFyZeHfejcGuLczlscMwS1RGorYn3EPimHdT3hZW7ihTJWLvms714iE8tIVtKhcy82bK5NPQnLa5Qa6PVtfvEqBvU97T8fY59HHO8JuYbtrQf8zyLWVetkTJdkuKx91ulZJt+zyQVUXUP2BiL+EuITXsj3r2xw6At5/bCtyQP6fhkt7x+UvH6WbeK6Erv+B43rZ//ycOVb1qN2v+wL9khuKbmJ6enEcvw/oH16iQ02aANXer0zVv+RUtuUPcF7QOylM1k/J3uajAXk7bBPhosYp6okvYwiHIIW55LU6Fh9qCsyXB9tvxHH5uQ9x5LYmqx+RSZdfKp8m5t0fKZ+K2SizfVbonM74pHk96Of6o9119uTR9HFUhcny1l//ohK13H4IR8KBkUaRzzb6phCPB6Tj28TOJkMx1XQ5XgOIiI0CScJfwYAAP//LKrxsw=="
+     "link": "eJzsVUFoXFUXnu+cNzN3Ttr/v7lOpjdXh46PSYwjhTfzHI1uMhYEF1ICblzWhUVEoTgrXb124yTTRQhunFURkTa4sMFKUlFDGjBTaa1gQ6ubWBDURRXrIiASeW8yk7a60nbn4fHeu9/9zne/ex/nHXlakaaAJvEMpul5HMZLOEoR0ALNAaeAD0BLwAqwDlwGrgKbwA/AL6AtUIuwSb+x8QJMwr0ninTWfUYyohfm2P5Y9DMfnaezy1TxVEnvl//rbpt97gFlvV+MPjXH9vdiHysl2PJNsvO3YGNi9Wab7VbRz51dpt5V8dSYLsuI/nCB7ftFPzOAeyI322zfesDPrfQTZERHJzgBTndvoVp9pc02crdrxzMj+swC21972hvbu9rn2my37zB9feZ2rCye/nSBxdMfz7AYfeYE24tFn093d3PuxMbE051Z9jOKAkx7b+xV0GSphKOIgOPITL/ywusvvjaLh4J6GIRBtV47EAaPBvUgCKtBPahVwzAMwmo1rCZAtYPUN0hdxx51bo30+TWyX3xPva/3Dv1BskKp/+JfhZn8p5mrtMRynyiXEU91Zj0/K2nhA2FThiXjPCE7vANVm0Zcj3dxnk3eGaflf6XtfkDNFEzOZV1aOH71HD2ZMr4rSaGSVzC5VcS5y+9yzBDUE6mNiM0h96wcNI2El/kLL5TxSlmxuX+RbCwjWUmHQfBq0+U6tCPheJVSA72+za/fxGB9z6iXY+yriOM5oaDpdsYD/pcRm5oLZNyUJV8xik16lkl5LjmAWtCUPb6IWkS8w0uF/pENNn2pYB53dXnEPCyjlX2DJW9cYJe4rsau/0bjxoVdD9e+YzPq9slef0hyi8lJHDuWWI6fA9rnV9hindZxbad2xhs/UWqLssd5CMReOpNVORlqMeZRcHlFlkuYoJoktYwSAvhtziWp0ZHGcE8k3xjtvB1Hd+rBI0lsTNW+JZsuPVe5x0U6MdO4GzJRd+2u6NyLeCK5f/Jz46neeGvqMHpY6vJUJavmDul0AwcfU9CwKNEE4n7WwDTilpj8fFvAyaQhLoGuxr0PEaFFOEn4MwAA//9NPe9g"
     }
    ]
   },
@@ -2622,121 +2622,121 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 7641.23371993777,
-       "stdev": 184.68528167718398,
-       "min": 7011.370229595676,
-       "max": 8284.798275867584
+       "dps": 9374.293846755041,
+       "stdev": 210.97129612480194,
+       "min": 8614.609309948415,
+       "max": 10181.77063498115
       },
       "300": {
-       "dps": 7556.127601906638,
-       "stdev": 141.9179025300855,
-       "min": 7032.482980795059,
-       "max": 8038.079821728652
+       "dps": 9244.09836331413,
+       "stdev": 159.11501491931898,
+       "min": 8700.849393867471,
+       "max": 9859.453839114478
       },
       "60": {
-       "dps": 8243.11630451007,
-       "stdev": 326.4259641208934,
-       "min": 6949.409605626118,
-       "max": 9320.308372347252
+       "dps": 10070.443093859649,
+       "stdev": 373.3302591293628,
+       "min": 8841.708326986438,
+       "max": 11737.554523507222
       }
      },
-     "link": "eJzsVE1IXGcUfee8NzNvPjvt52sHvj4cOn2MRQaEN/M6xXYz00KhuCgD3XRpF5UuupC4SlaDZDHqIpJIIBJEsxiycBGSjYkjqMnCWZiIC39iJBKIMXGhiwQGwsTw3ohIlonuchYf95577+HycTnid5OSLrvwB4r8Gz34D30sAWVwBLgJ3AKngTlgEVgG1oFtYBc4AOtgmdjma90yXHTBvh4xKQ37DURcPq1SvUw44c0FVnaYNsyUbBdRWX9CR6/sUFhyYJbqbcLRHy755e9kSsTklSldXU6kDbNdpkRcvqtS1RNOuLJzQuQrOTRDNXVMC0tuValG2wLhQKpdWHL1HoOO8VpzMCnicm+NqmR/QEfkpVmqq23iC7mxRnWYcPTxGkVMjlX97Gg3Q+49ojDk/oxfmpuhWkocLaQJQx7epWOadGNFowcXYiYkFZPoQwkYQLj4/z/n/z03hJSbc3NuptPNdbq5rJd1c5ms63lexnOzGc/LehnPy4xBewztGZS5tUp5cZ5qeJ7J3RV2vFih+3yFze+/wQbFHLXP+CRYXR87ucASRKsI24aganUiIiT0zky/Zdj8RbOEbdphYZj3R3kcT0zqx/HgibjSoNVm20KmvzRDFrs1nxX8sT+o3mnQittfi+ht+OnBpB7Qkw0qLHIRG0c38EPhFbU6IwN6C6gboXDEjIqWso5uw6bSnWE9GvSVegutzYlvCt+OXfNRy3/fG2A1n92kCiX/Sp/xZXUMFk5DplR7cCo6Z4Gfg3d2v/BrM6/ne9DktOV8OmKO/ClRwG8/mZBQSLIDvosWUIRvxIF1lIGJwIanwXXfcVEiysQE8T4AAP//pDutvA=="
+     "link": "eJzsVE9IHGccnfdmdnf2s9t+TrvwdXDpdliLLAizO91ie9ltoVA8lIVeerSHSg89SD01p0VyWPUQSSQQCaI5LDl4CMnFxBXU5OAeTMSDf2IkEogx8aCHBBbCxjCzYiTHRG95h5n3e9/3e/z4+PHEryYlXXbhNxT5J3rwD/pYAsrgCHAduAFOA3PAIrAMrAPbwC5wANbBMrHNl7pluOiCfTViUhr2K4i4fFylep5wwpsLrOwwbZgp2S6isv6Ijl7ZobDkwCzV64Sj31/yj7+RKRGTl6Z0dTGRNsx2mRJx+aZKVU844crOCZMv5NAM1dSxLCy5VaUabQuMA6t2YcnVOwxujNeajUkRl3trVCX7PTkiL8xSXW4Tn8mNNarDhKOP1yhicqzqV0ezGXLvAYUh92f8o7kZqqXE0UCaMOThbTqmSTdWNHpwLmZCUjGJPpSAAYSL//71/9//DSHl5tycm+l0c51uLutl3Vwm63qel/HcbMbzsl7G8zJj0B5CewJlbq1Snp+nGp5ncneFHc9W6D5dYfP5r7FBMUftEz4KVteHdi6wBNEqwrYhqFqdiAgJvTPTbxk2f9KsNtsWMv25GbLYrdlhYQh+3+//zVsNWsI2A3539B2fmNSP+eAJXmnQittfiuhN+OXBpB7Ikw0qLHIRG0c78F3hBbU6IwN6C6gboXDEjIqWso5uw6bSnWE9Gtwr9RZamx1fFb4eu+Kjlv+2N8BqPrtJFUr+kT7jzeoYLJyGTal271R8zgI/Bt/Z/cLPzbqe70FT05bz6Yg58rtEAb/8YEJCIckO+ClaQBF+EAfRUQYmghieBtf9xEWJKBMTxNsAAAD//4ZZrbw="
     },
     {
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 8988.493997229414,
-       "stdev": 208.68119232920048,
-       "min": 8208.34255717273,
-       "max": 9753.575075169452
+       "dps": 10778.360237521752,
+       "stdev": 237.9577968053819,
+       "min": 9921.402994539338,
+       "max": 11785.641744524995
       },
       "300": {
-       "dps": 8870.17904904463,
-       "stdev": 159.0305997795302,
-       "min": 8290.298350824734,
-       "max": 9476.440257618971
+       "dps": 10626.92088468089,
+       "stdev": 182.3839683819221,
+       "min": 9983.777548455386,
+       "max": 11351.211648326169
       },
       "60": {
-       "dps": 9818.939756013127,
-       "stdev": 368.90986844515476,
-       "min": 8491.45339664771,
-       "max": 11259.074220542438
+       "dps": 11704.512341448291,
+       "stdev": 424.7402865778677,
+       "min": 9977.984208320955,
+       "max": 13464.42810925342
       }
      },
-     "link": "eJzsVDFoG1cYvu+7k3R6xvXztYLXw8LqIRcjMJx0VXG7SC0Uioci6NLRHWo6dDD11E7CeJDroaY1gZjgSBlEIB5CAsGLwY5DsCB2jAfjJCQokWM7yWAPGQRBJNwpmDhkSuwt33D873vf970H9/jEDyYlXQ7iRxT4C4bxO0ZZBErgNHARuAwuAEvAKrABbAN1YB84BJtgiajzuW4ZLgZhr0RMSsM+RxGT5QbVk7gTvrbC9TWmDLNXJkVUrjXo6NVdX7H4kOpF3AlXd1nd9RV9MiEi8v95Xf0XF0pWGlTNuBNt77clSdkrYvLSDtX8204lJxpUMz3HDf6pMfnvPo/TfTIplFyvUx2844QueX6H6kyPE56rca5GYcn6HtXLeHD1IDUhLPmgcZxLCkNu7VEY8tltii55q0G11r6mH6IJQ95s0DFNup0FYxh/d5qQVExgFEVgHOHCH7/+9duf/yDpZt2smx5wswNuNuNl3Gw643qel/bcTNrzMl7a89Kz0O5CewRl3t+inFimmlpmYn+T/XubdB9vsv2XLrBFsUTtIz4I1uD7Oq+zCNEtwrYhqLqdiAgJfSA9Zhk2v9UsYZt2WBjmygyP5nJFP5on35irLVo9ti1k6hMzZHFI81nBr8aC3astWjH7UxG9An95WNEDutKiwipXcef1G/gy/5Rak9FxvQPUjVA4YkZFR0nHkGFT6c6UHg10xZF8d9vxWf7z2bM+arkvRgJs5TL3qEKJn1On/LL6J/MnEVOs3TiRnNPAN8F38SD/XXvdzA2jzWkbuVTEnP5JMo/vvzYhoZBgP/yyzaMAv6+D6igB5aCtF8Btv5hRJEpEmXgVAAD//3zvwFg="
+     "link": "eJzsVDFoG2cYvffuJJ1+4/r3tYK/h4XVQy5GYDjpquJ2kVooFA9F0KWjO9R06GDqqZ2E8SDXQ01rAjHBkTKIQDyEBIIXgx2HYEHsGA/GSUhQIsd2ksEeMgiCSLhTSOKQKbG3vOHu+9+99/4f7ueJH0xKuhzEjyjwFwzjd4yyCJTAaeA8cBFcAJaAVWAD2AbqwD5wCDbBElHnU90yXAzCXomYlIZ9hiImyw2qR3EnfGWF62tMGWavTIqoXGvQ0au7vmLxPtWzuBOu7rK66yv6ZEJE5P/zuvovLpSsNKiacSfa/t6WJGWviMkLO1TzbzuVnGhQzfQcNfi7xuS/+zxK98mkUHK9TnXwjh265NkdqlM9TniuxrkahSXre1TP48HRg9SEsOS9xlEuKQy5tUdhyCc3KbrkjQbVWvuYfogmDHm9Qcc06XYWjGH83WlCUjGBURSBcYQLf/z6129//oOkm3WzbnrAzQ642YyXcbPpjOt5XtpzM2nPy3hpz0vPQrsN7QGUeXeLcmKZamqZif1N9u9t0n24yfZfOscWxRK1j/ggWIPv67zKIkS3CNuGoOp2IiIk9IH0mGXY/FazemxbyNQnZsjikGaHhSH41Zj/Ni+3aAnbDOaVmddzuaK/miffmKstWjH7UxG9BH95WNEDutKiwipXcevlHfgy/5hak9FxvQPUjVA4YkZFR0nHkGFT6c6UHg10xZF8d9vxWf7z2dM+arkvRgJs5TJ3qEKJn1MnfLP6J/PHEVOsXTuWnJPAN8Fz8SD/XXvdzA2jzWkbuVTEnP5JMo/vvzYhoZBgP/yyzaMAv6+D6igB5aCtF8Btv5hRJEpEmXgRAAD//18NwFg="
     },
     {
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 11286.539304958378,
-       "stdev": 258.58181869517347,
-       "min": 10362.303596022117,
-       "max": 12357.854540157468
+       "dps": 13179.763217586047,
+       "stdev": 295.26093044198734,
+       "min": 12215.412222535959,
+       "max": 14255.820850087286
       },
       "300": {
-       "dps": 11169.984722174053,
-       "stdev": 196.8511624281649,
-       "min": 10456.986980453734,
-       "max": 11964.321966550227
+       "dps": 13011.41977520926,
+       "stdev": 224.04107676210907,
+       "min": 12223.738157896296,
+       "max": 13946.209306922545
       },
       "60": {
-       "dps": 12333.811805470741,
-       "stdev": 461.4212654286779,
-       "min": 10496.884367442584,
-       "max": 13892.70811770406
+       "dps": 14317.023167791545,
+       "stdev": 521.8634555830951,
+       "min": 12320.101778109794,
+       "max": 16288.934372136762
       }
      },
-     "link": "eJzsVE9IHHcUnu+b2dnZn9r+nHbh18HF7bAWWRBmd7rF9rLbQqF4KAu99GgPlR56kHpqT4uUstaLFCmtAdEcQg4JBoXgHkI05uAeIuJBTEJA8tfk4C5EZEEWw8xGMSGnRG/5Dj/e+973Hjx+j098a1HSYz++Q5E/YhC/YJgloAxOABeBK+AisASsAuvAFrAN7AB1sAGWiW3u6bbhoR/O9ahFaTj/UXwoHx9QPU245tUVrlUC4q86XX2twrRhdcuUiMuH+1QHCdecq3AupFOyR7TLynOqfxKuPlehUHK3RtVIuLGW6EiXFEou1KkuvVbplj3CltV9qsmuExURl1M1virtkSmh5OEuVe0N4+Nyvk71b5drrlU4XT1qaJcPalSHCVefrlK0y/3dVhZsaMjxevCeq4fr16huJVxzusrNQwpNGPLyHl3LotdRNAbxR4cFScUkhlECRmEWf/3p959/+xspL+flvEyfl+vzclk/6+UyWc/3/YzvZTO+n/Uzvp+ZgnYH2n0o694m5Z/LVOPLTO5ssPfJBr1HG2z90Hk2KZaovcc7we5/284bLEF0CtMxBFWnGxURofdlRmzD4VeaLRzLMYVhrUzyOJ6Z1Y/jsRPxhSbtLscRMv2BFbE5oAWs4OcjYXWhSTvufCRi8wjS+qwe0rNNKqxyFbdf3sBnhWfUGoyO6m2gbkTMqBUTbWUdA4ZDpbvjeizUlYYKna2OjwufTP0foJr/dCjEZj57lyqS/CF9xpfVO1Y4jTGl6s1TmXMW+DJ8r9UKX7fyRn4QLU5bz6ej1sT3Ui/gmy8sSCgk2YvAaAsoIvDq0DrKwEzo1IvgVmDKKBFlYoZ4EQAA//+UBMIG"
+     "link": "eJzsVE9IHGccnfdmdnb2U9vPaRe+Di5uh7XIgjC70y22l90WCsVDWeilR3uo9NCD1FN7WqSUtV6kSGkNiOYQckgwKAT3EKIxB/cQEQ9iEgKSvyYHdyEiC7IYZjYmJuSU6C3v8M37ve/9fvAxP5741qKkx358hyJ/xCB+wTBLQBmcAM4Dl8BFYAlYBdaBLWAb2AHqYAMsE9vc023DQz+cq1GL0nD+o/hQPjygepxwzcsrXKsEwl91uvpahWnD6pYpEZf396kOEq45V+FcKKdkj2iXladU/yRcfa5CoeRujaqRcGMt05EvKZRcqFNdeO2mW/YIW1b3qSa7jt2IuJyq8VVrj0wJJQ93qWpvGB+X83Wqf7tcc63C6epRQ7u8V6M6TLj6dJWiXe7vtqrghYYcrwfnmXr4/BrVjYRrTle5eUihCUNe3KNrWfQ6isYg/uiwIKmYxDBKwCjM4q8//f7zb38j5eW8nJfp83J9Xi7rZ71cJuv5vp/xvWzG97N+xvczU9BuQbsLZd3ZpPxzmWp8mcmdDfY+2qD3YIOtP3SWTYolau/xTrD737bzGksQncJ0DEHV6UZFROh9mRHbcPiVZnc5jpDpD6yIzQHNMYUh+PlI8LUWmrSFY4V8ZfIln5nVX/CxY/xck3bc+UjE5hGU9Vk9lGebVFjlKm4+34HPCk+oNRgd1dtA3YiYUSsm2so6BgyHSnfH9VjoKw0VOlsdHxc+mfo/QDX/6VCIzXz2NlUk+UP6lDerd6xwEmNK1esnMuc08GV4XqkVvm7VjfwgWpq2nk9HrYnvpV7AN19YkFBIshdB0BZQRJDVYXSUgZkwqRfBrSCUUSLKxAzxLAAA//92IsIG"
     },
     {
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 17074.833269756346,
-       "stdev": 389.04473916407454,
-       "min": 15652.116806817254,
-       "max": 18507.410353326297
+       "dps": 18227.799174601496,
+       "stdev": 377.4484215813768,
+       "min": 16952.368017907527,
+       "max": 19711.994215268438
       },
       "300": {
-       "dps": 16755.99729062379,
-       "stdev": 298.9889277713364,
-       "min": 15616.83211211322,
-       "max": 17892.42026656355
+       "dps": 17904.886443739568,
+       "stdev": 289.93282873101765,
+       "min": 16881.925943486494,
+       "max": 19148.92671362058
       },
       "60": {
-       "dps": 18576.88530970217,
-       "stdev": 696.8862708399118,
-       "min": 15870.431739075499,
-       "max": 21235.464566944353
+       "dps": 19709.55143495795,
+       "stdev": 670.9562327816074,
+       "min": 17411.082134599223,
+       "max": 22319.73171056795
       }
      },
-     "link": "eJzsVEFIFG0Ynuf9Zne//dTfz/l/4fsHl3//wUIWhNmdNqzLbkEQHmKhS0c7JB06SJ7qNFiHXcfDYlLkQbRDdAhWCsItAs0OLqSJB7NCECGyDuWhw0IsxsyodC699TAM7/d8z/vMC/PyiDOcJNnUg7Mo0AX04TIGyAWKoDLwAJgGzQCzwAKwDKwBG8AWsA2qg4qEDfrGDN1GD8zpGCepmyUSrXKxzNSnhBV9Mk+Vqk/UPGaxSpVSOu+USdEsX5eZ+p4IONEs1z2mRhMWW6qSUHLDY6qesOKVKoVPSudHZFK0yi8eUw8TVjSkRbt8VWZqrMOKLu3p/pOdolXeGmFWfHXH5yZqvm6pzJRr7jUGfr6u4jF1u2Pfz5CbJaZ2wkF2zZrlUy/kfIUun5WYEHJ0hAX3SWHINzeYWgzHnagF39OELu8MM4tzslsKeh+ut3BIUpTEAFxgCNHClYvXLl0dRqedtbN2utvOdtvZjJOxs+mM7ThO2rEzacfJOGnHSY9DewdtE4qvr5K8OUfKm6Pk1gp1fVwh+8MKhb/kHjVIzJL2B78Fo+dXO1+QC9EmoqYuSLVZMRERrDs9aOgmndQMYXIzKnQ+P0b79eQU269LP9X3G2R0mKaQqb94xKBezWcFHRsMbh83yGg3/xbxR/CP21MsoKcapLBAC3i7uwNH859Jq1NsiDWBmB6JxnhcNBUZenWTFLM8Fg90bn++Lez4J//v+F0ftdz//QFWc5n3pCLJ86lD3qyuUv4gbNzaywPxOQycCN7Pv+ZPhed6rg8hpy3nUjFePif1PE4f55BQSFIX/GTNowA/nIPoKAKTQTTPgNb8FIZLKBImCT8CAAD//706tg8="
+     "link": "eJzsVEFIFFEYnu9/s7tvn5rPKeE1uLQNFrIgzO60YV12C4LwEAtdOtoh6dBB8lSnxTrsOh4WkyIPoh2iQ7BSEG4RaHZwIU08mBWCCJF1KA8dFmIxZkatc+mtj2Hme998/zcP5vGJc5wk2dSF88jRJfTgKvooDxRAJeARMAmaAqaBOWARWAHWgA1gE1QDFQhr9IMZuo0umJMRTlI3iySa5XyJqS8xK/xslsoVT6i6zGLlCiV03i7jolG+LTH1M+ZrolGuukwNxyy2UCGh5JrLVC1mRcsVCq6Ezo/JuGiW31ymHsescCCLVvmmxNRImxVe2PEdke2iWd4ZYlZ0ecvTxqqeb6HEVN7cGfTzPF/ZZepu226eIdeLTG0FG9kOa5TP3UDzHLp8UWRCyOEh5r+PC0O+u8XUfLDdsar/PU3o8t4gszgnuymn9+BmE4ckRXH0IQ8MIJy7dvnGleuDaLfTdtpOdtrpTjudclJ2OpmyHcdJOnYq6TgpJ+k4yVFoH6CtQ/HVZZK3Z0i5MxTfWKKOz0tkf1qi4Jc8oDqJadL+459gdP3t5CvKQ7SIsKkLUi1WRIQE60z2G7pJpzWjzTSFTBzgIYO6NTMsdEEn+r0nf1onQ5jc57Mjv/n4BNvlxT/4wzoZreZBEX0Cb7k5wXx5ok4KczSH99tn4Hj2K2k1igywBhDTQ+EIj4qGAkO3bpJilsuivi/fm20JJg5lD4/e91DNHO31sZxJfSQVil9M7PPJ6ihm9yImX329Jzn7gVP+/eX37JlgXcv0INC0xUwiwksXpJ7F2ZMcEgpx6oDXrFnk4JWzXx0FYNyv5inQitfCyBMKhHHCrwAAAP//n1i2Dw=="
     },
     {
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 17301.95548492054,
-       "stdev": 373.1921116200268,
-       "min": 15980.050788032011,
-       "max": 18683.58566951239
+       "dps": 18398.699477550963,
+       "stdev": 366.2656621589185,
+       "min": 16956.916999994664,
+       "max": 19764.622796264463
       },
       "300": {
-       "dps": 17092.93121359843,
-       "stdev": 291.9474813271567,
-       "min": 15933.199994830698,
-       "max": 18162.418533112323
+       "dps": 18174.731066919463,
+       "stdev": 281.8029196773824,
+       "min": 17144.610567590607,
+       "max": 19257.530576903082
       },
       "60": {
-       "dps": 18830.4717729009,
-       "stdev": 648.5754024056791,
-       "min": 16224.56482617816,
-       "max": 21124.158848531646
+       "dps": 19933.50505397155,
+       "stdev": 628.9550264829347,
+       "min": 17608.67824466609,
+       "max": 22867.966961625338
       }
      },
-     "link": "eJzslEFIFF8cx+f7e7O7b59//z7n/xdeg0vboCELwuxOG9ZlpyAID7HQpaMdkg4dJE91WqzDqntYTAo9hHaIWAItK9xDodlBqTbxYFYEIkTWRaEOC7EYMxNLdCy99WUYfu/zvr/fPJjHV5zgJMmmLpxEls6gB+fRRzkgDyoCd4Bp0CwwBywCy8AasA5sAtugKihPWKevzNBtdMGciXCSulkg0SLHCkx9ilnhRwtUKVNC5/tlu4jKhyVmsUqZhCFfFZn6FrPYlL/dJtvFP7L8hdRIwESTfF5kqhqzwlNlWt3xwIMSU3cD4Dla5IsiU6OtVrjiA/8rbaJJXiswKxqYAl+lyNRWvTGh83bfd6/E1PVWHwdnmi4xtVM/kzfMkBuDvzIhRwrMr+NCl09KTBjy9RWmXsas6M0lCh6hCV3eGGIW52Q3ZvUeXG7kkKQojj7kgAGEsxfOXjp3cQhtdtpO28lOO91pp1NOyk4nU7bjOEnHTiUdJ+UkHSc5Du0ttA0o/n6V5NV5UsPzFN9coY6PK2R/WKHgr9yiGok50v7qj2R0/W7nU8pBNIuwqQtSzVZEhATrTPYbuklHNUOY3AwLnS+MUr2emGT1evCn+naNjFbTFDLxLw8Z1K15VNChfn93pkZGi/mfiN6Ht9yeZD6erJHCIi3izY87cND9TFqVogOsAcT0UDjCo6Ihz9Ctm6SYNcyivi/X6zYHHf+7+8bHPC1lDvT6Ws2k3pEKxU8n9vhmdQy6uzEmt/RsV+bshY7478db7rFgXc30IGDaciYR4cVTMuTi+GEOCYU4dcALVxdZePnsR0cemPDTeRa05gUxcoQ8YYLwPQAA//9rW7YR"
+     "link": "eJzsVEFIFG0Ynuf9Zne//fz9/ZwSvgaXtkFDFoTZnTasy05BEB5ioUtHOyQdOkie6rRYh1X3sJgUegjtELEEWla4h0Kzg1Jt4sGsCESIrItCHRZiMWYmLDqW3noYZp7vmed954V5ecQJTpJs6sBJZOkMunAePZQD8qAicAeYBE0DM8A8sAisAKvAOrAJqoLyhFX6ygzdRgfMqQgnqZsFEk1ypMDUp5gVfjRHlTIldL5ftoqofFhiFquUSRjyVZGpbzGLTfivW2Sr+E+Wv5AaCjTRIJ8XmarGrPBEmZa3POFBiam7geA5muSLIlPDzVa44gv+V1pEg7xWYFY0MAW+SpGpje3ChM5bfd+9ElPXm305mGmyxNTW9kxeM0Ou9f+uCTlUYD6PC10+KTFhyNdXmHoZs6I3Fyi4hCZ0eWOAWZyTXZ/Vu3C5nkOSojh6kAP6EM5eOHvp3MUBtNhpO20n2+10u51OOSk7nUzZjuMkHTuVdJyUk3Sc5Ci0t9DWoPj7ZZJXZ0kNzlJ8fYnaPi6R/WGJgr9yi2okZkj7h7+C0fGnlU8pB9EowqYuSDVaERESrD3Za+gmHdWMZtMUMvE/DxnUqZlhoQs61Os9+VSNDGFyn88N/+Rj42yb9//Cb9fIaDL3iOh9eMfNcebL4zVSmKd5vPmxAwfdz6RVKdrH6kBMD4UjPCrq8gydukmKWYMs6vty3W5jULHX3Tc64mEhc6Dbx3Im9Y5UKH46scub1dbv7kSb3MKzHemzGzji3x9vuMeCczXThUDTFjOJCC+ekiEXxw9zSCjEqQ1euLrIwstnPzrywJifztOgFS+IkSPkCWOE7wEAAP//TXm2EQ=="
     }
    ]
   },
@@ -2752,22 +2752,22 @@
      "phase": 1,
      "fights": {
       "180": {
-       "dps": 9168.018537207732,
-       "stdev": 171.18080804781113,
-       "min": 8503.639076344763,
-       "max": 9753.527501926326
+       "dps": 9612.212283993167,
+       "stdev": 179.66642037068758,
+       "min": 8909.741809852952,
+       "max": 10223.885610060599
       },
       "300": {
-       "dps": 8980.453621231423,
-       "stdev": 130.39468305808685,
-       "min": 8505.58637948003,
-       "max": 9453.413866779527
+       "dps": 9414.208995412857,
+       "stdev": 136.81304418638376,
+       "min": 8911.980403166932,
+       "max": 9909.08250724922
       },
       "60": {
-       "dps": 10855.267420884586,
-       "stdev": 320.4778791445761,
-       "min": 9656.295509174846,
-       "max": 12234.411876540526
+       "dps": 11386.49378279352,
+       "stdev": 336.4499972973169,
+       "min": 10129.194755642691,
+       "max": 12837.926058034089
       }
      },
      "link": "eJzsVU1oXFUUnnPemzd3TpPm5qZJbm4zZvqaSnh24vvhNUkVMxUK0oUE3XQhJYIWESvBtxCLi2kWGlPEKkUwCA4utIug0oWkmVHLYCFDioYsaq1dVMFStNT4R6aLWnk/M5riStudZzG8d873vu+c7w730F6GHG0chYdgAvfDJDwFU1gCmAE8BnAC4CPABYDTAEsAKwDnAS4BXAFYA2wAziBcwt80odswCupIG0OeVrNI3fyXKsqrOdM4U8PKZbR0ZvBB6uC/X0RTu7AQJgZ4ngQ/WkX5R87UYlCYy/Dj85qczZHgX1RRNpipvVePi4PUza98hfKDnGlULreI89TBX6qiPN5vGidOYbmOJPjPVZSv95tauR6DBqidr1VRvpxLdNr5tSrKN/sTinb+ZQVl6S5LZ/kI/NqnyWtYJf7ZYrMHna9VkNr5cgXl2ZBtkA8Q8XMfYwt8cTEZ2WQMbJjQ96cPtzPgKDEPU1ACmAZj4pnHX3jyuVnYYfu259qeUyh4rm+7nu07ruvZju25nuM7nu14vjMHqQuQ+g4ke38Z+YfLKE99j/kfV3Ho6ira11YxPpR38QbSaUz9H/8pxOi//bKGZ9PUSYbSCWWnmaE0aQUnoB5iyiCdlRtoEjEyCvbw2Egg+pUibm1mhsB9qRBBaAcR8sirKHrUlmZ1d1J1gt0psVX1UafVkeQjkV1OEGuKAZWjLquT6RFlljKUdoZH/Jh1/jqKF9VhmhLPUlvYiRtmb6wjHVCP0U5hUbfVxUCkSSPwFatBmjQ293xTbl8iN+IHLbQeo71b0NoGtEp0xH1qjO4VBeqzepku2NOJKyo7h8njrYZ4QdM6IVXP39qev46tofYyUHtoRPikLMkMkdDdXMfYghHfPhRQr9XNdJFdhLB2pqbFAkl3N9dRbFfbItAGgsT4FmhY7Uxsak2sYsPcLsqEj+ydIDnwtxsoCuoeyomtG0YOe48ac237UBCO1EyLSXWAHhD30w5r+waHuk+iYCD+Mkppq1oq8SL0LVvTEkmzn9RJ7GX4jwaH/59p6ImharPVxnShvQGpiE+Qijv/9leUsIRLsIJPfJ1cKXcXf8BUA7PT2iZATU8bGZalTTMaPKIr5GAe1bIRrnSw2Bl/saXYN/dWGPXxbQejODfufoMynX/UusMX1dArxdtBU6p/flt47kSMRb+f/FTcE783xichzqVWxq0MO/YwhyI8uIsBBwl5HIJwVRdhAsJtH62iGYBytOsXAM+Hax1KCDMIZYQ/AwAA///6Twd9"
@@ -2776,22 +2776,22 @@
      "phase": 2,
      "fights": {
       "180": {
-       "dps": 11252.013793063254,
-       "stdev": 213.5102065901765,
-       "min": 10506.518807000084,
-       "max": 12110.999674836838
+       "dps": 11777.510720226694,
+       "stdev": 222.8786097022694,
+       "min": 10993.362082260935,
+       "max": 12673.208800019358
       },
       "300": {
-       "dps": 10965.793355035832,
-       "stdev": 164.12653531381815,
-       "min": 10286.481481489354,
-       "max": 11624.542326763292
+       "dps": 11479.91742200356,
+       "stdev": 171.37377120171513,
+       "min": 10773.794063441828,
+       "max": 12169.14268426368
       },
       "60": {
-       "dps": 13348.533047065324,
-       "stdev": 411.47882361830943,
-       "min": 11855.447359125672,
-       "max": 14902.584592045725
+       "dps": 13964.451374729544,
+       "stdev": 428.4631732833094,
+       "min": 12410.132023190039,
+       "max": 15595.61670087601
       }
      },
      "link": "eJzsVk1oHGUY3ved2dlv39bm2y/dZPI1626nqYSxG+eH6SZVzFYoSA8S9NKDlAhaRKwE5yAWD2sOulaEIiIYBIMXeyhqc7ExCHWxkFCtIaDEWmRjYrpoqYJKtodamZ/d/OBJ25vvYZl9vud9nvd7Zphv6BBDjhYOwsMwgkdgFJ6GMawAVAFPAZwG+BjwHMB5gFmAeYBFgDpAA+A3wCZgFaGOfyhCtWAQ5OntDHlSnkXq4FcaqF/LGdqFGs6sBsBXdTSUmVU0VZbnBRL8mwbqf+VamMb7SPCpFdRPbsAKlOWLDdSbzNBmVnG9PctfWUb9w9wGWAtVl1ZQf6vXSEdwZP3nMhrp6TaQ5ZcbqL+6tTfLv66j/nZvCE/OrUv+cBX1yt2GEmEFnifBP1mOsOm4PU/Er9Sj6fqI+KXliNtHKf75VdQv5Yj42ZUWoYNfX8KWYp73GYyBBSPqkeSJuxhw1LEAY1ABGAdt5NknXnzq+ZOw1/Is17Fcu1h0Hc9yXMuzHce1bMt1XNuzXct2PXsCEpch8SPo7IOLyD+6iPr0T1j4ZQH7ry2gdX0Bo3v3Pt5EOo+J/+s/lRj8t501/DJJGdKkSqhnjBQlSSnaPnURkxqpbLKJBhEjrWgNDJV80SslcXMH0wQeTgQMQssPmS+/gaJL7mytHohXbf9AQuySPZQxO2I8NNlv+5GnyMscdZoZpoaSaUpR0h4oeZHqmRsoXpInaEw8R9uDSZwAvbmGdFQ+TvuESVmzk4FIkkLgSVaDJCls4oWW3eHYruT5bbYasd0tbGUTW8Y+4n45RPeJIvWY3UwV7Jk4FZmewPhyayCu34pO6LJrw9hnbmB7U4cYyINUEh5JU2eaiOVurWEUQcmzjvvUbWaZKtKfQrB2oaZEBvF0t9ZQ7JG7Q9ImgTj4NmlA7otjau9YRoE5nZQKLtl7fnzD322iKMp7KSd2bdpyMHs4mGNZx/1gSy1YjMqj9KB4gPaaezYllJ1CwUCsByWVBSURZxHklq4psaXRS3IKuxn+Y8DB8zMOXRFV7jC3M1Uob0Ii1BMko8mXfkcdZnEW5vHJ7+JXyj3lnzHRxPS4sg1QUZNaiqVpW1WBR1WJHIzXlXTIqxwrZ6KOneWeiXeCmhvefSysb4ed71FPFh4z7/CLqv+18u2Qqcx9cVt07kQNhb+f/Vo+GP1vDo9ChCXmh80UO/UIxzI8tJ8BBx0K2A/BiV6GEQg+CsKjqAowGX4SnANcDE5/qCBUESYR/g4AAP//0L4eOQ=="
@@ -2800,22 +2800,22 @@
      "phase": 3,
      "fights": {
       "180": {
-       "dps": 12852.089692149455,
-       "stdev": 222.8806242688474,
-       "min": 11952.245237950992,
-       "max": 13806.349924645468
+       "dps": 13467.866384386245,
+       "stdev": 233.76953179806193,
+       "min": 12521.395864240303,
+       "max": 14468.051654716754
       },
       "300": {
-       "dps": 12491.192163757607,
-       "stdev": 168.0723372086414,
-       "min": 11799.262072521831,
-       "max": 13175.564594917096
+       "dps": 13089.739824346108,
+       "stdev": 176.31917308838285,
+       "min": 12363.97953737563,
+       "max": 13810.587015140505
       },
       "60": {
-       "dps": 15208.552900019238,
-       "stdev": 438.08740564454905,
-       "min": 13669.119327209655,
-       "max": 16746.378017523944
+       "dps": 15940.912558707887,
+       "stdev": 459.2972179202626,
+       "min": 14323.080256380603,
+       "max": 17552.575493843327
       }
      },
      "link": "eJzsVl9oHNUX3nNmdnL3NL/25qab3Nxmf9lOUwljN84fpkmqmK1QkD5I0Jc+SImgRcRKcB7E4sMaKsaKWMSXBsGgoH0oavKUVYSwGEioSFhKqealVQpFS7q10t0+xMr82U1SfNL2zfOwzHz3u9/5zjfLzKVDDDnaOAxPwhgegXF4ESawBDAFeBrgLMBXgPMACwBLACsAlwAuA1wDqAE2AKcQLuMfmtBtGAY1186Qp9U3SFn+aR3l9ZxpLFZwsYyWzgzeTxl+toamtlpGErxaR/lnLrpLltv5wi2Up3KmNltGkvxMDWWDmZnFMq6WcTbi9fE8Zfm1GsovQvUyzizH2/Mk+MmbKD/sjTbMlvGz5VBkfQ3l+5uxhJ3lF+oo386Zxmw5sRhrX62h/D3WXm3Bgs/fRln6f9NuH+8nwd+6uRkLR9D5hRqSzqd/CUc8eQPlDzlT25DfwS/exg2REFi7sgnoNxkDG8b0I+kT/2PAUWIeJqAEMAnG2MvPvf7Cq6dgr+3bnmt7TqHgub7terbvuK5nO7bneo7veLbj+c40pH6C1M8g2efnkX95HmX5KuZ/q+LA9Sraa1WMn+InuI60gKn/6l+VGP6nOyv4fZo6yFA6oeww2yhNWsEJqIuYMkhnMw00iRgZBXtwZCgQvUoRt7YzQ+DhVMggtIOI+eZ7KLrUzubqgWTVCQ6kxC7VQx3WjgSPmux3grin6FM56rQ6mB5JZqiN0s7gkB+rnruD4g11gibEK9QeOnFDdL2OdFQ9S/uERVmrk4FIk0bgK1aBNGls+rVmu8NJuyE/aLH1mO3dw9a2sFXSRzyqRugRUaAeq5vpgr2UpKIy05hc3huIFzSjE1J1bbJ97g62hjrEQB2kIeGTsiQzRCJ3t45xBEO+fTygbivLdJH5GsK1xYoWN0jc3a2j2KN2R6QtAknwLdKg2pfE1JpYxYG5ndQWXrKPg+SBf9RAUVAPU07s2jJy6D0y5tr28SAcqQmLcXWUHheP0V5rz5aEsnMoGIiNoJRW1VJJFmFumYqWtDR7Sc1hN8O/DTj8/0xCV0xV2612pgvtA0hFeoJU7PzKLZSwhEuwgs//mLxSHir+iqkGZia1bYCanjbaWIa2TWnwtK6Qg/mulol4pWPFjnjHzmLP9Jmwlkd3H4vq4qi7ijKdf8Z6wC+qgXeK90OmtPzdfdF5EDUS/X57o3gwvm+MjkOMpVZGrTZ2+imuFeGJ/Qw4SMjjAITf9iKMQXg8iD5FUwAz0eFgHvBSeA6AEsIUwgzCXwEAAP//Rjkhbg=="
@@ -2824,22 +2824,22 @@
      "phase": 4,
      "fights": {
       "180": {
-       "dps": 17957.56454040822,
-       "stdev": 269.825123581862,
-       "min": 16866.265438801714,
-       "max": 19094.97696541587
+       "dps": 18414.874517426528,
+       "stdev": 275.8330360436326,
+       "min": 17297.780648141757,
+       "max": 19573.50386777353
       },
       "300": {
-       "dps": 17410.724195274524,
-       "stdev": 203.36741356380804,
-       "min": 16480.719232945605,
-       "max": 18334.69946028001
+       "dps": 17857.702442195678,
+       "stdev": 207.93252305858792,
+       "min": 16907.543328155087,
+       "max": 18798.85200961219
       },
       "60": {
-       "dps": 21342.818148604656,
-       "stdev": 547.7752151057808,
-       "min": 19346.36504640877,
-       "max": 23336.656076566076
+       "dps": 21877.20241905952,
+       "stdev": 560.0064937942536,
+       "min": 19835.440104419442,
+       "max": 23909.864403700045
       }
      },
      "link": "eJzsVU1oXFUUnnPum5c7p2Nzc9MkN7cZM31tJTw78f3wmqSKmQoF6UKCbrqQEkGLiJXgW4jFxZiNSSfiKCIahAY3ugjVFNRMpVCGBhIqErKQakBqQRAtKihkCtbK+5m0Ka603XkWw3vf+e53zvnecA8d4ijQwWF4FMbwCIzDszCBFYApwBrARwCfAC4CnAdYBlgFuARwGeBHgN8Am4BTCJfxDyYNB4ZBv5HnKLL6XaR28XmNqasFy1xq4FI9Aq5UmcXW62gbvF8UKS/qNab+KsQY5cWFKlMn07d28UWNqSa3zIU6RkCXWK8ydbpgmet1XEg19lCXWKwx9XZfzLsJS/Fplak3+6zcUgwvxApna0y9FjUUS6bUdlGdYeqdvhieW0GS4rtppir33tqqFJ9VE2xupXXQEPPTjEicm2a2wYtiD+XF6RmmvirELCJxaibJ9FNO/JnObnEODowZR7In7uEgUGERJqACMAnm2PNPvfzMiydhrxM4vuf4bqnke4Hj+U7gep7vuI7v+W7g+o7rB+4sZL6FzBVQ/MOLKD6+iKr+AxZ/XsOBq2vo/LKGySf6AK8jncfM//GfQg7/25MN/DJLHWRqg1B1WG2UJVZyQ+omrk0y+FwTLSJOZskZHBkKZZ/WJOzt3JR4OBMxCJ0wZr76OspuvaOVPZBm3fBARu7UvdRht6d4XGS/GyY1Zb8uUKfdwY1YMkdtlHUHh4JEdf4aylf0CZqQL1A+6sSL0OsbSEf1k7RP2tRld3KQWWIEgeYNyBLjsy+1yh1Oyw0F4SbbSNj+bWy2ha3TOvJBPUIPyBL12j3ckPy51BWdm8X08XZD/LBlnVS6+5a256/h5lCHOOiDNCQD0rbipkzlbmxgYsFQ4BwPqcfu4obMnYUot9RgSYG0uxsbKHfrXTFpi0Bq/CZpUO9LbdqcWCeGeZ3UFj3yU2H6wd9voizp+6kgd24ZOeo9bsxznONhNFILluP6KD0sH6K99u4tDnWdQclB3jRKszWWSb2IfMs1WFrS6iN9Bns4/qPB0f9nEroTqt5u57kh2VuQifUk6aTz739HBcu4DKv49DfplXJf+SfMNDE3ybYBMiNrtvEcbZti8LihUYBVZbmYVzlW7khO7Cj3zr4XxcrormNxfD3qraPKFp+w7/JFNTBdvhMylZULd0TnbsRI/Hvu1/LB5L05Og4Jllkdtdt47TFhlOGR/RwEKCjiAESLuwxjEO3+eBVNAczFm38R8FK05KGCMIUwh/B3AAAA//8MCRPO"
@@ -2848,22 +2848,22 @@
      "phase": 5,
      "fights": {
       "180": {
-       "dps": 17872.634448751833,
-       "stdev": 268.9118669257955,
-       "min": 16741.460728747392,
-       "max": 19043.00045313031
+       "dps": 18403.721480827706,
+       "stdev": 275.944219923115,
+       "min": 17243.93814674924,
+       "max": 19601.68123628232
       },
       "300": {
-       "dps": 17345.390576507234,
-       "stdev": 201.59030239262904,
-       "min": 16376.076635414653,
-       "max": 18195.333803054837
+       "dps": 17864.199889182106,
+       "stdev": 206.89419326272065,
+       "min": 16869.982702213678,
+       "max": 18737.316638583485
       },
       "60": {
-       "dps": 21275.972587408924,
-       "stdev": 537.7294901007867,
-       "min": 19239.078107387828,
-       "max": 23184.640888387275
+       "dps": 21897.858319940602,
+       "stdev": 551.8073645359358,
+       "min": 19808.583561990672,
+       "max": 23856.54314581247
       }
      },
      "link": "eJzsVU1oXFUUnnPum5c7p2Nzc9skN7eZZvqaSnh24vvhNUkVMxUK0oUE3XQhJYIWESvBtxCLizGrpIk4FBEMQgcRlBKqLWgzlUAYDCS0i5CFVLupglC0qKCQqVgr72eiKa603XkWw3vf+e75zvnecA8d5ijQwWF4AsbwKIzDCzCBFYApwCrARwCfAC4ALAGsAKwBXAW4DnAD4GfAJuAUwnX8lUnDgWHQ03mOIqtPI7WLi1WmbhYsc7mBy3WknPhgllnsfB0pL+pVpv4oWOxa/HbxLFOnCkmuU3xeZarJLXOxjot1tA1eFH3ULj47y9S5QgwnvIUqU2/3WuZSDNgG7xP9pMSnM0y91WvllmM4yfQLkzrFpSpTtd2Web6OtdXWgXYxM8vUO72WmRwgKa7MMFXZbbFE3RRFyosbKVZbRSKxOM3ivvrJEPPTjPLi3CxTvxVa+TOzLFbto5z4fYZZbKmOFufgwJhxNHvyAQ4CFRZhAioAk2COvfTsa8+/cgr2OYHje47vlkq+Fzie7wSu5/mO6/ie7wau77h+4M5B5mvIfAuKf3gZxceXUdW/w+IP6zhwcx2dH9cx+Tjv422kJcz8H/8p5PC/PdnAK1nqIFMbhKrDaqMssZIbUhdxbZLBa020iDiZJWdwZCiUvVqTsLdzU+KRTMQgdMKY+cabKLv0zlb2YJp1w4MZuUv3UIfdnuKxyAE3TDRlny7QDruDG3HJHLVR1h0cCpKq87dQvq5P0oR8mfJRJ16E3t5AOqafof3Spk57BweZJUYQaN6ALDE+92pL7kgqNxSEm2wjYft3sdkWtk515CN6hB6WJeqxu7kh+YupKzo3h+nj3Yb4Ycs6qXTX39qev4WbQx3moA/RkAxI24qbMi13ZwMTC4YC50RI3XYnN2TuEkS55QZLBNLu7myg3Kv3xKQtBVLjN0mDen9q0+bEOjHM20Ft0SM/E6Yf/L0mypJ+iApy15aRo97jxjzHORFGI7VgOa6P0WPyUdpn793iUOcFlBzkX0Zpts4yqReRb7kGSyWtXtIXsJvjPxoc/X8moSuh6u12nhuSnYZMXE+STjr/5hdUsIIrsIbPfZVeKQ+Wv8dME3OTbBsgM7JmG8/RtikGTxkaBVgzLBfzKsfLHcmJneWeuXejWB3dczyOL0e9a6iyxaft+3xRDUyX70WZyuoX96TO/YiR+Hfxp/Kh5L05Og4Jllkbtdt49UmRLcPjBzgIUFDEAYhWdhnGINr68SqaAqjFO38B8Gq03qGCMIVQQ/gzAAD//5FuEk8="
