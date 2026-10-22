@@ -22,6 +22,7 @@ gets its own `<effort>-<id>` branch and worktree off `integration` ([int]).
 | stat-weights | Wide-step stat slopes per build and phase at the BiS presets, for the playerbots' stat weights | `stat-weights`; [sim] | [statweights README](../../tools/statweights/README.md) | `tools/statweights/` |
 | dps-rankings | DPS tier list page: every DPS build's DPS per content phase in one standard scenario | `dps-rankings`; `wowsimwotlk-rankings` | [docs/dps-rankings/](../dps-rankings/) | `tools/rankings/`, `ui/rankings/`, `ui/scss/sims/rankings/`, `assets/rankings/`, `tools/uitest/tests/rankings/` |
 | spec-balance | Every in-scope DPS build at B tier or above in the rankings, through rotation fixes and mod-spell-tweaks buffs; the Playerbot switch | `spec-balance`; `wowsimwotlk-balance` | [docs/spec-balance/](../spec-balance/) | `docs/spec-balance/`, `tools/rankings/balance_check*.py`, the Playerbot switch's core files; per-phase carve-outs in its PLAN |
+| caps-and-priority (loop) | The Caps & Priority tab: each spec's caps as gear rating, stat values per phase or at the player's gear, reforge suggestions; the importer's server fetch | loop | [docs/caps-and-priority/](../caps-and-priority/) | `sim/statcaps/`, `sim/statslopes/`, `assets/statweights/`, `tools/statweights/publish.py`, `ui/core/stat_values.ts`, `ui/core/stat_priority.ts`, `caps_tab.ts`, `_caps_tab.scss`, `tools/uitest/tests/caps/`; its items' carve-outs (the PLAN) |
 | dev-guide | This guide's structure | `master` | `docs/dev-guide/` | `CLAUDE.md`, `CONTEXT.md`, `docs/guide/`, `docs/adr/`. Every effort adds content |
 
 ## Dependencies
@@ -38,7 +39,10 @@ the cross-effort ties:
 - **Stat weights:** `tools/statweights` imports presetgen's `gen.py` and reads the `p*_bis*` presets and
   `bis_presets.json`. Playerbots' `apps/simweights/generate_weights.py` reads its `weights.json` and
   maps or skips every `BUILDS` key (an unknown one fails the run), so a change to the `gen.py` API, the
-  `BUILDS` keys or that layout needs the other side updated.
+  `BUILDS` keys or that layout needs the other side updated. Its `publish.py` also turns `weights.json` into
+  `assets/statweights/stat_values.json` for the Caps & Priority tab, refreshed by `tools/bischain`.
+- **Caps:** `sim/optimizer`'s cap floors and the Caps & Priority tab both run `sim/statcaps`;
+  `tools/statweights`' runner and the tab's live measurement both run `sim/statslopes`.
 - **Playerbot switch:** presetgen, statweights' capture and the rankings all turn it on
   ([playerbot rules](playerbot-rules.md)), so a change to it moves the BiS presets, stat weights and rankings.
 - **DPS rankings:** `tools/rankings` runs statweights' `capture.py`, imports its `merge.py` and presetgen's

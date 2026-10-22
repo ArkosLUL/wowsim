@@ -93,7 +93,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z13 | EC-CORE-FIX10 (G, FS) · EC-PET-FIX8 (G, live) · EC-CLASS-FIX9 (G, live) · EC-TOOLS4 (live) | ✔ |
 | Z14 | EC-UPSTREAM (G, FS, live) · EC-CORE-FIX11 (G, FS, live) · EC-PET-FIX9 (G, live) · EC-CLASS-FIX10 (G) | ✔ |
 | Z15 | EC-CORE-FIX12 (G) · EC-PET-FIX10 (live) · EC-CLASS-FIX11 (G, live) · EC-TOOLS5 (C++, live) | ✔ |
-| Z16 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | ✔ |
+| Z16 | CAP-TAB · CAP-ROSTER | |
+| Z17 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -168,6 +169,9 @@ follow-ups with EC-TOOLS2 at last and BIS-TANK-SWAP in EC-PET-FIX6's place, whic
 in EC-TOOLS4's place, which waits for Z13, and the tank fixes and the hunter shots in EC-CLASS-FIX8 (the user's call,
 2026-10-15: Bulwark gems Agility, the tanks take resistance, and the chain's P1 hunters simmed NaN); the deferred BiS
 chain waits for Z12.
+Z16 is the user's call (2026-10-22): the [Caps & Priority tab](../caps-and-priority/caps-and-priority.PLAN.md), before
+Z15's follow-ups, which become Z17. Its items touch only the tab, its packages and tools, so goldens and BiS
+can't move, and it skips the re-baseline.
 
 **Where the specs are:**
 
@@ -181,16 +185,16 @@ chain waits for Z12.
 | `UI-` | [ui-tests PLAN, "Work items"](../ui-tests/ui-tests.PLAN.md) |
 | `TE-` | [test-enrichment PLAN, "Work items"](../test-enrichment/test-enrichment.PLAN.md) |
 | `EC-` | [e2e-coverage PLAN, "Work items"](../e2e-coverage/e2e-coverage.PLAN.md) |
+| `CAP-` | [caps-and-priority PLAN, "Work items"](../caps-and-priority/caps-and-priority.PLAN.md) |
 
 ## Current wave
 
-- Wave: Z15 (e2e-coverage PLAN; the user's go, 2026-10-19), landed with master's `4eb04d015` merged in
-  (`8f2a9adb0`). Base `0127441aa`; run `wf_22003b88-2d4` (Z14's script). Next: Z16 (Z15's follow-ups, specs in the
-  e2e-coverage PLAN) on the user's go. The BiS chain ran 2026-10-21 (BiS chain, below).
-  spec-balance's P0b is on master (`73ae11a98`): the `Player.playerbot` switch (`docs/guide/playerbot-rules.md`),
-  which presetgen, statweights' capture and the rankings turn on, so the BiS chain optimizes under bot rules. While
-  spec-balance's P1 is open (the APLs, presets and `sim.ts` defaults of its in-scope DPS builds), the wave's items
-  stay off `ui/<dir>/apls/`, the presets and `sim.ts`.
+- Wave: Z16 (caps-and-priority PLAN; the user's go, 2026-10-22), on integration fast-forwarded to master
+  `26955b309`. Next: Z17 (Z15's follow-ups, specs in the e2e-coverage PLAN) on the user's go. Z15 landed with
+  master's `4eb04d015` merged in (`8f2a9adb0`), base `0127441aa`, run `wf_22003b88-2d4` (Z14's script). The BiS
+  chain ran 2026-10-21 (BiS chain, below).
+  spec-balance is closed (2026-10-22). Its `Player.playerbot` switch (`docs/guide/playerbot-rules.md`) stays on in
+  presetgen, statweights' capture and the rankings, so the BiS chain optimizes under bot rules.
   Live stages stay short: the user finds hours of recordings not worth it (2026-10-16).
   The server runs [ac] `62fb09c68`: upstream merged, 338 commits over `3d89793c7` (DB import ran, `simval trace` row
   present). Its image is rebuilt by other sessions for mod-playerbots (last 2026-10-19 16:23 local, same rev); a

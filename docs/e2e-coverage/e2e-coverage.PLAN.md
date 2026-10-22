@@ -59,7 +59,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z13 | EC-CORE-FIX10 (G, FS) · EC-PET-FIX8 (G, live) · EC-CLASS-FIX9 (G, live) · EC-TOOLS4 (live) | Z12's follow-ups; EC-TOOLS4 moved from Z12 |
 | Z14 | EC-UPSTREAM (G, FS, live) · EC-CORE-FIX11 (G, FS, live) · EC-PET-FIX9 (G, live) · EC-CLASS-FIX10 (G) | The server's upstream merge, then Z13's follow-ups |
 | Z15 | EC-CORE-FIX12 (G) · EC-PET-FIX10 (live) · EC-CLASS-FIX11 (G, live) · EC-TOOLS5 (C++, live) | Z14's follow-ups, and Z13's UI one |
-| Z16 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | Z15's follow-ups |
+| Z17 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | Z15's follow-ups |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
 C1 moved last (after B6).
@@ -5772,7 +5772,7 @@ and 48111 stay uncompared rightly: a triggered aura's cost or dispel resist, or 
 doubles a death knight's off-hand fixed bonus itself (`ecTools5Base` gone); `strikeProbe` takes the off hand from
 `SPELL_ATTR3_REQUIRES_OFF_HAND_WEAPON`.
 
-### EC-CORE-FIX13 (Z16; changes goldens, full suite; stages: code)
+### EC-CORE-FIX13 (Z17; changes goldens, full suite; stages: code)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 
@@ -5808,7 +5808,7 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 - **Goldens:** TestFrost and TestFrostUH, likely every suite with two procs on a hit (proc order, triggered procs);
   none for the extra attacks or Mark of Blood's threat; report each.
 
-### EC-PET-FIX11 (Z16; golden-neutral; stages: code, live)
+### EC-PET-FIX11 (Z17; golden-neutral; stages: code, live)
 
 Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 
@@ -5826,7 +5826,7 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
 - **Owns:** the module's `e2e/petfix11_test.go`; `standAtReachOf`; their tests.
 - **Goldens:** none.
 
-### EC-CLASS-FIX12 (Z16; golden-neutral; stages: code, live)
+### EC-CLASS-FIX12 (Z17; golden-neutral; stages: code, live)
 
 - Frost Fever's slow keeps its own 15 + 3 × Epidemic s (`core.FrostFeverAura`, the knight's `FrostFeverDebuffAura`)
   while Glyph of Scourge Strike lengthens only the dot (`sim/deathknight/scourge_strike.go`, `Dot.AddDuration` 3 s, up
@@ -5840,7 +5840,7 @@ Scratch paths below are under `G:\DevStuff\GitHub\.wave-loop\`.
   their tests.
 - **Goldens:** none expected; report any.
 
-### EC-TOOLS6 (Z16; golden-neutral; stages: code)
+### EC-TOOLS6 (Z17; golden-neutral; stages: code)
 
 - `docs/azerothcore-parity/audit/` dates from e84c1ee9b (2026-10-11), before Z14's upstream merge (9bb608b66):
   `procs_audit.csv` lists 54741 (Firestarter) and 64823 (Elune's Wrath) without `req_spellmod`, where
