@@ -221,6 +221,23 @@ export function rosterRace(raceId: number): Race {
 	return acRaceToRace[raceId] ?? Race.RaceUnknown;
 }
 
+// Racials follow the server's racial swap, not the race, so a Draenei swapped away gives no Heroic
+// Presence. An unknown swap falls back to the real race, like buildCharacterImport.
+function racialsRace(char: RosterCharacter): Race {
+	const swapped = char.swapRaceId ? rosterRace(char.swapRaceId) : Race.RaceUnknown;
+	return swapped != Race.RaceUnknown ? swapped : rosterRace(char.raceId);
+}
+
+// Whoever gives this character Heroic Presence: the character, else the first one in their subgroup with
+// Draenei racials. undefined when nobody does.
+export function heroicPresenceSource(roster: Roster, char: RosterCharacter): RosterCharacter | undefined {
+	if (racialsRace(char) == Race.RaceDraenei) {
+		return char;
+	}
+	const subgroup = char.subgroup || 0;
+	return roster.characters.find(other => (other.subgroup || 0) == subgroup && racialsRace(other) == Race.RaceDraenei);
+}
+
 // The sim has one spec per talent build, the server has none, so the talent string decides. The
 // group's main-tank flag doesn't: raiders on this server carry it while playing a DPS build, so it
 // only says who goes into the raid's tank slots first (isMainTank in acore_importer.ts).

@@ -398,3 +398,10 @@ Plus an optional `UITEST_ACORE_LIVE=1` check against a dev server started with t
 - `stubServer`, moved from `tools/uitest/tests/raid/acore_server.spec.ts` into `tools/uitest/tests/lib/acore.ts`, with that spec importing it.
 - `tools/uitest/tests/caps/roster_import.spec.ts`.
 - This section's `#### As built`.
+
+#### As built
+
+- **Fetch:** with `simServerAvailable()`, opening fetches once and a **Fetch from server** button fetches again. The open fetch keeps a non-empty roster pasted or uploaded meanwhile; the button overwrites it. Status and errors show inline in `.acore-server-status`, never as an alert.
+- **Preselection:** the remembered pick (`{"character": name}`) when the roster holds it, else the best score: spec match 2, main-tree match 1, ties in roster order. A roster refresh keeps the current pick if still listed. The pick is saved on change and on Import.
+- **Heroic Presence:** `heroicPresenceSource(roster, char)` in `acore_roster.ts` returns the character or the first subgroup member with Draenei racials. Racials follow `swapRaceId` ([azerothcore-data](../guide/azerothcore-data.md#module-tables)): a Draenei swapped away gives none, a Night Elf swapped to Draenei does. Import sets the page party's buff and adds an "on"/"off" note naming who.
+- **Tests:** `tests/lib/acore.ts` holds `stubServer`, `errorReply`, their types, the server's error texts, and `dropServerRoster`. That aborts `/acoreRoster` for a test opening the importer without testing its fetch: `watchForErrors` counts a plain dev server's 503, not a dropped request. `roster_import.spec.ts`: 7 stubbed tests plus the live one, which passed against a dev server with prod's `--acore*` flags.

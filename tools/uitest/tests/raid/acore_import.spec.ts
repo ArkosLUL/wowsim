@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { dropServerRoster } from '../lib/acore';
 import { openRaid, openSimTab, watchForErrors } from '../lib/page';
 import { openSpec, storedSettings } from '../settings/helpers';
 import {
@@ -319,6 +320,7 @@ test('a version 1 roster leaves pets, ammo and consumables alone', async ({ page
 
 test('the individual importer sets the pet, ammo and consumables', async ({ page }) => {
 	const errors = watchForErrors(page);
+	await dropServerRoster(page);
 	const dialogs = collectDialogs(page);
 	await openSpec(page, 'hunter');
 	const pick = async (rosterText: string, name: string) => {
