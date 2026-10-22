@@ -13,19 +13,20 @@ Host, toolchain container, protos, builds, running the sim. For verification, se
 
 ## Toolchain container
 
-The Dockerfile's `toolchain` stage has Go, protoc and node. Build it once, then run commands in it with
-the checkout mounted:
+`compose.yaml`'s `toolchain` service runs the Dockerfile's `toolchain` stage (Go, protoc, node; image
+`wowsims-wotlk-dev`) with the checkout at `/wotlk` and Go caches in volumes `wotlk-gomod`/`wotlk-gocache`:
 
 ```sh
-docker build --target toolchain --tag wowsims-wotlk-dev .
-MSYS_NO_PATHCONV=1 docker run --rm -v G:/DevStuff/GitHub/wowsimwotlk:/wotlk \
-  -v wotlk-gomod:/go/pkg/mod -v wotlk-gocache:/root/.cache/go-build \
-  -w /wotlk wowsims-wotlk-dev sh -c '<command>'
+MSYS_NO_PATHCONV=1 docker compose run --rm toolchain sh -c '<command>'
+docker compose build toolchain   # after a Dockerfile change
 ```
 
-- Mount the worktree you're working in, not always [sim].
-- From PowerShell, drop `MSYS_NO_PATHCONV=1` and quote the mount: `-v "G:\DevStuff\GitHub\wowsimwotlk:/wotlk"`.
-- To reach the live DB as `ac-database:3306`, add `--network azerothcore-wotlk-pb_ac-network`.
+- Run it from the worktree you're working in: it mounts the compose file's directory. Each worktree is
+  its own compose project.
+- From PowerShell, drop `MSYS_NO_PATHCONV=1`.
+- The cache volumes are external: on a new machine, `docker volume create` both first.
+- The live DB is `host.docker.internal:3306`. For `ac-database:3306`, use plain `docker run` with the
+  same image and volumes plus `--network azerothcore-wotlk-pb_ac-network`.
 - The image has no docker CLI. Copy DBCs out on the host first, or mount the client-data volume
   ([azerothcore-server.md](azerothcore-server.md#dbcs)).
 - `tools/acore/dock.sh` wraps all of this. It uses image `wowsim-toolchain`,
@@ -64,43 +65,40 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
 
 ## Run
 
-- **Prod container** `wowsims-wotlk`, at http://localhost:3333/wotlk/:
+- **Prod**: `compose.yaml`'s `sim` service, container `wowsims-wotlk`, at http://localhost:3333/wotlk/.
+  Run it from [sim] (PowerShell: set `$env:SIM_COMMIT` first):
 
   ```sh
-  docker build --build-arg SIM_COMMIT=$(git rev-parse HEAD) --tag wowsims-wotlk .
-  MSYS_NO_PATHCONV=1 docker run -d --name wowsims-wotlk --restart unless-stopped -p 3333:3333 \
-    --add-host=host.docker.internal:host-gateway \
-    -v azerothcore-wotlk-pb_ac-client-data:/acdata:ro \
-    --mount type=bind,source=G:/DevStuff/GitHub/.wowsim,target=/wowsim,readonly \
-    --mount type=bind,source=G:/DevStuff/GitHub/azerothcore-wotlk-pb/configurationOverrides/Playerbot.env,target=/acconf/Playerbot.env,readonly \
-    --env-file G:/DevStuff/GitHub/.wowsim/prod.env \
-    wowsims-wotlk --acoreDbcDir=/acdata/dbc \
-    --acoreNamesFile=/wowsim/core-raid.txt --acoreLeader=Deathsong \
-    --acoreWorldBuffMatrix=/acconf/Playerbot.env
+  SIM_COMMIT=$(git rev-parse HEAD) docker compose up -d --build sim
   ```
 
-  - `prod.env` holds one line, `AC_DSN=root:password@tcp(host.docker.internal:3306)/` with the real password,
-    unquoted, the final `/` included. It stays outside the repo, and the DSN off the command line.
-  - It's distroless: no shell. It serves whatever was built into the image, so rebuild it to see
-    changes. The mounts and `--acore*` flags only feed `/acoreRoster` (below).
-  - The names file's directory is mounted, not the file: an editor that replaces a file leaves a
-    single-file mount stale. `Playerbot.env` is mounted alone because `Chronicle.env` sits beside it.
-  - `host.docker.internal`, not the AC network: a container on that network can't start once it's gone.
-  - The mounted volume blocks `docker compose down -v` in [ac] until the sim container is removed.
-  - Keep the `/wotlk/` path behind a reverse proxy.
   - Without `SIM_COMMIT`, optimizer results say sim "unknown": `.dockerignore` drops `.git`.
-  - After a rebuild, reload every open sim tab: a page from the old build keeps sending its old requests.
-- **Dev server** on :3334, since prod holds :3333. `--usefs` serves `./dist` from the mounted checkout.
-  There's no hot reload: `docker rm -f wotlk-dev` and start it again after changes. With a worktree
-  mounted, add `-e SIM_COMMIT=$(git -C <worktree> rev-parse HEAD)`: its `.git` points outside the mount,
-  so the container can't read the commit. For `/acoreRoster`, add the prod line's `--add-host`, mounts
-  and `--env-file` before the image, and its `--acore*` flags after `--host=":3333"` inside the `sh -c`.
+  - It's distroless: no shell. It serves whatever was built into the image, so rebuild it to see
+    changes. After a rebuild, reload every open sim tab: a page from the old build keeps sending its old
+    requests.
+  - Keep the `/wotlk/` path behind a reverse proxy.
+- **`/acoreRoster` wiring**, shared by prod and dev: the AC client-data volume (external), `../.wowsim`
+  and `../azerothcore-wotlk-pb/configurationOverrides/Playerbot.env`, relative to the checkout; override
+  with `WOWSIM_DIR` and `AC_DIR`. The `--acore*` settings are env vars in `compose.yaml`.
+  - `.wowsim/prod.env` holds one line, `AC_DSN=root:password@tcp(host.docker.internal:3306)/` with the
+    real password, unquoted, the final `/` included. It stays outside the repo. Without it, only
+    `/acoreRoster` fails (503). Compose expands `$` and cuts a ` #` comment in it, while
+    `tools/bischain`'s `docker run --env-file` reads it raw: keep both out of the password.
+  - The mounted volume blocks `docker compose down -v` in [ac] until the sim containers are removed.
+- **Dev server**: the `dev` service, container `wotlk-dev`, on :3334 since prod holds :3333. It builds
+  the UI and server in the mounted checkout, then `--usefs` serves `./dist`; the first start takes
+  minutes. No hot reload: `docker compose restart dev` after changes.
 
   ```sh
-  MSYS_NO_PATHCONV=1 docker run -d --name wotlk-dev -p 3334:3333 -v <worktree>:/wotlk \
-    -v wotlk-gomod:/go/pkg/mod -v wotlk-gocache:/root/.cache/go-build -w /wotlk wowsims-wotlk-dev \
-    sh -c 'make dist/wotlk/.dirstamp devserver && ./wowsimwotlk --usefs=true --launch=false --host=":3333"'
+  docker compose up -d dev
+  docker compose rm -sf dev   # stop it; plain `down` in [sim] removes prod and leaves dev
   ```
+
+  - From a worktree, pass `SIM_COMMIT=$(git rev-parse HEAD)`: its `.git` points outside the mount, so
+    the container can't read the commit. `restart` keeps the commit it was created with: after a
+    commit, `up -d dev` again with the new one.
+  - Another dev server (e.g. the wave loop's `wotlk-dev-<id>`): run it from its own worktree with
+    `WOTLK_DEV_NAME` and `WOTLK_DEV_PORT` set.
 
 - **`GET /acoreRoster`** returns the core raid as acraid's roster JSON
   ([acraid README](../../tools/database/acraid/README.md#from-the-sim-server)), read from the live
