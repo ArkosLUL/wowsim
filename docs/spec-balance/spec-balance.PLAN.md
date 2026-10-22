@@ -5,18 +5,12 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 [tweaks] `[ac]\modules\mod-spell-tweaks`, [bots] `[ac]\modules\mod-playerbots`, [simval]
 `[ac]\modules\mod-sim-validation`. Each module is its own git repo.
 
-Status: P0a–P3 and the baseline landed; results, bot findings and each build's gap in
-`spec-balance.INVESTIGATION.md`. P4's `spec-balance.PROPOSAL.md` approved as recommended (user, 2026-10-21).
-P5 done (2026-10-22, results in the INVESTIGATION): [tweaks] master `b957aa5` (nine local merges, no PRs, not
-pushed) applied on the live server; sim on master `7a44c9318` with the re-recorded server fixtures and the committed
-rankings (`balance_check.py` flags only the accepted shortfalls, so it can't exit 0); [bots] `467a9efb1` (Ret),
-`a7e9177c1` (Enh) and mod-racial-trait-swap `38fd254` await an image rebuild.
-
-P6 next, in order:
-1. Stat weights: running in `tmp/p6/sw` (settings copied from `tmp/p5/rk3`), then [bots]
-   `apps/simweights/generate_weights.py --weights <tmp/p6/sw/weights.json>`, commit on `Custom`.
-2. Ask for the image rebuild and `ac-db-import` (the weights SQL), batched.
-3. Promote durable learnings to [sim] guide pages; close the PLAN.
+Status: closed (2026-10-22). Results, bot findings and the remaining gaps in `spec-balance.INVESTIGATION.md`;
+the approved tweaks in `spec-balance.PROPOSAL.md`. Live on the server: [tweaks] master `b957aa5` (nine local
+merges, not pushed), [bots] `467a9efb1` (Ret), `a7e9177c1` (Enh), `35a455be8` (stat weights from `tmp/p6/sw`),
+mod-racial-trait-swap `38fd254`, and BiS tooltip dataset `6e77ea65` (the 12 raiders whose builds changed rerun).
+Sim master holds the re-recorded server fixtures and the rankings `7a44c9318` (`balance_check.py` flags only the
+accepted shortfalls, so it can't exit 0).
 
 Bundle builds over [bal]: `sh tmp/p5/bundle.sh` (the root tsconfig's tsc runs out of heap on `tmp/p4/trees`).
 

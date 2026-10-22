@@ -77,3 +77,6 @@ exits 1 on any of:
   build that held the cell's top counts its rise against its own old DPS;
 - a `--buffed` build taking a cell's top from another build (needs `--base`);
 - an excluded build at 95% or more.
+
+Size a buff against presets re-optimized with it in: one that changes a stat's worth (armor ignore) makes the
+optimizer regem, and two Normal optimizer runs can move a cell by up to 3 points.

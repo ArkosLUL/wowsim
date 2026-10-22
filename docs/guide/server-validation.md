@@ -44,6 +44,10 @@ and every test's run line.
   4. `dock.sh run ./tools/simval -records /wotlk/tmp/<capture> -fixture` replaces the fixture. Every
      failing record is a sim/server mismatch: remove it, add a row to the fixture README, and open a
      follow-up. Never fix the sim here. Move the `damage` lines to `damage.jsonl`.
+- After a mod-spell-tweaks SQL change goes live: recapture the changed ids
+  ([Capturing](../../tools/acore/spellids/README.md#capturing)), regenerate them with `gen_serverdata`, then
+  re-record the fixtures holding those spells (golden characters, the talent and spell-mod sweeps,
+  `strikes.jsonl`, fights) and remove the drops that waited for them.
 - Measurements, each run by name:
   - `TestEcCore6WorldTick`: the world ticks' lengths off `.server info`
     ([update timing](spell-data-and-timing.md#update-timing)).
