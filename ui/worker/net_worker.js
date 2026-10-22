@@ -34,7 +34,7 @@ addEventListener('message', async (e) => {
 		return;
 	}
 
-	const isAsync = msg == "raidSimAsync" || msg == "statWeightsAsync" || msg == "bulkSimAsync" || msg == "optimizeGearAsync";
+	const isAsync = msg == "raidSimAsync" || msg == "statWeightsAsync" || msg == "bulkSimAsync" || msg == "optimizeGearAsync" || msg == "statSlopesAsync";
 	const task = { handle: null, cancelRequested: false };
 	if (isAsync) {
 		asyncTasks.set(id, task);

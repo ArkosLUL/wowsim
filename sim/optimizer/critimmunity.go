@@ -1,70 +1,15 @@
 package optimizer
 
 import (
-	"errors"
-	"fmt"
-	"math"
-
-	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
-	"github.com/wowsims/wotlk/sim/core/stats"
+	"github.com/wowsims/wotlk/sim/statcaps"
 )
 
-// maxDefenseBonus caps the bisection. 2000 rating is 406 defense skill, and 140 over the level cap's
-// 400 is all the crit-taken formula asks of a tank with no defense at all.
-const maxDefenseBonus = 2000
-
-// requiredDefense is D*: the sheet Defense rating at which the encounter's boss stops critting the
-// target. It bisects bonus Defense around the seed, since defense skill comes in whole points, and
-// reads the resulting sheet rather than assuming a rating point is a sheet point.
-//
-// Everything else the crit formula reads (resilience, talent crit reductions, the boss's own crit)
-// comes off the seed, so gear that moves those moves the real answer too. Hence every result's own
-// sheet is rechecked afterwards rather than trusting the floor alone.
+// requiredDefense is statcaps.RequiredDefense around the seed. It reads the seed's resilience and
+// crit reductions, so every result's own sheet is rechecked afterwards rather than trusting the floor
+// alone.
 func requiredDefense(r *Request) (float64, error) {
-	sheetAt := func(bonus float64) (core.PlayerSheet, error) {
-		var offset stats.Stats
-		offset[stats.Defense] = bonus
-		return playerSheet(r.Base, r.TargetIndex, r.Seed, offset)
-	}
-	seed, err := sheetAt(0)
-	if err != nil {
-		return 0, err
-	}
-	if !seed.MeleeAttacker {
-		return 0, errors.New("nothing in the encounter swings at the target, so there's no melee crit to be immune to")
-	}
-	immune := func(bonus int) (bool, error) {
-		sheet, err := sheetAt(float64(bonus))
-		return sheet.MeleeAttacker && sheet.MeleeCritTakenChance == 0, err
-	}
-	switch ok, err := immune(maxDefenseBonus); {
-	case err != nil:
-		return 0, err
-	case !ok:
-		return 0, fmt.Errorf("even %d more Defense rating leaves the boss a %.2f%% crit chance", maxDefenseBonus, seed.MeleeCritTakenChance*100)
-	}
-	// down as well as up: a seed that is already immune says nothing about how much of its defense
-	// the search may trade away
-	lo, hi := -int(math.Ceil(seed.FinalStats[stats.Defense])), maxDefenseBonus
-	for lo < hi {
-		// lo + (hi-lo)/2, not (lo+hi)/2: lo can be negative, and Go truncates toward zero
-		mid := lo + (hi-lo)/2
-		ok, err := immune(mid)
-		if err != nil {
-			return 0, err
-		}
-		if ok {
-			hi = mid
-		} else {
-			lo = mid + 1
-		}
-	}
-	final, err := sheetAt(float64(lo))
-	if err != nil {
-		return 0, err
-	}
-	return final.FinalStats[stats.Defense], nil
+	return statcaps.RequiredDefense(seedSheetAt(r))
 }
 
 // critImmunityFloor adds D* to the run's stat floors, so the pool, the surrogate's penalty and

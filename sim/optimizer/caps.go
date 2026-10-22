@@ -9,90 +9,41 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	"github.com/wowsims/wotlk/sim/statcaps"
 )
 
-// hasteCeilingFloor is the cast time both haste ceilings bisect toward: a caster's hasted GCD
-// (Spell::TriggerGlobalCooldown's MIN_GCD) and, since a hunter's GCD isn't hasted, Steady Shot's own
-// cast time.
-const hasteCeilingFloor = time.Second
-
-// steadyShotBaseCast is Steady Shot's cast time before ranged haste (sim/hunter's registerSteadyShotSpell).
-const steadyShotBaseCast = 2 * time.Second
-
-// maxCapBonus bounds every cap bisection: far more rating than any pool could offer, so a genuinely
-// unreachable cap is reported rather than guessed at.
-const maxCapBonus = 4000
+const hasteCeilingFloor = statcaps.HasteCeilingFloor
 
 // capRole is which of the DPS cap floors and the haste ceiling a spec gets. A tank gets the melee hit
 // floor only, a healer none.
-type capRole int
+type capRole = statcaps.Role
 
 const (
-	capRoleNone capRole = iota
-	capRoleMelee
-	capRoleHunter
-	capRoleCaster
-	capRoleTank
+	capRoleNone   = statcaps.RoleNone
+	capRoleMelee  = statcaps.RoleMelee
+	capRoleHunter = statcaps.RoleHunter
+	capRoleCaster = statcaps.RoleCaster
+	capRoleTank   = statcaps.RoleTank
 )
 
-// dpsCapRole reads the target's role off its spec, the way objective.go's referenceStat does.
+// dpsCapRole is the target's role, a healer's as none: the optimizer leaves healers out.
 func dpsCapRole(player *proto.Player) capRole {
-	switch player.GetSpec().(type) {
-	case *proto.Player_FeralDruid, *proto.Player_Rogue, *proto.Player_RetributionPaladin,
-		*proto.Player_EnhancementShaman, *proto.Player_Warrior, *proto.Player_Deathknight:
-		return capRoleMelee
-	case *proto.Player_Hunter:
-		return capRoleHunter
-	case *proto.Player_BalanceDruid, *proto.Player_Mage, *proto.Player_ShadowPriest,
-		*proto.Player_SmitePriest, *proto.Player_ElementalShaman, *proto.Player_Warlock:
-		return capRoleCaster
-	case *proto.Player_ProtectionWarrior, *proto.Player_ProtectionPaladin,
-		*proto.Player_FeralTankDruid, *proto.Player_TankDeathknight:
-		return capRoleTank
-	default:
-		return capRoleNone
+	if role := statcaps.RoleOf(player); role != statcaps.RoleHealer {
+		return role
+	}
+	return capRoleNone
+}
+
+// seedSheetAt is the target's sheet in the seed, offset added to its bonus stats.
+func seedSheetAt(r *Request) statcaps.SheetAt {
+	return func(offset stats.Stats) (core.PlayerSheet, error) {
+		return playerSheet(r.Base, r.TargetIndex, r.Seed, offset)
 	}
 }
 
-// bisectCapBonus finds the smallest bonus to stat st, from -(seed rating) to maxCapBonus, where ok
-// holds; like requiredDefense, it assumes ok is false below some crossing point and true from it on,
-// and bisects downward too since a seed already past the crossing point says nothing about how much
-// of its rating the search may trade away. It returns the sheet rating at that point.
+// bisectCapBonus is statcaps.BisectCapBonus around the seed.
 func bisectCapBonus(r *Request, st stats.Stat, ok func(core.PlayerSheet) bool) (float64, error) {
-	sheetAt := func(bonus float64) (core.PlayerSheet, error) {
-		var offset stats.Stats
-		offset[st] = bonus
-		return playerSheet(r.Base, r.TargetIndex, r.Seed, offset)
-	}
-	seed, err := sheetAt(0)
-	if err != nil {
-		return 0, err
-	}
-	switch atMax, err := sheetAt(maxCapBonus); {
-	case err != nil:
-		return 0, err
-	case !ok(atMax):
-		return 0, fmt.Errorf("even %d more %s rating doesn't reach it", maxCapBonus, st.StatName())
-	}
-	lo, hi := -int(math.Ceil(seed.FinalStats[st])), maxCapBonus
-	for lo < hi {
-		// lo + (hi-lo)/2, not (lo+hi)/2: lo can be negative, and Go truncates toward zero
-		mid := lo + (hi-lo)/2
-		sheet, err := sheetAt(float64(mid))
-		if err != nil {
-			return 0, err
-		}
-		if ok(sheet) {
-			hi = mid
-		} else {
-			lo = mid + 1
-		}
-	}
-	final, err := sheetAt(float64(lo))
-	if err != nil {
-		return 0, err
-	}
-	return final.FinalStats[st], nil
+	return statcaps.BisectCapBonus(seedSheetAt(r), st, ok)
 }
 
 // addStatFloor raises settings' floor on st to at least value, the way critImmunityFloor raises
@@ -243,14 +194,12 @@ func (r *run) warnTauntGlyph() {
 		name, where, missAt(0), missAt(spellHitDebuff))
 }
 
-// globalCooldown is Unit.SpellGCD: the default GCD scaled by castSpeed, floored at 1 s.
 func globalCooldown(castSpeed float64) time.Duration {
-	return max(core.GCDMin, time.Duration(float64(core.GCDDefault)*castSpeed))
+	return statcaps.GlobalCooldown(castSpeed)
 }
 
-// steadyShotCastTime is Steady Shot's cast time at a given ranged swing speed (Unit.ApplyRangedCastSpeed).
 func steadyShotCastTime(rangedSwingSpeed float64) time.Duration {
-	return time.Duration(float64(steadyShotBaseCast) / rangedSwingSpeed)
+	return statcaps.SteadyShotCastTime(rangedSwingSpeed)
 }
 
 // capMiss is the summed rating final is short of the floors in r.capFloors and over the ceilings in

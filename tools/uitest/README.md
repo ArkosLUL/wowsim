@@ -27,8 +27,10 @@ npx playwright show-trace test-results/<test>/trace.zip         # a failure's tr
 |---|---|
 | `tests/lib/page.ts` | `SPECS`, `openSim(page, spec)`, `openRaid`, `openSimTab(page, id)`, `watchForErrors(page)`, which skips requests the network dropped (`net::`) |
 | `tests/lib/fixture.ts` | `loadFixture(name)`, `showFixture(page, fixture, { url, settings })`, `label(player)` |
+| `tests/lib/acore.ts` | `stubServer(page, reply)`, a stubbed `/acoreRoster`, with `errorReply` and the server's error texts (caps-and-priority-roster only) |
 | `tests/smoke.spec.ts` | every spec page, the raid page and the results page load without a console error; `watchForErrors` itself |
-| `tests/<area>/` | one directory per area (`results`, `gear`, `raid`, `settings`, `rankings`), its helpers beside the specs |
+| `tests/<area>/` | one directory per area (`results`, `gear`, `raid`, `settings`, `rankings`, `caps`), its helpers beside the specs |
+| `tests/caps/` | the Caps & Priority tab: `caps_tab` (caps), `caps_priority`, `caps_reforge` (also `suggestReforges` without a page) and `caps_live`, which stub `stat_values.json`, `/statCaps` or `/statSlopesAsync` where a test needs fixed numbers |
 
 ## Fixtures
 

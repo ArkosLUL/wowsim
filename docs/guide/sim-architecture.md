@@ -73,6 +73,10 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   candidates, `search.go` anneals and polishes, and `verify.go` and `neighborhood.go` confirm the pick
   with paired sims and collect the runners-up. For the raid-DPS objective (the BiS batch's stage 2),
   `NewRaidEvaluator` sims the whole raid and scores its total DPS, so every sim step ranks by raid DPS.
+- `sim/statcaps`: the stat caps the optimizer and the Caps & Priority tab share, bisected on the character
+  sheet (`core.PlayerSheet`), and `/statCaps` ([stat-caps](stat-caps.md)).
+- `sim/statslopes`: stat slopes from wide sim steps, centered for `tools/statweights` and one-sided for the
+  tab's `/statSlopesAsync`.
 
 ## Protos
 
@@ -131,6 +135,9 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   `assets/rankings/rankings.json` and rebuilds a build's sim link at the selected fight, `tiers.ts` grades
   and sorts, `phase_chart.ts` draws the across-phases chart. `PHASE_LABELS` lives in
   `ui/core/constants/other.ts`: importing it from `optimizer_tab.ts` would bundle the optimizer.
+- `ui/core/components/individual_sim_ui/caps_tab.ts`: the Caps & Priority tab ([stat-caps](stat-caps.md)).
+  `ui/core/stat_values.ts` loads the shipped `assets/statweights/stat_values.json`; `ui/core/stat_priority.ts`
+  holds the pure build choice, priority, cap rule and reforge scoring.
 
 ## Tools
 
@@ -148,5 +155,7 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
   ([README](../../tools/acore/spellids/README.md)), `gen_serverdata`) and `tools/simval`.
 - `tools/rankings` ([README](../../tools/rankings/README.md)): sims every DPS build's BiS per content phase
   in one standard scenario into `assets/rankings/rankings.json`, from `tools/statweights`' captured settings.
+- `tools/statweights` ([README](../../tools/statweights/README.md)): stat slopes per build at each phase's
+  BiS, for the playerbots' stat weights and the tab's `assets/statweights/stat_values.json`.
 - `tools/apldbg` ([README](../../tools/apldbg/README.md)): one character on one rotation, row by row, with
   casts, uptimes, a log or a timeline, also against a base commit's sim code.

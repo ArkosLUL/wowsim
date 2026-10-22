@@ -19,6 +19,7 @@ import (
 	"github.com/wowsims/wotlk/sim"
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/statslopes"
 	googleProto "google.golang.org/protobuf/proto"
 )
 
@@ -210,6 +211,12 @@ func loadSettings(data []byte) (*proto.IndividualSimSettings, error) {
 	}, nil
 }
 
+func raidOf(settings *proto.IndividualSimSettings) *proto.Raid {
+	raid := core.SinglePlayerRaidProto(settings.Player, settings.PartyBuffs, settings.RaidBuffs, settings.Debuffs)
+	raid.Tanks = settings.Tanks
+	return raid
+}
+
 // itemIDs lists the gear in ItemSlot order, 0 for an empty slot.
 func itemIDs(player *proto.Player) []int32 {
 	ids := make([]int32, len(proto.ItemSlot_name))
@@ -236,12 +243,12 @@ func (c config) previous(path, settingsHash string) *result {
 	return &prev
 }
 
-func upToDate(prev *result, steps []step) bool {
+func upToDate(prev *result, steps []statslopes.Step) bool {
 	if prev == nil || len(prev.Slopes) != len(steps) {
 		return false
 	}
 	for _, s := range steps {
-		if p, ok := prev.Slopes[s.name]; !ok || p.Delta != s.delta || p.Shift != s.shift {
+		if p, ok := prev.Slopes[s.Name]; !ok || p.Delta != s.Delta || p.Shift != s.Shift {
 			return false
 		}
 	}
@@ -259,11 +266,12 @@ func (c config) run(j job) (bool, error) {
 		return false, fmt.Errorf("%s: %v", j.file, err)
 	}
 	spec := core.PlayerProtoToSpec(settings.Player)
-	r, err := roleOf(spec)
+	r, err := statslopes.RoleOf(spec)
 	if err != nil {
 		return false, err
 	}
-	steps := stepsFor(r, finalStats(settings))
+	raid := raidOf(settings)
+	steps := statslopes.CenteredSteps(r, statslopes.FinalStats(raid, settings.Encounter))
 	dest := filepath.Join(c.out, "results", fmt.Sprintf("%s_p%d.json", j.build, j.phase))
 	prev := c.previous(dest, hex.EncodeToString(sum[:]))
 	if upToDate(prev, steps) {
@@ -277,7 +285,7 @@ func (c config) run(j job) (bool, error) {
 	if prev != nil {
 		res.Dps, res.Tps, res.Tmi = prev.Dps, prev.Tps, prev.Tmi
 	} else {
-		base, err := simulate(settings, c.iterations, c.seed)
+		base, err := statslopes.Simulate(raid, settings.Encounter, c.iterations, c.seed)
 		if err != nil {
 			return false, err
 		}
@@ -286,17 +294,17 @@ func (c config) run(j job) (bool, error) {
 	reused := 0
 	for _, s := range steps {
 		if prev != nil {
-			if p, ok := prev.Slopes[s.name]; ok && p.Delta == s.delta && p.Shift == s.shift {
-				res.Slopes[s.name] = p
+			if p, ok := prev.Slopes[s.Name]; ok && p.Delta == s.Delta && p.Shift == s.Shift {
+				res.Slopes[s.Name] = p
 				reused++
 				continue
 			}
 		}
-		sl, err := measure(settings, s, c.iterations, c.seed)
+		m, err := statslopes.Centered(raid, settings.Encounter, s, c.iterations, c.seed)
 		if err != nil {
-			return false, fmt.Errorf("%s: %v", s.name, err)
+			return false, fmt.Errorf("%s: %v", s.Name, err)
 		}
-		res.Slopes[s.name] = sl
+		res.Slopes[s.Name] = slope{Delta: s.Delta, Shift: s.Shift, Dps: m.Dps, Tps: m.Tps, Tmi: m.Tmi}
 	}
 	res.Seconds = time.Since(start).Seconds()
 

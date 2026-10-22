@@ -44,8 +44,18 @@ addEventListener('message', async (e) => {
 				});
 			});
 		}],
+		['statSlopesAsync', data => {
+			return statSlopesAsync(data, result => {
+				postMessage({
+					msg: "progress",
+					outputData: result,
+					id: id + "progress",
+				});
+			});
+		}],
 		['computeStats', computeStats],
 		['computeStatsJson', computeStatsJson],
+		['statCaps', statCaps],
 		['raidSim', raidSim],
 		['raidSimJson', raidSimJson],
 		['raidSimAsync', (data) => {
