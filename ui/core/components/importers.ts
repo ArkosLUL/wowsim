@@ -7,10 +7,14 @@ import {
 	buildCharacterImport,
 	describeConsumeSource,
 	describePetAndAmmo,
+	heroicPresenceSource,
+	inferSpec,
 	parseRoster,
+	RosterCharacter,
 	rosterClass,
 	rosterEquipmentSpec,
 } from '../../raid/acore_roster';
+import { fetchServerRoster } from '../../raid/acore_server';
 import { IndividualSimUI } from '../individual_sim_ui';
 import {
 	Class,
@@ -18,6 +22,7 @@ import {
 	Glyphs,
 	ItemSlot,
 	ItemSpec,
+	PartyBuffs,
 	Profession,
 	Race,
 	Spec,
@@ -25,7 +30,7 @@ import {
 import { IndividualSimSettings } from '../proto/ui';
 import { Database } from '../proto_utils/database';
 import { classNames, nameToClass, nameToProfession,nameToRace } from '../proto_utils/names';
-import { specNames } from '../proto_utils/utils';
+import { getTalentTree, specNames } from '../proto_utils/utils';
 import { SimSettingCategories } from '../sim';
 import { SimUI } from '../sim_ui';
 import { classGlyphsConfig, talentSpellIdsToTalentString } from '../talents/factory';
@@ -33,6 +38,7 @@ import { GlyphConfig } from '../talents/glyphs_picker';
 import { TypedEvent } from '../typed_event';
 import { buf2hex, getEnumValues } from '../utils';
 import { BaseModal } from './base_modal';
+import { simServerAvailable } from './individual_sim_ui/optimizer_tab';
 
 export abstract class Importer extends BaseModal {
 	protected readonly textElem: HTMLTextAreaElement;
@@ -576,6 +582,9 @@ export class IndividualAddonImporter<SpecType extends Spec> extends Importer {
 export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 	private readonly simUI: IndividualSimUI<SpecType>;
 	private readonly characterPicker: HTMLSelectElement;
+	private readonly serverStatus: HTMLElement;
+	private fetchButton: HTMLButtonElement | null = null;
+	private rosterFromUser = false;
 
 	constructor(parent: HTMLElement, simUI: IndividualSimUI<SpecType>) {
 		super(parent, simUI, 'AzerothCore Import', true);
@@ -588,8 +597,12 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 			</p>
 			<p>
 				This brings over gear (with gems, enchants and reforges), race, racial traits, talents, glyphs,
-				professions, the pet, ammo and consumables. It does NOT import buffs, debuffs, rotation, or custom
-				stats.
+				professions, the pet, ammo and consumables, and sets Heroic Presence from the character's party.
+				It does NOT import other buffs, debuffs, rotation, or custom stats.
+			</p>
+			<p>
+				The server only knows a character as of their last save, so run <code>saveall</code> in the
+				worldserver console first.
 			</p>
 			<p>
 				To import, upload the roster file or paste it below, pick the character, then click 'Import'.
@@ -601,27 +614,79 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 		pickerElem.innerHTML = `
 			<label class="form-label">Character</label>
 			<select class="form-select acore-character-select"></select>
+			<div class="acore-server-status form-text d-none"></div>
 		`;
 		this.body.prepend(pickerElem);
 		this.characterPicker = pickerElem.getElementsByClassName('acore-character-select')[0] as HTMLSelectElement;
+		this.serverStatus = pickerElem.getElementsByClassName('acore-server-status')[0] as HTMLElement;
+		this.characterPicker.addEventListener('change', () => this.storePick(this.characterPicker.value));
 		this.refreshCharacters('');
+
+		simServerAvailable().then(available => {
+			if (available) {
+				this.addFetchButton();
+				this.fetchFromServer(false);
+			}
+		});
+	}
+
+	private addFetchButton() {
+		const button = document.createElement('button');
+		button.classList.add('importer-button', 'btn', 'btn-primary', 'fetch-button', 'me-2');
+		button.innerHTML = '<i class="fa fa-cloud-arrow-down"></i> Fetch from server';
+		button.addEventListener('click', () => this.fetchFromServer(true));
+		this.importButton.before(button);
+		this.fetchButton = button;
+
+		const hint = document.createElement('p');
+		hint.classList.add('acore-fetch-hint');
+		hint.textContent = "The core raid comes straight off the server when this opens. 'Fetch from server' reads it again.";
+		this.descriptionElem.appendChild(hint);
+	}
+
+	// On open, a roster the user added meanwhile stays. The button overwrites it.
+	private async fetchFromServer(overwrite: boolean) {
+		this.fetchButton!.disabled = true;
+		this.showStatus('Reading the core raid off the server...', false);
+		try {
+			const data = await fetchServerRoster();
+			if (this.rosterFromUser && !overwrite) {
+				this.showStatus("Kept the roster you added. 'Fetch from server' swaps in the server's.", false);
+				return;
+			}
+			this.textElem.value = data;
+			this.rosterFromUser = false;
+			this.refreshCharacters(data);
+			const exportedAt = JSON.parse(data)?.exportedAt;
+			this.showStatus(`From the server${exportedAt ? `, exported ${exportedAt}` : ''}.`, false);
+		} catch (error: any) {
+			this.showStatus(`Couldn't read the roster off the server: ${error?.message}`, true);
+		} finally {
+			this.fetchButton!.disabled = false;
+		}
+	}
+
+	private showStatus(text: string, failed: boolean) {
+		this.serverStatus.textContent = text;
+		this.serverStatus.classList.remove('d-none');
+		this.serverStatus.classList.toggle('text-danger', failed);
 	}
 
 	protected onTextChanged(data: string) {
+		this.rosterFromUser = data.trim() != '';
 		this.refreshCharacters(data);
 	}
 
 	private refreshCharacters(data: string) {
 		const previous = this.characterPicker.value;
 		const playerClass = this.simUI.player.getClass();
-		let names: Array<string> = [];
+		let chars: Array<RosterCharacter> = [];
 		try {
-			names = parseRoster(data)
-				.characters.filter(char => rosterClass(char.classId) == playerClass)
-				.map(char => char.name);
+			chars = parseRoster(data).characters.filter(char => rosterClass(char.classId) == playerClass);
 		} catch {
 			// Nothing usable pasted yet; the Import button says why.
 		}
+		const names = chars.map(char => char.name);
 
 		// Names come out of an uploaded file, so build the options instead of templating HTML.
 		this.characterPicker.innerHTML = '';
@@ -630,8 +695,51 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 			return;
 		}
 		names.forEach(name => this.characterPicker.appendChild(new Option(name, name)));
-		if (names.includes(previous)) {
-			this.characterPicker.value = previous;
+		this.characterPicker.value = names.includes(previous) ? previous : this.preferredCharacter(chars);
+	}
+
+	// The last pick if the roster has them, else whoever plays this page's spec, on the page's main talent
+	// tree if possible.
+	private preferredCharacter(chars: Array<RosterCharacter>): string {
+		const saved = this.loadPick();
+		if (chars.some(char => char.name == saved)) {
+			return saved;
+		}
+		const player = this.simUI.player;
+		const score = (char: RosterCharacter) => {
+			try {
+				const specMatch = inferSpec(player.getClass(), char.talents) == player.spec;
+				const treeMatch = getTalentTree(char.talents) == player.getTalentTree();
+				return (specMatch ? 2 : 0) + (treeMatch ? 1 : 0);
+			} catch {
+				// talents too long for the class's trees
+				return 0;
+			}
+		};
+		return chars.reduce((best, char) => (score(char) > score(best) ? char : best)).name;
+	}
+
+	private pickKey(): string {
+		return this.simUI.getStorageKey('acore-import.v1');
+	}
+
+	private loadPick(): string {
+		try {
+			const saved = JSON.parse(window.localStorage.getItem(this.pickKey()) || '{}');
+			return typeof saved?.character == 'string' ? saved.character : '';
+		} catch {
+			return '';
+		}
+	}
+
+	private storePick(name: string) {
+		if (!name) {
+			return;
+		}
+		try {
+			window.localStorage.setItem(this.pickKey(), JSON.stringify({ character: name }));
+		} catch {
+			// storage off: the spec match picks next time
 		}
 	}
 
@@ -646,6 +754,7 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 			throw new Error(`This roster has no ${classNames.get(playerClass)} in it.`);
 		}
 		const picked = candidates.find(char => char.name == this.characterPicker.value) || candidates[0];
+		this.storePick(picked.name);
 
 		const imported = buildCharacterImport(db, picked);
 		await this.finishIndividualImport(
@@ -665,9 +774,22 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 		applyPetAndAmmo(player, imported.playerClass, imported.loadout, TypedEvent.nextEventID());
 		applyConsumes(player, imported, TypedEvent.nextEventID());
 
+		const presence = heroicPresenceSource(roster, picked);
+		const party = player.getParty();
+		if (party) {
+			party.setBuffs(TypedEvent.nextEventID(), PartyBuffs.create({ ...party.getBuffs(), heroicPresence: !!presence }));
+		}
+
 		const notes = (roster.warnings || []).concat(picked.warnings || []).concat(imported.warnings);
 		if (imported.loadout.skipped.length) {
 			notes.unshift(`Kept, the sim has no value for: ${imported.loadout.skipped.join(', ')}.`);
+		}
+		if (!presence) {
+			notes.unshift(`Heroic Presence off: nobody in ${picked.name}'s party has Draenei racials.`);
+		} else if (presence == picked) {
+			notes.unshift(`Heroic Presence on: ${picked.name} has Draenei racials.`);
+		} else {
+			notes.unshift(`Heroic Presence on: ${presence.name} in ${picked.name}'s party has Draenei racials.`);
 		}
 		if (roster.version < 2) {
 			notes.unshift('The pet, ammo and consumables stay as they are: a version 1 roster has none.');

@@ -1,5 +1,6 @@
-import { expect, type Page, type Request, test } from '@playwright/test';
+import { expect, type Page, test } from '@playwright/test';
 
+import { DATABASE_DOWN, errorReply, NOT_CONFIGURED, stubServer } from '../lib/acore';
 import { openRaid, watchForErrors } from '../lib/page';
 import { collectDialogs, fixtureRoster, openImporter, readRoster, roster, rosterSlots, savedSettings, seedRaid } from './raid';
 
@@ -8,38 +9,6 @@ const rosterJson = JSON.parse(ROSTER);
 
 // Synthetic version 2 roster of six, quick to import twice in one test.
 const LOADOUT = readRoster('loadout');
-
-// The sim server's own texts (sim/web/acroster/handler.go)
-const NOT_CONFIGURED = "This sim server isn't set up to import from AzerothCore: it was started without --acoreDsn, --acoreDbcDir, --acoreNamesFile";
-const DATABASE_DOWN = "The AzerothCore database didn't answer. The sim server's log says why.";
-
-interface Reply {
-	status?: number;
-	contentType?: string;
-	body: string;
-	// the answer is held back until this resolves
-	after?: Promise<void>;
-}
-
-interface StubbedServer {
-	reply: Reply;
-	requests: Array<Request>;
-}
-
-const errorReply = (status: number, code: string, error: string): Reply => ({ status, body: JSON.stringify({ code, error }) });
-
-// Stands in for the sim server's /acoreRoster, which needs a live AzerothCore database. Set `reply`
-// to change the next answer. A request with a query string lands here too, so a test can catch one.
-async function stubServer(page: Page, reply: Reply): Promise<StubbedServer> {
-	const server: StubbedServer = { reply, requests: [] };
-	await page.route(/\/acoreRoster(\?.*)?$/, async route => {
-		server.requests.push(route.request());
-		const { status = 200, contentType = 'application/json', body, after } = server.reply;
-		await after;
-		await route.fulfill({ status, contentType, body });
-	});
-	return server;
-}
 
 const serverButton = (page: Page) => page.locator('.raid-controls .acore-server-import');
 

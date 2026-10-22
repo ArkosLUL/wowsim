@@ -3,6 +3,7 @@ import path from 'node:path';
 
 import { expect, type Page, test as base } from '@playwright/test';
 
+import { dropServerRoster } from '../lib/acore';
 import { openSimTab, watchForErrors } from '../lib/page';
 import { acceptDialogs, checkbox, icon, numberInput, openSpec, savedData, select, setNumber, storedSettings, stubWowheadTooltips } from './helpers';
 
@@ -289,6 +290,7 @@ test('a Wowhead link for another class is refused with a message', async ({ page
 
 test('the AzerothCore importer brings over the picked character', async ({ page }) => {
 	const errors = watchForErrors(page);
+	await dropServerRoster(page);
 	const dialogs = acceptDialogs(page);
 	const character = JSON.parse(readFileSync(ROSTER, 'utf-8')).characters.find((c: any) => c.name == 'Smartface');
 	await openSpec(page, SPEC);
