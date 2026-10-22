@@ -7,26 +7,18 @@ worktree), [int] `G:\DevStuff\GitHub\wowsimwotlk-int` (wave loop's), [ac] `G:\De
 
 Status: P0a–P3 and the baseline landed; results, bot findings and each build's gap in
 `spec-balance.INVESTIGATION.md`. P4's `spec-balance.PROPOSAL.md` approved as recommended (user, 2026-10-21).
-P5 in progress:
-- Sim on `spec-balance` only (not master): `ca5062282` every approved tweak (Call of Thunder +70%, re-sized after
-  the Lightning Overload fix), parity fixes (Lightning Overload, Demonic Pact ICD, T10 Ret 2pc), cap-exempt fixes
-  (Combat Lethality, Glyph of Stormstrike, Ret Consecration first, Enh Shamanistic Rage on cooldown with T10 2pc);
-  `ca12bf424` Arms/MM/Destruction P1–5 or P4–5 re-geared, MM's Marked for Death 11% a rank, Arms' Endless Rage 14%
-  and Wrecking Crew 4/9/13/18/22% (closest fit under the cap; user: no follow-up). `tools/simval` replays of the
-  buffed spells fail until re-recorded. Per-class work, staged SQL and reports: `tmp/p4/trees/<class>/tmp/p5/`.
-- Final rankings: `tmp/p5/rk3/rankings.json` (committed `assets/rankings/rankings.json` stays the pre-buff
-  `--base` until P6). `balance_check.py` flags only accepted shortfalls: Fire, Fury P1/P2; Ret 4 cells; Demonology
-  P5; Destruction P4/P5 180 s; Arms P1/180, P2.
-- [tweaks]: no PRs (user, 2026-10-22). The nine `feature/balance-<class>` branches are merged into local master
-  (`b957aa5`), not pushed.
-- [bots]: committed on `Custom` (`467a9efb1` Ret, `a7e9177c1` Enh).
-- Bundle builds over [bal]: `sh tmp/p5/bundle.sh` (the root tsconfig's tsc runs out of heap on `tmp/p4/trees`).
+P5 done (2026-10-22, results in the INVESTIGATION): [tweaks] master `b957aa5` (nine local merges, no PRs, not
+pushed) applied on the live server; sim on master `7a44c9318` with the re-recorded server fixtures and the committed
+rankings (`balance_check.py` flags only the accepted shortfalls, so it can't exit 0); [bots] `467a9efb1` (Ret),
+`a7e9177c1` (Enh) and mod-racial-trait-swap `38fd254` await an image rebuild.
 
-Next, in order:
-1. Ask: `ac-db-import` + worldserver restart from [tweaks] master. Recapture the spelldump (the tweaked ids
-   plus 45284, 45297, 53646), `gen_serverdata` (must reproduce the hand-edited serverdata), `spellmods`;
-   re-record the moved simval records (goldchar, talent sweep, spell mods, strikes, fights) and remove their drops.
-2. ff master; P6.
+P6 next, in order:
+1. Stat weights: running in `tmp/p6/sw` (settings copied from `tmp/p5/rk3`), then [bots]
+   `apps/simweights/generate_weights.py --weights <tmp/p6/sw/weights.json>`, commit on `Custom`.
+2. Ask for the image rebuild and `ac-db-import` (the weights SQL), batched.
+3. Promote durable learnings to [sim] guide pages; close the PLAN.
+
+Bundle builds over [bal]: `sh tmp/p5/bundle.sh` (the root tsconfig's tsc runs out of heap on `tmp/p4/trees`).
 
 Open findings: presetgen doesn't carry a phase's racial traits into the next phase's seed (bis-optimizer's;
 Shadow's P5 BiS); further Demonic Pact gaps (self-feeding spell power, recast replaces); the server's Lightning

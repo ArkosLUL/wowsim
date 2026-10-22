@@ -262,3 +262,24 @@ cell has below 95% (none: already ≥ 95%, so ±0.3 points there), and how many 
 
 Weak early, strong late (a gear-shaped lever must help low gear only): Ret, Arms, Fire, Fury, Feral, MM, SV.
 Weak late: Destruction, Elemental, Enhancement, Demonology, Affliction. Flat: Combat, Arcane, Shadow.
+
+## P5 results (2026-10-22)
+
+Rankings `7a44c9318`: 14 of the 20 in-scope builds are at B in every counted cell (baseline: 4). Below B, all
+accepted: Fire 6 cells and Fury 4 (no tweak), Ret 4, Arms 3 (P1/180, both P2), Demonology 2 (P5), Destruction 2
+(P4/P5 at 180 s); 21 of 200 counted cells.
+
+- **Re-gear moves armor penetration buffs.** With Endless Rage's or Marked for Death's armor ignore in the sim, the
+  optimizer swaps armor penetration gems for Strength or Agility, and the tweak then adds about the same % in every
+  phase: Arms went to 95.6–99.8%, MM to 95.6–97.9%. MM fits at 11% a rank (85.7–94.2%). Arms can't: its P2/180 sits
+  14% under its P4/300, and both its levers are flat, so the user took the closest fit under the cap: Endless Rage
+  14%, Wrecking Crew 4/9/13/18/22% (79.0–93.8%).
+- **Optimizer noise.** Two Normal runs at nearly the same sizes moved Arms' P2 and P4/300 cells by up to 3 points.
+  Size a tweak against the gear the final run picked, not against a prediction.
+- **Server parity after the apply** (mod-spell-tweaks `b957aa5`): the spelldump recapture moved 47 spell rows and
+  `gen_serverdata` reproduced every hand-edited row; golden characters (6), the talent sweep (3 paths), the spell-mod
+  sweep (6 paths), strikes and 7 fights were recorded again, and every drop that waited for them is gone.
+- **Racial swap leftovers.** `TestBotDps` buys each bot its racial traits; the swap row outlived the deleted character,
+  and after a worldserver restart new characters reuse those guids, so they logged in with another race's racials.
+  Fixed: the e2e cleanup deletes the row (mod-sim-validation `9807c45`), mod-racial-trait-swap deletes it with the
+  character (`38fd254`, needs an image rebuild), and the 71 orphaned rows were deleted.
