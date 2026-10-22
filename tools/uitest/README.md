@@ -83,6 +83,7 @@ fixture, so sim changes don't break them.
   past. The one test that asks the real route runs only with `UITEST_ACORE_LIVE=1`,
   against a server started with those flags; it only reads.
 - A page tells a sim server from wasm by fetching `sim_worker.js` (`simServerAvailable`). To fake wasm,
-  stub only requests whose `resourceType()` is `fetch`, or the worker itself won't load.
+  stub only requests whose `resourceType()` is `fetch`, or the worker itself won't load. That only hides the
+  server buttons: the sims still go to the server. A `--wasm` dev server tests the wasm path.
 - A spec page keeps its settings in localStorage under `__wotlk_<spec>__currentSettings__`, except
   enhancement's `__wotlk_enhacement_shaman` prefix (`storageKey` in `tests/settings/helpers.ts`).
