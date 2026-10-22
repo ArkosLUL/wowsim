@@ -6,7 +6,7 @@ import { ItemSpec } from './proto/common.js';
 import { ItemType } from './proto/common.js';
 import { Stat } from './proto/common.js';
 
-import { ComputeStatsRequest, ComputeStatsResult } from './proto/api.js';
+import { ComputeStatsRequest, ComputeStatsResult, StatCapsRequest, StatCapsResult, StatSlopesRequest, StatSlopesResult } from './proto/api.js';
 import { RaidSimRequest, RaidSimResult, ProgressMetrics } from './proto/api.js';
 import { StatWeightsRequest, StatWeightsResult } from './proto/api.js';
 import { BulkSimRequest, BulkSimResult, OptimizeGearRequest } from './proto/api.js';
@@ -39,6 +39,22 @@ export class WorkerPool {
 	async computeStats(request: ComputeStatsRequest): Promise<ComputeStatsResult> {
 		const result = await this.makeApiCall('computeStats', ComputeStatsRequest.toBinary(request));
 		return ComputeStatsResult.fromBinary(result);
+	}
+
+	async statCaps(request: StatCapsRequest): Promise<StatCapsResult> {
+		const result = await this.makeApiCall('statCaps', StatCapsRequest.toBinary(request));
+		return StatCapsResult.fromBinary(result);
+	}
+
+	async statSlopesAsync(request: StatSlopesRequest, onProgress: (progress: ProgressMetrics) => void): Promise<StatSlopesResult> {
+		const worker = this.getLeastBusyWorker();
+		const id = worker.makeTaskId();
+		worker.addPromiseFunc(id + 'progress', this.newProgressHandler(id, worker, onProgress), console.error);
+		const result = ProgressMetrics.fromBinary(await worker.doApiCall('statSlopesAsync', StatSlopesRequest.toBinary(request), id)).finalSlopesResult;
+		if (!result) {
+			throw new Error('The live run returned no result.');
+		}
+		return result;
 	}
 
 	async statWeightsAsync(request: StatWeightsRequest, onProgress: Function): Promise<StatWeightsResult> {
@@ -121,7 +137,8 @@ export class WorkerPool {
 			var progress = ProgressMetrics.fromBinary(progressData);
 			onProgress(progress);
 			// If we are done, stop adding the handler.
-			if (progress.finalRaidResult != null || progress.finalWeightResult != null || progress.finalBulkResult != null || progress.finalOptimizeResult != null) {
+			if (progress.finalRaidResult != null || progress.finalWeightResult != null || progress.finalBulkResult != null || progress.finalOptimizeResult != null ||
+				progress.finalSlopesResult != null) {
 				return;
 			}
 

@@ -177,6 +177,26 @@ _Avoid_: TTL alone, which reads as a cache term
 A copy of the optimizer's pick with one of its gems banned and its slots regemmed, simmed against the pick so
 the sim, not the curves alone, settles its gems.
 
+### Caps & Priority
+
+**Gear rating**:
+A stat's rating from gear, gems, enchants, consumables and bonus stats, without race, talents and buffs. The
+Caps & Priority tab reads every cap in it, as the in-game sheet does.
+_Avoid_: sheet rating, which counts race, talents and buffs too
+
+**Soft cap**:
+The dual wield white hit cap: past the yellow (hard) cap, more hit still takes misses off white swings.
+
+**Shipped values**:
+Stat values measured at each content phase's BiS and published with the sim (`stat_values.json`).
+
+**Live values**:
+Stat values measured at the player's own gear by "Measure at my gear": a gain from one more point and a loss
+from one fewer.
+
+**Cap rule**:
+Past every hard cap on a stat that shipped values measured below its cap, more of it is worth 0.
+
 ### BiS tooltip
 
 **Subject**:

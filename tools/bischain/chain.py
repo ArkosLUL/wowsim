@@ -538,14 +538,20 @@ class Chain:
         (REPO / rk).mkdir(parents=True, exist_ok=True)
         shutil.copytree(REPO / sw / 'settings', REPO / rk / 'settings', dirs_exist_ok=True)
         dest = ['--dest', self.a.rankings_dest] if self.a.rankings_dest else []
+        # a test run, which writes its rankings elsewhere, keeps its stat values out of assets/ too
+        values = self.a.rankings_dest and f'{sw}/stat_values.json'
+        values_dest = ['--dest', values] if values else []
+        # publish goes last: rankings' merge would read its new file under assets/ as a dirty sim
         for step, cmd in [('rankings', [BASH, 'tools/acore/dock.sh', 'run', '--tags=with_db', './tools/rankings',
                                         '--out', rk]),
-                          ('rankings merge', [PY, 'tools/rankings/merge.py', '--out', rk, *dest])]:
+                          ('rankings merge', [PY, 'tools/rankings/merge.py', '--out', rk, *dest]),
+                          ('statweights publish', [PY, 'tools/statweights/publish.py', '--out', sw, *values_dest])]:
             self.log(f'weights: {step}')
             if self.run(cmd, 'weights') != 0:
                 return self.fail('weights', f'{step}, see logs/weights.log')
         done.write_text(datetime.now().isoformat(), encoding='utf-8')
-        self.log(f'stat weights in {sw}/weights.json; rankings in {self.a.rankings_dest or "assets/rankings/rankings.json"}')
+        self.log(f'stat weights in {sw}/weights.json and {values or "assets/statweights/stat_values.json"}; '
+                 f'rankings in {self.a.rankings_dest or "assets/rankings/rankings.json"}')
 
     def all(self):
         self.start_servers()

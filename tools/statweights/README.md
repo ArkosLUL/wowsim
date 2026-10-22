@@ -1,7 +1,8 @@
 # statweights
 
 Measures stat slopes for every [presetgen](../presetgen/README.md) build at each phase's BiS gear,
-the source of the playerbots' per-spec stat weights. It uses wide steps, not the sim's Stat Weights
+the source of the playerbots' per-spec stat weights and the Caps & Priority tab's shipped values
+([stat-caps](../../docs/guide/stat-caps.md#shipped)). It uses wide steps, not the sim's Stat Weights
 tool: that tool's ±20 lands on rotation breakpoints and misreads haste in most builds.
 
 ## Before running
@@ -21,10 +22,16 @@ container also sees:
 python tools/statweights/capture.py --out tmp/statweights
 tools/acore/dock.sh run --tags=with_db ./tools/statweights --out tmp/statweights
 python tools/statweights/merge.py --out tmp/statweights
+python tools/statweights/publish.py --out tmp/statweights
 ```
 
-- All three take `--out` (required), `--builds` (comma-separated keys of `BUILDS` in presetgen's
-  `gen.py`, default all 30, tanks included) and `--phases` (default `1-5`, or e.g. `1,5`).
+- All four take `--out` (required). The first three also take `--builds` (comma-separated keys of
+  `BUILDS` in presetgen's `gen.py`, default all 30, tanks included) and `--phases` (default `1-5`, or
+  e.g. `1,5`).
+- `publish.py` writes the Caps & Priority tab's shipped values to `assets/statweights/stat_values.json`
+  (`--dest` another file). It refuses unless every presetgen build has phases 1–5 and an entry in its
+  `TREES` table, the build's main talent tree. A new presetgen build needs one, and a place in
+  `TWO_HAND` when it shares spec and tree with a dual wield build.
 - `capture.py` also takes `--base` (the sim server, default `http://localhost:3333`) and `--port`
   (Chrome's debugging port, default 9361). A Chrome already on the port is reused, so pick one no
   other run holds.
@@ -59,6 +66,10 @@ In `--out`:
     - `slopes`, keyed by `Stat` or `PseudoStat` enum name: `{delta, shift, dps, tps, tmi}`, per point.
 - `capture.log`, `run.log`, `chrome-profile/`, `settings.tmp.json`.
 
+From `publish.py`, to commit: `assets/statweights/stat_values.json`, with `weights.json`'s `sim_commit`
+and `generated_at`, and `builds[]`: `key`, `name` (presetgen's label), `class`, `spec`, `tree`,
+`two_hand`, and `phases[]` of `phase` and `slopes` `{dps, tps, tmi}`, to 4 significant digits.
+
 ## Method
 
 - **Settings** come from the page, because an exported settings JSON keeps the rotation as
@@ -73,7 +84,9 @@ In `--out`:
     request the page posts to its worker, once none has followed for 2 s.
 - **Slopes:** `(sim(base+shift+δ) − sim(base+shift−δ)) / 2δ` through `Player.BonusStats`, both
   ends at the same seed with `IsTest`. The stats per role (melee, hunter, caster, tank, from the
-  player's spec) are in `steps.go`.
+  player's spec), the steps and the sims are in the [`sim/statslopes`](../../sim/statslopes/statslopes.go)
+  library, which the tab's one-sided live run shares
+  ([stat-caps](../../docs/guide/stat-caps.md#live)).
 
   | Stat | δ | Shift |
   |---|---|---|

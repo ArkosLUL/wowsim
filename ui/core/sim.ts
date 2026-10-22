@@ -10,7 +10,7 @@ import {
 	UnitReference_Type as UnitType,
 } from './proto/common.js';
 import { BulkSimRequest, BulkSimResult, BulkSettings, OptimizeGearRequest, ProgressMetrics, Raid as RaidProto } from './proto/api.js';
-import { ComputeStatsRequest } from './proto/api.js';
+import { ComputeStatsRequest, StatCapsRequest, StatCapsResult, StatSlopesRequest, StatSlopesResult } from './proto/api.js';
 import { RaidSimRequest, RaidSimResult } from './proto/api.js';
 import { SimOptions } from './proto/api.js';
 import { StatWeightsRequest, StatWeightsResult } from './proto/api.js';
@@ -346,6 +346,35 @@ export class Sim {
 				this.unitMetadataEmitter.emit(eventID);
 			}
 		});
+	}
+
+	// The server works them out for the raid's first player, which is where an individual sim keeps its own.
+	async statCaps(player: Player<any>): Promise<StatCapsResult> {
+		await this.waitForInit();
+		if (player.getRaidIndex() != 0) {
+			throw new Error('Stat caps only cover the raid\'s first player.');
+		}
+		return await this.workerPool.statCaps(StatCapsRequest.create({
+			raid: this.getModifiedRaidProto(),
+			encounter: this.encounter.toProto(),
+		}));
+	}
+
+	// What a point of each stat is worth at the player's gear, every sim at the page's iterations and
+	// one seed. Raid's first player only, like statCaps.
+	async statSlopes(player: Player<any>, onProgress: (progress: ProgressMetrics) => void): Promise<StatSlopesResult> {
+		await this.waitForInit();
+		if (player.getRaidIndex() != 0) {
+			throw new Error('Stat slopes only cover the raid\'s first player.');
+		}
+		return await this.workerPool.statSlopesAsync(StatSlopesRequest.create({
+			raid: this.getModifiedRaidProto(),
+			encounter: this.encounter.toProto(),
+			simOptions: SimOptions.create({
+				iterations: this.getIterations(),
+				randomSeed: BigInt(this.nextRngSeed()),
+			}),
+		}), onProgress);
 	}
 
 	async statWeights(player: Player<any>, epStats: Array<Stat>, epPseudoStats: Array<PseudoStat>, epReferenceStat: Stat, onProgress: Function): Promise<StatWeightsResult> {

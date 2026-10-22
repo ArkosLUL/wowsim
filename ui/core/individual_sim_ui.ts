@@ -6,6 +6,7 @@ import * as Exporters from './components/exporters';
 import * as IconInputs from './components/icon_inputs';
 import * as Importers from './components/importers';
 import { BulkTab } from './components/individual_sim_ui/bulk_tab';
+import { CapsTab } from './components/individual_sim_ui/caps_tab';
 import { GearTab } from './components/individual_sim_ui/gear_tab';
 import { OptimizerTab } from './components/individual_sim_ui/optimizer_tab';
 import { RotationTab } from './components/individual_sim_ui/rotation_tab';
@@ -317,6 +318,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 		const gearTab = this.addGearTab();
 		this.bt = this.addBulkTab();
 		this.addOptimizerTab(gearTab);
+		this.addCapsTab();
 		this.addSettingsTab();
 		this.addTalentsTab();
 		this.addRotationTab();
@@ -411,6 +413,18 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 		new OptimizerTab(this.simTabContentsContainer, this, gearTab);
 	}
 
+	private addCapsTab() {
+		if (this.isWithinRaidSim) {
+			return;
+		}
+		new CapsTab(this.simTabContentsContainer, this);
+	}
+
+	// The Import menu's AzerothCore entry and the caps tab's roster button both open it here.
+	openAcoreImporter() {
+		new Importers.IndividualAcoreImporter(this.rootElem, this);
+	}
+
 	private addSettingsTab() {
 		new SettingsTab(this.simTabContentsContainer, this);
 	}
@@ -463,7 +477,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 		);
 		this.simHeader.addImportLink(
 			'AzerothCore',
-			_parent => new Importers.IndividualAcoreImporter(this.rootElem, this),
+			_parent => this.openAcoreImporter(),
 			true,
 		);
 

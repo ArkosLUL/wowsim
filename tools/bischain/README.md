@@ -31,9 +31,10 @@ python tools/bischain/chain.py all --work G:/DevStuff/GitHub/.wave-loop/bis-chai
 
 `all` starts the servers (named `wotlk-chain-<work name>-<role>`) and exports the roster, which must match
 Deathsong's live parties (`--allow-party-mismatch` overrides). Then two branches run side by side:
-- **Presets**, then stat weights and rankings. Each ui folder goes whole to the next free server, slowest
-  first by `--times`, with its own `presets/<folder>/` output and a 1200 s Normal timeout. **Stop 1:** once
-  written, the presets wait for the orchestrator to check and commit them (`ui/` clean), so stat weights and
+- **Presets**, then stat weights, rankings and the stat values ([publish.py](../statweights/README.md#running)),
+  last since the rankings merge would read a new file under `assets/` as a dirty sim. Each ui folder goes
+  whole to the next free server, slowest first by `--times`, with its own `presets/<folder>/` output and a
+  1200 s Normal timeout. **Stop 1:** once written, the presets wait for the orchestrator to check and commit them (`ui/` clean), so stat weights and
   rankings stamp a clean commit.
 - **Dataset**: one batch per `--dataset-split` group (default `1,2,3:4,5`) on its own server, both stages,
   plus the switches; a pass missing any job's entry reruns its failed jobs once, then fails. Then the merge,
@@ -48,8 +49,8 @@ one). Single steps: `servers`, `presets`, `roster` (exports a new roster), `data
 Rerun only what a change touches: `--builds` and `--phases` narrow presets, stat weights and rankings;
 `--dataset-raiders` the dataset. A narrowed run needs `--from-work` naming an earlier full run, since
 `weights.json`, `rankings.json` and the live dataset cover everyone: it starts from that run's captures,
-results and merged batch. Without it, stat weights cover the chosen builds alone, the rankings are skipped and
-`assemble` refuses. The 2026-10-21 run is laid out for it as `bis-chain-1021`.
+results and merged batch. Without it, stat weights cover the chosen builds alone, the rankings and stat values
+are skipped and `assemble` refuses. The 2026-10-21 run is laid out for it as `bis-chain-1021`.
 Both dataset stages stay at Normal (the user's call, 2026-10-21).
 `--no-write`, `--dataset-effort Quick` and `--rankings-dest` are for test runs.
 
@@ -59,7 +60,8 @@ Both dataset stages stay at Normal (the user's call, 2026-10-21).
   `presets/<ui folder>/`, `bis/<batch>/`, `switch/<raider>/`.
 - In the checkout's `tmp/`: `<work name>/bis_dataset.sql` (and `.lua`, `batch.json`),
   `statweights-<work name>/weights.json` (for playerbots' `generate_weights.py`), `rankings-<work name>/`.
-- `ui/*/gear_sets/` and `assets/rankings/rankings.json`, to commit.
+- `ui/*/gear_sets/`, `assets/rankings/rankings.json` and `assets/statweights/stat_values.json`, to commit.
+  With `--rankings-dest`, the stat values go to `tmp/statweights-<work name>/stat_values.json` instead.
 
 ## Timing
 

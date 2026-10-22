@@ -49,7 +49,8 @@ Before starting, read every doc whose trigger matches the task.
 | [caster-mechanics](docs/guide/caster-mechanics.md) | changing a druid's, shaman's, mage's, priest's or warlock's spells, talents or procs |
 | [pets](docs/guide/pets.md) | changing a pet's or guardian's stats, timers, AI, or the buffs and casts that reach it |
 | [threat](docs/guide/threat.md) | changing threat, energizes or heals, or a spell's threat data |
-| [tank-modeling](docs/guide/tank-modeling.md) | changing the optimizer's tank boss, healing model, survival score, or any run's hit, expertise or haste caps |
+| [tank-modeling](docs/guide/tank-modeling.md) | changing the optimizer's tank boss, healing model or survival score |
+| [stat-caps](docs/guide/stat-caps.md) | changing a cap, the Caps & Priority tab, or how stat values are shipped or measured |
 | [playerbot-rules](docs/guide/playerbot-rules.md) | changing what the Playerbot switch does, or a tool that turns it on |
 | [spell-data-and-timing](docs/guide/spell-data-and-timing.md) | declaring a spell's server data; update, aura, swing, cast or GCD timing |
 | [missiles](docs/guide/missiles.md) | changing a missile's flight or landing, or a unit's or target's combat reach |

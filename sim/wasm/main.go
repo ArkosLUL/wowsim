@@ -13,6 +13,8 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	proto "github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/optimizer"
+	"github.com/wowsims/wotlk/sim/statcaps"
+	"github.com/wowsims/wotlk/sim/statslopes"
 	protojson "google.golang.org/protobuf/encoding/protojson"
 	googleProto "google.golang.org/protobuf/proto"
 )
@@ -26,6 +28,7 @@ func main() {
 
 	js.Global().Set("computeStats", js.FuncOf(computeStats))
 	js.Global().Set("computeStatsJson", js.FuncOf(computeStatsJson))
+	js.Global().Set("statCaps", js.FuncOf(statCaps))
 	js.Global().Set("raidSim", js.FuncOf(raidSim))
 	js.Global().Set("raidSimJson", js.FuncOf(raidSimJson))
 	js.Global().Set("raidSimAsync", js.FuncOf(raidSimAsync))
@@ -33,6 +36,7 @@ func main() {
 	js.Global().Set("statWeightsAsync", js.FuncOf(statWeightsAsync))
 	js.Global().Set("bulkSimAsync", js.FuncOf(bulkSimAsync))
 	js.Global().Set("optimizeGearAsync", js.FuncOf(optimizeGearAsync))
+	js.Global().Set("statSlopesAsync", js.FuncOf(statSlopesAsync))
 	js.Global().Call("wasmready")
 	<-c
 }
@@ -171,6 +175,22 @@ func raidSimAsync(this js.Value, args []js.Value) interface{} {
 	return processAsyncProgress(args[1], reporter)
 }
 
+func statCaps(this js.Value, args []js.Value) interface{} {
+	request := &proto.StatCapsRequest{}
+	if err := googleProto.Unmarshal(getArgsBinary(args[0]), request); err != nil {
+		log.Printf("Failed to parse request: %s", err)
+		return nil
+	}
+	outbytes, err := googleProto.Marshal(statcaps.ComputeRequest(request))
+	if err != nil {
+		log.Printf("[ERROR] Failed to marshal result: %s", err.Error())
+		return nil
+	}
+	outArray := js.Global().Get("Uint8Array").New(len(outbytes))
+	js.CopyBytesToJS(outArray, outbytes)
+	return outArray
+}
+
 func statWeights(this js.Value, args []js.Value) interface{} {
 	swr := &proto.StatWeightsRequest{}
 	if err := googleProto.Unmarshal(getArgsBinary(args[0]), swr); err != nil {
@@ -232,6 +252,18 @@ func optimizeGearAsync(this js.Value, args []js.Value) interface{} {
 	return processAsyncProgress(args[1], reporter)
 }
 
+func statSlopesAsync(this js.Value, args []js.Value) interface{} {
+	req := &proto.StatSlopesRequest{}
+	if err := googleProto.Unmarshal(getArgsBinary(args[0]), req); err != nil {
+		log.Printf("Failed to parse request: %s", err)
+		return nil
+	}
+	reporter := make(chan *proto.ProgressMetrics, 100)
+	statslopes.MeasureAsync(req, reporter)
+
+	return processAsyncProgress(args[1], reporter)
+}
+
 // Assumes args[0] is a Uint8Array
 func getArgsBinary(value js.Value) []byte {
 	data := make([]byte, value.Get("length").Int())
@@ -263,7 +295,8 @@ reader:
 			js.CopyBytesToJS(outArray, outbytes)
 			progFunc.Invoke(outArray)
 
-			if progMetric.FinalWeightResult != nil || progMetric.FinalRaidResult != nil || progMetric.FinalBulkResult != nil || progMetric.FinalOptimizeResult != nil {
+			if progMetric.FinalWeightResult != nil || progMetric.FinalRaidResult != nil || progMetric.FinalBulkResult != nil || progMetric.FinalOptimizeResult != nil ||
+				progMetric.FinalSlopesResult != nil {
 				return outArray
 			}
 		}

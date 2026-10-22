@@ -34,6 +34,39 @@ type PlayerSheet struct {
 	CastSpeed float64
 	// The multiplier RangedSwingSpeed scales ranged attacks by, Steady Shot's cast time included.
 	RangedSwingSpeed float64
+
+	// The main-hand white swing's miss chance against that target, dual wield penalty included.
+	WhiteMissChance float64
+	// Each weapon hand's table against that target, off its auto attack. Values, not pointers: the
+	// optimizer compares whole sheets.
+	MainHand, OffHand HandSheet
+	// How much of the armor penetration cap the player ignores, in percent: rating plus percent
+	// auras, capped at 100.
+	ArmorPenPercent float64
+	// Whether the rotation casts anything with ProcMaskSpellDamage.
+	CastsSpellDamage bool
+	// Hit rating that target's debuffs hand every attack or spell against it.
+	MeleeHitTaken, SpellHitTaken float64
+	// That target's melee table with nothing of the player's in it: no hit, expertise or dodge
+	// reduction, in front. The level gap the caps start from.
+	BareTable MeleeTableInput
+	// The snapshots ComputeStats reports along the way: after race, gear (bonus stats included),
+	// talents, buffs and consumes.
+	BaseStats, GearStats, TalentsStats, BuffsStats, ConsumesStats stats.Stats
+}
+
+// HandSheet is one weapon hand's dodge and parry against a target, parry as if in front.
+type HandSheet struct {
+	// False without melee auto attacks, and for the off hand also when not dual wielding.
+	Swings            bool
+	WeaponType        proto.WeaponType
+	YellowDodgeChance float64
+	YellowParryChance float64
+	WhiteDodgeChance  float64
+	WhiteParryChance  float64
+	// Expertise on this hand's spells only, like a racial that covers just this hand's weapon. The
+	// sheet's FinalStats leaves it out.
+	BonusExpertiseRating float64
 }
 
 // ComputePlayerSheet builds the raid and encounter the way ComputeStats does, then reads one
@@ -63,7 +96,13 @@ func ComputePlayerSheet(raidProto *proto.Raid, encounterProto *proto.Encounter, 
 	if raidIndex < 0 || party >= len(parties) || slot >= len(parties[party].GetPlayers()) {
 		return sheet, fmt.Errorf("no stats for raid index %d", raidIndex)
 	}
-	sheet.FinalStats = stats.FromFloatArray(parties[party].GetPlayers()[slot].GetFinalStats().GetStats())
+	playerStats := parties[party].GetPlayers()[slot]
+	sheet.FinalStats = stats.FromFloatArray(playerStats.GetFinalStats().GetStats())
+	sheet.BaseStats = stats.FromFloatArray(playerStats.GetBaseStats().GetStats())
+	sheet.GearStats = stats.FromFloatArray(playerStats.GetGearStats().GetStats())
+	sheet.TalentsStats = stats.FromFloatArray(playerStats.GetTalentsStats().GetStats())
+	sheet.BuffsStats = stats.FromFloatArray(playerStats.GetBuffsStats().GetStats())
+	sheet.ConsumesStats = stats.FromFloatArray(playerStats.GetConsumesStats().GetStats())
 
 	var defender *Unit
 	for _, unit := range env.Raid.AllPlayerUnits {
@@ -105,8 +144,30 @@ func ComputePlayerSheet(raidProto *proto.Raid, encounterProto *proto.Encounter, 
 			for _, spell := range magic {
 				hitPct := float32(spell.SpellHitChance(at.Defender) * 100)
 				worst = max(worst, SpellMissBP(at.DefenderLevel-at.AttackerLevel, hitPct, at.Defender.Type == PlayerUnit))
+				sheet.CastsSpellDamage = sheet.CastsSpellDamage || spell.ProcMask.Matches(ProcMaskSpellDamage)
 			}
 			sheet.SpellMissChance = float64(worst) / 10000
+		}
+
+		sheet.MeleeHitTaken = target.PseudoStats.BonusMeleeHitRatingTaken
+		sheet.SpellHitTaken = target.PseudoStats.BonusSpellHitRatingTaken
+		sheet.ArmorPenPercent = defender.ArmorPenetrationPercentage(defender.stats[stats.ArmorPenetration]) * 100
+
+		sheet.BareTable = at.meleeTableInput()
+		sheet.BareTable.InFront = true
+		sheet.BareTable.DodgeReductionPct = 0
+		sheet.BareTable.EnemyDodgeMultiplier = 1
+
+		sheet.WhiteMissChance = float64(MeleeMissBP(in, false)) / 10000
+		if agent := env.Raid.GetPlayerFromUnit(defender); agent != nil {
+			character := agent.GetCharacter()
+			if mh := defender.AutoAttacks.MHAuto(); mh != nil {
+				sheet.WhiteMissChance = float64(MeleeMissBP(mh.WhiteTableInput(at), false)) / 10000
+				sheet.MainHand = handSheet(mh, at, character.MainHand())
+			}
+			if oh := defender.AutoAttacks.OHAuto(); oh != nil && defender.AutoAttacks.IsDualWielding {
+				sheet.OffHand = handSheet(oh, at, character.OffHand())
+			}
 		}
 	}
 	for _, target := range env.Encounter.Targets {
@@ -122,6 +183,25 @@ func ComputePlayerSheet(raidProto *proto.Raid, encounterProto *proto.Encounter, 
 		sheet.MeleeAttacker = true
 	}
 	return sheet, nil
+}
+
+// handSheet reads one hand's tables off its auto attack, so expertise on that hand's spells counts.
+func handSheet(auto *Spell, at *AttackTable, weapon *Item) HandSheet {
+	yellow := auto.YellowTableInput(at)
+	yellow.InFront = true
+	white := auto.WhiteTableInput(at)
+	white.InFront = true
+	yellowTable := YellowMeleeTableBP(yellow, YellowOptions{})
+	whiteTable := WhiteMeleeTableBP(white)
+	return HandSheet{
+		Swings:               true,
+		WeaponType:           weapon.WeaponType,
+		YellowDodgeChance:    float64(yellowTable.Dodge) / 10000,
+		YellowParryChance:    float64(yellowTable.Parry) / 10000,
+		WhiteDodgeChance:     float64(whiteTable.Dodge) / 10000,
+		WhiteParryChance:     float64(whiteTable.Parry) / 10000,
+		BonusExpertiseRating: auto.BonusExpertiseRating,
+	}
 }
 
 // rotationDamageSpells is what unit's APL casts, prepull included, that deals damage, by the hit it

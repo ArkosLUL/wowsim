@@ -278,6 +278,107 @@ The tab, its packages and RPCs, the shipped values and the docs. Stages:
 - `tools/uitest/tests/caps/caps_*.spec.ts`;
 - the docs of stage 5.
 
+#### As built
+
+**Stage 1, caps:**
+- `sim/statcaps`: `bisect.go` holds the moved engine (`RoleOf` with `RoleHealer`, `BisectCapBonus(SheetAt, …)`,
+  `RequiredDefense(SheetAt)`, `GlobalCooldown`, `SteadyShotCastTime`); `compute.go` holds `Compute`,
+  `ComputeRequest` (the RPC, raid index 0) and `PlayerSheetAt`. Caps bisect in parallel goroutines; a spec takes
+  milliseconds.
+- The optimizer's wrappers keep the old names; `dpsCapRole` maps a healer to none.
+- `PlayerSheet.MainHand`/`OffHand` are `HandSheet` values with a `Swings` flag, not pointers:
+  `TestPoolSheetMemo` compares sheets with `!=`. Also added: `BareTable`, the target's table with nothing of the
+  player's, for the bare-cap rows. `ArmorPenPercent` is 0–100.
+- Proto enums `StatCapKind`, `StatCapHand`. An unreachable cap has `needed` = +Infinity and an "Out of reach" note.
+- Rows: ArP is a ceiling with sources (rest: "Stances and talents"); haste ceilings carry only the note; Defense
+  lists race, talent and buff rows only, since crit reductions aren't rating.
+- The tab: `tr.caps-row` carries `data-label`, `data-hand`, `data-rating`, `data-needed`; the roster button sits in
+  a "Your character" block on the right. Tests: `tools/uitest/tests/caps/caps_tab.spec.ts`.
+
+**Deviations:**
+- Yellow parry is 460 and white parry 440, not 459/439: 459 rating truncates to 1399 bp.
+- Spell hit is capped at a 1 bp threshold: the server misses only on `irand(1, 10000) < threshold`. That gives 446
+  and 367 exactly. The optimizer's floor still asks for 0 bp, sometimes one rating more.
+- Misery is 78.7 rating, so on whole-rating gear it moves the cap by 78 or 79; the default Shadow page gets 78. The
+  Playwright test accepts either and checks the source row reads −79.
+- The default Fury page is Draenei and the default Shadow page has Improved Faerie Fire: the tests switch to
+  Human and clear it first.
+- Warrior stance ArP auras aren't active at sheet time, so Fury's ArP cap is a flat 1400.
+
+**Stage 2, values:**
+- `publish.py --out <work dir>` (`--dest` overrides the asset) carries `weights.json`'s `sim_commit` and
+  `generated_at`; per build adds `name` (presetgen's label), `tree` (its `TREES` table) and `two_hand` (`TWO_HAND`).
+  Slopes keep 4 significant digits. It refuses unless every presetgen build has phases 1–5 and a tree.
+- The asset is the seed, published as is: no `sim/`, `proto/` or `assets/` commit since `cc854cd47`.
+- bischain publishes after the rankings merge, whose `sim_commit` would read the new asset as a dirty sim. With
+  `--rankings-dest` it writes `<statweights work dir>/stat_values.json` instead.
+- `stat_priority.ts`: `GEAR_STATS` (attack power = AP + RAP too), `chooseBuild` (spec, tree, two-hand; with no
+  build for the tree, the spec's first, flagged), `capState`, `priority`.
+- The cap rule covers only melee hit, spell hit, expertise and ArP, the stats statweights measures below the cap.
+  A stat is capped once past every hard cap on it (both hands, dodge and parry). Hit with only one part capped
+  keeps the other and reads "capped for attacks (N over)".
+- The tab: a "Stat priority" block beside Caps. `caps-tab.v1` holds `{phase, metric}`. Healer pages fetch
+  nothing. Rows are `tr.priority-row` with `data-stat`, `data-value`. Tests: `tools/uitest/tests/caps/caps_priority.spec.ts`.
+
+**Deviations (stage 2):**
+- Survival ratios are to the stat weights tool's tank reference (`tankRefStat`, default armor), not
+  `epReferenceStat`: AP and SP barely move TMI.
+
+**Stage 3, reforge:**
+- `stat_priority.ts`: `REFORGE_TYPE_STATS` (TS copy of `reforgeStatTypeToStats`), `reforgeDelta` (zero when the
+  settings refuse the reforge, like `core.ReforgeStats`), `suggestReforges`. Candidates are `validReforges` minus
+  the current one, plus "remove" when reforged; each is scored as the net change after the current reforge comes
+  off. Per stat, the cap rule is piecewise: adding is worth the value up to the hard cap room; taking away costs the
+  value below the soft cap too. Picks need a gain above 1e-6.
+- The tab: a "Reforge suggestions" block under Caps and Priority (now in `.caps-tab-top`), scored with the priority's
+  phase and metric. "Apply all (+gain)" sets every pick in one `setGear`; Apply sets one. Rows grey out and buttons
+  disable on any change until the new caps arrive (`gearChangeEmitter` added to the refresh triggers). Messages for
+  healers, reforging off, missing values or caps. Rows are `tr.reforge-row` with `data-slot` (ItemSlot),
+  `data-item`, `data-current`, `data-suggestion` (label, `keep` or `remove`). Tests:
+  `tools/uitest/tests/caps/caps_reforge.spec.ts`, which also unit-tests `suggestReforges` without a page.
+
+**Deviations (stage 3):**
+- Past the yellow hit cap but short of the white one, removing hit costs its full shipped value while adding gains
+  nothing: the shipped value can't price white-only hit, so suggestions never spend it.
+- A suggestion can also be "Remove the reforge".
+
+**Stage 4, live:**
+- `sim/statslopes`: `statslopes.go` holds the moved roles (plus `Healer`: Int, Spirit, SP, MP5, spell crit, spell
+  haste, read in HPS), `CenteredSteps`, `Simulate`, `Shifted`, `Centered`; `onesided.go` holds `OneSidedSteps`
+  (centered deltas, no shift), `Measure` and `MeasureAsync`. `tools/statweights/steps.go` is gone; the tool maps
+  `Metrics` onto its own JSON `slope`, so its output has no `hps`. Results matched the old tool byte for byte
+  bar `seconds` (Fury and Prot warrior P5, 300 iterations, seed 424242).
+- One-sided runs each sim single-threaded via `core.RunRaidSim`, one per core minus one: IsTest sims don't
+  recover panics, and this way `runOne` does instead of the server dying. The low step stops at the stat's
+  final value (`low_delta`; 0 leaves loss unmeasured).
+- Proto: `StatSlopesRequest {raid, encounter, sim_options}`, `StatSlope`, `StatSlopeMetrics`,
+  `ProgressMetrics.final_slopes_result` (13), counted final in `isFinalProgress`, wasm's
+  `processAsyncProgress` and `newProgressHandler`. `sim.statSlopes(player, onProgress)` sends the page's
+  iterations and `nextRngSeed()`.
+- `stat_values.ts`: `Slope.hps`, `SlopeSet`, `LiveValues {gain, loss}`, `liveValues(result)`.
+  `stat_priority.ts`: `Metric` adds `hps`; `livePriority` (gain-sorted, no cap rule); `suggestReforges` takes
+  `ShippedPhase | LiveValues` (`isLive`), scoring added rating at gain and removed at loss, no cap rule.
+- The tab: "Measure at my gear" (`.priority-measure`, progress "Measuring… N of M sims" in
+  `.priority-measure-status`) in the priority block, healers included (metric `hps`, no switch). After a run
+  the `.priority-source-switch` (`data-source` `shipped`/`live`, "Phase N BiS" / "My gear") shows and picks
+  live; live disables the phase select and adds a "Losing one" column (`data-loss`). Stale = the run's raid and
+  encounter protos no longer `equals` the page's, checked on every refresh trigger: the table gets
+  `.priority-stale` and the suggestions block says to measure again. Live values aren't saved.
+- Tests: `sim/statslopes/statslopes_test.go`; `tools/uitest/tests/caps/caps_live.spec.ts` (stubbed
+  `/statSlopesAsync` + `/asyncProgress` by progress id, and one real run); a live scoring case in
+  `caps_reforge.spec.ts`.
+
+**Stage 5, docs:**
+- New `docs/guide/stat-caps.md`: caps per role, the gear-side frame and sources, the optimizer's caps (moved from
+  `tank-modeling.md`'s "Stat caps", now a link), shipped and live values, the cap rule, reforge scoring, the tab.
+  CLAUDE.md maps it; the tank-modeling row drops "any run's hit, expertise or haste caps".
+- `sim-architecture.md`: `sim/statcaps`, `sim/statslopes`, the tab with `stat_values.ts` and `stat_priority.ts`,
+  `tools/statweights` and the asset.
+- READMEs: statweights (`publish.py`, its output, `TREES`/`TWO_HAND`, the `statslopes` library); bischain (the
+  publish step, the asset to commit, `--rankings-dest`); uitest (`tests/caps/`, and `tests/lib/acore.ts` tagged
+  `(caps-and-priority-roster only)`).
+- CONTEXT.md: a Caps & Priority section: gear rating, soft cap, shipped values, live values, cap rule.
+
 ### CAP-ROSTER (Z16; golden-neutral; stages: code)
 
 The importer's server fetch, as described under "Roster import".

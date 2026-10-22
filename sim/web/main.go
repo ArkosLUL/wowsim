@@ -28,6 +28,8 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	proto "github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/optimizer"
+	"github.com/wowsims/wotlk/sim/statcaps"
+	"github.com/wowsims/wotlk/sim/statslopes"
 	"github.com/wowsims/wotlk/sim/web/acroster"
 
 	googleProto "google.golang.org/protobuf/proto"
@@ -122,6 +124,9 @@ var handlers = map[string]apiHandler{
 	"/computeStats": {msg: func() googleProto.Message { return &proto.ComputeStatsRequest{} }, handle: func(msg googleProto.Message) googleProto.Message {
 		return core.ComputeStats(msg.(*proto.ComputeStatsRequest))
 	}},
+	"/statCaps": {msg: func() googleProto.Message { return &proto.StatCapsRequest{} }, handle: func(msg googleProto.Message) googleProto.Message {
+		return statcaps.ComputeRequest(msg.(*proto.StatCapsRequest))
+	}},
 }
 
 var asyncAPIHandlers = map[string]asyncAPIHandler{
@@ -135,6 +140,9 @@ var asyncAPIHandlers = map[string]asyncAPIHandler{
 		// TODO: we can use context's to cancel stuff.
 		// We should have all the async APIs take in context and let it be cancelled via its async ID.
 		core.RunBulkSimAsync(context.Background(), msg.(*proto.BulkSimRequest), reporter)
+	}},
+	"/statSlopesAsync": {msg: func() googleProto.Message { return &proto.StatSlopesRequest{} }, handle: func(msg googleProto.Message, reporter chan *proto.ProgressMetrics) {
+		statslopes.MeasureAsync(msg.(*proto.StatSlopesRequest), reporter)
 	}},
 }
 
@@ -201,7 +209,8 @@ func (s *server) addNewSim(cancel context.CancelFunc, first *proto.ProgressMetri
 }
 
 func isFinalProgress(p *proto.ProgressMetrics) bool {
-	return p.FinalRaidResult != nil || p.FinalWeightResult != nil || p.FinalBulkResult != nil || p.FinalOptimizeResult != nil
+	return p.FinalRaidResult != nil || p.FinalWeightResult != nil || p.FinalBulkResult != nil || p.FinalOptimizeResult != nil ||
+		p.FinalSlopesResult != nil
 }
 
 func writeAsyncAPIResult(w http.ResponseWriter, progressID string, status int) {

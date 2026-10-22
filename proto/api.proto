@@ -404,6 +404,79 @@ message ComputeStatsResult {
 	string error_result = 2;
 }
 
+// RPC StatCaps: the caps of the raid's first player, the individual sim's.
+message StatCapsRequest {
+	Raid raid = 1;
+	Encounter encounter = 2;
+}
+message StatCapsResult {
+	repeated StatCap caps = 1;
+	string error_result = 2;
+}
+enum StatCapKind {
+	// short of it costs: hit, expertise, Defense
+	StatCapFloor = 0;
+	// past it the stat does nothing: haste at the cast-time floor, armor penetration at 100%
+	StatCapCeiling = 1;
+	// worth reaching, not a must: a dual wielder's white hit
+	StatCapSoft = 2;
+}
+enum StatCapHand {
+	StatCapHandBoth = 0;
+	StatCapHandMain = 1;
+	StatCapHandOff = 2;
+}
+message StatCapSource {
+	string label = 1;
+	// what it adds to the cap, negative when it lowers it
+	double rating = 2;
+	double percent = 3;
+}
+message StatCap {
+	string label = 1;
+	Stat stat = 2;
+	StatCapHand hand = 3;
+	StatCapKind kind = 4;
+	// rating from gear, gems, enchants, food, elixirs and bonus stats
+	double rating = 5;
+	// the rating from those the cap asks for, +Infinity when no gear reaches it
+	double needed = 6;
+	repeated StatCapSource sources = 7;
+	string note = 8;
+}
+
+// RPC StatSlopesAsync: what one point of each stat is worth at the raid's first player's gear,
+// measured one-sided around it. Every sim runs at sim_options' iterations and seed, with IsTest.
+message StatSlopesRequest {
+	Raid raid = 1;
+	Encounter encounter = 2;
+	SimOptions sim_options = 3;
+}
+message StatSlopeMetrics {
+	double dps = 1;
+	double hps = 2;
+	double tps = 3;
+	double tmi = 4;
+}
+message StatSlope {
+	// a stat, or a pseudo stat when pseudo is set
+	Stat stat = 1;
+	PseudoStat pseudo_stat = 2;
+	bool pseudo = 3;
+	double delta = 4;
+	// below delta when the stat has less than that to lose; 0 leaves loss unmeasured
+	double low_delta = 5;
+	// per point: gain from sim(+delta) - sim(0), loss from sim(0) - sim(-low_delta)
+	StatSlopeMetrics gain = 6;
+	StatSlopeMetrics loss = 7;
+}
+message StatSlopesResult {
+	repeated StatSlope slopes = 1;
+	// at the gear as it is
+	StatSlopeMetrics base = 2;
+	string error_result = 3;
+}
+
 // RPC StatWeights
 message StatWeightsRequest {
 	Player player = 1;
@@ -454,6 +527,7 @@ message ProgressMetrics {
 	StatWeightsResult final_weight_result = 7;
 	BulkSimResult final_bulk_result = 10;
 	OptimizerResult final_optimize_result = 11;
+	StatSlopesResult final_slopes_result = 13;
 
 	// Optimizer runs only.
 	OptimizerProgress optimizer_progress = 12;

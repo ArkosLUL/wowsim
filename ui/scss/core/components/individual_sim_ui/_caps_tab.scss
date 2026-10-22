@@ -1,0 +1,190 @@
+@use 'sass:map';
+
+.caps-tab {
+	.caps-tab-left {
+		flex-direction: column;
+		gap: map-get($spacers, 4);
+	}
+
+	.caps-tab-top {
+		display: flex;
+		gap: map-get($spacers, 4);
+	}
+
+	.caps-tab-caps,
+	.caps-tab-priority {
+		flex: 1;
+	}
+
+	.reforge-controls {
+		margin-bottom: map-get($spacers, 2);
+	}
+
+	.reforge-table {
+		&.caps-loading {
+			opacity: 0.6;
+		}
+
+		td {
+			vertical-align: middle;
+		}
+
+		.reforge-slot {
+			margin-right: map-get($spacers, 2);
+			opacity: 0.75;
+		}
+
+		.reforge-gain,
+		.reforge-action {
+			text-align: right;
+			white-space: nowrap;
+		}
+
+		.reforge-gain {
+			color: $success;
+		}
+
+		.reforge-keep .reforge-suggestion {
+			opacity: 0.75;
+		}
+	}
+
+	.priority-controls {
+		display: flex;
+		flex-wrap: wrap;
+		gap: map-get($spacers, 2);
+		margin-bottom: map-get($spacers, 2);
+
+		.priority-phase {
+			width: auto;
+			max-width: 100%;
+		}
+	}
+
+	.priority-measure-row {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: map-get($spacers, 2);
+		margin-bottom: map-get($spacers, 2);
+	}
+
+	.priority-measure-status {
+		font-size: 0.85rem;
+	}
+
+	.priority-table {
+		th:nth-child(2),
+		th:nth-child(3),
+		th:nth-child(4),
+		.priority-value,
+		.priority-loss,
+		.priority-ratio {
+			text-align: right;
+			white-space: nowrap;
+		}
+
+		&.priority-stale {
+			opacity: 0.6;
+		}
+
+		.priority-reforgeable {
+			margin-left: map-get($spacers, 2);
+			font-weight: normal;
+			opacity: 0.75;
+		}
+
+		.priority-capped .priority-value,
+		.priority-note {
+			color: $warning;
+		}
+
+		.priority-empty {
+			opacity: 0.75;
+		}
+	}
+
+	.caps-hint {
+		font-size: 0.85rem;
+		opacity: 0.75;
+	}
+
+	.caps-status {
+		margin-bottom: map-get($spacers, 2);
+	}
+
+	.caps-error {
+		color: $danger;
+	}
+
+	.caps-table {
+		&.caps-loading {
+			opacity: 0.6;
+		}
+
+		.caps-expandable {
+			cursor: pointer;
+		}
+
+		.caps-kind {
+			margin-left: map-get($spacers, 2);
+			font-weight: normal;
+			opacity: 0.75;
+		}
+
+		.caps-short,
+		.caps-wasted {
+			color: $danger;
+		}
+
+		.caps-over {
+			color: $warning;
+		}
+
+		.caps-at {
+			color: $success;
+		}
+
+		.caps-soft-short,
+		.caps-room,
+		.caps-unreachable,
+		.caps-empty {
+			opacity: 0.75;
+		}
+
+		.caps-details > td {
+			padding-left: map-get($spacers, 4);
+		}
+	}
+
+	.caps-sources {
+		width: 100%;
+		font-size: 0.85rem;
+
+		td {
+			padding: 0 map-get($spacers, 2) 0 0;
+		}
+
+		td:not(:first-child) {
+			text-align: right;
+			white-space: nowrap;
+		}
+
+		.caps-source-total td {
+			border-top: 1px solid $border-color;
+			font-weight: bold;
+		}
+	}
+
+	.caps-note {
+		font-size: 0.85rem;
+		opacity: 0.75;
+		margin-top: map-get($spacers, 1);
+	}
+}
+
+@include media-breakpoint-down(md) {
+	.caps-tab .caps-tab-top {
+		flex-direction: column;
+	}
+}
