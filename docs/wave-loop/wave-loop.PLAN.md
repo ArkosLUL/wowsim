@@ -196,6 +196,9 @@ whose own registry lists their items. They move only healer suites and skip the 
 
 - Wave: HL1 ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md); the user's go, 2026-10-23): HEAL-SHA,
   HEAL-PRI, HEAL-TEST. Then HL2, HL3, then Z18 (Z15's follow-ups, specs in the e2e-coverage PLAN).
+  Base `149c6a726`, args `waveHL1-build.py`, run `wf_d9e3f4f8-cee` (a PC restart cut it off in HEAL-SHA's page
+  stage); HEAL-SHA alone resumed as `wf_7a88f74d-116` (`waveHL1-resume-build.py`, spells stage as `priorReport`).
+  HEAL-TEST and HEAL-PRI merged; HEAL-SHA running.
   Z17 landed (base `65cc430ed`, run `wf_7326f510-421`, cross-review `.wave-loop\z17-run1\xreview.md`, build
   `waveZ17-build.py`); the server runs mod-reforging `e2ef2a6`; `.reforge apply` passed live round trips online
   and offline. The BiS

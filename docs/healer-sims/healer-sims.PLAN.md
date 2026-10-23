@@ -1,6 +1,6 @@
 # Healer sims: Holy Paladin, Resto Druid and Resto Shaman pages that heal
 
-Status: approved by the user (2026-10-23); HL1 next.
+Status: approved by the user (2026-10-23); HL1 running, HEAL-TEST and HEAL-PRI merged.
 
 ## Context
 
