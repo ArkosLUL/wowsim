@@ -266,6 +266,59 @@ Cross-review (uncommitted):
 - **Owns:** the encounter-default lines of `ui/core/individual_sim_ui.ts` and `ui/core/encounter.ts`, those two
   tests, the 180 s fight facts in `docs/guide/caster-mechanics.md`.
 
+#### As built
+
+- `Encounter.applyDefaults(eventID, defaultTarget?, healingSpec)`: 300 s for a healer, else 180; the individual page
+  passes `isHealingSpec`, the raid sim nothing (180). Settings a browser saved earlier, and links, carry their own
+  encounter and keep their duration; only "Restore Defaults" moves them to 300 s.
+- Tests: both `pageRequest`s send 300 s and the OOM checks read it. `defaultAPLGoldenRequest` keeps 180 s, so
+  `Rotation-Default-Average` doesn't move. The priest's `pageRequest(tree, phase)` now matches what the page sends
+  (Draenei, 200 ms reaction, no clip delay, Engineering and Jewelcrafting, Totem of Wrath): at 180 s it reproduces
+  HEAL-PRI's numbers (Undead ran ~1% lower). The shaman's differs only in fields its heals don't read (reaction time,
+  clip delay, Jewelcrafting, minor glyphs): within 0.1%.
+- Measured with `pageRequest` per tree and phase, 300 s, 3000 iterations, seed 424242; slopes by
+  `statslopes.Measure`. These replace HEAL-SHA's and HEAL-PRI's numbers. Time to OOM, s out of mana in brackets, HPS
+  (past 300 s is the sim's estimate):
+
+  | | preraid | P1 | P2 | P3 | P4 | P5 |
+  |---|---|---|---|---|---|---|
+  | Disc | 139 (79) 5114 | 150 (67) 6155 | 155 (65) 6912 | 189 (44) 7993 | 373 (0) 10444 | 328 (0) 11157 |
+  | Holy | 84 (140) 4523 | 96 (120) 5503 | 88 (125) 6282 | 61 (145) 7217 | 154 (57) 11055 | 123 (90) 10737 |
+  | Resto | 111 (118) 5273 | 130 (91) 7265 | 102 (125) 8537 | 147 (84) 10550 | 181 (65) 16827 | 165 (83) 16230 |
+
+- "Measure at my gear", HPS a point, gain/loss:
+
+  | | Int | Spirit | SP | MP5 | Crit | Haste |
+  |---|---|---|---|---|---|---|
+  | Disc preraid | 2.20/2.08 | 0.85/0.75 | 1.06/1.07 | 2.18/2.26 | 0.76/0.77 | 0.04/−0.04 |
+  | Disc P1 | 2.48/2.36 | 0.96/0.96 | 1.13/1.13 | 2.46/2.50 | 0.90/0.92 | −0.06/0.10 |
+  | Disc P2 | 2.88/2.75 | 1.04/1.08 | 1.17/1.17 | 2.80/2.72 | 1.00/1.00 | −0.10/0.15 |
+  | Disc P3 | 3.07/3.08 | 1.21/1.22 | 1.27/1.27 | 3.09/2.97 | 1.14/1.14 | 0.18/−0.05 |
+  | Disc P4 | 0.80/0.61 | 0.21/−0.00 | 1.50/1.50 | 0.31/0.25 | 1.41/1.42 | 1.20/2.26 |
+  | Disc P5 | 0.54/2.43 | 0.02/0.53 | 1.56/1.56 | 0.07/2.26 | 1.51/1.52 | 0.45/2.00 |
+  | Holy preraid | 2.17/2.34 | 2.04/2.35 | 1.09/1.10 | 2.51/3.44 | 0.33/0.34 | −0.14/−0.07 |
+  | Holy P1 | 3.60/2.66 | 3.11/2.51 | 1.25/1.25 | 4.59/2.78 | 0.37/0.37 | −0.13/−0.23 |
+  | Holy P2 | 1.90/2.81 | 1.82/2.38 | 1.27/1.26 | 4.17/5.42 | 0.63/0.63 | −0.14/0.01 |
+  | Holy P3 | 2.16/3.16 | 2.46/3.16 | 1.35/1.35 | 4.00/4.64 | 0.67/0.69 | 0.08/−0.04 |
+  | Holy P4 | 2.96/2.60 | 3.13/3.41 | 1.69/1.69 | 4.35/5.40 | 0.81/0.80 | −0.09/−0.05 |
+  | Holy P5 | 2.26/1.73 | 1.64/2.04 | 1.56/1.55 | 3.47/5.52 | 0.70/0.70 | −0.10/−0.30 |
+  | Resto preraid | 2.89/2.44 | 0.33/0.14 | 1.47/1.47 | 4.42/4.41 | 1.43/1.33 | 0.05/0.20 |
+  | Resto P1 | 3.14/3.38 | 0.12/0.19 | 1.82/1.81 | 4.98/4.70 | 1.97/1.94 | 0.31/0.54 |
+  | Resto P2 | 4.57/4.29 | 0.44/0.23 | 2.51/2.74 | 7.29/5.86 | 2.74/2.61 | 0.97/0.50 |
+  | Resto P3 | 4.90/4.36 | −0.01/0.17 | 3.36/3.34 | 5.95/6.67 | 3.24/2.90 | 1.59/1.51 |
+  | Resto P4 | 6.66/7.06 | −0.02/0.13 | 2.92/3.18 | 9.65/9.67 | 4.78/4.58 | 0.72/3.60 |
+  | Resto P5 | 6.52/7.76 | 0.36/0.44 | 2.54/2.60 | 10.42/11.19 | 4.12/4.07 | 1.62/1.92 |
+
+  Every stat is nonzero except:
+  - Disc P4 and P5 still don't run dry: Spirit and MP5 gain 0.21/0.31 (P4) and 0.02/0.07 (P5), and read only on the
+    loss side (P5 0.53, 2.26). 300 s meets the decision's aim there only halfway (480 s at P4: Spirit 1.45, MP5 3.27).
+  - Haste about 0 or below while mana-bound: holy at every phase, disc preraid to P3.
+  - Resto Spirit about 0 (−0.02 to 0.44): the five-second rule.
+- HPS falls where the longer fight leaves more time out of mana (Resto P4 21460 → 16827).
+- Review: at 300 s the Resto APL without its Healing Wave line out-heals the default by 10–27% at every phase and
+  still runs dry (preraid 6553, P1 9234 at ~255 s, P2 9407, P3 12099, P4 20662, P5 20444 HPS); at 180 s P1 it's +14%,
+  not the ~6% the guide had. The APL is HEAL-SHA's, left as is.
+
 ### HEAL-PAL-1 (G; stages: code, code, live)
 
 - The Holy Paladin's heals and talents (the Missing list above, without glyphs, sets and librams).

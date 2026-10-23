@@ -197,9 +197,10 @@ export class Encounter {
 		});
 	}
 
-	applyDefaults(eventID: EventID, defaultTarget?: TargetProto) {
+	applyDefaults(eventID: EventID, defaultTarget?: TargetProto, healingSpec = false) {
 		this.fromProto(eventID, EncounterProto.create({
-			duration: 180,
+			// healers run out of mana past 180 s at later phases, and mana stats only measure once they do
+			duration: healingSpec ? 300 : 180,
 			durationVariation: 5,
 			executeProportion20: 0.2,
 			executeProportion25: 0.25,

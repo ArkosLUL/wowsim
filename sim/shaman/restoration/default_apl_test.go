@@ -63,7 +63,7 @@ func pageRequest(phase string) *proto.RaidSimRequest {
 		Encounter:  core.MakeSingleTargetEncounter(5),
 		SimOptions: &proto.SimOptions{Iterations: 300, IsTest: true, RandomSeed: 101},
 	}
-	rsr.Encounter.Duration = 180
+	rsr.Encounter.Duration = 300
 	// the page sends 5 parties of 5 slots, blank ones included, and the dummies fill the blanks
 	rsr.Raid.Parties = append(rsr.Raid.Parties, &proto.Party{}, &proto.Party{}, &proto.Party{}, &proto.Party{})
 	for _, party := range rsr.Raid.Parties {
@@ -79,6 +79,8 @@ func pageRequest(phase string) *proto.RaidSimRequest {
 func defaultAPLGoldenRequest() *proto.RaidSimRequest {
 	rsr := pageRequest("p1")
 	rsr.SimOptions = core.AverageDefaultSimTestOptions
+	// the golden row is on a 180 s fight
+	rsr.Encounter.Duration = 180
 	return rsr
 }
 
@@ -119,15 +121,17 @@ func TestDefaultAPLHeals(t *testing.T) {
 	}
 }
 
-// the default fight is 3 minutes: the P1 gear has to run dry inside it, or mana stats measure nothing
+// the P1 gear has to run dry inside the page's default fight, or mana stats measure nothing
 func TestDefaultAPLRunsShortOfManaAtP1(t *testing.T) {
-	result := core.RunRaidSim(pageRequest("p1"))
+	rsr := pageRequest("p1")
+	fight := rsr.Encounter.Duration
+	result := core.RunRaidSim(rsr)
 	if result.ErrorResult != "" {
 		t.Fatal(result.ErrorResult)
 	}
 	unit := result.RaidMetrics.Parties[0].Players[0]
-	if unit.Tto.Avg >= 180 {
-		t.Errorf("out of mana after %.0f s, want before the fight's 180 s", unit.Tto.Avg)
+	if unit.Tto.Avg >= fight {
+		t.Errorf("out of mana after %.0f s, want before the fight's %.0f s", unit.Tto.Avg, fight)
 	}
 }
 

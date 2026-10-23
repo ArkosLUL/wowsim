@@ -573,7 +573,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 				this.sim.raid.setTargetDummies(eventID, 0);
 			} else {
 				this.sim.raid.setTargetDummies(eventID, healingSpec ? 9 : 0);
-				this.sim.encounter.applyDefaults(eventID, this.individualConfig.defaults.encounterTarget);
+				this.sim.encounter.applyDefaults(eventID, this.individualConfig.defaults.encounterTarget, healingSpec);
 				this.sim.raid.setDebuffs(eventID, this.individualConfig.defaults.debuffs);
 				this.sim.applyDefaults(eventID, tankSpec, healingSpec);
 
