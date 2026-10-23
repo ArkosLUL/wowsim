@@ -8,6 +8,7 @@ import { suggestReforges } from '../../../../ui/core/stat_priority';
 import { type LiveValues, type ShippedPhase } from '../../../../ui/core/stat_values';
 import { closePicker, openPicker, picker, showTab, type Slot } from '../gear/gear';
 import { openSim, openSimTab } from '../lib/page';
+import { savedData } from '../settings/helpers';
 
 const HIT = 31;
 const CRIT = 32;
@@ -95,8 +96,8 @@ test.describe('reforge scoring', () => {
 		expect(suggest([{ item: item(1, { [DODGE]: 25 }) }], [])).toEqual([]);
 	});
 
-	test('a floor cap you meet stays met, even when the stat is worth nothing', () => {
-		// expertise is worth nothing, so only the floor holds the item back
+	test('a hit or expertise cap you meet stays met, even when the stat is worth nothing', () => {
+		// hit and expertise are worth nothing, so only the floor holds the item back
 		const expertise = (rating: number, needed = 212) => StatCap.create({ label: 'Expertise', stat: Stat.StatExpertise, rating, needed });
 		const items = [{ item: item(1, { [EXPERTISE]: 25 }) }];
 		expect(suggest(items, [expertise(215)], REFORGING, HASTE_PHASE)[0].suggested).toBeUndefined();
@@ -104,6 +105,10 @@ test.describe('reforge scoring', () => {
 		const [first, second] = suggest([...items, { item: item(2, { [EXPERTISE]: 25 }) }], [expertise(222)], REFORGING, HASTE_PHASE);
 		expect(first.suggested).toEqual(reforge(EXPERTISE, HASTE));
 		expect(second.suggested).toBeUndefined();
+
+		const hit = [{ item: item(1, { [HIT]: 25 }) }];
+		expect(suggest(hit, [hitCap(305, 300)], REFORGING, HASTE_PHASE)[0].suggested).toBeUndefined();
+		expect(suggest(hit, [hitCap(310, 300)], REFORGING, HASTE_PHASE)[0].suggested).toEqual(reforge(HIT, HASTE));
 	});
 
 	test('a floor cap you are short of never gets shorter', () => {
@@ -131,6 +136,9 @@ test.describe('reforge scoring', () => {
 		const expertise = (rating: number) => StatCap.create({ label: 'Expertise', stat: Stat.StatExpertise, rating, needed: 212 });
 		expect(suggestReforges(slots, live, 'dps', [expertise(212)], REFORGING)[0].suggested).toBeUndefined();
 		expect(suggestReforges(slots, live, 'dps', [expertise(230)], REFORGING)[0].suggested).toEqual(reforge(EXPERTISE, HASTE));
+
+		const hit = [{ slot: ItemSlot.ItemSlotHead, item: item(1, { [HIT]: 25 }), reforge: null }];
+		expect(suggestReforges(hit, live, 'dps', [hitCap(300, 300)], REFORGING)[0].suggested).toBeUndefined();
 	});
 
 	test('a gain under 5% of the value given up is skipped', () => {
@@ -363,17 +371,26 @@ async function readFloors(page: Page): Promise<CapReading[]> {
 		.map(cap => ({ label: cap.label, hand: cap.hand, surplus: Math.round(cap.rating) - Math.round(cap.needed) }));
 }
 
-test.describe('Apply all keeps the floors', () => {
-	test.afterEach(async ({ page }) => page.unrouteAll({ behavior: 'ignoreErrors' }));
+// the rogue page opens on Assassination
+async function combatRogue(page: Page) {
+	await openSimTab(page, 'talents-tab');
+	await savedData(page.locator('#talents-tab'), 'Saved Talents').chip('Combat Fists').locator('.saved-data-set-name').click();
+	await openSimTab(page, 'gear-tab');
+	await savedData(page.locator('#gear-tab'), 'Gear Sets').chip('P3 Combat').locator('.saved-data-set-name').click();
+}
 
-	for (const [name, spec] of [
-		['Unholy death knight', 'deathknight'],
-		['Fury warrior', 'warrior'],
-		['rogue', 'rogue'],
-		['Protection paladin', 'protection_paladin'],
-	]) {
+const FLOOR_PAGES: Array<{ name: string; spec: string; setup?: (page: Page) => Promise<void> }> = [
+	{ name: 'Unholy death knight', spec: 'deathknight' },
+	{ name: 'Fury warrior', spec: 'warrior' },
+	{ name: 'Combat rogue', spec: 'rogue', setup: combatRogue },
+	{ name: 'Protection paladin', spec: 'protection_paladin' },
+];
+
+test.describe('Apply all keeps the floors', () => {
+	for (const { name, spec, setup } of FLOOR_PAGES) {
 		test(`${name} at phase 3: a met cap stays met and a short one gets no shorter`, async ({ page }) => {
 			await openSim(page, spec);
+			await setup?.(page);
 			await openSimTab(page, 'caps-tab');
 			await page.locator('#caps-tab select.priority-phase').selectOption('3');
 			await expect(rows(page).first()).toBeVisible();
