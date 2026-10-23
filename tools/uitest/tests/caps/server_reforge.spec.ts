@@ -8,8 +8,10 @@ import { acceptDialogs, openSpec, storageKey } from '../settings/helpers';
 const SPEC = 'deathknight';
 const rosterJson = JSON.parse(readRoster());
 
-// Deathsong's neck carries a reforge (acSlot 1), his chest too (4), his belt none (5)
+// Deathsong's neck carries a reforge (acSlot 1), his chest too (4), his head (0), shoulders (2) and belt (5) none
+const HEAD = 0;
 const NECK = 1;
+const SHOULDERS = 2;
 const CHEST = 4;
 const BELT = 5;
 const MAIN_HAND = 15;
@@ -31,10 +33,13 @@ async function stubReforge(page: Page, reply: { status?: number; body: unknown }
 	return posted;
 }
 
-// The roster with Deathsong's gear changed: no reforge on the neck, another chest, no main hand.
+// The roster with Deathsong's gear changed: crit into haste on the head, a reforge from crit on the
+// shoulders (which have none, so the sim can't take it), no reforge on the neck, another chest, no main hand.
 function changedRoster(): string {
 	const changed = JSON.parse(JSON.stringify(rosterJson));
 	const gear: Array<any> = changed.characters.find((char: any) => char.name == 'Deathsong').gear;
+	gear.find(item => item.acSlot == HEAD).reforge = { fromStatType: 32, toStatType: 36 };
+	gear.find(item => item.acSlot == SHOULDERS).reforge = { fromStatType: 32, toStatType: 37 };
 	delete gear.find(item => item.acSlot == NECK).reforge;
 	gear.find(item => item.acSlot == CHEST).id = 99999;
 	gear.splice(gear.findIndex(item => item.acSlot == MAIN_HAND), 1);
@@ -79,6 +84,9 @@ test('the dialog preselects the importer pick and sorts each slot into change, s
 	await expect(row(dialog, NECK).locator('td').nth(3)).not.toHaveText('none');
 	await expect(row(dialog, NECK).locator('.acore-reforge-row-status')).toHaveText('Will change');
 	await expect(row(dialog, BELT).locator('.acore-reforge-row-status')).toHaveText('Same');
+	await expect(row(dialog, HEAD).locator('.acore-reforge-row-status')).toHaveText('Will remove');
+	await expect(row(dialog, SHOULDERS).locator('td').nth(2)).toHaveText('Crit → Expertise');
+	await expect(row(dialog, SHOULDERS).locator('.acore-reforge-row-status')).toHaveText("Left out: the sim's copy of the item can't take the server's reforge");
 	await expect(row(dialog, CHEST).locator('.acore-reforge-row-status')).toHaveText('Different item on the server, left out');
 	await expect(row(dialog, MAIN_HAND).locator('.acore-reforge-row-status')).toContainText('nothing equipped on the server');
 	expect(errors).toEqual([]);
@@ -111,9 +119,11 @@ test('Send posts every slot with the same item and shows each slot\'s answer', a
 	expect(slots).toContain(BELT);
 	expect(slots).not.toContain(CHEST);
 	expect(slots).not.toContain(MAIN_HAND);
+	expect(slots).not.toContain(SHOULDERS);
 	expect(new Set(slots).size).toBe(slots.length);
 	expect(posted[0].items.find(item => item.acSlot == NECK)).toEqual({ acSlot: NECK, itemId: 45193, from: 32, to: 37 });
 	expect(posted[0].items.find(item => item.acSlot == BELT)).toEqual({ acSlot: BELT, itemId: 40278, from: 0, to: 0 });
+	expect(posted[0].items.find(item => item.acSlot == HEAD)).toEqual({ acSlot: HEAD, itemId: 45472, from: 0, to: 0 });
 	expect(errors).toEqual([]);
 });
 

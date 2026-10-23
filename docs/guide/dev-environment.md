@@ -104,6 +104,8 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     commit, `up -d dev` again with the new one.
   - Another dev server (e.g. the wave loop's `wotlk-dev-<id>`): run it from its own worktree with
     `WOTLK_DEV_NAME` and `WOTLK_DEV_PORT` set.
+  - Dev servers send no GM commands: their `AC_SOAP_URL` is `WOTLK_DEV_SOAP_URL`, empty unless set, so
+    `/acoreReforge` answers 503 even with `prod.env`. Set it only for a live run.
 
 - **`GET /acoreRoster`** returns the core raid as acraid's roster JSON
   ([acraid README](../../tools/database/acraid/README.md#from-the-sim-server)), read from the live
@@ -143,7 +145,8 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
   - Checks run in this order: 405 `method_not_allowed`, 403 `cross_site`, 503 `not_configured` (before the body
     is read, so a `{}` POST tells a configured server from one that isn't), 400 `bad_request`, 409
     `not_in_roster`. Then 502 `soap` (fault text passes through; 401/403 reads "the SOAP login was refused"; a
-    reply that isn't `character <name> online|offline` means mod-reforging is out of date) and 504 `timeout`.
+    reply that isn't `character <name> online|offline` means mod-reforging is out of date) and 504 `timeout`
+    (the worldserver still runs a command it got, so the message says to send again).
   - The password and user name are masked in every error and log line.
 - **API** (`/raidSim`, `/computeStats`) takes binary protobuf. `/version` returns JSON.
   - Encode and decode with the image's protoc: `protoc -I/p --encode=proto.RaidSimRequest /p/api.proto`,

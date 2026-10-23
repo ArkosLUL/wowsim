@@ -771,7 +771,12 @@ export class CapsTab extends SimTab {
 		}
 		const action = newElement('td', 'reforge-action');
 		if (s.suggested !== undefined) {
-			action.appendChild(button('Apply', 'btn-sm btn-outline-primary reforge-apply', () => this.applySuggestions([s])));
+			const apply = button('Apply', 'btn-sm btn-outline-primary reforge-apply', () => this.applySuggestions([s]));
+			if (!s.alone) {
+				apply.disabled = true;
+				action.title = 'Alone this would drop a hit or expertise cap: it spends what other suggestions add. Use Apply all.';
+			}
+			action.appendChild(apply);
 		}
 		tr.classList.toggle('reforge-keep', s.suggested === undefined);
 		tr.append(

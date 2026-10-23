@@ -1,8 +1,10 @@
 package acreforge
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -148,15 +150,34 @@ func TestRefusedLogin(t *testing.T) {
 	}
 }
 
+// captureLog collects the route's log lines for the rest of the test.
+func captureLog(t *testing.T) *bytes.Buffer {
+	t.Helper()
+	var logged bytes.Buffer
+	log.SetOutput(&logged)
+	t.Cleanup(func() { log.SetOutput(os.Stderr) })
+	return &logged
+}
+
+func checkLogHasNoLogin(t *testing.T, logged *bytes.Buffer) {
+	t.Helper()
+	if strings.Contains(logged.String(), testPassword[:5]) || strings.Contains(logged.String(), testUser) {
+		t.Errorf("the login is in the log: %s", logged)
+	}
+}
+
 func TestUnexpectedReplyIsReportedAndRedacted(t *testing.T) {
+	logged := captureLog(t)
 	stub := &soapStub{body: result("There is no such command " + testPassword)}
 	rec := post(setup(t, stub, nil), goodBody)
 	if rec.Code != http.StatusBadGateway || errorCode(t, rec) != "soap" || !strings.Contains(rec.Body.String(), "no such command") {
 		t.Errorf("%d %s", rec.Code, rec.Body)
 	}
+	checkLogHasNoLogin(t, logged)
 }
 
 func TestFaultTextIsRedacted(t *testing.T) {
+	logged := captureLog(t)
 	// the second fault puts the password across the cut a long quote gets
 	for _, text := range []string{"bad login " + testPassword, strings.Repeat("x", maxQuoted-5) + testPassword} {
 		stub := &soapStub{status: 500, body: fault(text)}
@@ -166,22 +187,43 @@ func TestFaultTextIsRedacted(t *testing.T) {
 			t.Errorf("leaked: %s", rec.Body)
 		}
 	}
+	if !strings.Contains(logged.String(), "bad login") {
+		t.Errorf("the fault wasn't logged: %s", logged)
+	}
+	checkLogHasNoLogin(t, logged)
 }
 
 func TestTimeout(t *testing.T) {
 	stub := &soapStub{body: result("character Angry online"), delay: 600 * time.Millisecond}
 	rec := post(setup(t, stub, func(cfg *Config) { cfg.Timeout = 100 * time.Millisecond }), goodBody)
-	if rec.Code != http.StatusGatewayTimeout || errorCode(t, rec) != "timeout" {
+	if rec.Code != http.StatusGatewayTimeout || errorCode(t, rec) != "timeout" || !strings.Contains(rec.Body.String(), "may still apply") {
 		t.Errorf("%d %s", rec.Code, rec.Body)
 	}
 }
 
 func TestUnreachableSoapDoesNotLeak(t *testing.T) {
+	logged := captureLog(t)
 	stub := &soapStub{}
-	rec := post(setup(t, stub, func(cfg *Config) { cfg.SoapURL = "http://127.0.0.1:1/" }), goodBody)
+	rec := post(setup(t, stub, func(cfg *Config) { cfg.SoapURL = "http://" + testUser + ":" + testPassword + "@127.0.0.1:1/" }), goodBody)
 	if rec.Code != http.StatusBadGateway || errorCode(t, rec) != "soap" {
 		t.Errorf("%d %s", rec.Code, rec.Body)
 	}
+	if !strings.Contains(logged.String(), "127.0.0.1:1") {
+		t.Errorf("the dial error wasn't logged: %s", logged)
+	}
+	checkLogHasNoLogin(t, logged)
+}
+
+func TestBadSoapURLIsLogged(t *testing.T) {
+	logged := captureLog(t)
+	rec := post(setup(t, &soapStub{}, func(cfg *Config) { cfg.SoapURL = "http://" + testUser + ":" + testPassword + "@[::1" }), goodBody)
+	if rec.Code != http.StatusBadGateway || errorCode(t, rec) != "soap" {
+		t.Errorf("%d %s", rec.Code, rec.Body)
+	}
+	if !strings.Contains(logged.String(), "missing ']'") {
+		t.Errorf("the parse error wasn't logged: %s", logged)
+	}
+	checkLogHasNoLogin(t, logged)
 }
 
 func TestNotInRoster(t *testing.T) {

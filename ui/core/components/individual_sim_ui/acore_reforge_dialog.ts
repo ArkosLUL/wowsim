@@ -140,17 +140,15 @@ export class AcoreReforgeDialog extends BaseModal {
 			}
 			const kept = simItem?.reforge && (simItem.reforge.fromStatType || simItem.reforge.toStatType) ? simItem.reforge : null;
 			const simReforge = kept && isValidReforge(simItem!.item, kept, config) ? kept : null;
+			const serverReforge = serverItem?.reforge ? ItemReforge.create(serverItem.reforge) : null;
+			const serverReadable = !!serverReforge && simItem?.id == serverItem?.id && isValidReforge(simItem!.item, serverReforge, config);
 			const label = (item: EquippedItem | null, reforge: ItemReforge | null) =>
 				reforge && item ? reforgeLabel(item.item, reforge, config) : 'none';
 
 			const row: Row = {
 				acSlot,
 				itemName: simItem?.item.name ?? `Item ${serverItem?.id}`,
-				serverLabel: serverItem?.reforge
-					? simItem && simItem.id == serverItem.id
-						? label(simItem, ItemReforge.create(serverItem.reforge))
-						: statNames(serverItem.reforge)
-					: 'none',
+				serverLabel: serverReforge ? (serverReadable ? label(simItem!, serverReforge) : statNames(serverReforge)) : 'none',
 				simLabel: kept && !simReforge ? statNames(kept) : label(simItem, simReforge),
 				note: '',
 				statusCell: document.createElement('td'),
@@ -163,11 +161,13 @@ export class AcoreReforgeDialog extends BaseModal {
 				row.note = 'Different item on the server, left out';
 			} else if (kept && !simReforge) {
 				row.note = "Left out: the server can't take the sim's reforge";
+			} else if (serverReforge && !serverReadable && !simReforge) {
+				// the import drops a reforge the sim's item can't take, so none here isn't the user's pick
+				row.note = "Left out: the sim's copy of the item can't take the server's reforge";
 			} else {
 				const same =
-					(serverItem.reforge?.fromStatType ?? 0) == (simReforge?.fromStatType ?? 0) &&
-					(serverItem.reforge?.toStatType ?? 0) == (simReforge?.toStatType ?? 0);
-				row.note = same ? 'Same' : 'Will change';
+					(serverReforge?.fromStatType ?? 0) == (simReforge?.fromStatType ?? 0) && (serverReforge?.toStatType ?? 0) == (simReforge?.toStatType ?? 0);
+				row.note = same ? 'Same' : simReforge ? 'Will change' : 'Will remove';
 				row.send = { acSlot, itemId: simItem.id, from: simReforge?.fromStatType ?? 0, to: simReforge?.toStatType ?? 0 };
 			}
 			rows.push(row);

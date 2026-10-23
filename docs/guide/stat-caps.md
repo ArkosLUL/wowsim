@@ -131,9 +131,14 @@ loads it.
 - **Picks:** greedy, best gain first; each spends the surplus or room later ones are scored against.
 - **Floors**, for shipped and live values alike: every `StatCapFloor` cap with a finite `needed` (hit, spell
   hit, each expertise row, Defense). Surplus = `round(rating) - round(needed)`; no pick takes a floor below
-  `min(0, surplus)`: a met cap stays met, a short one never gets shorter. A candidate moves a floor by its net
+  `min(0, surplus)`, counting the picks before it: a met cap stays met, a short one never gets shorter. A pick
+  that holds only after earlier ones (`alone: false`) gets no Apply of its own, only Apply all. A candidate
+  moves a floor by its net
   change on the cap's `stat` (generic hit moves melee and spell hit). Soft caps and ceilings aren't floors.
 - **Noise:** a pick's gain must exceed 1e-6 and be at least 5% (`MIN_RELATIVE_GAIN`) of the value it gives up.
+  Between statweights seeds a DPS swap ratio moves 0.4% (median), 2% (90th percentile), so 5% lets no DPS noise
+  through and drops at most ~0.1 DPS a point. Tanks' TMI and TPS slopes are noisier: a few swaps pass on one seed
+  and not the other.
 - **Apply:** `gear.withEquippedItem` and `player.setGear`, the gear picker's path; Apply all is one gear change.
   Rows disable from any change until fresh caps arrive.
 
@@ -148,15 +153,17 @@ The "Your character" block's "Apply reforges on server…" button (sim server on
 - The dialog lists the page's class from a fresh `fetchServerRoster()`, preselecting the importer's saved pick
   (`acore-import.v1`). A row per equipped slot (`acSlotToItemSlot`) shows the server reforge as of the
   character's last save and the sim's, with a status:
-  - `Will change` or `Same`: sent;
-  - left out: different item on the server, nothing on the server, nothing in the sim, or a sim reforge
-    the live server can't take.
+  - `Will change`, `Will remove` (a server reforge, none in the sim) or `Same`: sent;
+  - left out: different item on the server, nothing on the server, nothing in the sim, a sim reforge the
+    live server can't take, or a server reforge the sim's item can't take (the import drops it, so the sim's
+    none isn't the user's pick).
   - Reforges are checked against `LIVE_REFORGING`, never the page's server settings: with reforging off
     there, Send would strip every reforge.
-- Send posts every `Will change` and `Same` slot to `POST /acoreReforge`, then each row shows the server's
-  `<status>: <text>` (`applied`, `removed`, `unchanged`, `mismatch`, `invalid`, `failed`) and whether the
-  character was online or offline.
-- Online, the item is re-reforged live. Offline, the stored reforge is written and applied at next login.
+- Send posts every sent slot to `POST /acoreReforge`, then each row shows the server's `<status>: <text>`
+  (`applied`, `removed`, `unchanged`, `mismatch`, `invalid`) and whether the character was online or offline.
+  A timed-out request may still land: sending again reports each slot.
+- Online, the item is re-reforged live (`ItemReforge::SetEquippedReforge`, one synchronous write). Offline, the
+  stored reforge is written and applied at next login.
   A bot redoes its own reforges when it refreshes its gear.
 - Tests: `sim/web/acreforge/handler_test.go` (against an `httptest` SOAP stub),
   `tools/uitest/tests/caps/server_reforge.spec.ts` (stubbed `/acoreRoster` and `/acoreReforge`).

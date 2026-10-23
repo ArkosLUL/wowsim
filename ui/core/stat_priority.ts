@@ -347,6 +347,8 @@ export interface ReforgeSuggestion extends ReforgeSlot {
 	// undefined keeps the item as it is, null takes its reforge off
 	suggested?: ItemReforge | null;
 	gain: number;
+	// false when the suggestion keeps the floors only after the picks before it, so it can't be applied alone
+	alone: boolean;
 }
 
 // float noise between two equal values isn't a gain
@@ -373,10 +375,10 @@ function floorsOf(caps: Array<StatCap>): Array<Floor> {
 }
 
 // One suggestion per item, picked greedily: the best gain first, and each pick spends the cap
-// surplus or room the later ones are scored against. No pick takes a floor cap below where it
-// stands or below zero, whichever is lower. An item's current reforge comes off before a
-// candidate goes on. Items with nothing to offer and no reforge are left out. Live values score
-// added rating at their gain and removed rating at their loss.
+// surplus or room the later ones are scored against. No pick, after the ones before it, takes a
+// floor cap below where it stands or below zero, whichever is lower. An item's current reforge
+// comes off before a candidate goes on. Items with nothing to offer and no reforge are left out.
+// Live values score added rating at their gain and removed rating at their loss.
 export function suggestReforges(
 	items: Array<ReforgeSlot>,
 	values: ShippedPhase | LiveValues,
@@ -395,8 +397,8 @@ export function suggestReforges(
 	};
 	const moved = new Map<Stat, number>();
 	const floors = floorsOf(caps);
-	const keepsFloors = (change: Map<Stat, number>) =>
-		floors.every(floor => floor.start + (moved.get(floor.stat) ?? 0) + (change.get(floor.stat) ?? 0) >= floor.limit);
+	const keepsFloors = (change: Map<Stat, number>, after: Map<Stat, number>) =>
+		floors.every(floor => floor.start + (after.get(floor.stat) ?? 0) + (change.get(floor.stat) ?? 0) >= floor.limit);
 	// net gain, and what the rating taken away was worth
 	const gainOf = (change: Map<Stat, number>) => {
 		let gain = 0;
@@ -420,7 +422,7 @@ export function suggestReforges(
 			continue;
 		}
 		const current = reforgeDelta(item, reforge, reforging);
-		const result: ReforgeSuggestion = { slot, item, reforge, active: !!reforge && isValidReforge(item, reforge, reforging), gain: 0 };
+		const result: ReforgeSuggestion = { slot, item, reforge, active: !!reforge && isValidReforge(item, reforge, reforging), gain: 0, alone: true };
 		results.push(result);
 		open.push({
 			result,
@@ -436,7 +438,7 @@ export function suggestReforges(
 		let best: { index: number; reforge: ItemReforge | null; change: Map<Stat, number>; gain: number } | null = null;
 		for (let index = 0; index < open.length; index++) {
 			for (const { reforge, change } of open[index].candidates) {
-				if (!keepsFloors(change)) {
+				if (!keepsFloors(change, moved)) {
 					continue;
 				}
 				const { gain, given } = gainOf(change);
@@ -451,6 +453,7 @@ export function suggestReforges(
 		const [{ result }] = open.splice(best.index, 1);
 		result.suggested = best.reforge;
 		result.gain = best.gain;
+		result.alone = keepsFloors(best.change, new Map());
 		best.change.forEach((by, stat) => moved.set(stat, (moved.get(stat) ?? 0) + by));
 	}
 	return results;

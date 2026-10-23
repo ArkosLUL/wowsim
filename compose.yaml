@@ -72,7 +72,10 @@ services:
     ports:
       - "${WOTLK_DEV_PORT:-3334}:3333"
     env_file: *acore-env-file
-    environment: *acore-env
+    environment:
+      <<: *acore-env
+      # prod.env's SOAP login runs GM commands: a dev server sends them only when WOTLK_DEV_SOAP_URL is set
+      AC_SOAP_URL: ${WOTLK_DEV_SOAP_URL:-}
     volumes: *acore-volumes
     command:
       - sh

@@ -438,9 +438,10 @@ Apply all could leave hit or expertise below a cap: `suggestReforges` priced rat
 
 #### As built
 
-- `suggestReforges` builds floors (`floorsOf`) from the caps; `keepsFloors` skips any candidate taking one below `min(0, start surplus)`, counting earlier picks. `gainOf` also returns the value given up for the 5% noise rule.
+- `suggestReforges` builds floors (`floorsOf`) from the caps; `keepsFloors` skips any candidate taking one below `min(0, start surplus)`, counting earlier picks. Cross-review: Apply sets one suggestion alone, so a pick spending an earlier pick's overshoot could leave a cap short (the haste-only Fury page has such picks); `ReforgeSuggestion.alone` flags them and their Apply is disabled (title says use Apply all). `gainOf` also returns the value given up for the 5% noise rule.
+- 5% (cross-review, the 424242 and 777 statweights runs): DPS swap ratios move 0.4% median, 2% p90 between seeds; 8 of 618 passing DPS swaps sit on the edge, none flips to a loss; the shipped asset's 26 sub-5% DPS swaps are worth ≤ 0.105 DPS a point. Tanks' TMI/TPS: 3/151 and 6/237 seed-dependent, a few sign flips (Blood tank P5 parry↔expertise TPS).
 - The hint line is `p.reforge-floor-hint`. No Go change; goldens untouched.
-- Tests in `caps_reforge.spec.ts`: floor, short-cap, spell-hit, live and noise units; a page test per Unholy DK, Fury and Prot paladin (default gear) and Combat rogue (Combat Fists, P3 Combat gear), at phase 3, checks no floor ends below `min(0, before)` after Apply all. Floors on the page are read from cap labels, since the row carries no kind.
+- Tests in `caps_reforge.spec.ts`: floor, short-cap, spell-hit, live and noise units; a page test per Unholy DK, Fury and Prot paladin (default gear) and Combat rogue (Combat Fists, P3 Combat gear), at phase 3, checks no floor ends below `min(0, before)` after Apply all. Floors on the page are read from cap labels, since the row carries no kind. Cross-review: under shipped values the DK and rogue pages had nothing to apply (the test skipped Apply all and passed vacuously); the page tests now stub haste-only values per spec and require Apply all enabled.
 
 ### CAP-SERVER (Z17; golden-neutral; C++; stages: server, route, live, docs)
 
@@ -483,7 +484,7 @@ A tab button sends the sim's reforges to a core-raid character on the live serve
 - `ItemReforge` gained `ReforgeAmount`, `GetReforgingData(uint32)` (the `Item*` overload delegates), `SetStoredReforge`, `EraseStoredReforge` (map under `reforgingDataLock`, then `DirectExecute` on `character_reforging`, delete plus insert).
 - Command fails (SOAP fault) before touching anything on: reforging disabled, a malformed spec, no spec, unknown character, or an online character not in world.
 - Per-slot `invalid` before any lookup: slot ≥ 19, slot given twice, `from`/`to` not both 0 or both stats, same or non-reforgeable stats. Then `mismatch` ("item N is equipped" / "nothing is equipped"), `unchanged`, `invalid` (item can't take it, via `ReforgeAmount`), `applied`, `removed`, `failed`.
-- Online: `RemoveReforge` then `Reforge`; a failed `Reforge` re-applies the old one. Offline: the plan's join query, as a formatted `CharacterDatabase.Query` (the module can't add prepared statements); the stored-reforge members write the result.
+- Online: `RemoveReforge` then `Reforge`; a failed `Reforge` re-applies the old one. Cross-review (uncommitted, needs a worldserver rebuild): online goes through new `SetEquippedReforge` (item mods off, stored-reforge member, mods on, item packet), so the row is written synchronously and doesn't depend on `WorkerThreads`; `SetStoredReforge` is one `REPLACE`; `failed` is gone. Offline: the plan's join query, as a formatted `CharacterDatabase.Query` (the module can't add prepared statements); the stored-reforge members write the result.
 - Reply: `character <name> online|offline`, then `<slot> <status> <text>` per spec, in input order. The name is normalized (first letter upper-case) before the lookup.
 - Working copies here are CRLF (`core.autocrlf`); the repo stores LF. The new file is LF.
 
@@ -495,6 +496,7 @@ A tab button sends the sim's reforges to a core-raid character on the live serve
 - Tests: `sim/web/acreforge/handler_test.go` against an `httptest` SOAP stub.
 - UI: `acore_reforge_dialog.ts` (`AcoreReforgeDialog`) lists the page's class from a fresh `fetchServerRoster()`, preselects the importer's `acore-import.v1` pick. Rows go over the slots of `acSlotToItemSlot` (now exported from `ui/raid/acore_roster.ts`); reforges are checked with `isValidReforge` against `LIVE_REFORGING`, never the page's server settings. Status: `Will change`, `Same`, or left out (different item, nothing on the server, nothing in the sim, a sim reforge the live server can't take). Send posts every `Will change` and `Same` slot, then each row shows `<status>: <text>` and the line says online or offline. The button `.caps-server-reforge` sits in the "Your character" block, hidden with it under wasm.
 - Spec `tools/uitest/tests/caps/server_reforge.spec.ts` stubs `/acoreRoster` and `/acoreReforge`.
+- Cross-review: a server reforge the sim's item can't take (the import drops it) with none in the sim is left out, not stripped; a strip reads `Will remove`. The 504 says the command may still land and to send again; the startup log and a bad SOAP URL's error (now logged) are redacted. `compose.yaml`'s `dev` takes `AC_SOAP_URL` from `WOTLK_DEV_SOAP_URL` (empty by default), so dev servers send no GM commands.
 - Live stage probe: POST `{}` answers 503 `not_configured` before reading the body, so it tells a configured server from one that isn't.
 
 **Stage 4, docs** (no live facts yet: which address the sim reaches SOAP on, the round trip):
@@ -515,3 +517,4 @@ A tab button sends the sim's reforges to a core-raid character on the live serve
 - The online path is compile-checked only: no character was online.
 - Hazard: online, `RemoveReforge`'s async DELETE must run before `Reforge`'s async INSERT, which holds with
   `CharacterDatabase.WorkerThreads = 1` (live). With more workers a changed reforge could vanish at the next restart.
+  The cross-review's `SetEquippedReforge` removes it once the worldserver is rebuilt.

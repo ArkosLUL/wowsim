@@ -45,8 +45,10 @@ The live server: where it runs, how to reach it, what's installed. For table and
   `[ac]/docker-compose.override.yml` (all gitignored). Sim containers reach it at `http://192.168.49.35:7878/`;
   without a login, SOAP answers a 401 fault. If `192.168.49.35` isn't up when Docker starts the worldserver,
   Docker may refuse to start it.
-- `.reforge apply` on an online character relies on `CharacterDatabase.WorkerThreads = 1`: `RemoveReforge`'s async
-  DELETE must reach `character_reforging` before `Reforge`'s async INSERT, or the new reforge is gone after a restart.
+- mod-reforging's `RemoveReforge` then `Reforge` (NPC, bots) rely on `CharacterDatabase.WorkerThreads = 1` (live):
+  with more workers the async DELETE can land after the INSERT, and the reforge is gone after a restart.
+  `.reforge apply` writes synchronously and doesn't (mod-reforging working tree only: a worldserver built from
+  `c092fd3` still uses that pair online).
 - Character data reaches the DB only when a character saves. Before reading it, ask the user to run
   `saveall` in the worldserver console. Agents have no SOAP login (only `prod.env` holds it), and don't
   `docker attach`.

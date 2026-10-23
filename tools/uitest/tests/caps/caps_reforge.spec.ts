@@ -113,10 +113,19 @@ test.describe('reforge scoring', () => {
 
 	test('a floor cap you are short of never gets shorter', () => {
 		const caps = [hitCap(280, 300)];
-		const [only] = suggest([{ item: item(1, { [HIT]: 25 }) }], caps);
+		const [only] = suggest([{ item: item(1, { [HIT]: 25 }) }], caps, REFORGING, HASTE_PHASE);
 		expect(only.suggested).toBeUndefined();
 		// reforging crit into hit moves it closer
 		expect(suggest([{ item: item(1, { [CRIT]: 25 }) }], caps)[0].suggested).toEqual(reforge(CRIT, HIT));
+	});
+
+	test('a pick that keeps a floor only after an earlier one is flagged, so Apply can refuse it alone', () => {
+		// crit into hit overshoots the cap by 6 and item 2's hit into haste spends that, but alone it leaves hit 14 short
+		const [first, second] = suggest([{ item: item(1, { [CRIT]: 25, [HASTE]: 25 }) }, { item: item(2, { [HIT]: 25 }) }], [hitCap(296, 300)]);
+		expect(first.suggested).toEqual(reforge(CRIT, HIT));
+		expect(first.alone).toBe(true);
+		expect(second.suggested).toEqual(reforge(HIT, HASTE));
+		expect(second.alone).toBe(false);
 	});
 
 	test('a generic hit reforge moves spell hit too, and the spell hit floor holds it', () => {
@@ -191,7 +200,7 @@ test.describe('reforge scoring', () => {
 	});
 });
 
-type Slopes = Record<string, { dps?: number }>;
+type Slopes = Record<string, { dps?: number; tmi?: number }>;
 
 function statValues(slopes: (phase: number) => Slopes) {
 	const build = (key: string, tree: number) => ({
@@ -293,6 +302,14 @@ test.describe('the suggestions block', () => {
 		await expectReforgeInGearPicker(page, pick!.slot, pick!.suggestion);
 	});
 
+	test('a suggestion that only keeps the caps after another one has no Apply of its own', async ({ page }) => {
+		await openCapsTab(page, HASTE_ONLY);
+		const leaning = page.locator('#caps-tab tr.reforge-row:has(.reforge-apply:disabled)');
+		await expect(leaning.first()).toBeVisible();
+		await expect(leaning.first().locator('.reforge-action')).toHaveAttribute('title', /Use Apply all/);
+		await expect(page.locator('#caps-tab .reforge-apply-all')).toBeEnabled();
+	});
+
 	test('Apply all puts every suggestion on, replacing reforges the items had', async ({ page }) => {
 		await openCapsTab(page, HASTE_ONLY);
 		const picks = await readSuggestions(page);
@@ -379,16 +396,25 @@ async function combatRogue(page: Page) {
 	await savedData(page.locator('#gear-tab'), 'Gear Sets').chip('P3 Combat').locator('.saved-data-set-name').click();
 }
 
-const FLOOR_PAGES: Array<{ name: string; spec: string; setup?: (page: Page) => Promise<void> }> = [
-	{ name: 'Unholy death knight', spec: 'deathknight' },
-	{ name: 'Fury warrior', spec: 'warrior' },
-	{ name: 'Combat rogue', spec: 'rogue', setup: combatRogue },
-	{ name: 'Protection paladin', spec: 'protection_paladin' },
+const FLOOR_PAGES: Array<{ name: string; spec: string; protoSpec: string; setup?: (page: Page) => Promise<void> }> = [
+	{ name: 'Unholy death knight', spec: 'deathknight', protoSpec: 'SpecDeathknight' },
+	{ name: 'Fury warrior', spec: 'warrior', protoSpec: 'SpecWarrior' },
+	{ name: 'Combat rogue', spec: 'rogue', protoSpec: 'SpecRogue', setup: combatRogue },
+	{ name: 'Protection paladin', spec: 'protection_paladin', protoSpec: 'SpecProtectionPaladin' },
 ];
 
+// Only haste is worth anything (tmi for the tank), so without the floors Apply all would spend every
+// point of hit and expertise.
+function hasteOnlyFor(protoSpec: string) {
+	const values = statValues(() => ({ StatMeleeHaste: { dps: 10, tmi: -10 } }));
+	values.builds.forEach(b => (b.spec = protoSpec));
+	return values;
+}
+
 test.describe('Apply all keeps the floors', () => {
-	for (const { name, spec, setup } of FLOOR_PAGES) {
+	for (const { name, spec, protoSpec, setup } of FLOOR_PAGES) {
 		test(`${name} at phase 3: a met cap stays met and a short one gets no shorter`, async ({ page }) => {
+			await page.route('**/assets/statweights/stat_values.json', route => route.fulfill({ json: hasteOnlyFor(protoSpec) }));
 			await openSim(page, spec);
 			await setup?.(page);
 			await openSimTab(page, 'caps-tab');
@@ -404,10 +430,9 @@ test.describe('Apply all keeps the floors', () => {
 			};
 			const reforgesBefore = await reforges();
 			const applyAll = page.locator('#caps-tab .reforge-apply-all');
-			if (await applyAll.isEnabled()) {
-				await applyAll.click();
-				await expect.poll(reforges).not.toBe(reforgesBefore);
-			}
+			await expect(applyAll, 'the page has something to apply').toBeEnabled();
+			await applyAll.click();
+			await expect.poll(reforges).not.toBe(reforgesBefore);
 			const after = await readFloors(page);
 			expect(after.length).toBe(before.length);
 			after.forEach((cap, i) => {

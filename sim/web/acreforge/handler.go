@@ -98,16 +98,11 @@ func (e *Error) Error() string { return e.Message }
 
 // New serves POST /acoreReforge.
 func New(cfg Config) http.Handler {
-	if missing := cfg.missingFlags(); len(missing) > 0 {
-		log.Printf("/acoreReforge is off: no %s", strings.Join(missing, ", "))
-	} else {
-		log.Printf("/acoreReforge sends reforges for the characters in %s to %s", cfg.NamesFile, cfg.SoapURL)
-	}
 	timeout := cfg.Timeout
 	if timeout <= 0 {
 		timeout = defaultTimeout
 	}
-	return &handler{
+	h := &handler{
 		cfg:     cfg,
 		missing: cfg.missingFlags(),
 		timeout: timeout,
@@ -117,6 +112,12 @@ func New(cfg Config) http.Handler {
 		},
 		slot: make(chan struct{}, 1),
 	}
+	if len(h.missing) > 0 {
+		log.Printf("/acoreReforge is off: no %s", strings.Join(h.missing, ", "))
+	} else {
+		log.Printf("/acoreReforge sends reforges for the characters in %s to %s", cfg.NamesFile, h.redact(cfg.SoapURL))
+	}
+	return h
 }
 
 type handler struct {
@@ -284,6 +285,7 @@ func (h *handler) send(ctx context.Context, req request) (*reply, error) {
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, h.cfg.SoapURL, &body)
 	if err != nil {
+		log.Printf("/acoreReforge: %s", h.redact(err.Error()))
 		return nil, &Error{http.StatusBadGateway, "soap", "The SOAP address isn't valid. The sim server's log says why."}
 	}
 	httpReq.Header.Set("Content-Type", "text/xml; charset=utf-8")
@@ -377,8 +379,9 @@ func (h *handler) fail(w http.ResponseWriter, err error) {
 	case errors.As(err, &failure):
 	// Canceled is the browser going away, where nobody reads the answer
 	case errors.Is(err, context.DeadlineExceeded), errors.Is(err, context.Canceled):
+		// the worldserver runs a command it got however long it takes, so a sent one can still land
 		failure = &Error{http.StatusGatewayTimeout, "timeout",
-			fmt.Sprintf("The worldserver didn't finish within %s", h.timeout)}
+			fmt.Sprintf("The worldserver didn't answer within %s and may still apply the reforges. Send again to see where each slot stands.", h.timeout)}
 	default:
 		failure = &Error{http.StatusBadGateway, "soap", "The worldserver's SOAP port failed. The sim server's log says why."}
 		log.Printf("/acoreReforge: %s", h.redact(err.Error()))
