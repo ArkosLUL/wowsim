@@ -60,9 +60,10 @@ func (druid *Druid) registerInnervateCD() {
 			return innervateTarget.HasActiveAuraWithTag(core.InnervateAuraTag)
 		},
 
-		SpellSchool:      core.SpellSchoolNature,
-		ProcMask:         core.ProcMaskEmpty,
-		ThreatMultiplier: 1,
+		SpellSchool: core.SpellSchoolNature,
+		ProcMask:    core.ProcMaskEmpty,
+		// Subtlety's ranks 1 and 3 list Innervate in their threat mask, rank 2 doesn't
+		ThreatMultiplier: core.TernaryFloat64(druid.Talents.Subtlety == 2, 1, druid.healThreatMultiplier()),
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysHit)
 			innervateAura.Activate(sim)

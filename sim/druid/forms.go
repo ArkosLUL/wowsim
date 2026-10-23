@@ -39,6 +39,8 @@ func (druid *Druid) ClearForm(sim *core.Simulation) {
 		druid.BearFormAura.Deactivate(sim)
 	} else if druid.InForm(Moonkin) {
 		panic("cant clear moonkin form")
+	} else if druid.InForm(Tree) && druid.TreeOfLifeAura != nil {
+		druid.TreeOfLifeAura.Deactivate(sim)
 	}
 	druid.form = Humanoid
 	druid.SetCurrentPowerBar(core.ManaBar)

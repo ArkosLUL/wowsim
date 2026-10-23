@@ -128,6 +128,24 @@ rounding, caps and crit damage. Everything else the server does differently is i
   so each tick takes only aura 136 and the target's taken terms again (`sim/priest/prayer_of_healing.go`).
   Ancestral Awakening is `int32(crit × 10% a rank)` and ignores caster modifiers, Purification included
   (`sim/shaman/heals.go`).
+- **Druid heal scripts** ([caster mechanics](caster-mechanics.md#druid)):
+  - Direct heals carry SPELLMOD_DAMAGE and Master Shapeshifter's aura 136 in `DamageMultiplier`; a hot's amount
+    takes only its SPELLMOD_DOT percents (`hotSnapshot`), aura 136 at each tick.
+  - Living Seed's 48503: base points `uint32(float32(crit heal) × 30 / 100)`, the overheal in; it never crits
+    (`SPELL_ATTR2_CANT_CRIT`), ignores caster modifiers and makes no threat, so only the target's taken terms
+    apply.
+  - Lifebloom's bloom 33778: `776 × stacks + int32(power × 0.655 × stacks)` through a direct heal's done and
+    taken terms, then the druid's crit (`Spell::EffectHeal` skips the terms again). Not modelled: the flat
+    healing taken term of Lifebloom's ticks and bloom ignores the stacks.
+  - Wild Growth's tick n: `int32(b + b × (6 − 2(n−1)) / 100)` in float32, b the aura's amount
+    (`spell_dru_wild_growth_aura`).
+  - Nourish: × 1.2f in the taken terms on a target with the druid's own Rejuvenation, Regrowth, Lifebloom or
+    Wild Growth (`Unit::SpellHealingBonusTaken`).
+  - Swiftmend (`Spell::EffectHeal`): 1 plus 4 ticks of a Rejuvenation or 6 of a Regrowth, whichever has less
+    time left (a tie to the older), the druid's own first, else another druid's (`AURA_STATE_SWIFTMEND` isn't
+    per caster); each tick `int32(amount × its caster's healing done)` through the target's taken terms
+    (`Dot.HotTickHealing`, `TickHealingTaken`), then `SPELLMOD_DAMAGE` and the crit; no done or taken of its
+    own. It eats the hot, and needs one up.
 - **Mark of Blood**'s 61607 heals the unit the marked target hits for 4% of that unit's max health, Vampiric
   Blood's included, through its healing taken percents only, never a dead unit (`core.MarkOfBloodAura`). Its
   charges: [class mechanics](class-mechanics.md#death-knight).

@@ -48,7 +48,14 @@ func (resto *RestorationDruid) GetDruid() *druid.Druid {
 }
 
 func (resto *RestorationDruid) Initialize() {
+	if dummy := resto.Env.Raid.GetFirstTargetDummy(); dummy != nil {
+		resto.CurrentTarget = &dummy.Unit
+	} else {
+		resto.CurrentTarget = &resto.Unit
+	}
+
 	resto.Druid.Initialize()
+	resto.RegisterRestorationSpells()
 }
 
 func (resto *RestorationDruid) Reset(sim *core.Simulation) {
