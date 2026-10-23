@@ -27,7 +27,8 @@ func NewRestorationShaman(character *core.Character, options *proto.Player) *Res
 	restoShamOptions := options.GetRestorationShaman()
 
 	selfBuffs := shaman.SelfBuffs{
-		Shield: restoShamOptions.Options.Shield,
+		Shield:         restoShamOptions.Options.Shield,
+		EarthShieldPPM: restoShamOptions.Options.EarthShieldPPM,
 	}
 
 	totems := &proto.ShamanTotems{}

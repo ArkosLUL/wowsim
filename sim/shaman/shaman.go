@@ -40,7 +40,9 @@ func NewShaman(character *core.Character, talents string, totems *proto.ShamanTo
 	}
 
 	if selfBuffs.Shield == proto.ShamanShield_WaterShield {
-		shaman.AddStat(stats.MP5, 100)
+		// Water Shield's second effect, 100 mana per 5 s. Glyph of Water Mastery and T7's 2 piece each add a
+		// percent of it
+		shaman.AddStat(stats.MP5, 100+core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfWaterMastery), 30, 0))
 	}
 
 	// When using the tier bonus for snapshotting we do not use the bonus spell
@@ -57,6 +59,8 @@ type SelfBuffs struct {
 	Shield  proto.ShamanShield
 	ImbueMH proto.ShamanImbue
 	ImbueOH proto.ShamanImbue
+	// Earth Shield's hits taken per minute, in place of damage
+	EarthShieldPPM int32
 }
 
 // Indexes into NextTotemDrops for self buffs
@@ -138,6 +142,24 @@ type Shaman struct {
 	ChainHeal              *core.Spell
 	Riptide                *core.Spell
 	EarthShield            *core.Spell
+	TidalForce             *core.Spell
+
+	// Earth Shield's stand-in hits, per target
+	earthShieldTargets map[*core.Unit]*earthShieldHits
+	// the raid's target dummies, which a chain heal's jumps fall back on
+	dummyUnits map[*core.Unit]bool
+
+	// Glyph of Healing Wave's heal and the base points the next one carries
+	glyphOfHealingWaveHeal *core.Spell
+	glyphHealAmount        float64
+	// T10's 4 piece hot, the amount per tick the next one carries, and the 400 ms step it lands on
+	chainedHeal       *core.Spell
+	chainedHealAmount float64
+	chainedHealDelay  *core.DelayedPeriodicApplier
+	// Water Shield's mana per orb, which Improved Water Shield's procs give
+	waterShieldOrbMana float64
+	// a cast phase proc on Chain Heal (Totem of Calming Tides), which runs before the cast's heals
+	onChainHealCast func(sim *core.Simulation)
 
 	waterShieldManaMetrics *core.ResourceMetrics
 
@@ -279,18 +301,26 @@ func (shaman *Shaman) Initialize() {
 }
 
 func (shaman *Shaman) RegisterHealingSpells() {
+	// T7's 2 piece adds a tenth to Improved Shields' share of the orb, in the same spell mod
+	shaman.waterShieldOrbMana = 428 * (1 + 0.05*float64(shaman.Talents.ImprovedShields) +
+		core.TernaryFloat64(shaman.HasSetBonus(ItemSetEarthshatterRegalia, 2), 0.1, 0))
+
 	shaman.registerAncestralHealingSpell()
 	shaman.registerLesserHealingWaveSpell()
 	shaman.registerHealingWaveSpell()
 	shaman.registerRiptideSpell()
 	shaman.registerEarthShieldSpell()
 	shaman.registerChainHealSpell()
+	shaman.registerTidalForce()
+	if shaman.HasSetBonus(ItemSetFrostWitchGarb, 4) {
+		shaman.registerChainedHeal()
+	}
 
 	if shaman.Talents.TidalWaves > 0 {
 		shaman.tidalWaveProc = shaman.GetOrRegisterAura(core.Aura{
 			Label:    "Tidal Wave Proc",
 			ActionID: core.ActionID{SpellID: 53390},
-			Duration: core.NeverExpires,
+			Duration: time.Second * 15,
 			OnReset: func(aura *core.Aura, sim *core.Simulation) {
 				aura.Deactivate(sim)
 			},
@@ -310,6 +340,9 @@ func (shaman *Shaman) RegisterHealingSpells() {
 func (shaman *Shaman) Reset(sim *core.Simulation) {
 	if shaman.Totems.Fire == proto.FireTotem_TotemOfWrath {
 		shaman.applyToWDebuff(sim)
+	}
+	for _, hits := range shaman.earthShieldTargets {
+		hits.readyAt = 0
 	}
 }
 

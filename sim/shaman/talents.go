@@ -501,12 +501,18 @@ func (shaman *Shaman) applyMaelstromWeapon() {
 	})
 }
 
+func (shaman *Shaman) CastsManaTide() bool {
+	return shaman.Talents.ManaTideTotem
+}
+
 func (shaman *Shaman) registerManaTideTotemCD() {
-	if !shaman.Talents.ManaTideTotem {
+	if !shaman.CastsManaTide() {
 		return
 	}
 
-	mttAura := core.ManaTideTotemAura(shaman.GetCharacter(), shaman.Index)
+	// the glyph adds 1 to the 6 percent each player gets a tick (spell_sha_mana_tide_totem)
+	mttAura := core.ManaTideTotemAuraRestoring(shaman.GetCharacter(), shaman.Index,
+		0.06+core.TernaryFloat64(shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfManaTide), 0.01, 0))
 	mttSpell := shaman.RegisterSpell(core.SpellConfig{
 		ActionID: core.ManaTideTotemActionID,
 		Flags:    core.SpellFlagNoOnCastComplete,

@@ -1220,8 +1220,29 @@ var ManaTideTotemAuraTag = "ManaTideTotem"
 const ManaTideTotemDuration = time.Second * 12
 const ManaTideTotemCD = time.Minute * 5
 
+// ManaTideCaster is a player that drops its own Mana Tide Totem, whose aura restores its whole party.
+type ManaTideCaster interface {
+	CastsManaTide() bool
+}
+
+// ownManaTides counts the party's players casting their own Mana Tide. AddPartyBuffs counts them as party buffs
+// too, for a request that sims someone else in their party, so they come off the external totems here.
+func ownManaTides(party *Party) int32 {
+	if party == nil {
+		return 0
+	}
+	var n int32
+	for _, agent := range party.Players {
+		if caster, ok := agent.(ManaTideCaster); ok && caster.CastsManaTide() {
+			n++
+		}
+	}
+	return n
+}
+
 func registerManaTideTotemCD(agent Agent, numManaTideTotems int32) {
-	if numManaTideTotems == 0 {
+	numManaTideTotems -= ownManaTides(agent.GetCharacter().Party)
+	if numManaTideTotems <= 0 {
 		return
 	}
 
@@ -1256,6 +1277,11 @@ func registerManaTideTotemCD(agent Agent, numManaTideTotems int32) {
 }
 
 func ManaTideTotemAura(character *Character, actionTag int32) *Aura {
+	return ManaTideTotemAuraRestoring(character, actionTag, 0.06)
+}
+
+// ManaTideTotemAuraRestoring is Mana Tide with a share of each player's mana a tick, 6% with no glyph.
+func ManaTideTotemAuraRestoring(character *Character, actionTag int32, share float64) *Aura {
 	actionID := ManaTideTotemActionID.WithTag(actionTag)
 
 	metrics := make([]*ResourceMetrics, len(character.Party.Players))
@@ -1279,7 +1305,7 @@ func ManaTideTotemAura(character *Character, actionTag int32) *Aura {
 					for i, player := range character.Party.Players {
 						if metrics[i] != nil {
 							char := player.GetCharacter()
-							char.AddMana(sim, 0.06*char.MaxMana(), metrics[i])
+							char.AddMana(sim, share*char.MaxMana(), metrics[i])
 						}
 					}
 				},

@@ -77,6 +77,9 @@ rounding, caps and crit damage. Everything else the server does differently is i
     in raid order.
   - Prayer of Mending's jump (`prayerOfMendingJump`; `Acore::MostHPMissingGroupInRange`) takes the unit missing
     the most whole health, not the holder, a tie to the first in raid order.
+  - Glyph of Healing Wave's 55533 is base points `int32(heal × 20%)` and crits on the shaman's own chance. Class
+    mask 0 and no coefficient: no spell power or spell mod; `SPELL_ATTR6_IGNORE_HEALTH_MODIFIERS`: no healing
+    done percent (`SpellPctHealingModsDone` returns 1; `SpellFlagIgnoreAttackerModifiers`).
   - Circle of Healing, past its 5 or 6 targets, keeps the lowest health percents (`circleOfHealingTargets`;
     `HealthPctOrderPred`), a stable sort, so a tie keeps raid order.
 - **Healing done percents** (aura 136: Focused Power, Blessed Resilience, Purification, Avenging Wrath,
@@ -115,8 +118,9 @@ rounding, caps and crit damage. Everything else the server does differently is i
     [pets](pets.md#buffs-and-casts)).
   - An absorb takes none, nor does a heal with neither.
 - A heal whose server spell has `SPELL_ATTR6_IGNORE_HEALTH_MODIFIERS` or `SPELL_ATTR0_CU_NO_POSITIVE_TAKEN_BONUS`
-  loses the flat term and the taken percent when that percent is over 1 (`noPositiveHealingTaken`). Among the
-  sim's heals only Ancestral Awakening (52752) has one; Earth Shield's 49284 does, but heals as 379.
+  loses the flat term and the taken percent when that percent is over 1 (`noPositiveHealingTaken`). The sim's
+  heals with one: Ancestral Awakening (52752), Glyph of Healing Wave (55533), T10's Chained Heal (70809); Earth
+  Shield's 49284 has one, but heals as 379.
 - **Heals off another heal:** Empowered Renew's 63544 is 5% a rank of every Renew tick as the target takes it
   (`Dot.TickHealingTaken`: flat term and percents), then takes the healing done talents and its own taken terms
   again (`sim/priest/renew.go`). Glyph of Prayer of Healing's 56161 ticks `int32(heal × 20%) / 2` off the

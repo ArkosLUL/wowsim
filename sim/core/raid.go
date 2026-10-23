@@ -293,8 +293,9 @@ func (raid *Raid) applyCharacterEffects(raidConfig *proto.Raid) *proto.RaidStats
 		for _, player := range party.Players {
 			char := player.GetCharacter()
 			// by slot: party.Players skips the party's empty slots
-			if char.PartyIndex >= len(partyConfig.Players) {
-				// This happens for target dummies.
+			_, isDummy := player.(*TargetDummy)
+			// the page pads every party to 5 slots, so a dummy can sit in a slot that has a (blank) config
+			if isDummy || char.PartyIndex >= len(partyConfig.Players) {
 				continue
 			}
 			playerConfig := partyConfig.Players[char.PartyIndex]

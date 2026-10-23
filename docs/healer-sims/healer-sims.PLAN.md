@@ -123,6 +123,74 @@ G changes only the class's own healer suites (and, for HEAL-TEST, the four heale
 - **Owns:** `sim/shaman/heals.go`, `chain_heal.go`, `sim/shaman/restoration/`, the shaman's heal sets, glyphs and
   totems, `ui/restoration_shaman/`, the new `sim/core` healer stand-ins file.
 
+#### As built
+
+Stage 1, spells (uncommitted):
+- `core.HitTakenStandIn` (`sim/core/healer_stand_ins.go`): a hit every 60 / rate s from `Start`, for the later items.
+  Earth Shield's charges ride it at `earth_shield_p_p_m`, 3.5 s apart per target.
+- Chain Heal follows the server: a full-health unit doesn't qualify, so the dummies count as missing 1 health
+  (`standInDeficit`) to give jumps. Also fixed: the Riptide check is the first target's only (+25% on every heal of
+  the cast), and every target's crit is rolled before any heal lands.
+- Tidal Force (no major cooldown: the APL casts it), Healing Way, Riptide and Earth Shield behind their talents,
+  Glyphs of Healing Wave (55533), Riptide, Mana Tide and Water Mastery, T7 to T10 resto sets, and the Misery,
+  Relentless, Wrathful, Calming Tides and Surging Sea totems. Glyph of Water Shield does nothing (orbs need hits).
+  Glyph of Healing Stream Totem isn't done: the totem's script and 52042 both read the glyph, unchecked.
+- Needs a live capture (stage 3): 55533 and 70809 (`tmp/spellids-missing.txt`), then `gen_serverdata`. 70809's
+  tick count, damage class and flags are from Spell.dbc.
+- Also touched: `implemented_talents.json` (regenerated), `sim/optimizer/residuals.go` (3 totem ids),
+  `sim/core/buffs.go` (`ManaTideTotemAuraRestoring`), `sim/core/healing_done.go` (`HealingDoneMultiplier`),
+  `spells_auto_gen.go` and friends (regenerated, additions only).
+- Goldens: P1 gear has T7 2/4-piece, so Resto's stats gain 10 MP5 and Chain Heal 5% (Healing Grace suite HPS
+  +5.7%); every shaman suite gains `AllItems` rows for the new sets and totems.
+
+Stage 2, page (uncommitted):
+- Default APL `ui/restoration_shaman/apls/default.apl.json` as `autoRotation` (rule in
+  [caster-mechanics](../guide/caster-mechanics.md)); `earthShieldPPM` 30, totems in `DefaultOptions`; P5 gear
+  (Val'anyr, Surging Sea); Raid and Tank Healing talents and glyphs kept; launched.
+- `sim/core/raid.go`: a target dummy gets no character effects or health bar even in a slot the page sent as a
+  blank player (the page pads parties to 5). Without it the page healed ~184 HPS. No golden moves.
+- Tests (`default_apl_test.go`): the page's request heals with every APL spell, runs P1 dry inside 180 s, and
+  every preset item is in the server catalog by its phase's tier; new golden row `Rotation-Default-Average`.
+- Page request, 180 s: time to OOM preraid 129 s, P1 153, P2 120, P3 176, P4 and P5 none (HPS 6975 to 22043).
+- "Measure at my gear" on the page, HPS a point (Int / SP / crit / haste / MP5): P1 4.07 / 2.32 / 2.30 / 0.64 /
+  3.43; P3 4.62 / 5.37 / 3.79 / 3.36 / 2.65; P5 1.37 / 3.22 / 1.97 / 3.10 / 0.22. Spirit ≤ 0.19, exactly 0 at P4.
+
+Stage 3, live (uncommitted; server lock held 17:37 to 17:56 UTC, no rebuild):
+- Spell capture: 55533 and 70809 captured (`TestSpelldumpCapture`), added to `spelldump.jsonl`; `gen_serverdata`
+  rerun (additions only); `spellids` reports nothing missing.
+- `talent_paths.json` rewritten (`TestTalentPathsFile -update`: ShamanRestoration gains tidalForce, healingWay,
+  riptide; earthShield stops being a filler) and `spellmod_spells.json` regenerated (`tools/acore/spellmods`:
+  Healing Way, and 55166/55198 under several shaman talents). Stage 1 left `TestTalentPathsFile` and
+  `TestTalentPathsAreLegal` failing; both pass now.
+- Talent sweep, ShamanRestoration (`SIMVAL_TALENT_ONLY`), trimmed into `talents.jsonl`: every step agrees or
+  moves no field. Spell-mod sweep, ShamanElemental and ShamanRestoration (their lines replaced in
+  `spellmods.jsonl`): Restoration 32 agree, 13 move nothing, 14 not compared, none disagree (Healing Way ×1.2498
+  on both sides); Elemental 40 / 10 / 26, none disagree. `TestTalentSweepRecords`, `TestSpellModRecords` pass.
+- Timing: a private copy of the e2e harness (not committed) took `.simval timing` of Riptide, Chain Heal, Healing
+  Wave, Lesser Healing Wave, Earth Shield, Tidal Force, Mana Tide, Nature's Swiftness, Healing Stream,
+  Ancestral Awakening, Earthliving, Tidal Waves, Chained Heal and Rapid Currents: bare, talented with Glyphs of
+  Riptide, Earth Shield and Healing Wave, under Tidal Waves, T8 and T10 bonus auras, and Bloodlust (49 records),
+  replayed through `replayTiming`. Agree: every cast time, GCD, cooldown, cost, aura duration and tick count
+  of the new spells; Glyph of Riptide 21 s and 7 ticks; T8 Riptide 5 s and Chain Heal 2.3 s; Rapid Currents
+  ×1/1.2 on cast time and GCD; Chained Heal 9 s, 3 ticks.
+- Fixed from it: Tidal Waves' buff never expired (server 15 s); the shaman got Mana Tide twice, its own and
+  core's external one its talent added to its own party (`core.ManaTideCaster`, `sim/core/buffs.go`). Tests in
+  `mana_tide_test.go`.
+- Left: Healing Stream's 1 s GCD (allowlisted, Call of the Elements); Earthliving's hot sits on 51994 (12 s, 4
+  ticks, as the server's 52000).
+- Page request after the fixes, 180 s (time to OOM, HPS): preraid 111 s 6496, P1 130 s 8842, P2 102 s 11183, P3
+  147 s 13378, P4 none 20921, P5 166 s 21205. HPS a point, `statslopes.Measure` at the page's request, 3000
+  iterations (Int / SP / crit / haste / MP5): P1 4.12 / 2.19 / 2.26 / 0.52 / 4.27; P3 6.77 / 4.73 / 4.15 / 2.83 /
+  5.55; P5 6.37 / 3.17 / 4.14 / 1.98 / 5.77. Spirit ≤ 0.24, 0 at P4. These replace stage 2's.
+
+Review (uncommitted):
+- T10 4-piece's 70809 now adds what's left of the running hot and lands on the shaman's next 400 ms step
+  (`Unit::CastDelayedSpellWithPeriodicAmount`; `core.DelayedPeriodicApplier`).
+- Glyph of Healing Wave's 55533 drops the healing done percents (`SPELL_ATTR6_IGNORE_HEALTH_MODIFIERS`);
+  `Unit.HealingDoneMultiplier` removed. Neither moves a golden.
+- Page request after the fixes, same method: P4 none, HPS 21460; P5 166 s, 21619 (mana unchanged). P5 HPS a point
+  (Int / SP / crit / haste / MP5): 6.50 / 3.18 / 4.46 / 2.77 / 5.81. These replace stage 3's P5.
+
 ### HEAL-PRI (G; stages: code)
 
 - `disc.apl.json` and `holy.apl.json` fill every GCD, no `spellCpm` caps; P5 presets; launch from Alpha.

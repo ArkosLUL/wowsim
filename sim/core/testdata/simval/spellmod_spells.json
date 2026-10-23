@@ -1526,6 +1526,7 @@
     {"id":49236,"name":"Frost Shock","ops":["COST"]},
     {"id":49238,"name":"Lightning Bolt","ops":["COST"]},
     {"id":49271,"name":"Chain Lightning","ops":["COST"]},
+    {"id":55166,"name":"Tidal Force","ops":["COST"]},
     {"id":60043,"name":"Lava Burst","ops":["COST"]}
   ]},
  {"ranks":[16109],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[2416967683,134230016,0]}],
@@ -1537,6 +1538,7 @@
     {"id":49236,"name":"Frost Shock","ops":["COST"]},
     {"id":49238,"name":"Lightning Bolt","ops":["COST"]},
     {"id":49271,"name":"Chain Lightning","ops":["COST"]},
+    {"id":55166,"name":"Tidal Force","ops":["COST"]},
     {"id":59159,"name":"Thunderstorm","ops":["COST"]},
     {"id":60043,"name":"Lava Burst","ops":["COST"]}
   ]}
@@ -1551,6 +1553,7 @@
     {"id":49236,"name":"Frost Shock","ops":["DAMAGE"]},
     {"id":49238,"name":"Lightning Bolt","ops":["DAMAGE"]},
     {"id":49271,"name":"Chain Lightning","ops":["DAMAGE"]},
+    {"id":55166,"name":"Tidal Force","ops":["DAMAGE"]},
     {"id":59159,"name":"Thunderstorm","ops":["DAMAGE"]},
     {"id":60043,"name":"Lava Burst","ops":["DAMAGE"]}
   ]}
@@ -1558,6 +1561,7 @@
 {"class":"shaman","tree":"Elemental","talent":"callOfFlame","passive":true,"groups": [
  {"ranks":[16038,16160,16161],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[1073741824,262144,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[0,4096,0]}],
   "spells": [
+    {"id":55166,"name":"Tidal Force","ops":["DAMAGE"]},
     {"id":58702,"name":"Attack","ops":["DAMAGE"]},
     {"id":58735,"name":"Magma Totem","ops":["DAMAGE"]},
     {"id":60043,"name":"Lava Burst","ops":["DAMAGE"]},
@@ -1583,6 +1587,7 @@
     {"id":49236,"name":"Frost Shock","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":49238,"name":"Lightning Bolt","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":49271,"name":"Chain Lightning","ops":["CRIT_DAMAGE_BONUS"]},
+    {"id":55166,"name":"Tidal Force","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":58702,"name":"Attack","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":58735,"name":"Magma Totem","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":58799,"name":"Frostbrand Attack","ops":["CRIT_DAMAGE_BONUS"]},
@@ -1615,6 +1620,7 @@
     {"id":45297,"name":"Chain Lightning","ops":["CASTING_TIME"]},
     {"id":49238,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
     {"id":49271,"name":"Chain Lightning","ops":["CASTING_TIME"]},
+    {"id":55166,"name":"Tidal Force","ops":["CASTING_TIME"]},
     {"id":60043,"name":"Lava Burst","ops":["CASTING_TIME"]}
   ]}
 ]},
@@ -1625,6 +1631,7 @@
     {"id":45297,"name":"Chain Lightning","ops":["CASTING_TIME"]},
     {"id":49238,"name":"Lightning Bolt","ops":["CASTING_TIME"]},
     {"id":49271,"name":"Chain Lightning","ops":["CASTING_TIME"]},
+    {"id":55166,"name":"Tidal Force","ops":["CASTING_TIME"]},
     {"id":60043,"name":"Lava Burst","ops":["CASTING_TIME"]}
   ]}
 ]},
@@ -1653,6 +1660,7 @@
 {"class":"shaman","tree":"Elemental","talent":"lavaFlows","passive":true,"groups": [
  {"ranks":[51480,51481,51482],"mods":[{"effect":1,"type":"pct","op":"CRIT_DAMAGE_BONUS","classMask":[0,4096,0]}],
   "spells": [
+    {"id":55166,"name":"Tidal Force","ops":["CRIT_DAMAGE_BONUS"]},
     {"id":60043,"name":"Lava Burst","ops":["CRIT_DAMAGE_BONUS"]}
   ]}
 ]},
@@ -1663,6 +1671,7 @@
     {"id":45297,"name":"Chain Lightning","ops":["BONUS_MULTIPLIER"]},
     {"id":49238,"name":"Lightning Bolt","ops":["BONUS_MULTIPLIER"]},
     {"id":49271,"name":"Chain Lightning","ops":["BONUS_MULTIPLIER"]},
+    {"id":55166,"name":"Tidal Force","ops":["BONUS_MULTIPLIER"]},
     {"id":60043,"name":"Lava Burst","ops":["BONUS_MULTIPLIER"]}
   ]}
 ]},
@@ -1793,6 +1802,8 @@
     {"id":51994,"name":"Earthliving Weapon","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":52000,"name":"Earthliving","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
     {"id":53390,"name":"Tidal Waves","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":55166,"name":"Tidal Force","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":55198,"name":"Tidal Force","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":55459,"name":"Chain Heal","ops":["THREAT"]},
     {"id":57960,"name":"Water Shield","ops":["RESIST_DISPEL_CHANCE"]},
     {"id":58804,"name":"Windfury Weapon","ops":["RESIST_DISPEL_CHANCE"]},
@@ -1844,6 +1855,12 @@
   ],
   "excluded": [
     {"id":379,"name":"Earth Shield","op":"CRITICAL_CHANCE","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
+  ]}
+]},
+{"class":"shaman","tree":"Restoration","talent":"healingWay","passive":true,"groups": [
+ {"ranks":[29206,29205,29202],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[64,0,0]}],
+  "spells": [
+    {"id":49273,"name":"Healing Wave","ops":["DAMAGE"]}
   ]}
 ]},
 {"class":"shaman","tree":"Restoration","talent":"naturesSwiftness","passive":false,"groups": [

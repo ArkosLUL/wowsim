@@ -35,7 +35,7 @@ var hardCodedItemIDs = map[int32]bool{
 	32330: true, 23199: true, 28248: true, 40267: true, 42598: true, 42597: true, 42596: true,
 	42595: true, 28523: true, 38368: true, 45114: true, 40709: true, 38361: true, 45255: true,
 	38367: true, 42607: true, 42608: true, 42609: true, 51507: true, 45169: true, 40322: true,
-	27815: true, 40710: true,
+	27815: true, 40710: true, 39728: true, 42599: true, 51501: true,
 }
 
 // ItemHasEffect says whether an item or gem does something its stats don't show.

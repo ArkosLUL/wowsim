@@ -85,12 +85,53 @@ pets and guardians in [pets](pets.md).
   raid member and pet.
 - **Improved Healing Wave** takes 0.1 s a point off Healing Wave.
 - **Chain Heal** picks every jump before its first heal lands (`chainHealJumps`; `Spell::SearchChainTargets`):
-  the enabled, [living](damage-and-healing.md#healing) unit with a health bar, not yet healed by the chain,
-  with the largest whole health deficit over 0, a tie to the first in raid order. Nobody hurt ends the chain,
-  so a full raid takes one heal a cast. With no positions, everyone is in range and sight.
+  the enabled, [living](damage-and-healing.md#healing) unit not yet healed by the chain with the largest whole
+  health deficit over 0, a tie to the first in raid order. A full-health unit never qualifies, so a full raid
+  takes one heal a cast. With no positions, everyone is in range and sight.
+  - Nothing damages the healer sim's target dummies, so each counts as missing 1 health (`standInDeficit`),
+    a stand-in for a hurt raid: a real deficit goes first, and the caster at full health is skipped.
+  - Every target's heal and crit is rolled before the first one lands (`Spell::DoAllEffectOnLaunchTarget`),
+    so Tidal Force's charges don't thin the later targets' crit chance.
+  - `spell_sha_chain_heal` looks for the caster's Riptide on the first target only, consumes it there, and
+    raises every heal of the cast by 25%.
+- **Healing Way** is +8/16/25% on Healing Wave, a damage spell mod that multiplies with Purification.
+- **Tidal Waves**' buff (53390) ends after 15 s, charges left or not.
+- **Mana Tide:** the shaman's own cast restores its whole party, so core's external Mana Tides
+  (`PartyBuffs.ManaTideTotems`, which `AddPartyBuffs` counts the shaman into for anyone else's sim) leave out
+  the party's own casters (`core.ManaTideCaster`).
+- **Tidal Force** (55198, 3 min, no GCD) puts 55166 on the shaman: 3 stacks of +20% crit chance on Healing Wave,
+  Lesser Healing Wave and Chain Heal for 20 s. Each crit of those spends a stack (`spell_proc`).
+- **Earth Shield**'s charges come off a stand-in hit taken at the page's `earth_shield_p_p_m` a minute
+  (`core.HitTakenStandIn`, first a period after the cast), 3.5 s apart (379's cooldown on the target). Riptide
+  and Earth Shield exist only with their talents.
+- **Glyph of Healing Wave** (`spell_sha_glyph_of_healing_wave`) casts 55533 on the shaman for
+  `int32(heal × 20%)` of each Healing Wave on someone else: the healing done percents and no spell power.
+  **Glyph of Riptide** adds 6 s (2 ticks). **Glyph of Mana Tide** makes each tick 7%. **Glyph of Water
+  Mastery** adds 30% to Water Shield's 100 mana per 5 s. **Glyph of Water Shield** (an orb) does nothing:
+  orbs need hits taken.
+- **Resto sets:** T7 (Earthshatter Regalia) 2-piece adds 10% to Water Shield (10 mana per 5 s and 10% of the
+  orb, added to Improved Shields'), 4-piece +5% Healing Wave and Chain Heal. T8 takes 1 s off Riptide's
+  cooldown and 0.2 s off Chain Heal's cast. T9 (Thrall's/Nobundo's Garb) is +20% Riptide, direct and periodic,
+  and +5% Chain Heal crit. T10 (Frost Witch's Garb) 2-piece: a Riptide hit gives 20% cast speed (70806) to the
+  next cast, 10 s; 4-piece: a Chain Heal crit puts 70809 on its target, 3 ticks of `int32(int32(heal × 25%) / 3)`
+  with the healing done percents again (`spell_sha_t10_restoration_4p_bonus`), plus `int32(old × ticks left / 3)`
+  of one already there, read at the crit; it's [munched](spell-data-and-timing.md#update-timing) like Ignite.
+- **Resto totems:** Misery takes 79 off Healing Wave's base cost; Relentless and Wrathful Totems of the Third
+  Wind add 404 and 459 healing power to Lesser Healing Wave; Calming Tides rolls 70% (8 s) on a Chain Heal
+  cast, before its heals, for 234 spell power, 15 s; Surging Sea gives 85 spell power a Riptide, 15 s, up to 3.
 - **Improved Water Shield** rolls on a heal's crit at 33/66/100% × 60% for Lesser Healing Wave, 30% for Chain
   Heal, 100% otherwise (`impWaterShieldChance`; `spell_sha_imp_water_shield`), and gives mana only with Water
   Shield up, using no orb.
+- **Resto page** (`ui/restoration_shaman/apls/default.apl.json`): Call of the Elements and Earth Shield before the
+  pull, then Earth Shield when it's gone, Tidal Force, Riptide on cooldown, Healing Wave at 2 Tidal Waves
+  stacks, Chain Heal; Mana Tide and Nature's Swiftness go out as major cooldowns. The page's Earth Shield rate
+  is 30 hits a minute (a boss swing every 2 s).
+  - Chain Heal alone out-heals this by ~6% but sustains ~300 s on P1 gear; with Healing Wave, preraid to P3 gear
+    runs dry inside the 180 s default fight (P1 at ~130 s), and P5 at ~166 s; P4 doesn't. Improved Water Shield's crit procs
+    are the largest mana source.
+  - Spirit gives mana only outside the five-second rule, so it measures near 0 but for the time spent out of
+    mana: 0 at P4, which doesn't run dry.
+  - Val'anyr's shields count as healing, so it beats the 893 spell power scepter in HPS.
 - **Frost Witch's 4-piece** (`spell_sha_t10_elemental_4p_bonus`): a Lava Burst cast adds 6 s to Flame Shock's
   time left. The max duration, which caps the ticks, rises only when the new time passes it
   ([`Dot.AddRemaining`](spell-data-and-timing.md#update-timing)).

@@ -24,7 +24,7 @@ export const ShamanShieldInput = InputHelpers.makeSpecOptionsEnumIconInput<Spec.
 export const TriggerEarthShield = InputHelpers.makeSpecOptionsNumberInput<Spec.SpecRestorationShaman>({
 	fieldName: 'earthShieldPPM',
 	label: 'Earth Shield PPM',
-	labelTooltip: 'How many times Earth Shield should be triggered per minute.',
+	labelTooltip: 'Hits per minute the Earth Shield target takes (30 is a boss swinging every 2 s). A charge needs 3.5 s since the last one.',
 	showWhen: (player: Player<Spec.SpecRestorationShaman>) => player.getTalents().earthShield,
 	changeEmitter: (player: Player<Spec.SpecRestorationShaman>) => TypedEvent.onAny([player.specOptionsChangeEmitter, player.rotationChangeEmitter, player.talentsChangeEmitter]),
 });
