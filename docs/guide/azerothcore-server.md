@@ -47,8 +47,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
   Docker may refuse to start it.
 - mod-reforging's `RemoveReforge` then `Reforge` (NPC, bots) rely on `CharacterDatabase.WorkerThreads = 1` (live):
   with more workers the async DELETE can land after the INSERT, and the reforge is gone after a restart.
-  `.reforge apply` writes synchronously and doesn't (mod-reforging working tree only: a worldserver built from
-  `c092fd3` still uses that pair online).
+  `.reforge apply` writes synchronously and doesn't.
 - Character data reaches the DB only when a character saves. Before reading it, ask the user to run
   `saveall` in the worldserver console. Agents have no SOAP login (only `prod.env` holds it), and don't
   `docker attach`.
@@ -84,7 +83,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
 | Module | On the server | In the sim |
 |---|---|---|
 | mod-individual-progression | Gates content by [progression tier](#progression-tiers). Its `data/sql/world/base/{tbc,vanilla}_item_changes.sql` is applied (438 TBC-era items at pre-3.0 stats). Its `optional/` SQL isn't. It has a damage penalty below tier 13 | items come from the server DB ([ADR 0002](../adr/0002-item-data-from-live-db.md)); item availability per tier from the server catalog ([ADR 0005](../adr/0005-server-item-catalog.md)); the penalty is ignored |
-| mod-reforging | moves 40% of one stat into another; stats 6, 13, 14, 31, 32, 36, 37; never into a stat the item already has. Reads `character_reforging` only at startup. `.reforge apply <character> <slot>:<item>:<from>:<to> …` (administrator, console and SOAP) sets or removes (`0:0`) equipped items' reforges, live for an online character, in `character_reforging` for an offline one | `ItemSpec.reforge`; the Caps tab's [Apply on server](stat-caps.md#apply-on-server) calls the command |
+| mod-reforging | moves 40% of one stat into another; stats 6, 13, 14, 31, 32, 36, 37; never into a stat the item already has. Reads `character_reforging` only at startup. `.reforge apply <character> <slot>:<item>:<from>:<to> …` (administrator, console and SOAP) sets or removes (`0:0`) equipped items' reforges, live for an online character, in `character_reforging` for an offline one. Every reforge change logs at Info under `module.reforging` (`docker logs ac-worldserver`, `Server.log`): character, item, stats and source (the reforger NPC, item destroyed, item moved off the character, "another module" = playerbots), plus each `.reforge apply` reply line | `ItemSpec.reforge`; the Caps tab's [Apply on server](stat-caps.md#apply-on-server) calls the command |
 | mod-racial-trait-swap | swaps racial abilities, not base stats or faction | `Player.racial_traits` |
 | mod-shared-professions | shares profession skills and spells per account, applied at login | any number of professions |
 | mod-dungeon-scale | raid creature stat multipliers; live boss health ×1.2 | server setting ([ADR 0004](../adr/0004-server-config-as-settings.md)), applied to targets ([server-parity](server-parity.md#other-measured-server-behaviour)) |

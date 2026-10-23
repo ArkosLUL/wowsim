@@ -193,6 +193,7 @@ func (h *handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		h.fail(w, err)
 		return
 	}
+	log.Print(h.redact(summary(req.Character, result)))
 	body, _ := json.Marshal(result)
 	w.Header().Set("Content-Type", "application/json")
 	w.Write(body)
@@ -275,12 +276,27 @@ type envelope struct {
 	Fault  string `xml:"Body>Fault>faultstring"`
 }
 
+// e.g. "/acoreReforge: Angry was online: 0 removed (Crit -> Haste), 4 applied (Crit -> Hit)"
+func summary(character string, r *reply) string {
+	state := "offline"
+	if r.Online {
+		state = "online"
+	}
+	slots := make([]string, 0, len(r.Slots))
+	for _, slot := range r.Slots {
+		slots = append(slots, fmt.Sprintf("%d %s (%s)", slot.AcSlot, slot.Status, slot.Text))
+	}
+	return fmt.Sprintf("/acoreReforge: %s was %s: %s", character, state, strings.Join(slots, ", "))
+}
+
 func (h *handler) send(ctx context.Context, req request) (*reply, error) {
+	cmd := command(req)
+	log.Print(h.redact("/acoreReforge sends: " + cmd))
 	var body bytes.Buffer
 	body.WriteString(`<?xml version="1.0" encoding="UTF-8"?>` +
 		`<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/" xmlns:ns1="urn:AC">` +
 		`<SOAP-ENV:Body><ns1:executeCommand><command>`)
-	xml.EscapeText(&body, []byte(command(req)))
+	xml.EscapeText(&body, []byte(cmd))
 	body.WriteString(`</command></ns1:executeCommand></SOAP-ENV:Body></SOAP-ENV:Envelope>`)
 
 	httpReq, err := http.NewRequestWithContext(ctx, http.MethodPost, h.cfg.SoapURL, &body)

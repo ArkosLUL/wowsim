@@ -147,6 +147,7 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     `not_in_roster`. Then 502 `soap` (fault text passes through; 401/403 reads "the SOAP login was refused"; a
     reply that isn't `character <name> online|offline` means mod-reforging is out of date) and 504 `timeout`
     (the worldserver still runs a command it got, so the message says to send again).
+  - Each request logs the command it sends and a one-line summary of the reply.
   - The password and user name are masked in every error and log line.
 - **API** (`/raidSim`, `/computeStats`) takes binary protobuf. `/version` returns JSON.
   - Encode and decode with the image's protoc: `protoc -I/p --encode=proto.RaidSimRequest /p/api.proto`,

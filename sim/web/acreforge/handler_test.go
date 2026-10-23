@@ -166,6 +166,23 @@ func checkLogHasNoLogin(t *testing.T, logged *bytes.Buffer) {
 	}
 }
 
+func TestLogsTheCommandAndTheReply(t *testing.T) {
+	logged := captureLog(t)
+	stub := &soapStub{body: result("character Angry online\n0 removed Crit -&gt; Haste\n4 applied Crit -&gt; Haste " + testPassword + "\n")}
+	if rec := post(setup(t, stub, nil), goodBody); rec.Code != http.StatusOK {
+		t.Fatalf("status %d: %s", rec.Code, rec.Body)
+	}
+	for _, want := range []string{
+		"/acoreReforge sends: reforge apply Angry 0:200:0:0 4:100:32:36",
+		"/acoreReforge: Angry was online: 0 removed (Crit -> Haste), 4 applied (Crit -> Haste <password>)",
+	} {
+		if !strings.Contains(logged.String(), want) {
+			t.Errorf("the log lacks %q:\n%s", want, logged)
+		}
+	}
+	checkLogHasNoLogin(t, logged)
+}
+
 func TestUnexpectedReplyIsReportedAndRedacted(t *testing.T) {
 	logged := captureLog(t)
 	stub := &soapStub{body: result("There is no such command " + testPassword)}
