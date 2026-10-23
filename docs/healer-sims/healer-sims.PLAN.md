@@ -1,6 +1,6 @@
 # Healer sims: Holy Paladin, Resto Druid and Resto Shaman pages that heal
 
-Status: approved by the user (2026-10-23); HL1 landed; HL2 next.
+Status: approved by the user (2026-10-23); HL1 landed; HL2 running.
 
 ## Context
 
@@ -74,6 +74,8 @@ Status: approved by the user (2026-10-23); HL1 landed; HL2 next.
   an inline note on the page.
 - **Healing Priest:** its APLs move to the fill-every-GCD model (its `spellCpm` caps leave haste and mana stats
   near zero in "Measure at my gear"), and it launches from Alpha.
+- **Default fight:** 300 s on healer pages, so mana stats measure where 180 s ends before the mana does (Disc P4
+  and P5).
 
 ## Out of scope
 
@@ -87,7 +89,7 @@ All waves skip the BiS re-baseline: no DPS spec, preset or optimizer path moves.
 | Wave | WIs |
 |---|---|
 | HL1 | HEAL-SHA (G) · HEAL-PRI (G) · HEAL-TEST (G) |
-| HL2 | HEAL-PAL-1 (G) · HEAL-DRU-1 (G) |
+| HL2 | HEAL-FIGHT · HEAL-PAL-1 (G) · HEAL-DRU-1 (G) |
 | HL3 | HEAL-PAL-2 (G) · HEAL-DRU-2 (G) |
 
 G changes only the class's own healer suites (and, for HEAL-TEST, the four healer suites' weights rows).
@@ -252,6 +254,18 @@ Cross-review (uncommitted):
   what the model is).
 - Goldens: only the five healer suites' StatWeights rows moved; dps, hps, tps, dtps and abilities unchanged in all 37.
 
+### HEAL-FIGHT (stages: code)
+
+- Healer pages default to a 300 s fight, one rule for every `isHealingSpec` page (`ui/core/individual_sim_ui.ts`,
+  `Encounter.applyDefaults`); other pages keep 180 s.
+- The page-request tests (`sim/shaman/restoration/default_apl_test.go`, `sim/priest/healing/page_request_test.go`)
+  send 300 s and still assert P1 runs dry before the end.
+- Re-measure Disc, Holy and Resto Shaman on the page's request at 300 s, each phase preset: time to OOM and
+  "Measure at my gear", every stat nonzero or explained. These replace HEAL-SHA's and HEAL-PRI's numbers.
+- Golden-neutral: report any golden that moves.
+- **Owns:** the encounter-default lines of `ui/core/individual_sim_ui.ts` and `ui/core/encounter.ts`, those two
+  tests, the 180 s fight facts in `docs/guide/caster-mechanics.md`.
+
 ### HEAL-PAL-1 (G; stages: code, code, live)
 
 - The Holy Paladin's heals and talents (the Missing list above, without glyphs, sets and librams).
@@ -270,8 +284,9 @@ Cross-review (uncommitted):
 - **Owns:** new heal files in `sim/druid/`, `sim/druid/restoration/`, the druid's serverdata allowlist and
   undeclared files.
 
-HL2's two items both regenerate `spells_auto_gen.go`: at integration, the second merge reruns `gen_serverdata`
-on the merged tree instead of resolving the conflict by hand.
+HL2's class items both regenerate `spells_auto_gen.go`, `implemented_talents.json`, `talent_paths.json` and
+`spellmod_spells.json`, and add to `spelldump.jsonl` and the sweep records: at integration, the second merge
+keeps both items' lines and reruns the generators on the merged tree instead of resolving them by hand.
 
 ### HEAL-PAL-2 (G; stages: code, live)
 
