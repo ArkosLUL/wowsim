@@ -153,6 +153,33 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
     DP/AW shared timer stands in for the marker.
   - The Prot Paladin default APL casts it under 25% health, mod-playerbots' critical health
     (`Playerbots.CriticalHealth`).
+- **Holy Shock** (48825) casts 48821's heal on a friend, 48823's damage on anyone else (`spell_pal_holy_shock`).
+- **Sacred Shield** (53601), one target at a time: its target counts as always hit, so 58597 goes on with the aura,
+  then once a cooldown (`core.HitTakenStandIn`); a refresh keeps the clock, a new target restarts it.
+  - The cooldown is 53601's effect 0 in seconds with Divine Guardian's +10% a point, whole: 6, 6, 7 s. Divine
+    Guardian also adds 50% a point to both auras' durations.
+  - 58597's +50% Flash of Light crit counts only on the paladin healing himself (`Unit::SpellTakenCritChance`
+    looks it up cast by the healed unit). Its absorb: [damage and healing](damage-and-healing.md#healing).
+- **Divine Favor**: +100% crit on the next Holy Light, Flash of Light or Holy Shock heal or damage that lands;
+  its 2 min cooldown starts then (`SPELL_ATTR0_COOLDOWN_ON_EVENT`). **Divine Illumination**: -50% cost in every school but physical for 15 s (aura 72).
+- **Holy talents:** Holy Power is 1% crit a point on every holy spell, melee and ranged class ones too. Sanctified
+  Light is 2% crit a point on Holy Light and both Holy Shocks; Healing Light 4% a point (`SPELLMOD_DAMAGE`) on those
+  and Flash of Light. Holy Guidance: 4% of intellect a point as spell power. Enlightened Judgements: 2% melee and
+  spell hit a point. Spiritual Focus (no pushback) and Purifying Power (in no golden build) do nothing.
+- **Light's Grace**: a landed Holy Light procs 31834 (33% a point): 0.5 s off the next Holy Light, 15 s. The Holy
+  Light it sped up takes its charge as it finishes, unless its own proc refreshed it (`Aura::RefreshSpellMods`).
+- **Infusion of Light** (`spell_pal_infusion_of_light`): a Holy Shock crit, heal or damage, gives 53672 / 54149 for
+  15 s: 10% crit a point on the next Holy Light or 0.75 s a point off the next Flash of Light, used up by
+  whichever it reached. A Flash of Light on a unit with anyone's Sacred Shield puts on 66922 instead
+  ([damage and healing](damage-and-healing.md#healing)).
+- **Illumination** (`spell_pal_illumination`): a crit of Holy Light, Flash of Light or Holy Shock's heal gives, at
+  20% a point, 30% of its base cost (Holy Shock's: 48825's 18%) as 20272, each step whole.
+- **Judgements of the Pure**: a landed judgement gives 53655 to 54153, 3% cast and attack haste a point (aura 193)
+  for 60 s. Its 5% a point damage and DoT mods reach the seals, their judgements and 54158.
+- **Seal of Wisdom / Light**: a judgement also casts 54158 (`spell_pal_judgement`: no effect-2 seal judgement).
+  Melee hits, 54158 included (`SPELL_ATTR3_NOT_A_PROC`), roll 12 / 10 PPM off the main hand's speed for 4% of
+  max mana / a self heal of 15% AP + 15% SP (no crit). Holy has a main hand for it but never swings.
+- Holy's rotation heals with no target go to the first target dummy, so judgements must target the boss.
 - **Judgement of Light**'s 20185 procs like Judgement of Wisdom's (15 PPM, landed damaging hits, no triggered
   casts): 20267 heals the attacker for 2% of his max health through his healing taken percents. Its original
   caster, the judging paladin, gets the healing and its threat, so the sim credits nobody.

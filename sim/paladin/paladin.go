@@ -44,8 +44,20 @@ type Paladin struct {
 	AvengingWrath         *core.Spell
 	DivineProtection      *core.Spell
 	SovDotSpell           *core.Spell
-	// SealOfWisdom        *core.Spell
-	// SealOfLight         *core.Spell
+	SealOfWisdom          *core.Spell
+	SealOfLight           *core.Spell
+	SealJudgement         *core.Spell
+
+	HolyLight          *core.Spell
+	FlashOfLight       *core.Spell
+	HolyShock          *core.Spell
+	HolyShockHeal      *core.Spell
+	HolyShockDamage    *core.Spell
+	BeaconOfLight      *core.Spell
+	SacredShield       *core.Spell
+	SacredShieldAbsorb *core.Spell
+	DivineFavor        *core.Spell
+	DivineIllumination *core.Spell
 
 	HolyShieldAura          *core.Aura
 	RighteousFuryAura       *core.Aura
@@ -59,9 +71,19 @@ type Paladin struct {
 	DivineProtectionAura    *core.Aura
 	ForbearanceAura         *core.Aura
 	VengeanceAura           *core.Aura
+	SealOfWisdomAura        *core.Aura
+	SealOfLightAura         *core.Aura
+	DivineFavorAura         *core.Aura
+	DivineIlluminationAura  *core.Aura
 
-	// SealOfWisdomAura        *core.Aura
-	// SealOfLightAura         *core.Aura
+	BeaconOfLightAuras core.AuraArray
+	SacredShieldAuras  core.AuraArray
+
+	beacon          beaconOfLight
+	sacredShield    sacredShieldState
+	lightsGrace     lightsGrace
+	infusionOfLight infusionOfLight
+	illumination    illumination
 
 	ArtOfWarInstantCast *core.Aura
 
@@ -174,9 +196,10 @@ func (paladin *Paladin) Initialize() {
 	paladin.registerSealOfVengeanceSpellAndAura()
 	paladin.registerSealOfRighteousnessSpellAndAura()
 	paladin.registerSealOfCommandSpellAndAura()
+	paladin.registerSealJudgementSpell()
+	paladin.registerSealOfWisdomSpellAndAura()
+	paladin.registerSealOfLightSpellAndAura()
 	// paladin.setupSealOfTheCrusader()
-	// paladin.setupSealOfWisdom()
-	// paladin.setupSealOfLight()
 	// paladin.setupSealOfRighteousness()
 	// paladin.setupJudgementRefresh()
 
@@ -198,6 +221,7 @@ func (paladin *Paladin) Initialize() {
 	paladin.registerDivinePleaSpell()
 	paladin.registerDivineProtectionSpell()
 	paladin.registerForbearanceDebuff()
+	paladin.registerHealingSpells()
 	paladin.registerLayOnHandsSpell()
 
 	for i := int32(0); i < paladin.Env.GetNumTargets(); i++ {

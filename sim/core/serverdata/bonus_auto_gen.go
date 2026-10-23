@@ -7,6 +7,7 @@ var bonuses = []Bonus{
 	{SpellID: 12470, Row: 12470, Direct: 0.5},                                            // Fire Nova
 	{SpellID: 13376, Row: 13376, Direct: 0.015},                                          // Fire Shield
 	{SpellID: 20153, Row: 20153, Direct: 1.35},                                           // Immolation (Rank 1)
+	{SpellID: 20167, Row: 20167, Direct: 0.15, AP: 0.15},                                 // Seal of Light
 	{SpellID: 20187, Row: 20187, Direct: 0.32, AP: 0.2},                                  // Judgement of Righteousness (Rank 1)
 	{SpellID: 22703, Row: 22703, Direct: 1},                                              // Inferno Effect
 	{SpellID: 25012, Row: 25012, Direct: 0.333},                                          // Lightning Breath (Rank 6)
@@ -73,10 +74,14 @@ var bonuses = []Bonus{
 	{SpellID: 48568, Row: 48568, APDot: 0.01},                                            // Lacerate (Rank 3)
 	{SpellID: 48574, Row: 48574, AP: 0.01, APDot: 0.06},                                  // Rake (Rank 7)
 	{SpellID: 48676, Row: 48676, APDot: 0.07},                                            // Garrote (Rank 10)
+	{SpellID: 48782, Row: 48782, Direct: 1.66},                                           // Holy Light (Rank 13)
+	{SpellID: 48785, Row: 48785, Direct: 1},                                              // Flash of Light (Rank 9)
 	{SpellID: 48801, Row: 48801, Direct: 0.15, AP: 0.15},                                 // Exorcism (Rank 9)
 	{SpellID: 48806, Row: 48806, Direct: 0.15, AP: 0.15},                                 // Hammer of Wrath (Rank 6)
 	{SpellID: 48817, Row: 48817, Direct: 0.07, AP: 0.07},                                 // Holy Wrath (Rank 5)
 	{SpellID: 48819, Row: 48819, Dot: 0.04, APDot: 0.04},                                 // Consecration (Rank 8)
+	{SpellID: 48821, Row: 48821, Direct: 0.8057},                                         // Holy Shock (Rank 7)
+	{SpellID: 48823, Row: 48823, Direct: 0.4286},                                         // Holy Shock (Rank 7)
 	{SpellID: 48827, Row: 48827, Direct: 0.07, AP: 0.07},                                 // Avenger's Shield (Rank 5)
 	{SpellID: 48952, Row: 48952, Direct: 0.09, AP: 0.056},                                // Holy Shield (Rank 6)
 	{SpellID: 49001, Row: 49001, APDot: 0.04},                                            // Serpent Sting (Rank 12)
@@ -125,6 +130,7 @@ var bonuses = []Bonus{
 	{SpellID: 53598, Row: 53598, Dot: 0.333},                                             // Spore Cloud (Rank 6)
 	{SpellID: 54043, Row: 7294, Direct: 0.025},                                           // Retribution Aura (Rank 7)
 	{SpellID: 54053, Row: 54053, Direct: 0.429},                                          // Shadow Bite (Rank 5)
+	{SpellID: 54158, Row: 54158, Direct: 0.25, AP: 0.16},                                 // Judgement
 	{SpellID: 55078, Row: 55078, APDot: 0.06325},                                         // Blood Plague
 	{SpellID: 55095, Row: 55095, APDot: 0.06325},                                         // Frost Fever
 	{SpellID: 55360, Row: 55360, Dot: 0.2},                                               // Living Bomb (Rank 3)

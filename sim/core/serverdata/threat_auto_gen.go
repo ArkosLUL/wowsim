@@ -89,10 +89,21 @@ var threats = []Threat{
 	{SpellID: 20132, Targets: ThreatTargetsCaster},                                         // Redoubt
 	{SpellID: 20153, Targets: ThreatTargetsEnemyArea},                                      // Immolation (Rank 1)
 	{SpellID: 20154, Targets: ThreatTargetsCaster},                                         // Seal of Righteousness
+	{SpellID: 20165, Targets: ThreatTargetsCaster},                                         // Seal of Light
+	{SpellID: 20166, Targets: ThreatTargetsCaster},                                         // Seal of Wisdom
+	{SpellID: 20167, Targets: ThreatTargetsCaster},                                         // Seal of Light
+	{SpellID: 20168, Targets: ThreatTargetsCaster},                                         // Seal of Wisdom
 	{SpellID: 20178, Targets: ThreatTargetsCaster},                                         // Reckoning
 	{SpellID: 20182, Targets: ThreatTargetsCaster},                                         // Reckoning (Rank 5)
 	{SpellID: 20185, Row: 20185, FlatMod: 0, PctMod: 0},                                    // Judgement of Light (Rank 1)
+	{SpellID: 20210, Targets: ThreatTargetsCaster},                                         // Illumination (Rank 1)
+	{SpellID: 20212, Targets: ThreatTargetsCaster},                                         // Illumination (Rank 2)
+	{SpellID: 20213, Targets: ThreatTargetsCaster},                                         // Illumination (Rank 3)
+	{SpellID: 20214, Targets: ThreatTargetsCaster},                                         // Illumination (Rank 4)
+	{SpellID: 20215, Targets: ThreatTargetsCaster},                                         // Illumination (Rank 5)
+	{SpellID: 20216, Targets: ThreatTargetsCaster},                                         // Divine Favor
 	{SpellID: 20267, Targets: ThreatTargetsCaster},                                         // Judgement of Light (Rank 1)
+	{SpellID: 20272, Targets: ThreatTargetsCaster},                                         // Illumination
 	{SpellID: 20337, Targets: ThreatTargetsCaster},                                         // Heart of the Crusader (Rank 3)
 	{SpellID: 20375, Targets: ThreatTargetsCaster},                                         // Seal of Command
 	{SpellID: 20594, Targets: ThreatTargetsCaster},                                         // Stoneform (Racial)
@@ -138,6 +149,11 @@ var threats = []Threat{
 	{SpellID: 31245, Targets: ThreatTargetsCaster},                                         // Quick Recovery (Rank 2)
 	{SpellID: 31572, Targets: ThreatTargetsCaster},                                         // Arcane Potency (Rank 2)
 	{SpellID: 31801, Targets: ThreatTargetsCaster},                                         // Seal of Vengeance
+	{SpellID: 31833, Targets: ThreatTargetsCaster},                                         // Light's Grace (Rank 1)
+	{SpellID: 31834, Targets: ThreatTargetsCaster},                                         // Light's Grace
+	{SpellID: 31835, Targets: ThreatTargetsCaster},                                         // Light's Grace (Rank 2)
+	{SpellID: 31836, Targets: ThreatTargetsCaster},                                         // Light's Grace (Rank 3)
+	{SpellID: 31842, Targets: ThreatTargetsCaster},                                         // Divine Illumination
 	{SpellID: 31878, Targets: ThreatTargetsCaster},                                         // Judgements of the Wise (Rank 3)
 	{SpellID: 31884, Targets: ThreatTargetsCaster},                                         // Avenging Wrath
 	{SpellID: 32746, Targets: ThreatTargetsCaster},                                         // Reckoning
@@ -350,10 +366,17 @@ var threats = []Threat{
 	{SpellID: 53530, Targets: ThreatTargetsCaster},                                         // Divine Guardian (Rank 2)
 	{SpellID: 53598, Targets: ThreatTargetsEnemyArea},                                      // Spore Cloud (Rank 6)
 	{SpellID: 53646, Targets: ThreatTargetsCaster},                                         // Demonic Pact (Rank 1)
+	{SpellID: 53655, Targets: ThreatTargetsCaster},                                         // Judgements of the Pure (Rank 1)
+	{SpellID: 53656, Targets: ThreatTargetsCaster},                                         // Judgements of the Pure (Rank 2)
+	{SpellID: 53657, Targets: ThreatTargetsCaster},                                         // Judgements of the Pure (Rank 3)
+	{SpellID: 53672, Targets: ThreatTargetsCaster},                                         // Infusion of Light
 	{SpellID: 53696, Targets: ThreatTargetsCaster},                                         // Judgements of the Just (Rank 2)
 	{SpellID: 53817, Targets: ThreatTargetsCaster},                                         // Maelstrom Weapon
 	{SpellID: 54043, Row: 7294, FlatMod: 0, PctMod: 2, Targets: ThreatTargetsCaster},       // Retribution Aura (Rank 7)
 	{SpellID: 54118, Targets: ThreatTargetsCaster},                                         // Improved Soul Leech (Rank 2)
+	{SpellID: 54149, Targets: ThreatTargetsCaster},                                         // Infusion of Light (Rank 2)
+	{SpellID: 54152, Targets: ThreatTargetsCaster},                                         // Judgements of the Pure (Rank 4)
+	{SpellID: 54153, Targets: ThreatTargetsCaster},                                         // Judgements of the Pure (Rank 5)
 	{SpellID: 54227, Targets: ThreatTargetsCaster},                                         // Rapid Recuperation Effect
 	{SpellID: 54277, Targets: ThreatTargetsCaster},                                         // Backdraft
 	{SpellID: 54428, Targets: ThreatTargetsCaster},                                         // Divine Plea

@@ -88,8 +88,10 @@
   {"talent":"divinity","rank":5,"spell":63650},
   {"talent":"divineStrength","rank":5,"spell":20266},
   {"talent":"anticipation","rank":5,"spell":20100},
+  {"talent":"divineSacrifice","rank":1,"spell":64205,"filler":true},
   {"talent":"improvedRighteousFury","rank":3,"spell":20470},
   {"talent":"toughness","rank":5,"spell":20147},
+  {"talent":"divineGuardian","rank":2,"spell":53530},
   {"talent":"improvedDevotionAura","rank":3,"spell":20140},
   {"talent":"blessingOfSanctuary","rank":1,"spell":20911,"filler":true},
   {"talent":"reckoning","rank":5,"spell":20182},
@@ -106,9 +108,31 @@
   {"talent":"shieldOfTheTemplar","rank":3,"spell":53711},
   {"talent":"judgementsOfTheJust","rank":2,"spell":53696},
   {"talent":"sealsOfThePure","rank":5,"spell":20332},
-  {"talent":"deflection","rank":5,"spell":20064}
+  {"talent":"healingLight","rank":3,"spell":20239}
+]},
+{"name":"PaladinProtection2","class":2,"race":11,"spec":"protection_paladin","items":[{"slot":15,"id":40345},{"slot":16,"id":40400}],"auras":[31801,25780,48942],"steps": [
+  {"talent":"spiritualFocus","rank":5,"spell":20208,"filler":true},
+  {"talent":"sealsOfThePure","rank":3,"spell":20330},
+  {"talent":"unyieldingFaith","rank":2,"spell":25836,"filler":true},
+  {"talent":"auraMastery","rank":1,"spell":31821,"filler":true},
+  {"talent":"illumination","rank":5,"spell":20215},
+  {"talent":"improvedLayOnHands","rank":2,"spell":20235},
+  {"talent":"improvedConcentrationAura","rank":3,"spell":20256,"filler":true},
+  {"talent":"improvedBlessingOfWisdom","rank":1,"spell":20244,"filler":true},
+  {"talent":"divineFavor","rank":1,"spell":20216},
+  {"talent":"sanctifiedLight","rank":3,"spell":20361},
+  {"talent":"holyPower","rank":5,"spell":25829},
+  {"talent":"lightsGrace","rank":3,"spell":31836},
+  {"talent":"holyShock","rank":1,"spell":20473},
+  {"talent":"holyGuidance","rank":5,"spell":31841},
+  {"talent":"divineIllumination","rank":1,"spell":31842},
+  {"talent":"judgementsOfThePure","rank":5,"spell":54155},
+  {"talent":"infusionOfLight","rank":2,"spell":53576},
+  {"talent":"enlightenedJudgements","rank":2,"spell":53557},
+  {"talent":"beaconOfLight","rank":1,"spell":53563}
 ]},
 {"name":"PaladinRetribution","class":2,"race":11,"spec":"retribution_paladin","items":[{"slot":15,"id":40384}],"auras":[31801,54043],"steps": [
+  {"talent":"deflection","rank":5,"spell":20064},
   {"talent":"benediction","rank":5,"spell":20105},
   {"talent":"improvedJudgements","rank":2,"spell":25957},
   {"talent":"heartOfTheCrusader","rank":3,"spell":20337},
@@ -129,7 +153,7 @@
   {"talent":"righteousVengeance","rank":3,"spell":53382},
   {"talent":"spiritualFocus","rank":5,"spell":20208,"filler":true},
   {"talent":"divineIntellect","rank":5,"spell":20261},
-  {"talent":"improvedLayOnHands","rank":2,"spell":20235}
+  {"talent":"illumination","rank":5,"spell":20215}
 ]},
 {"name":"HunterBeastMastery","class":3,"race":3,"spec":"hunter","items":[{"slot":17,"id":40385},{"slot":4,"id":43593}],"auras":[61847],"steps": [
   {"talent":"improvedAspectOfTheHawk","rank":5,"spell":19556},

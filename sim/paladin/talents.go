@@ -64,6 +64,7 @@ func (paladin *Paladin) ApplyTalents() {
 	paladin.AddHealingTakenPct(paladin.Talents.Divinity)
 	paladin.AddHealingDonePct(paladin.Talents.Divinity)
 
+	paladin.applyHolyTalents()
 	paladin.applyRedoubt()
 	paladin.applyReckoning()
 	paladin.applyArdentDefender()

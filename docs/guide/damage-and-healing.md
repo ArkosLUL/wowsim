@@ -128,6 +128,17 @@ rounding, caps and crit damage. Everything else the server does differently is i
   so each tick takes only aura 136 and the target's taken terms again (`sim/priest/prayer_of_healing.go`).
   Ancestral Awakening is `int32(crit × 10% a rank)` and ignores caster modifiers, Purification included
   (`sim/shaman/heals.go`).
+- **Paladin direct heals** carry Divinity and Healing Light in their multiplier; Avenging Wrath's 20% and Divine
+  Plea's -50% (`SPELLMOD_DAMAGE` on Holy Light, Flash of Light and Holy Shock's heal) are read at the heal.
+- **Infusion of Light**'s 66922: `CalculatePct(heal / 12, 50% a point)` a tick for 12 1 s ticks, heal being the
+  Flash of Light's whole heal, taken terms and crit in. Family 0 and no damage class: each tick takes only the
+  healing done percents and the target's taken percents.
+- **Beacon of Light** (`spell_pal_light_s_beacon`): Holy Light, Flash of Light or Holy Shock on anyone but the
+  beacon target copies its heal before the healed unit's taken terms, crit included
+  (`HealInfo::GetHealBeforeTakenMods`), as 53652 / 53653 / 53654; Lay on Hands copies the paladin's max health. The
+  copy takes no caster modifier and can't crit, only the beacon target's taken terms (default instant coefficient).
+- **Sacred Shield**'s 58597 absorbs int32(500 × e) + int32(int32(75% of healing power) × e), e = 1 + Divine
+  Guardian's 10% a point, then +30% under Strength of Wrynn; no healing done percent (`spell_pal_sacred_shield`).
 - **Mark of Blood**'s 61607 heals the unit the marked target hits for 4% of that unit's max health, Vampiric
   Blood's included, through its healing taken percents only, never a dead unit (`core.MarkOfBloodAura`). Its
   charges: [class mechanics](class-mechanics.md#death-knight).

@@ -68,6 +68,38 @@
     {"id":59638,"name":"Frostbolt","ops":["COST"]}
   ]}
 ]},
+{"class":"paladin","tree":"Holy","talent":"divineIllumination","passive":false,"groups": [
+ {"ranks":[31842],"mods":[{"effect":0,"aura":72,"schoolMask":126}],
+  "spells": [
+    {"id":498,"name":"Divine Protection","ops":["COST"]},
+    {"id":6940,"name":"Hand of Sacrifice","ops":["COST"]},
+    {"id":20154,"name":"Seal of Righteousness","ops":["COST"]},
+    {"id":20165,"name":"Seal of Light","ops":["COST"]},
+    {"id":20166,"name":"Seal of Wisdom","ops":["COST"]},
+    {"id":20216,"name":"Divine Favor","ops":["COST"]},
+    {"id":20271,"name":"Judgement of Light","ops":["COST"]},
+    {"id":20375,"name":"Seal of Command","ops":["COST"]},
+    {"id":21084,"name":"Seal of Righteousness","ops":["COST"]},
+    {"id":25899,"name":"Greater Blessing of Sanctuary","ops":["COST"]},
+    {"id":31801,"name":"Seal of Vengeance","ops":["COST"]},
+    {"id":31884,"name":"Avenging Wrath","ops":["COST"]},
+    {"id":48782,"name":"Holy Light","ops":["COST"]},
+    {"id":48785,"name":"Flash of Light","ops":["COST"]},
+    {"id":48801,"name":"Exorcism","ops":["COST"]},
+    {"id":48806,"name":"Hammer of Wrath","ops":["COST"]},
+    {"id":48817,"name":"Holy Wrath","ops":["COST"]},
+    {"id":48819,"name":"Consecration","ops":["COST"]},
+    {"id":48825,"name":"Holy Shock","ops":["COST"]},
+    {"id":48827,"name":"Avenger's Shield","ops":["COST"]},
+    {"id":48932,"name":"Blessing of Might","ops":["COST"]},
+    {"id":48952,"name":"Holy Shield","ops":["COST"]},
+    {"id":53408,"name":"Judgement of Wisdom","ops":["COST"]},
+    {"id":53563,"name":"Beacon of Light","ops":["COST"]},
+    {"id":53595,"name":"Hammer of the Righteous","ops":["COST"]},
+    {"id":53601,"name":"Sacred Shield","ops":["COST"]},
+    {"id":61411,"name":"Shield of Righteousness","ops":["COST"]}
+  ]}
+]},
 {"class":"priest","tree":"Discipline","talent":"powerInfusion","passive":false,"groups": [
  {"ranks":[10060],"mods":[{"effect":1,"aura":72,"schoolMask":126}],
   "spells": [

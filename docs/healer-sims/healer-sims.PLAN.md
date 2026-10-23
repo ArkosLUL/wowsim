@@ -275,6 +275,61 @@ Cross-review (uncommitted):
 - **Owns:** new heal files in `sim/paladin/`, `sim/paladin/holy/`, the paladin's serverdata allowlist and
   undeclared files.
 
+#### As built
+
+Stage 1, spells (uncommitted):
+- Holy Light, Flash of Light, Holy Shock, Beacon of Light (copies 53652-4, Lay on Hands too), Sacred Shield (58597 on
+  the stand-in at its cooldown), Divine Favor, Divine Illumination, Seals of Wisdom and Light with 54158, in
+  `sim/paladin/{heals,holy_shock,beacon_of_light,sacred_shield,sow_sol}.go`; rules in
+  [class-mechanics](../guide/class-mechanics.md#paladin) and [damage-and-healing](../guide/damage-and-healing.md#healing).
+  Divine Guardian's Sacred Shield mods taken too; tests `sim/paladin/holy/heals_test.go`.
+- Also touched: `paladin.go`, `lay_on_hands.go`; Holy gets a non-swinging main hand and the first dummy as target.
+- Generated: `gen_serverdata` (additions only), `implemented_talents.json`, `spellmod_spells.json`,
+  `talent_paths.json`. `tools/simval`'s `TestTalentSweepRecords` and `TestSpellModRecords` fail until stage 3
+  re-records the paladin sweeps.
+- `TestHoly` runs an APL casting every heal (beacon on self): Average HPS 0 → 6650; StatWeights nonzero.
+- Left for stage 2: Healing Light, Sanctified Light, Holy Power, Light's Grace, Infusion of Light (66922 on a Sacred
+  Shield target), Illumination (needs 20272 captured), Judgements of the Pure (+5% a point on 54158 too), Holy
+  Guidance, Improved Flash of Light, Purifying Power.
+
+Stage 2, talents (uncommitted):
+- Healing Light, Sanctified Light, Holy Power, Holy Guidance, Enlightened Judgements, Light's Grace, Infusion of Light
+  (with 66922), Illumination, Judgements of the Pure (haste, and its damage mods on the seal and judgement spells in
+  `sor.go`, `sov.go`, `soc.go`, `sow_sol.go`) in `sim/paladin/holy_talents.go`; rules in
+  [class-mechanics](../guide/class-mechanics.md#paladin) and [damage-and-healing](../guide/damage-and-healing.md#healing).
+  Tests `sim/paladin/holy/talents_test.go`; stage 1's crit tests now zero the talents' crit.
+- Not done: Spiritual Focus (no pushback model); Purifying Power (no golden build takes it; it needs an `untakenTalents`
+  entry in `sim/talent_coverage_test.go`, outside this item). "Improved Flash of Light" isn't a 3.3.5 talent.
+- Needs a live capture (stage 3): 20272 and 66922; their data here is from Spell.dbc.
+- Generated: `gen_serverdata` (additions only), `implemented_talents.json` (+12 holy talents), `spellmod_spells.json`,
+  `talent_paths.json` (holy steps on PaladinProtection2 and PaladinRetribution).
+- `TestHoly` Average HPS 6650 → 9975; spell power +327 (Holy Guidance), 4% hit; StatWeights Int 4.04, SP 2.31,
+  MP5 2.31, crit 1.34, haste 0.63.
+
+Stage 3, live (uncommitted; server lock held 21:19 to 21:37 UTC, no rebuild):
+- Spell capture: 20272 and 66922 (`TestSpelldumpCapture`) added to `spelldump.jsonl`; `gen_serverdata` rerun
+  (additions only; 20272's energize threat moves only `TestHoly`'s TPS); `spellids` reports nothing missing.
+- `costaura_spells.json`, stale since stage 1 (Divine Illumination, aura 72), rewritten (`TestCostAuraSpellsFile
+  -update`); `spellmod_spells.json` and `talent_paths.json` unchanged.
+- Sweeps of PaladinProtection, PaladinProtection2 and PaladinRetribution, their lines replaced in `talents.jsonl`
+  and `spellmods.jsonl`, added to `costauras.jsonl`; none disagree. Talent: 17 agree, 48 move no field. Spell-mod:
+  54 agree, 53 move nothing, 17 not compared. Cost-aura: Divine Illumination's -50% agrees on 22 spells.
+  - 48821 and 48823 aren't compared: the replay finds no talent teaching them (first ranks 25914, 25912). Taught
+    Holy Shock by hand, Healing Light ×1.12, Divine Favor's and Sanctified Light's crit agree.
+- Timing: a private copy of the e2e harness (not committed) took `.simval timing` of the 21 spells stages 1 and 2
+  added: bare; under Benediction, Divine Guardian, Light's Grace, Infusion of Light and Judgements of the Pure;
+  then each of 31834, 54149, 31842, 54153 and Bloodlust on top (141 records). Replayed through `replayTiming`
+  (plus Light's Grace's and Infusion's `ModifyCast` cut): every cast time, GCD, cooldown, cost, aura duration and
+  tick count agrees.
+  - Probing 54153 puts 15% haste on and off, leaving the server's float cast speed just under 1, so every later
+    probe reads 1 ms short: probe it last.
+- Fixed: Divine Favor's cooldown started at cast; the server's starts as its buff goes. Test
+  `TestDivineFavorCooldownStartsWhenUsed`; `TestHoly` Average HPS 9975 → 9974.
+
+Review (uncommitted):
+- Judgement of Command (20467) now takes Judgements of the Pure's +5% a point: its flags[1] 0x200 is in the
+  talent's `SPELLMOD_DAMAGE` mask (0x20400e00). No golden build has both; JoC is unprobed in the sweep.
+
 ### HEAL-DRU-1 (G; stages: code, code, live)
 
 - The Resto Druid's heals, Tree of Life as an aura and form, and talents (the Missing list above, without glyphs,

@@ -1357,6 +1357,45 @@ var spells = []Spell{
 			{Effect: 6, Aura: 108, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0x800000, 0, 0x8}},
 		},
 	},
+	// Seal of Light
+	{
+		ID: 20165, Family: 10, FamilyFlags: [3]uint32{0, 0x2000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x50000},
+		GCDMs:      1500, GCDCategory: 133, DurationMs: 1800000, MaxDurationMs: 1800000,
+		ProcFlags: 0x14, ProcChance: 100, ManaCostPct: 14, SpellLevel: 30, BaseLevel: 30,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 20167},
+			{Effect: 6, Aura: 108, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0xc0000000, 0x1010000}},
+		},
+	},
+	// Seal of Wisdom
+	{
+		ID: 20166, Family: 10, FamilyFlags: [3]uint32{0, 0x4000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x50000},
+		GCDMs:      1500, GCDCategory: 133, DurationMs: 1800000, MaxDurationMs: 1800000,
+		ProcFlags: 0x14, ProcChance: 100, ManaCostPct: 14, SpellLevel: 38, BaseLevel: 38,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 20168},
+			{Effect: 6, Aura: 108, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0xc0200000, 0x1000000}},
+		},
+	},
+	// Seal of Light
+	{
+		ID: 20167, Family: 10, FamilyFlags: [3]uint32{0x40000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagPositive,
+		Attributes: [8]uint32{0x40000, 0, 0x20000000}, AttributesCu: 0x100,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Seal of Wisdom
+	{
+		ID: 20168, Family: 10, FamilyFlags: [3]uint32{0x40000}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x40000, 0, 0x20000000, 0x2000000}, AttributesCu: 0x100010,
+		SpellLevel: 38, BaseLevel: 38,
+		Effects: [3]Effect{
+			{Effect: 137, BasePoints: 3, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Reckoning
 	{
 		ID: 20178, SchoolMask: 1, Flags: FlagPositive,
@@ -1408,6 +1447,67 @@ var spells = []Spell{
 			{Effect: 3, BasePoints: 107, DieSides: 1, PointsPerLevel: 18, DamageMultiplier: 1, BonusMultiplier: 0.058},
 		},
 	},
+	// Illumination (Rank 1)
+	{
+		ID: 20210, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0, 0, 0, 0, 0x80000}, AttributesCu: 0x100000,
+		ProcFlags: 0x4400, ProcChance: 20,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 18350},
+			{Effect: 6, Aura: 112, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 2689, ClassMask: [3]uint32{0xc0000000}},
+		},
+	},
+	// Illumination (Rank 2)
+	{
+		ID: 20212, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0, 0, 0, 0, 0x80000}, AttributesCu: 0x100000,
+		ProcFlags: 0x4400, ProcChance: 40,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 18350},
+			{Effect: 6, Aura: 112, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 2689, ClassMask: [3]uint32{0xc0000000}},
+		},
+	},
+	// Illumination (Rank 3)
+	{
+		ID: 20213, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0, 0, 0, 0, 0x80000}, AttributesCu: 0x100000,
+		ProcFlags: 0x4400, ProcChance: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 18350},
+			{Effect: 6, Aura: 112, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 2689, ClassMask: [3]uint32{0xc0000000}},
+		},
+	},
+	// Illumination (Rank 4)
+	{
+		ID: 20214, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0, 0, 0, 0, 0x80000}, AttributesCu: 0x100000,
+		ProcFlags: 0x4400, ProcChance: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 18350},
+			{Effect: 6, Aura: 112, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 2689, ClassMask: [3]uint32{0xc0000000}},
+		},
+	},
+	// Illumination (Rank 5)
+	{
+		ID: 20215, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0, 0, 0, 0x4000000, 0x80000}, AttributesCu: 0x100000,
+		ProcFlags: 0x4400, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 18350},
+			{Effect: 6, Aura: 112, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 2689, ClassMask: [3]uint32{0xc0000000}},
+		},
+	},
+	// Divine Favor
+	{
+		ID: 20216, Family: 10, FamilyFlags: [3]uint32{0, 0x100}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0xa050000, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		CooldownMs: 120000, DurationMs: -1, MaxDurationMs: -1,
+		ProcFlags: 0x14000, ProcChance: 100, ProcCharges: 1, ManaCostPct: 3,
+		CooldownMods: ModBounds{FlatMin: -15000},
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0xc0200000, 0x10000}},
+		},
+	},
 	// Lay on Hands (Rank 1)
 	{
 		ID: 20233, Family: 10, FamilyFlags: [3]uint32{0, 0x80004000}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
@@ -1446,6 +1546,14 @@ var spells = []Spell{
 		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 77, BasePoints: 1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Illumination
+	{
+		ID: 20272, SchoolMask: 1, Flags: FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0, 0, 0x30000}, AttributesCu: 0x10,
+		Effects: [3]Effect{
+			{Effect: 30, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
 	// Heart of the Crusader (Rank 3)
@@ -2184,6 +2292,55 @@ var spells = []Spell{
 		CooldownMods: ModBounds{FlatMin: -4000},
 		Effects: [3]Effect{
 			{Effect: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.22},
+		},
+	},
+	// Light's Grace (Rank 1)
+	{
+		ID: 31833, Family: 10, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0},
+		DurationMs: -1, MaxDurationMs: -1,
+		ProcFlags: 0x4000, ProcChance: 33,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 31834, ClassMask: [3]uint32{0x1020}},
+		},
+	},
+	// Light's Grace
+	{
+		ID: 31834, Family: 10, FamilyFlags: [3]uint32{0, 0x80004000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   15000, MaxDurationMs: 15000,
+		ProcChance: 101, ProcCharges: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: -501, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x80000000}},
+		},
+	},
+	// Light's Grace (Rank 2)
+	{
+		ID: 31835, Family: 10, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0},
+		DurationMs: -1, MaxDurationMs: -1,
+		ProcFlags: 0x4000, ProcChance: 66,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 31834, ClassMask: [3]uint32{0x1020}},
+		},
+	},
+	// Light's Grace (Rank 3)
+	{
+		ID: 31836, Family: 10, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0},
+		ProcFlags:  0x4000, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 31834, ClassMask: [3]uint32{0x1020}},
+		},
+	},
+	// Divine Illumination
+	{
+		ID: 31842, Family: 10, FamilyFlags: [3]uint32{0, 0x80004000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8050000}, AttributesCu: 0x100000,
+		CooldownMs: 180000, DurationMs: 15000, MaxDurationMs: 15000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 72, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, MiscValue: 126, MiscValueB: 1, ClassMask: [3]uint32{0x206000}},
 		},
 	},
 	// Judgements of the Wise (Rank 3)
@@ -4609,6 +4766,28 @@ var spells = []Spell{
 			{Effect: 10, BasePoints: 39, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Holy Light (Rank 13)
+	{
+		ID: 48782, Family: 10, FamilyFlags: [3]uint32{0x80000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000}, AttributesCu: 0x100100,
+		CastMs: 2500, BaseCastMs: 2500, GCDMs: 1500, GCDCategory: 133,
+		ProcChance: 101, ManaCostPct: 29, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		CastMods: ModBounds{FlatMin: -100},
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 4887, DieSides: 557, PointsPerLevel: 12.1, DamageMultiplier: 1, BonusMultiplier: 1.679},
+		},
+	},
+	// Flash of Light (Rank 9)
+	{
+		ID: 48785, Family: 10, FamilyFlags: [3]uint32{0x40000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0, 0x2000000}, AttributesCu: 0x100100,
+		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133,
+		ProcChance: 101, ManaCostPct: 7, SpellLevel: 79, BaseLevel: 79, MaxLevel: 83,
+		CastMods: ModBounds{FlatMin: -1000}, GCDMods: ModBounds{FlatMin: -1000},
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 784, DieSides: 95, PointsPerLevel: 3.9, DamageMultiplier: 1, BonusMultiplier: 1.009},
+		},
+	},
 	// Lay on Hands (Rank 5)
 	{
 		ID: 48788, Family: 10, FamilyFlags: [3]uint32{0x8000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
@@ -4675,6 +4854,39 @@ var spells = []Spell{
 		CooldownMods: ModBounds{FlatMax: 2000},
 		Effects: [3]Effect{
 			{Effect: 27, Aura: 3, AmplitudeMs: 1000, BasePoints: 112, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.04},
+		},
+	},
+	// Holy Shock (Rank 7)
+	{
+		ID: 48821, Family: 10, FamilyFlags: [3]uint32{0, 0x10000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x50000, 0, 0, 0x200, 0x1}, AttributesCu: 0x100100,
+		GCDCategory: 133,
+		ProcChance:  101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		CooldownMods: ModBounds{FlatMin: -1000},
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 2400, DieSides: 199, DamageMultiplier: 1, BonusMultiplier: 0.807},
+		},
+	},
+	// Holy Shock (Rank 7)
+	{
+		ID: 48823, Family: 10, FamilyFlags: [3]uint32{0x200000}, SchoolMask: 2, DmgClass: DmgClassMagic,
+		Attributes: [8]uint32{0x50000, 0, 0, 0x200, 0x1}, AttributesCu: 0x1100,
+		GCDCategory: 133,
+		ProcChance:  101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		CooldownMods: ModBounds{FlatMin: -1000},
+		Effects: [3]Effect{
+			{Effect: 2, BasePoints: 1295, DieSides: 107, DamageMultiplier: 1, BonusMultiplier: 0.429},
+		},
+	},
+	// Holy Shock (Rank 7)
+	{
+		ID: 48825, Family: 10, FamilyFlags: [3]uint32{0x200000}, SchoolMask: 2, Flags: FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x50000, 0, 0, 0x30000},
+		GCDMs:      1500, GCDCategory: 133, CategoryCooldownMs: 6000, Category: 892,
+		ProcChance: 101, ManaCostPct: 18, SpellLevel: 80, BaseLevel: 80,
+		CooldownMods: ModBounds{FlatMin: -1000},
+		Effects: [3]Effect{
+			{Effect: 3, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
 	// Avenger's Shield (Rank 5)
@@ -6224,6 +6436,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 12, DamageMultiplier: 1},
 		},
 	},
+	// Beacon of Light
+	{
+		ID: 53563, Family: 10, FamilyFlags: [3]uint32{0, 0x1000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x20050000, 0x20000, 0, 0, 0x80000, 0x220, 0x4},
+		GCDMs:      1500, GCDCategory: 133, DurationMs: 60000, MaxDurationMs: 60000,
+		ProcChance: 101, ManaCostPct: 35, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 23, AmplitudeMs: 1500, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 53651},
+		},
+	},
 	// Sonic Blast (Rank 6)
 	{
 		ID: 53568, Family: 9, FamilyFlags: [3]uint32{0, 0x10000000}, SchoolMask: 8, DmgClass: DmgClassMagic,
@@ -6294,6 +6516,16 @@ var spells = []Spell{
 			{Effect: 27, Aura: 101, BasePoints: -4, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
 		},
 	},
+	// Sacred Shield (Rank 1)
+	{
+		ID: 53601, Family: 10, FamilyFlags: [3]uint32{0, 0x80000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0, 0, 0, 0x20, 0x4000000},
+		GCDMs:      1500, GCDCategory: 133, DurationMs: 30000, MaxDurationMs: 30000,
+		ProcFlags: 0x108000, ProcChance: 100, ManaCostPct: 12, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, MiscValue: 127, TriggerSpell: 58597},
+		},
+	},
 	// Demonic Pact (Rank 1)
 	{
 		ID: 53646, Family: 5, FamilyFlags: [3]uint32{0, 0x100000}, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
@@ -6301,6 +6533,85 @@ var spells = []Spell{
 		ProcFlags:  0x11154,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 48090, ClassMask: [3]uint32{0x4000000}},
+		},
+	},
+	// Light's Beacon
+	{
+		ID: 53651, Family: 10, SchoolMask: 2, Flags: FlagPositive | FlagTargetsArea,
+		Attributes: [8]uint32{0x8050180, 0x400, 0x4, 0x80, 0x88000},
+		DurationMs: 2000, MaxDurationMs: 2000,
+		ProcFlags: 0x8a20, ProcChance: 100, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 99, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Beacon of Light
+	{
+		ID: 53652, Family: 10, FamilyFlags: [3]uint32{0, 0x1000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
+		Attributes: [8]uint32{0x50000, 0, 0x20000000, 0x20000200, 0x8000, 0, 0x4}, AttributesCu: 0x100100,
+		GCDCategory: 133,
+		ProcChance:  101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Beacon of Light
+	{
+		ID: 53653, Family: 10, FamilyFlags: [3]uint32{0, 0x1000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x50000, 0, 0x20000000, 0x20000200, 0x8000, 0, 0x4}, AttributesCu: 0x100100,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Beacon of Light
+	{
+		ID: 53654, Family: 10, FamilyFlags: [3]uint32{0, 0x1000000}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x50000, 0, 0x20000000, 0x20000200, 0x8000, 0, 0x4}, AttributesCu: 0x100100,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Judgements of the Pure (Rank 1)
+	{
+		ID: 53655, Family: 10, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   60000, MaxDurationMs: 60000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 193, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 5, ClassMask: [3]uint32{0x800000}},
+		},
+	},
+	// Judgements of the Pure (Rank 2)
+	{
+		ID: 53656, Family: 10, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   60000, MaxDurationMs: 60000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 193, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 5, ClassMask: [3]uint32{0x800000}},
+		},
+	},
+	// Judgements of the Pure (Rank 3)
+	{
+		ID: 53657, Family: 10, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   60000, MaxDurationMs: 60000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 193, BasePoints: 8, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 5, ClassMask: [3]uint32{0x800000}},
+		},
+	},
+	// Infusion of Light
+	{
+		ID: 53672, Family: 10, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0, 0, 0, 0, 0, 0, 0x40}, AttributesCu: 0x100000,
+		DurationMs: 15000, MaxDurationMs: 15000,
+		ProcFlags: 0x4000, ProcChance: 100, ProcCharges: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x80000000}},
+			{Effect: 6, Aura: 107, BasePoints: -751, DieSides: 1, DamageMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x40000000}},
 		},
 	},
 	// Judgements of the Just (Rank 2)
@@ -6356,6 +6667,47 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 4, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, ClassMask: [3]uint32{0x381, 0xc0}},
 			{Effect: 6, Aura: 4, BasePoints: 99, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Infusion of Light (Rank 2)
+	{
+		ID: 54149, Family: 10, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0, 0, 0, 0, 0, 0, 0x40}, AttributesCu: 0x100000,
+		DurationMs: 15000, MaxDurationMs: 15000,
+		ProcFlags: 0x4000, ProcChance: 100, ProcCharges: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x80000000}},
+			{Effect: 6, Aura: 107, BasePoints: -1501, DieSides: 1, DamageMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x40000000}},
+		},
+	},
+	// Judgements of the Pure (Rank 4)
+	{
+		ID: 54152, Family: 10, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   60000, MaxDurationMs: 60000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 193, BasePoints: 11, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 5, ClassMask: [3]uint32{0x800000}},
+		},
+	},
+	// Judgements of the Pure (Rank 5)
+	{
+		ID: 54153, Family: 10, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   60000, MaxDurationMs: 60000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 193, BasePoints: 14, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 5, ClassMask: [3]uint32{0x800000}},
+		},
+	},
+	// Judgement
+	{
+		ID: 54158, Family: 10, FamilyFlags: [3]uint32{0x800000, 0, 0x8}, SchoolMask: 2, DmgClass: DmgClassMelee, Flags: FlagNoActiveDefense | FlagAlwaysHit,
+		Attributes: [8]uint32{0x250000, 0, 0x100000, 0x40200}, AttributesCu: 0x1100,
+		SpellLevel: 28, BaseLevel: 28,
+		CooldownMods: ModBounds{FlatMin: -4000},
+		Effects: [3]Effect{
+			{Effect: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.25},
 		},
 	},
 	// Rapid Recuperation Effect
@@ -7326,6 +7678,17 @@ var spells = []Spell{
 		SpellLevel: 1,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 138, BasePoints: 19, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Sacred Shield (Rank 1)
+	{
+		ID: 58597, Family: 10, FamilyFlags: [3]uint32{0, 0x80000}, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8010000}, AttributesCu: 0x100000,
+		DurationMs: 6000, MaxDurationMs: 6000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 90,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 69, BasePoints: 499, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.429, MiscValue: 127},
+			{Effect: 6, Aura: 4, BasePoints: 49, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Lava Breath
@@ -9572,6 +9935,16 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 30, BaseLevel: 30,
 		Effects: [3]Effect{
 			{Effect: 97, DamageMultiplier: 1, MiscValueB: 4, ClassMask: [3]uint32{0x2}},
+		},
+	},
+	// Flash of Light
+	{
+		ID: 66922, SchoolMask: 2, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0, 0x10000004, 0, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		DurationMs: 12000, MaxDurationMs: 12000,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 8, AmplitudeMs: 1000, BasePoints: 99, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Hack and Slash
