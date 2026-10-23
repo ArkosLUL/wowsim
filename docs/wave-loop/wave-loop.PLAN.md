@@ -191,8 +191,9 @@ the caps, and an "Apply on server" button over SOAP, also golden-neutral.
 
 ## Current wave
 
-- Wave: Z17 (caps-and-priority PLAN; the user's go, 2026-10-23), running. Base `3545a1099`; build `waveZ17-build.py`.
-  Z16 landed: run `wf_b6e64cf4-f8b`, reports `.wave-loop\z16-run1\`. Next: Z18 (Z15's follow-ups, specs in the
+- Wave: Z17 (caps-and-priority PLAN; the user's go, 2026-10-23), landed. Base `65cc430ed`, run `wf_7326f510-421`;
+  cross-review `.wave-loop\z17-run1\xreview.md`, build `waveZ17-build.py`. The server runs mod-reforging `c9b887a`;
+  `.reforge apply`'s online path still awaits a live round trip. Next: Z18 (Z15's follow-ups, specs in the
   e2e-coverage PLAN) on the user's go. The BiS
   chain ran 2026-10-21 (BiS chain, below).
   spec-balance is closed (2026-10-22). Its `Player.playerbot` switch (`docs/guide/playerbot-rules.md`) stays on in
@@ -242,7 +243,7 @@ the caps, and an "Apply on server" button over SOAP, also golden-neutral.
   - Perf scenarios refreshed `56a295570`, baseline on the 9950X3D `77b061b0c`.
   - Next time: [tools/bischain/README.md](../../tools/bischain/README.md) runs the whole chain; a narrowed run
     takes `--from-work bis-chain-1021`.
-- Workflow runIds: Z16's `wf_b6e64cf4-f8b` (both, base `6e24c717c`; the cross-review ran as a plain agent); Z15's `wf_22003b88-2d4` (all four, base `0127441aa`; the cross-review, the specs and the guides ran as plain agents); Z14's `wf_05383cd2-e97` (all four, base `36e678932`; the cross-review, the specs and the guides ran as plain agents); Z13's `wf_6395e35a-086` (all four, base `d61bbed61`; the cross-review, the specs and the guides ran as plain agents); Z12's `wf_661e4362-520` and `wf_ce509f13-550` (base `9a5d8fb6a`; the cross-review, the picks, the specs and the guides ran as plain agents); Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z17's `wf_7326f510-421` (both, base `65cc430ed`, resumed once for the live stage; the cross-review ran as a plain agent); Z16's `wf_b6e64cf4-f8b` (both, base `6e24c717c`; the cross-review ran as a plain agent); Z15's `wf_22003b88-2d4` (all four, base `0127441aa`; the cross-review, the specs and the guides ran as plain agents); Z14's `wf_05383cd2-e97` (all four, base `36e678932`; the cross-review, the specs and the guides ran as plain agents); Z13's `wf_6395e35a-086` (all four, base `d61bbed61`; the cross-review, the specs and the guides ran as plain agents); Z12's `wf_661e4362-520` and `wf_ce509f13-550` (base `9a5d8fb6a`; the cross-review, the picks, the specs and the guides ran as plain agents); Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
@@ -892,6 +893,9 @@ crashed before F2, so its column starts there.
 | CAP-TAB | merged | `0874270cc` | the Caps & Priority tab: caps as gear rating per hand (`sim/statcaps`, which the optimizer's caps now run), shipped stat values per phase (`assets/statweights/`, published by the BiS chain), reforge suggestions, live values at the player's gear (`sim/statslopes`, which `tools/statweights` now runs); no golden moves |
 | CAP-ROSTER | merged | `1a0e86a8a` | the spec pages' AzerothCore importer fetches the roster on open, preselects and remembers the raider, sets Heroic Presence from the raider's party; no golden moves |
 | wave Z16 cross-review | direct | `3ac4089c5` | Arms' ArP cap counts Battle Stance (1064); a healer test that couldn't fail; the RPCs side by side under `-race`; no golden moves |
+| CAP-FLOORS | merged | `f09e25c0d`, `22822103e` | reforge suggestions never drop a met hit, spell hit or expertise cap nor deepen a short one, and skip swaps under 5% of what they give up; no golden moves |
+| CAP-SERVER | merged | `d7df90071`; mod-reforging `c092fd3` | "Apply reforges on server…" sends `.reforge apply` over SOAP (on `192.168.49.35` and `127.0.0.1` only) for core-raid characters; live round trip on offline Angry; no golden moves |
+| wave Z17 cross-review | direct | `5745376cf`; mod-reforging `c9b887a` | the online path writes its row at once instead of two async writes; the dialog never strips a reforge the sim can't read; single Apply disabled where only Apply all keeps a cap; dev servers send no GM commands unless `WOTLK_DEV_SOAP_URL` is set; no golden moves |
 
 
 Later WIs are added as their wave starts.
