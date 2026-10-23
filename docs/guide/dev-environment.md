@@ -73,6 +73,9 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
   ```
 
   - Without `SIM_COMMIT`, optimizer results say sim "unknown": `.dockerignore` drops `.git`.
+  - Failing at once with `additional privileges requested: pass "--allow=fs.read=Dockerfile"` (seen from Git Bash
+    with the cwd on a lowercase `g:`): run it from PowerShell with `--project-directory G:\DevStuff\GitHub\wowsimwotlk
+    -f G:\DevStuff\GitHub\wowsimwotlk\compose.yaml`.
   - It's distroless: no shell. It serves whatever was built into the image, so rebuild it to see
     changes. After a rebuild, reload every open sim tab: a page from the old build keeps sending its old
     requests.
