@@ -214,16 +214,16 @@ test('each option names the main talent tree, and a pick still loads that charac
 });
 
 test.describe('healers load only on healer pages', () => {
-	// the roster's priests: Malediction plays Shadow, Prayer Discipline
-	const PRIEST_PAGES = [
+	// the roster's priests: Malediction plays Shadow, Prayer Discipline. Elemena is its one Restoration shaman
+	const PAGES = [
 		{ spec: 'shadow_priest', listed: 'Malediction', tree: 'Shadow' },
 		{ spec: 'smite_priest', listed: 'Malediction', tree: 'Shadow' },
 		{ spec: 'healing_priest', listed: 'Prayer', tree: 'Discipline' },
+		{ spec: 'restoration_shaman', listed: 'Elemena', tree: 'Restoration' },
 	];
-	for (const { spec, listed, tree } of PRIEST_PAGES) {
+	for (const { spec, listed, tree } of PAGES) {
 		test(`the ${spec} page lists only ${listed}, in the tab and in the window`, async ({ page }) => {
-			// the healer page alerts that its sim is experimental
-			acceptDialogs(page);
+			const dialogs = acceptDialogs(page);
 			await stubServer(page, { body: JSON.stringify(rosterJson) });
 			await openSpec(page, spec);
 			await openSimTab(page, 'caps-tab');
@@ -231,6 +231,7 @@ test.describe('healers load only on healer pages', () => {
 			const modal = await openImporter(page, 'AzerothCore');
 			await expect(modal.locator('.acore-server-status')).toContainText('From the server');
 			await expect(modal.locator('.acore-character-select option')).toHaveText([listed]);
+			expect(dialogs).toEqual([]);
 		});
 	}
 
@@ -273,7 +274,7 @@ test.describe('healers load only on healer pages', () => {
 	});
 
 	test('the healer page with no healer of its class says so', async ({ page }) => {
-		acceptDialogs(page);
+		const dialogs = acceptDialogs(page);
 		const noHealer = copy(rosterJson);
 		noHealer.characters = noHealer.characters.filter((char: any) => char.name != 'Prayer');
 		await stubServer(page, { body: JSON.stringify(noHealer) });
@@ -281,6 +282,7 @@ test.describe('healers load only on healer pages', () => {
 		await openSimTab(page, 'caps-tab');
 		await expect(tab(page).locator('.caps-character-status')).toHaveText('No Priest healers on the server.');
 		await expect(characterSelect(page)).toBeDisabled();
+		expect(dialogs).toEqual([]);
 	});
 });
 

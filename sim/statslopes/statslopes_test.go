@@ -109,10 +109,11 @@ func restorationShaman() *proto.Player {
 		Race:          proto.Race_RaceTroll,
 		Class:         proto.Class_ClassShaman,
 		Equipment:     core.GetGearSet("../../ui/restoration_shaman/gear_sets", "p1").GearSet,
-		Rotation:      castsNothing,
+		Rotation:      core.GetAplRotation("../../ui/restoration_shaman/apls", "default").Rotation,
 		TalentsString: "-3020503-50005331335310501122331251",
 		Spec: &proto.Player_RestorationShaman{RestorationShaman: &proto.RestorationShaman{Options: &proto.RestorationShaman_Options{
-			Shield: proto.ShamanShield_WaterShield,
+			Shield:         proto.ShamanShield_WaterShield,
+			EarthShieldPPM: 30,
 			Totems: &proto.ShamanTotems{
 				Earth: proto.EarthTotem_TremorTotem,
 				Air:   proto.AirTotem_WrathOfAirTotem,
@@ -313,7 +314,7 @@ func TestHealerIsMeasuredInHPS(t *testing.T) {
 		{"HealingPriest", holyPriest, true},
 		{"HolyPaladin", holyPaladin, false},
 		{"RestorationDruid", restorationDruid, false},
-		{"RestorationShaman", restorationShaman, false},
+		{"RestorationShaman", restorationShaman, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			player := tc.player()

@@ -13,19 +13,20 @@ func init() {
 	RegisterRestorationShaman()
 }
 
-// The APL only autocasts cooldowns and never heals, so the suite checks stats and item heals only.
+// The page's default APL, healing a target dummy at the page's Earth Shield rate.
 func TestRestoration(t *testing.T) {
 	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
 		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-			Class: proto.Class_ClassShaman,
-			Race:  proto.Race_RaceTroll,
+			Class:    proto.Class_ClassShaman,
+			Race:     proto.Race_RaceTroll,
+			IsHealer: true,
 
 			GearSet:     core.GetGearSet("../../../ui/restoration_shaman/gear_sets", "p1"),
 			Talents:     StandardTalents,
 			Glyphs:      StandardGlyphs,
 			Consumes:    FullConsumes,
-			SpecOptions: core.SpecOptionsCombo{Label: "Standard", SpecOptions: PlayerOptionsStandard},
-			Rotation:    core.RotationCombo{Label: "Default", Rotation: DefaultRotation},
+			SpecOptions: core.SpecOptionsCombo{Label: "Standard", SpecOptions: suiteOptions},
+			Rotation:    core.RotationCombo{Label: "Default", Rotation: core.GetAplRotation("../../../ui/restoration_shaman/apls", "default").Rotation},
 
 			ItemFilter: core.ItemFilter{
 				WeaponTypes: []proto.WeaponType{
@@ -136,6 +137,16 @@ var PlayerOptionsStandard = &proto.Player_RestorationShaman{
 	},
 }
 
+var suiteOptions = &proto.Player_RestorationShaman{
+	RestorationShaman: &proto.RestorationShaman{
+		Options: &proto.RestorationShaman_Options{
+			Shield:         proto.ShamanShield_WaterShield,
+			Totems:         BasicTotems,
+			EarthShieldPPM: 30,
+		},
+	},
+}
+
 var FullConsumes = &proto.Consumes{
 	Flask:           proto.Flask_FlaskOfBlindingLight,
 	Food:            proto.Food_FoodBlackenedBasilisk,
@@ -143,13 +154,6 @@ var FullConsumes = &proto.Consumes{
 	PrepopPotion:    proto.Potions_DestructionPotion,
 	DefaultConjured: proto.Conjured_ConjuredDarkRune,
 }
-
-var DefaultRotation = core.APLRotationFromJsonString(`{
-	"type": "TypeAPL",
-	"priorityList": [
-		{"action":{"autocastOtherCooldowns":{}}}
-	]
-}`)
 
 // Totemic Focus and Healing Grace, which no other build takes, on TestRestoration's default player healing
 // a target dummy

@@ -103,6 +103,11 @@ func (swr *StatWeightsResult) ToProto() *proto.StatWeightsResult {
 }
 
 func CalcStatWeight(swr *proto.StatWeightsRequest, referenceStat stats.Stat, progress chan *proto.ProgressMetrics) *StatWeightsResult {
+	return calcStatWeight(swr, 0, referenceStat, progress)
+}
+
+// calcStatWeight adds target dummies to the player's raid, which StatWeightsRequest has no field for.
+func calcStatWeight(swr *proto.StatWeightsRequest, targetDummies int32, referenceStat stats.Stat, progress chan *proto.ProgressMetrics) *StatWeightsResult {
 	if swr.Player.BonusStats == nil {
 		swr.Player.BonusStats = &proto.UnitStats{}
 	}
@@ -115,6 +120,7 @@ func CalcStatWeight(swr *proto.StatWeightsRequest, referenceStat stats.Stat, pro
 
 	raidProto := SinglePlayerRaidProto(swr.Player, swr.PartyBuffs, swr.RaidBuffs, swr.Debuffs)
 	raidProto.Tanks = swr.Tanks
+	raidProto.TargetDummies = targetDummies
 
 	simOptions := swr.SimOptions
 	simOptions.SaveAllValues = true

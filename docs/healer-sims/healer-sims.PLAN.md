@@ -191,6 +191,11 @@ Review (uncommitted):
 - Page request after the fixes, same method: P4 none, HPS 21460; P5 166 s, 21619 (mana unchanged). P5 HPS a point
   (Int / SP / crit / haste / MP5): 6.50 / 3.18 / 4.46 / 2.77 / 5.81. These replace stage 3's P5.
 
+Cross-review (uncommitted):
+- `TestRestoration` runs the page's APL with `IsHealer` and Earth Shield at 30 a minute, so its Settings,
+  AllItems, Average and StatWeights rows heal (they were 0 HPS); only that suite's goldens move.
+- The real page's request matches the numbers above; at P4 ~3 s out of mana on average (avg time to OOM 186 s).
+
 ### HEAL-PRI (G; stages: code)
 
 - `disc.apl.json` and `holy.apl.json` fill every GCD, no `spellCpm` caps; P5 presets; launch from Alpha.
@@ -204,18 +209,23 @@ Review (uncommitted):
 - P5 presets (`p5_disc`, `p5_holy`): ICC heroic cloth plus the Ruby Sanctum cloak, ring and trinket, gems
   matched to sockets. Both trees share one list. `p4_holy` was a copy of `p3_holy` (ToC gear); it now holds the
   P4 list. The page is Launched; `header.spec.ts` needed no change (Alpha was already in the menu).
-- Measured on the page's setup (9 dummies, 180 s, P1 to P5 presets), time to OOM in seconds:
+- Measured on the merged tree (cross-review) with the page's own `/statSlopesAsync` request (padded parties,
+  9 dummies, 180 s, 3000 iterations, seed 424242). Until HEAL-SHA's `raid.go` rule the page healed ~350 HPS
+  (its dummies were dead), so the numbers first reported here came from another request. Time to OOM, s
+  out of mana in brackets, HPS:
 
   | | preraid | P1 | P2 | P3 | P4 | P5 |
   |---|---|---|---|---|---|---|
-  | Disc | 161 | 174 | 187 | 214 | 497 | 433 |
-  | Holy | 98 | 112 | 102 | 64 | 187 | 146 |
+  | Disc | 139 (20) 5945 | 150 (14) 7072 | 155 (11) 7973 | 198 (0) 9051 | 325 (0) 10614 | 281 (0) 11358 |
+  | Holy | 84 (62) 5540 | 96 (49) 6605 | 88 (53) 7433 | 63 (68) 8313 | 154 (10) 12491 | 123 (29) 12476 |
 
-  Disc runs out of mana at preraid to P2 (3 s idle at P1, 1 s at P2) and not from P3; holy at every phase.
 - "Measure at my gear": every stat is nonzero except:
-  - Disc P4 and P5, Spirit and MP5 (0): the fight ends before mana does.
-  - Spell haste is slightly negative on disc P1 and P2 and on holy at every phase but P3 (+0.05): faster casts
-    spend mana the fight can't regain.
+  - Disc P4 and P5, Spirit and MP5 (0): the fight ends before mana does (480 s at P4: Spirit 1.45, MP5 3.27).
+  - Spell haste's gain is about 0 or below on disc P1 and P2 (−0.07, −0.18) and holy at every phase but P3
+    (−0.21 to −0.29): mana-bound, faster casts spend more of it on the Greater Heal filler. Unbound (holy P1
+    over 60 s) haste gains 1.05.
+- `page_request_test.go` (cross-review): the page's request heals with every APL spell and runs dry inside
+  180 s at P1, both trees.
 
 ### HEAL-TEST (G; stages: code)
 
@@ -230,12 +240,14 @@ Review (uncommitted):
 - `TestStatWeights` reads `Hps` weights when `core.IsHealerSpec` (new, `test_suite.go`); `HealerStatsToWeigh` is the
   six healer stats. `FullCharacterTestSuiteGenerator` (`test_generators.go`, outside the Owns line) defaults a
   healer suite's `StatsToWeigh` to them, SP as reference, so the three suites that had none gain a row.
-- `StatWeightsRequest` has no target dummies, so these rows measure a healer healing itself. A dummies field is a
-  proto change; not made.
-- Rows: Disc and Holy priest nonzero; Holy Paladin, Resto Druid and Resto Shaman all zero until they cast heals.
-- `statslopes_test.go`: player builders for the three other healers (autocast-only APL, P1 gear),
-  `request()` adds a dummy for every healer spec, `TestHealerIsMeasuredInHPS` runs all four (HPS above zero
-  only asserted for the priest).
+- `StatWeightsRequest` has no target dummies field (a proto change; not made). Cross-review: `TestStatWeights`
+  adds one for a healer through `calcStatWeight` (`sim/core/statweight.go`), as `IsHealer` does for the other
+  rows; `CalcStatWeight` and the UI are unchanged.
+- Rows: Disc, Holy priest and (cross-review: the suite runs the page's APL) Resto Shaman nonzero; Holy Paladin
+  and Resto Druid all zero until they cast heals.
+- `statslopes_test.go`: player builders for the three other healers (P1 gear; Resto Shaman on the page's APL,
+  the others autocast-only), `request()` adds a dummy for every healer spec, `TestHealerIsMeasuredInHPS` runs
+  all four (HPS above zero asserted for the priest and the shaman).
 - The alert is gone: healer pages add a warning-zone note (`Tooltips.HEALING_SIM_DISCLAIMER`, reworded to say
   what the model is).
 - Goldens: only the five healer suites' StatWeights rows moved; dps, hps, tps, dtps and abilities unchanged in all 37.

@@ -74,9 +74,11 @@ func (testSuite *IndividualTestSuite) TestCharacterStats(testName string, csr *p
 func (testSuite *IndividualTestSuite) TestStatWeights(testName string, swr *proto.StatWeightsRequest) {
 	testSuite.testNames = append(testSuite.testNames, testName)
 
-	result := StatWeights(swr)
+	healer := IsHealerSpec(PlayerProtoToSpec(swr.Player))
+	// a healer heals a target dummy, like an IsHealer suite's other rows, not itself
+	result := calcStatWeight(swr, TernaryInt32(healer, 1, 0), stats.Stat(swr.EpReferenceStat), nil).ToProto()
 	values := result.Dps
-	if IsHealerSpec(PlayerProtoToSpec(swr.Player)) {
+	if healer {
 		values = result.Hps
 	}
 	weights := stats.FromFloatArray(values.Weights.Stats)

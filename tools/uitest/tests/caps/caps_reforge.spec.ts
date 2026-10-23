@@ -8,7 +8,7 @@ import { suggestReforges } from '../../../../ui/core/stat_priority';
 import { type LiveValues, type ShippedPhase } from '../../../../ui/core/stat_values';
 import { closePicker, openPicker, picker, showTab, type Slot } from '../gear/gear';
 import { openSim, openSimTab } from '../lib/page';
-import { acceptDialogs, openSpec, savedData, select } from '../settings/helpers';
+import { openSpec, savedData, select } from '../settings/helpers';
 
 const HIT = 31;
 const CRIT = 32;
@@ -463,15 +463,16 @@ test.describe('the floor hint', () => {
 		});
 	}
 
-	test('a healer page holds no floor cap, so there is no hint', async ({ page }) => {
-		// the page alerts that the healing sim is experimental
-		acceptDialogs(page);
-		await openSim(page, 'healing_priest');
-		await openSimTab(page, 'caps-tab');
-		await expect(page.locator('#caps-tab tr.caps-row[data-label="Haste"]')).toBeVisible();
-		await expect(page.locator('#caps-tab .caps-table')).not.toHaveClass(/caps-loading/);
-		await expect(hint(page)).toBeHidden();
-	});
+	for (const spec of ['healing_priest', 'restoration_shaman']) {
+		test(`the ${spec} page holds only the haste cap, so there is no hint`, async ({ page }) => {
+			await openSim(page, spec);
+			await openSimTab(page, 'caps-tab');
+			await expect(page.locator('#caps-tab tr.caps-row[data-label="Haste"]')).toBeVisible();
+			await expect(page.locator('#caps-tab .caps-table')).not.toHaveClass(/caps-loading/);
+			await expect(page.locator('#caps-tab tr.caps-row')).toHaveCount(1);
+			await expect(hint(page)).toBeHidden();
+		});
+	}
 
 	test('the hint follows the caps when they refresh, and a cap out of reach is no floor', async ({ page }) => {
 		let expertiseOutOfReach = false;

@@ -1,7 +1,9 @@
 import { expect, type Page, test } from '@playwright/test';
 
+import { warnings } from '../gear/gear';
 import { SPECS } from '../lib/page';
 import {
+	acceptDialogs,
 	checkbox,
 	expectActive,
 	icon,
@@ -129,6 +131,15 @@ test('the sim title menu links every sim page, and each one opens', async ({ pag
 		expect((await page.request.get(href)).status(), href).toBe(200);
 	}
 });
+
+for (const spec of ['healing_priest', 'restoration_shaman']) {
+	test(`the ${spec} page says how it models healing in its warnings, with no alert`, async ({ page }) => {
+		const dialogs = acceptDialogs(page);
+		await openSpec(page, spec);
+		expect(await warnings(page)).toContain('Healing here is a throughput model');
+		expect(dialogs).toEqual([]);
+	});
+}
 
 test("a class's specs open from its submenu", async ({ page }) => {
 	await openSpec(page, SPEC);
