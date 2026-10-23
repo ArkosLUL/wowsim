@@ -4,10 +4,13 @@ import { closePicker, openPicker, pane } from '../gear/gear';
 import { errorReply, NOT_CONFIGURED, stubServer } from '../lib/acore';
 import { openSimTab, watchForErrors } from '../lib/page';
 import { exportJson, openImporter, paste, readRoster } from '../raid/raid';
-import { acceptDialogs, openSpec, storageKey, storedSettings } from '../settings/helpers';
+import { acceptDialogs, openSpec, reloadSim, storageKey, storedSettings } from '../settings/helpers';
 
 const SPEC = 'deathknight';
 const rosterJson = JSON.parse(readRoster());
+const DEATH_KNIGHTS = ['Deathsong (Unholy)', 'Obliteration (Frost)', 'Felesta (Blood)'];
+const character = (roster: any, name: string) => roster.characters.find((char: any) => char.name == name);
+const copy = (roster: any) => JSON.parse(JSON.stringify(roster));
 
 // Deathsong's neck carries a reforge (acSlot 1), his chest (4) and legs (6) too, his head (0), shoulders (2) and belt (5) none
 const NECK = 1;
@@ -62,7 +65,7 @@ async function loadDeathsong(page: Page, dialogs: string[]) {
 	const server = await stubServer(page, { body: JSON.stringify(rosterJson) });
 	await openSpec(page, SPEC);
 	await openSimTab(page, 'caps-tab');
-	await expect(characterSelect(page).locator('option')).toHaveText(['Deathsong', 'Obliteration', 'Felesta']);
+	await expect(characterSelect(page).locator('option')).toHaveText(DEATH_KNIGHTS);
 	await expect(characterSelect(page)).toHaveValue('Deathsong');
 	await tab(page).locator('.caps-character-reload').click();
 	await expect(tab(page).locator('.caps-import-loaded')).toContainText('Loaded Deathsong from the server');
@@ -181,10 +184,104 @@ test("the server's refusal shows inline in the character block, and Reload reads
 
 	server.reply = { body: JSON.stringify(rosterJson) };
 	await tab(page).locator('.caps-character-reload').click();
-	await expect(characterSelect(page).locator('option')).toHaveText(['Deathsong', 'Obliteration', 'Felesta']);
+	await expect(characterSelect(page).locator('option')).toHaveText(DEATH_KNIGHTS);
 	await expect(tab(page).locator('.caps-character-status')).toHaveText('');
 	await expect(tab(page).locator('.caps-import-loaded')).toHaveCount(0);
 	expect(dialogs).toEqual([]);
+});
+
+test('each option names the main talent tree, and a pick still loads that character by name', async ({ page }) => {
+	const dialogs = acceptDialogs(page);
+	const untalented = copy(rosterJson);
+	character(untalented, 'Obliteration').talents = '';
+	await stubServer(page, { body: JSON.stringify(untalented) });
+	await openSpec(page, SPEC);
+	await openSimTab(page, 'caps-tab');
+	const options = characterSelect(page).locator('option');
+	await expect(options).toHaveText(['Deathsong (Unholy)', 'Obliteration', 'Felesta (Blood)']);
+	expect(await options.evaluateAll(opts => opts.map(opt => (opt as HTMLOptionElement).value))).toEqual(['Deathsong', 'Obliteration', 'Felesta']);
+
+	await characterSelect(page).selectOption({ label: 'Felesta (Blood)' });
+	await expect(tab(page).locator('.caps-import-loaded')).toContainText('Loaded Felesta from the server');
+	expect((await storedSettings(page, SPEC)).player.talentsString).toBe(character(rosterJson, 'Felesta').talents);
+
+	// the saved pick is a name, and still preselects its labelled option
+	await reloadSim(page);
+	await openSimTab(page, 'caps-tab');
+	await expect(characterSelect(page)).toHaveValue('Felesta');
+	await expect(characterSelect(page).locator('option:checked')).toHaveText('Felesta (Blood)');
+	expect(dialogs).toEqual([]);
+});
+
+test.describe('healers load only on healer pages', () => {
+	// the roster's priests: Malediction plays Shadow, Prayer Discipline
+	const PRIEST_PAGES = [
+		{ spec: 'shadow_priest', listed: 'Malediction', tree: 'Shadow' },
+		{ spec: 'smite_priest', listed: 'Malediction', tree: 'Shadow' },
+		{ spec: 'healing_priest', listed: 'Prayer', tree: 'Discipline' },
+	];
+	for (const { spec, listed, tree } of PRIEST_PAGES) {
+		test(`the ${spec} page lists only ${listed}, in the tab and in the window`, async ({ page }) => {
+			// the healer page alerts that its sim is experimental
+			acceptDialogs(page);
+			await stubServer(page, { body: JSON.stringify(rosterJson) });
+			await openSpec(page, spec);
+			await openSimTab(page, 'caps-tab');
+			await expect(characterSelect(page).locator('option')).toHaveText([`${listed} (${tree})`]);
+			const modal = await openImporter(page, 'AzerothCore');
+			await expect(modal.locator('.acore-server-status')).toContainText('From the server');
+			await expect(modal.locator('.acore-character-select option')).toHaveText([listed]);
+		});
+	}
+
+	test('a character who respecced to heal since the list was read is refused, and nobody else loads', async ({ page }) => {
+		const dialogs = acceptDialogs(page);
+		const beforeRespec = copy(rosterJson);
+		character(beforeRespec, 'Holylight').talents = character(rosterJson, 'Justice').talents;
+		const server = await stubServer(page, { body: JSON.stringify(beforeRespec) });
+		await openSpec(page, 'retribution_paladin');
+		await openSimTab(page, 'caps-tab');
+		await expect(characterSelect(page).locator('option')).toHaveText(['Justice (Retribution)', 'Bulwark (Protection)', 'Holylight (Retribution)']);
+		const talents = async () => (await storedSettings(page, 'retribution_paladin'))?.player?.talentsString;
+		const before = await talents();
+
+		server.reply = { body: JSON.stringify(rosterJson) };
+		await characterSelect(page).selectOption('Holylight');
+		const status = tab(page).locator('.caps-character-status');
+		await expect(status).toHaveText("Couldn't load Holylight: Holylight is specced Holy: load them on a healer page.");
+		await expect(status).toHaveClass(/caps-error/);
+		await expect(tab(page).locator('.caps-import-loaded')).toHaveCount(0);
+		expect(await talents()).toBe(before);
+		expect(dialogs).toEqual([]);
+	});
+
+	test('a DPS page with only healers of its class says so, in the tab and in the window', async ({ page }) => {
+		const dialogs = acceptDialogs(page);
+		const healersOnly = copy(rosterJson);
+		healersOnly.characters = healersOnly.characters.filter((char: any) => char.name != 'Malediction');
+		await stubServer(page, { body: JSON.stringify(healersOnly) });
+		await openSpec(page, 'shadow_priest');
+		await openSimTab(page, 'caps-tab');
+		await expect(tab(page).locator('.caps-character-status')).toHaveText('Only Priest healers on the server: they load on a healer page.');
+		await expect(characterSelect(page).locator('option')).toHaveCount(0);
+		await expect(characterSelect(page)).toBeDisabled();
+
+		const modal = await openImporter(page, 'AzerothCore');
+		await expect(modal.locator('.acore-character-select option')).toHaveText(['Only Priest healers in this roster: they load on a healer page']);
+		await modal.locator('.import-button').click();
+		await expect.poll(() => dialogs).toEqual(['Import error:\nOnly Priest healers in this roster: they load on a healer page.']);
+	});
+
+	test('the healer page with no healer of its class says so', async ({ page }) => {
+		acceptDialogs(page);
+		const noHealer = copy(rosterJson);
+		noHealer.characters = noHealer.characters.filter((char: any) => char.name != 'Prayer');
+		await stubServer(page, { body: JSON.stringify(noHealer) });
+		await openSpec(page, 'healing_priest');
+		await openSimTab(page, 'caps-tab');
+		await expect(tab(page).locator('.caps-character-status')).toHaveText('No Priest healers on the server.');
+		await expect(characterSelect(page)).toBeDisabled();
+	});
 });
 
 test('the preview lists only the slots that change and counts the ones left out', async ({ page }) => {

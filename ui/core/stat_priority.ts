@@ -364,10 +364,14 @@ interface Floor {
 	limit: number;
 }
 
-// Every cap that costs when missed. A met one stays met and a short one never gets shorter.
+// A cap that costs when missed. A met one stays met and a short one never gets shorter.
+export function isFloor(cap: StatCap): boolean {
+	return cap.kind == StatCapKind.StatCapFloor && Number.isFinite(cap.needed);
+}
+
 function floorsOf(caps: Array<StatCap>): Array<Floor> {
 	return caps
-		.filter(cap => cap.kind == StatCapKind.StatCapFloor && Number.isFinite(cap.needed))
+		.filter(isFloor)
 		.map(cap => {
 			const start = Math.round(cap.rating) - Math.round(cap.needed);
 			return { stat: cap.stat, start, limit: Math.min(0, start) };

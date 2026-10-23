@@ -1,4 +1,4 @@
-import { parseRoster, rosterClass } from '../../../raid/acore_roster';
+import { parseRoster, RosterCharacter } from '../../../raid/acore_roster';
 import { fetchServerRoster } from '../../../raid/acore_server';
 import * as Mechanics from '../../constants/mechanics';
 import { IndividualSimUI } from '../../individual_sim_ui';
@@ -11,6 +11,7 @@ import { isHealingSpec, isTankSpec } from '../../proto_utils/utils';
 import {
 	BuildChoice,
 	chooseBuild,
+	isFloor,
 	livePriority,
 	Metric,
 	phaseOf,
@@ -24,7 +25,7 @@ import { LiveValues, liveValues, loadStatValues, ShippedPhase, StatValues } from
 import { TypedEvent } from '../../typed_event';
 import { getEnumValues } from '../../utils';
 import { ContentBlock } from '../content_block';
-import { importAcoreCharacter, loadAcorePick } from '../importers';
+import { acoreCandidates, importAcoreCharacter, loadAcorePick, mainTreeName, noAcoreCandidates } from '../importers';
 import { SimTab } from '../sim_tab';
 import { PlanRow, planServerReforges, postReforges } from './acore_reforge';
 import { button, formatNumber, newElement, PHASE_LABELS, simServerAvailable, tableRow } from './optimizer_tab';
@@ -126,6 +127,39 @@ function capKey(cap: StatCap): string {
 	return `${cap.label}|${cap.hand}`;
 }
 
+const FLOOR_NAMES: Partial<Record<Stat, string>> = {
+	[Stat.StatMeleeHit]: 'hit',
+	[Stat.StatSpellHit]: 'spell hit',
+	[Stat.StatExpertise]: 'expertise',
+	[Stat.StatDefense]: 'Defense',
+};
+
+// "hit and expertise caps", or '' when no floor is held; names follow the caps table's order.
+function floorCapsPhrase(caps: Array<StatCap>): string {
+	const names = [...new Set(caps.filter(isFloor).map(cap => FLOOR_NAMES[cap.stat] ?? statNames.get(cap.stat) ?? ''))];
+	if (names.length == 0) {
+		return '';
+	}
+	if (names.length == 1) {
+		return `${names[0]} cap`;
+	}
+	return `${names.slice(0, -1).join(', ')} and ${names[names.length - 1]} caps`;
+}
+
+function floorHintText(caps: Array<StatCap>): string {
+	const phrase = floorCapsPhrase(caps);
+	if (!phrase) {
+		return '';
+	}
+	const them = phrase.endsWith('caps') ? 'them' : 'it';
+	return `Suggestions keep your ${phrase} once you meet ${them}, and never take you further from ${them}.`;
+}
+
+function characterLabel(char: RosterCharacter): string {
+	const tree = mainTreeName(char);
+	return tree ? `${char.name} (${tree})` : char.name;
+}
+
 function clampPhase(phase: number): number {
 	return Math.min(MAX_CONTENT_PHASE, Math.max(MIN_CONTENT_PHASE, phase));
 }
@@ -170,6 +204,7 @@ export class CapsTab extends SimTab {
 	// healers only ever have live values
 	private source: Source = 'shipped';
 
+	private readonly floorHint: HTMLElement;
 	private readonly reforgeStatus: HTMLElement;
 	private readonly reforgeControls: HTMLElement;
 	private readonly reforgeTable: HTMLTableElement;
@@ -249,6 +284,8 @@ export class CapsTab extends SimTab {
 		}
 
 		const reforgeBlock = new ContentBlock(leftPanel, 'caps-tab-reforge', { header: { title: 'Reforge suggestions' } });
+		this.floorHint = newElement('p', 'caps-hint reforge-floor-hint');
+		this.floorHint.hidden = true;
 		this.reforgeStatus = newElement('p', 'reforge-status');
 		this.reforgeControls = newElement('div', 'reforge-controls');
 		this.reforgeTable = newElement('table', 'table table-sm reforge-table');
@@ -267,7 +304,7 @@ export class CapsTab extends SimTab {
 				"Scored with the stat priority's values. Rating past a cap counts for nothing, and each pick uses up the cap room " +
 					'or surplus before the next one is scored.',
 			),
-			newElement('p', 'caps-hint reforge-floor-hint', 'Suggestions keep every hit and expertise cap you meet.'),
+			this.floorHint,
 			this.reforgeStatus,
 			this.reforgeControls,
 			this.sendPreview,
@@ -417,6 +454,8 @@ export class CapsTab extends SimTab {
 			body.append(...this.capRows(cap));
 		}
 		this.capsTable.replaceChildren(head, body);
+		this.floorHint.textContent = floorHintText(this.caps);
+		this.floorHint.hidden = !this.floorHint.textContent;
 	}
 
 	private capRows(cap: StatCap): Array<HTMLTableRowElement> {
@@ -831,7 +870,7 @@ export class CapsTab extends SimTab {
 			const apply = button('Apply', 'btn-sm btn-outline-primary reforge-apply', () => this.applySuggestions([s]));
 			if (!s.alone) {
 				apply.disabled = true;
-				action.title = 'Alone this would drop a hit or expertise cap: it spends what other suggestions add. Use Apply all.';
+				action.title = `Alone this would drop your ${floorCapsPhrase(this.caps)}: it spends what other suggestions add. Use Apply all.`;
 			}
 			action.appendChild(apply);
 		}
@@ -881,7 +920,7 @@ export class CapsTab extends SimTab {
 		}
 	}
 
-	// The core raid's characters of this page's class, in a dropdown. The character the page last
+	// The core raid's characters this page can load, in a dropdown. The character the page last
 	// loaded (or the importer's remembered pick) is preselected but not loaded until Reload.
 	private async requestCharacters() {
 		if (!this.hasServer || this.charactersRequested) {
@@ -891,16 +930,19 @@ export class CapsTab extends SimTab {
 		this.setCharacterStatus('Reading the core raid off the server…', false);
 		try {
 			const roster = parseRoster(await fetchServerRoster());
-			const playerClass = this.simUI.player.getClass();
-			const names = roster.characters.filter(char => rosterClass(char.classId) == playerClass).map(char => char.name);
-			if (names.length == 0) {
-				throw new Error('The core raid has no character of this class.');
-			}
+			const characters = acoreCandidates(this.simUI, roster.characters);
 			// names come off the server, so build the options instead of templating HTML
-			this.characterSelect.replaceChildren(...names.map(name => new Option(name, name)));
-			const wanted = [this.simUI.lastAcoreImport?.name, loadAcorePick(this.simUI)];
-			this.characterSelect.value = wanted.find(name => name && names.includes(name)) ?? names[0];
-			this.setCharacterStatus('', false);
+			this.characterSelect.replaceChildren(...characters.map(char => new Option(characterLabel(char), char.name)));
+			if (characters.length == 0) {
+				// so Reload reads the list again
+				this.charactersRequested = false;
+				this.setCharacterStatus(`${noAcoreCandidates(this.simUI, roster.characters, 'on the server')}.`, false);
+			} else {
+				const names = characters.map(char => char.name);
+				const wanted = [this.simUI.lastAcoreImport?.name, loadAcorePick(this.simUI)];
+				this.characterSelect.value = wanted.find(name => name && names.includes(name)) ?? names[0];
+				this.setCharacterStatus('', false);
+			}
 		} catch (error: any) {
 			this.charactersRequested = false;
 			this.setCharacterStatus(`Couldn't read the roster off the server: ${error?.message}`, true);

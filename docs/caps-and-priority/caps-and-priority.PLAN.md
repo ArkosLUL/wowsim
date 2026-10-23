@@ -70,6 +70,14 @@ Runs in the [wave loop](../wave-loop/wave-loop.PLAN.md). The [RUNBOOK](../wave-l
 - The Import menu's AzerothCore window drops both alerts (success and notes); its notes show in the Caps tab. Import errors still alert.
 - A phase loop on branch `caps-and-priority-ux`, not a wave.
 
+**CAP-UX2 (2026-10-23)**
+- Asked for after a healer, loaded on a DPS page of their class, showed that page's hit cap under a hint naming hit and expertise.
+- The floor hint names only the floor caps the page's current caps hold, and hides with none (healers).
+- Dropdown options read "<name> (<main talent tree>)".
+- A healer (main tree Holy paladin, Discipline or Holy priest, Restoration shaman or druid) loads only on a healer page (`isHealingSpec`), and only healers load there; Smite is a DPS page. One rule for the Caps tab dropdown, the Import menu's AzerothCore window and `importAcoreCharacter`; the raid sim's import stays.
+- The class menu shows no Holy Paladin, Resto Druid or Resto Shaman page (unlaunched; those sims cast nothing): Healing Priest is the only healer page.
+- A phase loop on branch `caps-and-priority-ux2`.
+
 ## Design
 
 ### Caps engine: `sim/statcaps`
@@ -566,3 +574,28 @@ Load and send one character in three clicks (decisions above). Raid sim import, 
 - Specs: `server_reforge` rewritten (15 tests: the review added a held load and a vanished name, Reload after a failed list, a gear-tab change, another importer, and exact posted slots with reforging off so no suggestion moves them); `roster_import`, `caps_tab`, `raid/acore_import` (the individual importer test) and `settings/import_export` (the AzerothCore import) updated to no alert.
 - Verified: `dock.sh tsc` clean; eslint on the changed files shows only three old `importers.ts` unused-var warnings. Dev server `wotlk-dev-cap-ux` on 3338 with `/acoreRoster` and `/acoreReforge` stubbed: the whole uitest suite ran 475 passed, 3 skipped, 3 failed. The three (`gear_actions` unequip, `gems_enchants` fourth Dragon's Eye, `rankings` dropdown link) fail the same way on prod at master `1d4a488a9`, so they predate this item.
 - After the review fixes: `dock.sh tsc` clean, eslint the same three warnings; on `wotlk-dev-cap-ux` without prod.env, `smoke`, `caps/`, `raid/acore_import`, `raid/acore_server` and `settings/import_export` ran 150 passed, 2 skipped.
+
+### CAP-UX2 (phase loop; golden-neutral; stages: code, docs)
+
+Three changes to the Caps tab and the individual AzerothCore import (decisions above). Suggestions, floors, the send and the raid sim's import stay as they are.
+
+**Floor hint** (`caps_tab.ts`): `.reforge-floor-hint` names the floors (`StatCapFloor`, finite `needed`) the current caps hold, expertise once, re-rendered on every caps refresh; hidden with none.
+
+**Dropdown labels** (`caps_tab.ts`): "<name> (<main talent tree>)" from `getTalentTree` and `classTalentsConfig`; bare name without talents; the option value stays the name.
+
+**Healer rule** (`importers.ts`): on a DPS or tank page only non-healers of the class, on a healer page only healers, in the dropdown, the window and `importAcoreCharacter` (which refuses a misfit, naming why). A failing saved pick isn't preselected; with no one left, a short line says so.
+
+**Tests** (dev server 3338, `wotlk-dev-cap-ux2`, without prod.env): hint per role (warrior, tank DK, mage, healing priest, a refresh); labels and pick by label; priests listed per page in tab and window; a refused import; no one left. Plus `dock.sh tsc` and eslint.
+
+**Docs** (via `/compact-docs-writer`): [stat-caps](../guide/stat-caps.md)'s floors and "The tab"; the uitest README's caps row.
+
+**Owns:** `caps_tab.ts`'s floor hint and dropdown, `isFloor` in `stat_priority.ts`, `importers.ts`'s AzerothCore candidate rule, `tests/caps/caps_reforge.spec.ts` and `server_reforge.spec.ts`, these docs, this `#### As built`.
+
+#### As built
+
+- Floors: `isFloor` (`stat_priority.ts`) is shared by `floorsOf` and the hint. Names follow the caps table's order: "Suggestions keep your hit, expertise and Defense caps once you meet them, and never take you further from them." (tank DK), "…your hit and expertise caps…" (Fury), "Suggestions keep your spell hit cap once you meet it, and never take you further from it." (mage); hidden on healers. An out-of-reach floor isn't named.
+- Labels: `mainTreeName` (`importers.ts`), '' at zero points, so "000" also reads bare. Only the tab labels; the window keeps bare names.
+- Healer rule: `acoreCandidates`, `roleMisfit`, `noAcoreCandidates` in `importers.ts`. A character with no talents counts as a non-healer. Refusals: "<name> is specced <tree>: load them on a healer page." / "…on a DPS or tank page."; the tab shows it as "Couldn't load <name>: …". No one left: tab status (not red, Reload reads the list again) "No Priest healers on the server." or "Only Priest healers on the server: they load on a healer page."; the window's only option is the same line "in this roster", and Import alerts it. No one of the class at all now reads "No <class> on the server." in the tab (it was a red "Couldn't read the roster" line); the window's texts stay.
+- Specs: `caps_reforge` replaces its hint test with 5 (`the floor hint`); `server_reforge` adds 6 (labels and pick by label with a reload, priests on Shadow, Smite and Healing, a respec refused on Ret, healers only on Shadow, no healer on Healing) and expects labels in 2.
+- Review fixes: the disabled Apply's tooltip named "a hit or expertise cap" whatever the page; it now reads "Alone this would drop your <floors> caps: …" from the same `floorCapsPhrase` as the hint, and `caps_reforge` pins it on Fury. No other finding.
+- Verified: `dock.sh tsc` clean; eslint same as HEAD (three old `importers.ts` warnings). On `wotlk-dev-cap-ux2` without prod.env: `smoke` and `caps/` 122 passed, 1 skipped; `raid/acore_import`, `raid/acore_server`, `settings/import_export` 39 passed, 1 skipped.
