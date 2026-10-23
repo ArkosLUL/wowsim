@@ -436,6 +436,12 @@ Apply all could leave hit or expertise below a cap: `suggestReforges` priced rat
 
 **Owns:** `suggestReforges` and its helpers in `stat_priority.ts`; the hint line in `caps_tab.ts`'s reforge block; `tools/uitest/tests/caps/caps_reforge.spec.ts`; [stat-caps](../guide/stat-caps.md)'s "Reforge suggestions"; this section's `#### As built`.
 
+#### As built
+
+- `suggestReforges` builds floors (`floorsOf`) from the caps; `keepsFloors` skips any candidate taking one below `min(0, start surplus)`, counting earlier picks. `gainOf` also returns the value given up for the 5% noise rule.
+- The hint line is `p.reforge-floor-hint`. No Go change; goldens untouched.
+- Tests in `caps_reforge.spec.ts`: floor, short-cap, spell-hit, live and noise units; a page test per Unholy DK, Fury, rogue and Prot paladin (default gear, phase 3) checks no floor ends below `min(0, before)` after Apply all. Floors on the page are read from cap labels, since the row carries no kind.
+
 ### CAP-SERVER (Z17; golden-neutral; C++; stages: server, route, live, docs)
 
 A tab button sends the sim's reforges to a core-raid character on the live server. mod-reforging reads `character_reforging` into memory only at startup, so the change goes through a GM command over SOAP, never a DB write.

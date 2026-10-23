@@ -241,6 +241,7 @@ export class CapsTab extends SimTab {
 				"Scored with the stat priority's values. Rating past a cap counts for nothing, and each pick uses up the cap room " +
 					'or surplus before the next one is scored.',
 			),
+			newElement('p', 'caps-hint reforge-floor-hint', 'Suggestions keep every hit and expertise cap you meet.'),
 			this.reforgeStatus,
 			this.reforgeControls,
 			this.reforgeTable,

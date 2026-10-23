@@ -351,9 +351,29 @@ export interface ReforgeSuggestion extends ReforgeSlot {
 
 // float noise between two equal values isn't a gain
 const MIN_GAIN = 1e-6;
+// a pick must gain at least this share of the value it gives up, so near-equal stats don't churn
+const MIN_RELATIVE_GAIN = 0.05;
+
+interface Floor {
+	stat: Stat;
+	// rating past the cap now; the least the gear may be left at
+	start: number;
+	limit: number;
+}
+
+// Every cap that costs when missed. A met one stays met and a short one never gets shorter.
+function floorsOf(caps: Array<StatCap>): Array<Floor> {
+	return caps
+		.filter(cap => cap.kind == StatCapKind.StatCapFloor && Number.isFinite(cap.needed))
+		.map(cap => {
+			const start = Math.round(cap.rating) - Math.round(cap.needed);
+			return { stat: cap.stat, start, limit: Math.min(0, start) };
+		});
+}
 
 // One suggestion per item, picked greedily: the best gain first, and each pick spends the cap
-// surplus or room the later ones are scored against. An item's current reforge comes off before a
+// surplus or room the later ones are scored against. No pick takes a floor cap below where it
+// stands or below zero, whichever is lower. An item's current reforge comes off before a
 // candidate goes on. Items with nothing to offer and no reforge are left out. Live values score
 // added rating at their gain and removed rating at their loss.
 export function suggestReforges(
@@ -373,10 +393,19 @@ export function suggestReforges(
 		return found;
 	};
 	const moved = new Map<Stat, number>();
+	const floors = floorsOf(caps);
+	const keepsFloors = (change: Map<Stat, number>) =>
+		floors.every(floor => floor.start + (moved.get(floor.stat) ?? 0) + (change.get(floor.stat) ?? 0) >= floor.limit);
+	// gain, and the part of it spent on value given up
 	const gainOf = (change: Map<Stat, number>) => {
 		let gain = 0;
-		change.forEach((by, stat) => (gain += moveValue(line(stat), moved.get(stat) ?? 0, by)));
-		return gain;
+		let given = 0;
+		change.forEach((by, stat) => {
+			const part = moveValue(line(stat), moved.get(stat) ?? 0, by);
+			gain += part;
+			given -= Math.min(0, part);
+		});
+		return { gain, given };
 	};
 
 	const results: Array<ReforgeSuggestion> = [];
@@ -406,8 +435,11 @@ export function suggestReforges(
 		let best: { index: number; reforge: ItemReforge | null; change: Map<Stat, number>; gain: number } | null = null;
 		for (let index = 0; index < open.length; index++) {
 			for (const { reforge, change } of open[index].candidates) {
-				const gain = gainOf(change);
-				if (gain > MIN_GAIN && (!best || gain > best.gain)) {
+				if (!keepsFloors(change)) {
+					continue;
+				}
+				const { gain, given } = gainOf(change);
+				if (gain > MIN_GAIN && gain >= MIN_RELATIVE_GAIN * given && (!best || gain > best.gain)) {
 					best = { index, reforge, change, gain };
 				}
 			}
