@@ -126,9 +126,8 @@ pets and guardians in [pets](pets.md).
   pull, then Earth Shield when it's gone, Tidal Force, Riptide on cooldown, Healing Wave at 2 Tidal Waves
   stacks, Chain Heal; Mana Tide and Nature's Swiftness go out as major cooldowns. The page's Earth Shield rate
   is 30 hits a minute (a boss swing every 2 s).
-  - Chain Heal alone out-heals this by ~6% but sustains ~300 s on P1 gear; with Healing Wave, preraid to P3 gear
-    runs dry inside the 180 s default fight (P1 at ~130 s), and P5 at ~166 s; P4 only in some iterations (~3 s
-    out of mana on average). Improved Water Shield's crit procs are the largest mana source.
+  - Every phase's gear runs dry inside the healer pages' 300 s default fight (P1 at ~130 s, P4 at ~181 s).
+    Without its Healing Wave line the APL heals 10–27% more and still runs dry at every phase (P1 at ~255 s). Improved Water Shield's crit procs are the largest mana source.
   - Spirit gives mana only outside the five-second rule, and even out of mana the shaman casts again as soon as
     in-combat regen pays for a spell, so Spirit measures about 0 at every phase and fight length.
   - Val'anyr's shields count as healing, so it beats the 893 spell power scepter in HPS.
@@ -205,9 +204,10 @@ pets and guardians in [pets](pets.md).
     flight (`sim/priest/penance.go`; a KeepSim allowance on 53007's speed), a heal's to a friend or the priest
     as [missiles](missiles.md#flight-and-reach) give it.
 - **Healing Priest APLs** (`ui/healing_priest/apls`) cast on every GCD with no `spellCpm` caps; the mana pool
-  limits them. In the 180 s default fight disc runs out of mana at preraid to P2 and not from P3; holy runs
-  out at every phase. A stat that only matters while mana-bound (Spirit, MP5) measures 0 once the fight ends first, and
-  haste measures about 0 or below while the priest is mana-bound.
+  limits them. In the healer pages' 300 s default fight holy runs out of mana at every phase, disc at preraid
+  to P3 but not at P4 and P5 (the sim estimates ~373 and ~328 s). A stat that only matters while mana-bound
+  (Spirit, MP5) measures near 0 once the fight ends first, and haste about 0 or below while the priest is
+  mana-bound.
 - **Twisted Faith** at 5/5 gives 53% of Spirit as spell power, damage and healing (mod-spell-tweaks'
   `spell_dbc` row for 51167; stock 20%). Ranks 1–4 stay 4% a rank.
 - **Silent Resolve** cuts holy and arcane threat ([threat](threat.md)), so not Mind Blast's.
