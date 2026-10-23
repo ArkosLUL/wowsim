@@ -109,7 +109,8 @@ loads it.
 - **Steps:** `OneSidedSteps`, the centered deltas with no shift. Gain = (sim(+δ) − sim(0)) / δ; loss =
   (sim(0) − sim(−low)) / low, where low stops at the stat's final value, so ArP never goes below 0. At 0,
   loss is unmeasured.
-- **Healer role:** Int, Spirit, SP, MP5, spell crit and spell haste, in HPS.
+- **Healer role:** Int, Spirit, SP, MP5, spell crit and spell haste, in HPS. A request needs `TargetDummies`
+  for a healer to heal anyone but itself; `TestHealerIsMeasuredInHPS` covers all four healer specs.
 - **Sims:** one seed (the page's `nextRngSeed()`: repeatable only with a fixed seed), `IsTest`, the page's
   iterations. Each runs single-threaded through `core.RunRaidSim`, one per core minus one: IsTest sims don't
   recover their panics, so `runOne` does and the server survives.

@@ -631,6 +631,11 @@ func FullCharacterTestSuiteGenerator(config CharacterSuiteConfig) TestGenerator 
 		},
 	})
 
+	if len(config.StatsToWeigh) == 0 && IsHealerSpec(PlayerProtoToSpec(defaultPlayer)) {
+		config.StatsToWeigh = HealerStatsToWeigh
+		config.EPReferenceStat = proto.Stat_StatSpellPower
+	}
+
 	if len(config.StatsToWeigh) > 0 {
 		generator.subgenerators = append(generator.subgenerators, SubGenerator{
 			name: "StatWeights",

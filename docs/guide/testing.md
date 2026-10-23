@@ -71,6 +71,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - `delta` compares dps, hps, tps and dtps per test, and lists tests that appear or disappear. Under each
     Average test it lists the moved abilities (below), four-space indented, largest damage or healing change
     first. Diff the two files for stats and stat weights.
+  - A healer spec's `StatWeights` row holds HPS weights (Int, Spirit, SP, MP5, crit, haste); DPS weights
+    would be all zero. A healer suite without `StatsToWeigh` gets those six, SP as reference, from
+    `FullCharacterTestSuiteGenerator`. `StatWeightsRequest` has no target dummies, so the healer heals itself.
 - `Average` tests also store `ability_results`: one entry per `<unit>|action|<id>` and `<unit>|aura|<id>`,
   `<unit>` being `player`, `pet:<name>` or `target<i>` (target auras only).
   - Fields, per iteration and summed over targets: `casts`, `hits`, `crit_pct`, `amount_per_hit`, `amount`
@@ -99,7 +102,8 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
     one run against another. The directory must be absolute.
   - The settings are a `proto.ServerSettings` in JSON, laid over the suite's. Nothing is held to the goldens.
 - Not real coverage of their spec: the three healer suites (Resto Shaman, Holy Paladin, Resto Druid)
-  only autocast cooldowns, so they check stats and item heals only; Subtlety runs a Combat APL.
+  only autocast cooldowns, so they check stats and item heals only (their HPS weight rows are all zero);
+  Subtlety runs a Combat APL.
 - A `.results` that shows as modified with an empty `git diff` is CRLF noise: leave it out of commits.
 - `sim/optimizer/raidctx/testdata/raid25.derived.json` is a golden too. Rewrite it with
   `go test --tags=with_db ./sim/optimizer/raidctx -run TestDeriveFixtureGolden -update`.

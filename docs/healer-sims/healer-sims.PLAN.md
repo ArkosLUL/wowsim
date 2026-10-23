@@ -136,6 +136,21 @@ G changes only the class's own healer suites (and, for HEAL-TEST, the four heale
 - The healer page's alert becomes an inline note (`ui/core/individual_sim_ui.ts`, `Tooltips.HEALING_SIM_DISCLAIMER`).
 - **Owns:** those carve-outs, `sim/statslopes/statslopes_test.go`.
 
+#### As built
+
+- `TestStatWeights` reads `Hps` weights when `core.IsHealerSpec` (new, `test_suite.go`); `HealerStatsToWeigh` is the
+  six healer stats. `FullCharacterTestSuiteGenerator` (`test_generators.go`, outside the Owns line) defaults a
+  healer suite's `StatsToWeigh` to them, SP as reference, so the three suites that had none gain a row.
+- `StatWeightsRequest` has no target dummies, so these rows measure a healer healing itself. A dummies field is a
+  proto change; not made.
+- Rows: Disc and Holy priest nonzero; Holy Paladin, Resto Druid and Resto Shaman all zero until they cast heals.
+- `statslopes_test.go`: player builders for the three other healers (autocast-only APL, P1 gear),
+  `request()` adds a dummy for every healer spec, `TestHealerIsMeasuredInHPS` runs all four (HPS above zero
+  only asserted for the priest).
+- The alert is gone: healer pages add a warning-zone note (`Tooltips.HEALING_SIM_DISCLAIMER`, reworded to say
+  what the model is).
+- Goldens: only the five healer suites' StatWeights rows moved; dps, hps, tps, dtps and abilities unchanged in all 37.
+
 ### HEAL-PAL-1 (G; stages: code, code, live)
 
 - The Holy Paladin's heals and talents (the Missing list above, without glyphs, sets and librams).

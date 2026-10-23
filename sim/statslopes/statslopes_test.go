@@ -65,9 +65,68 @@ func holyPriest() *proto.Player {
 	}
 }
 
+var castsNothing = core.APLRotationFromJsonString(`{
+	"type": "TypeAPL",
+	"priorityList": [
+		{"action":{"autocastOtherCooldowns":{}}}
+	]
+}`)
+
+func holyPaladin() *proto.Player {
+	return &proto.Player{
+		Name:          "HolyPaladin",
+		Race:          proto.Race_RaceHuman,
+		Class:         proto.Class_ClassPaladin,
+		Equipment:     core.GetGearSet("../../ui/holy_paladin/gear_sets", "p1").GearSet,
+		Rotation:      castsNothing,
+		TalentsString: "50350151020013053100515221-50023131203",
+		Spec: &proto.Player_HolyPaladin{HolyPaladin: &proto.HolyPaladin{Options: &proto.HolyPaladin_Options{
+			Judgement: proto.PaladinJudgement_JudgementOfWisdom,
+			Aura:      proto.PaladinAura_DevotionAura,
+		}}},
+		Buffs: core.FullIndividualBuffs,
+	}
+}
+
+func restorationDruid() *proto.Player {
+	return &proto.Player{
+		Name:          "Resto",
+		Race:          proto.Race_RaceTauren,
+		Class:         proto.Class_ClassDruid,
+		Equipment:     core.GetGearSet("../../ui/restoration_druid/gear_sets", "p1").GearSet,
+		Rotation:      castsNothing,
+		TalentsString: "05320031103--230023312131502331050313051",
+		Spec: &proto.Player_RestorationDruid{RestorationDruid: &proto.RestorationDruid{Options: &proto.RestorationDruid_Options{
+			InnervateTarget: &proto.UnitReference{Type: proto.UnitReference_Player, Index: 0},
+		}}},
+		Buffs: core.FullIndividualBuffs,
+	}
+}
+
+func restorationShaman() *proto.Player {
+	return &proto.Player{
+		Name:          "RestoShaman",
+		Race:          proto.Race_RaceTroll,
+		Class:         proto.Class_ClassShaman,
+		Equipment:     core.GetGearSet("../../ui/restoration_shaman/gear_sets", "p1").GearSet,
+		Rotation:      castsNothing,
+		TalentsString: "-3020503-50005331335310501122331251",
+		Spec: &proto.Player_RestorationShaman{RestorationShaman: &proto.RestorationShaman{Options: &proto.RestorationShaman_Options{
+			Shield: proto.ShamanShield_WaterShield,
+			Totems: &proto.ShamanTotems{
+				Earth: proto.EarthTotem_TremorTotem,
+				Air:   proto.AirTotem_WrathOfAirTotem,
+				Water: proto.WaterTotem_ManaSpringTotem,
+				Fire:  proto.FireTotem_FlametongueTotem,
+			},
+		}}},
+		Buffs: core.FullIndividualBuffs,
+	}
+}
+
 func request(player *proto.Player, iterations int32) *proto.StatSlopesRequest {
 	raid := core.SinglePlayerRaidProto(player, &proto.PartyBuffs{}, core.FullRaidBuffs, &proto.Debuffs{})
-	if _, ok := player.Spec.(*proto.Player_HealingPriest); ok {
+	if core.IsHealerSpec(core.PlayerProtoToSpec(player)) {
 		// what a healer heals in an individual sim
 		raid.TargetDummies = 1
 	}
@@ -245,12 +304,30 @@ func TestHitPastTheCapIsWorthNothingEitherWay(t *testing.T) {
 
 func TestHealerIsMeasuredInHPS(t *testing.T) {
 	needDB(t)
-	result := measure(t, request(holyPriest(), 50))
-	if len(result.Slopes) != len(Healer.Stats) || result.Base.Hps <= 0 {
-		t.Fatalf("%d slopes, base hps %v", len(result.Slopes), result.Base.Hps)
-	}
-	if sp := slopeOf(t, result, proto.Stat_StatSpellPower); sp.Gain.Hps <= 0 {
-		t.Errorf("spell power gains %v HPS per point", sp.Gain.Hps)
+	for _, tc := range []struct {
+		name   string
+		player func() *proto.Player
+		// false while the spec's default APL casts no heals
+		heals bool
+	}{
+		{"HealingPriest", holyPriest, true},
+		{"HolyPaladin", holyPaladin, false},
+		{"RestorationDruid", restorationDruid, false},
+		{"RestorationShaman", restorationShaman, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			player := tc.player()
+			if role, err := RoleOf(core.PlayerProtoToSpec(player)); err != nil || !reflect.DeepEqual(role, Healer) {
+				t.Fatalf("role %v, err %v", role, err)
+			}
+			result := measure(t, request(player, 50))
+			if len(result.Slopes) != len(Healer.Stats) || (tc.heals && result.Base.Hps <= 0) {
+				t.Fatalf("%d slopes, base hps %v", len(result.Slopes), result.Base.Hps)
+			}
+			if sp := slopeOf(t, result, proto.Stat_StatSpellPower); tc.heals && sp.Gain.Hps <= 0 {
+				t.Errorf("spell power gains %v HPS per point", sp.Gain.Hps)
+			}
+		})
 	}
 }
 

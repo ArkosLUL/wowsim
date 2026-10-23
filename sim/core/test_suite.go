@@ -25,6 +25,25 @@ import (
 // different float rounding behavior.
 const storagePrecision = 5
 
+// A healer's golden stat weights are HPS weights: its DPS weights are all zero.
+var HealerStatsToWeigh = []proto.Stat{
+	proto.Stat_StatIntellect,
+	proto.Stat_StatSpirit,
+	proto.Stat_StatSpellPower,
+	proto.Stat_StatMP5,
+	proto.Stat_StatSpellCrit,
+	proto.Stat_StatSpellHaste,
+}
+
+func IsHealerSpec(spec proto.Spec) bool {
+	switch spec {
+	case proto.Spec_SpecHolyPaladin, proto.Spec_SpecRestorationDruid, proto.Spec_SpecRestorationShaman,
+		proto.Spec_SpecHealingPriest:
+		return true
+	}
+	return false
+}
+
 type IndividualTestSuite struct {
 	Name string
 
@@ -56,7 +75,11 @@ func (testSuite *IndividualTestSuite) TestStatWeights(testName string, swr *prot
 	testSuite.testNames = append(testSuite.testNames, testName)
 
 	result := StatWeights(swr)
-	weights := stats.FromFloatArray(result.Dps.Weights.Stats)
+	values := result.Dps
+	if IsHealerSpec(PlayerProtoToSpec(swr.Player)) {
+		values = result.Hps
+	}
+	weights := stats.FromFloatArray(values.Weights.Stats)
 
 	testSuite.testResults.StatWeightsResults[testName] = &proto.StatWeightsTestResult{
 		Weights: toFixedStats(weights[:], storagePrecision),
