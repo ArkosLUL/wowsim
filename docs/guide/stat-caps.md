@@ -128,7 +128,12 @@ loads it.
   - Shipped values take the cap rule on both ends: added rating counts up to the hard cap's room; removed rating
     costs its value below the soft cap too, so white-only hit is never spent.
   - Live values score added rating at gain and removed at loss.
-- **Picks:** greedy, best gain first (above 1e-6); each spends the surplus or room later ones are scored against.
+- **Picks:** greedy, best gain first; each spends the surplus or room later ones are scored against.
+- **Floors**, for shipped and live values alike: every `StatCapFloor` cap with a finite `needed` (hit, spell
+  hit, each expertise row, Defense). Surplus = `round(rating) - round(needed)`; no pick takes a floor below
+  `min(0, surplus)`: a met cap stays met, a short one never gets shorter. A candidate moves a floor by its net
+  change on the cap's `stat` (generic hit moves melee and spell hit). Soft caps and ceilings aren't floors.
+- **Noise:** a pick's gain must exceed 1e-6 and be at least 5% (`MIN_RELATIVE_GAIN`) of the value it gives up.
 - **Apply:** `gear.withEquippedItem` and `player.setGear`, the gear picker's path; Apply all is one gear change.
   Rows disable from any change until fresh caps arrive.
 

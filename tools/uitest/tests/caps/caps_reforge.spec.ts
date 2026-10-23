@@ -39,9 +39,12 @@ function hitCap(rating: number, needed: number, kind = StatCapKind.StatCapFloor)
 	return StatCap.create({ label: kind == StatCapKind.StatCapSoft ? 'Dual wield white hit' : 'Hit', stat: Stat.StatMeleeHit, kind, rating, needed });
 }
 
-function suggest(items: Array<{ item: UIItem; reforge?: ItemReforge }>, caps: Array<StatCap>, reforging = REFORGING) {
+// only haste is worth anything
+const HASTE_PHASE: ShippedPhase = { ...PHASE, stats: new Map([[Stat.StatMeleeHaste, { dps: 2, tps: 0, tmi: 0, hps: 0 }]]) };
+
+function suggest(items: Array<{ item: UIItem; reforge?: ItemReforge }>, caps: Array<StatCap>, reforging = REFORGING, phase = PHASE) {
 	const slots = items.map(({ item, reforge }, i) => ({ slot: ItemSlot.ItemSlotHead + i, item, reforge: reforge ?? null }));
-	return suggestReforges(slots, PHASE, 'dps', caps, reforging);
+	return suggestReforges(slots, phase, 'dps', caps, reforging);
 }
 
 test.describe('reforge scoring', () => {
@@ -90,6 +93,59 @@ test.describe('reforge scoring', () => {
 
 	test('items with nothing to reforge are left out', () => {
 		expect(suggest([{ item: item(1, { [DODGE]: 25 }) }], [])).toEqual([]);
+	});
+
+	test('a floor cap you meet stays met, even when the stat is worth nothing', () => {
+		// expertise is worth nothing, so only the floor holds the item back
+		const expertise = (rating: number, needed = 212) => StatCap.create({ label: 'Expertise', stat: Stat.StatExpertise, rating, needed });
+		const items = [{ item: item(1, { [EXPERTISE]: 25 }) }];
+		expect(suggest(items, [expertise(215)], REFORGING, HASTE_PHASE)[0].suggested).toBeUndefined();
+		expect(suggest(items, [expertise(222)], REFORGING, HASTE_PHASE)[0].suggested).toEqual(reforge(EXPERTISE, HASTE));
+		const [first, second] = suggest([...items, { item: item(2, { [EXPERTISE]: 25 }) }], [expertise(222)], REFORGING, HASTE_PHASE);
+		expect(first.suggested).toEqual(reforge(EXPERTISE, HASTE));
+		expect(second.suggested).toBeUndefined();
+	});
+
+	test('a floor cap you are short of never gets shorter', () => {
+		const caps = [hitCap(280, 300)];
+		const [only] = suggest([{ item: item(1, { [HIT]: 25 }) }], caps);
+		expect(only.suggested).toBeUndefined();
+		// reforging crit into hit moves it closer
+		expect(suggest([{ item: item(1, { [CRIT]: 25 }) }], caps)[0].suggested).toEqual(reforge(CRIT, HIT));
+	});
+
+	test('a generic hit reforge moves spell hit too, and the spell hit floor holds it', () => {
+		const spellHit = StatCap.create({ label: 'Spell hit', stat: Stat.StatSpellHit, rating: 300, needed: 300 });
+		const slots = [{ slot: ItemSlot.ItemSlotHead, item: item(1, { [HIT]: 25 }), reforge: null }];
+		expect(suggestReforges(slots, HASTE_PHASE, 'dps', [], REFORGING)[0].suggested).toEqual(reforge(HIT, HASTE));
+		expect(suggestReforges(slots, HASTE_PHASE, 'dps', [spellHit], REFORGING)[0].suggested).toBeUndefined();
+	});
+
+	test('live values keep the floors too', () => {
+		const dps = (value: number) => ({ dps: value, tps: 0, tmi: 0, hps: 0 });
+		const live: LiveValues = {
+			gain: { stats: new Map([[Stat.StatMeleeHaste, dps(2)]]), pseudoStats: new Map() },
+			loss: { stats: new Map([[Stat.StatMeleeHaste, dps(2)]]), pseudoStats: new Map() },
+		};
+		const slots = [{ slot: ItemSlot.ItemSlotHead, item: item(1, { [EXPERTISE]: 25 }), reforge: null }];
+		const expertise = (rating: number) => StatCap.create({ label: 'Expertise', stat: Stat.StatExpertise, rating, needed: 212 });
+		expect(suggestReforges(slots, live, 'dps', [expertise(212)], REFORGING)[0].suggested).toBeUndefined();
+		expect(suggestReforges(slots, live, 'dps', [expertise(230)], REFORGING)[0].suggested).toEqual(reforge(EXPERTISE, HASTE));
+	});
+
+	test('a gain under 5% of the value given up is skipped', () => {
+		const dps = (value: number) => ({ dps: value, tps: 0, tmi: 0, hps: 0 });
+		const near = (haste: number): ShippedPhase => ({
+			...PHASE,
+			stats: new Map([
+				[Stat.StatMeleeCrit, dps(1)],
+				[Stat.StatMeleeHaste, dps(haste)],
+			]),
+		});
+		const slots = [{ slot: ItemSlot.ItemSlotHead, item: item(1, { [CRIT]: 25 }), reforge: null }];
+		const crit = { ...REFORGING, statTypes: [CRIT, HASTE] };
+		expect(suggestReforges(slots, near(1.04), 'dps', [], crit)[0].suggested).toBeUndefined();
+		expect(suggestReforges(slots, near(1.1), 'dps', [], crit)[0].suggested).toEqual(reforge(CRIT, HASTE));
 	});
 
 	test('live values score added rating at its gain and removed rating at its loss, with no cap rule', () => {
@@ -282,4 +338,71 @@ test.describe('the suggestions block', () => {
 		await expect(page.locator('#caps-tab .reforge-status')).toContainText('healers get theirs from a live run');
 		await expect(page.locator('#caps-tab .reforge-apply-all')).toBeHidden();
 	});
+});
+
+interface CapReading {
+	label: string;
+	hand: string;
+	surplus: number;
+}
+
+// hit, expertise and Defense: the floors. White hit is soft, armor penetration and haste are ceilings.
+const FLOOR_LABEL = /^(?!White hit|Armor penetration|Haste)/;
+
+async function readFloors(page: Page): Promise<CapReading[]> {
+	await expect(page.locator('#caps-tab .caps-table')).not.toHaveClass(/caps-loading/);
+	await expect(page.locator('#caps-tab .reforge-table')).not.toHaveClass(/caps-loading/);
+	const read = await page.locator('#caps-tab tr.caps-row').evaluateAll(trs =>
+		trs.map(tr => {
+			const data = (tr as HTMLElement).dataset;
+			return { label: data.label ?? '', hand: data.hand ?? '', rating: Number(data.rating), needed: Number(data.needed) };
+		}),
+	);
+	return read
+		.filter(cap => FLOOR_LABEL.test(cap.label) && Number.isFinite(cap.needed))
+		.map(cap => ({ label: cap.label, hand: cap.hand, surplus: Math.round(cap.rating) - Math.round(cap.needed) }));
+}
+
+test.describe('Apply all keeps the floors', () => {
+	test.afterEach(async ({ page }) => page.unrouteAll({ behavior: 'ignoreErrors' }));
+
+	for (const [name, spec] of [
+		['Unholy death knight', 'deathknight'],
+		['Fury warrior', 'warrior'],
+		['rogue', 'rogue'],
+		['Protection paladin', 'protection_paladin'],
+	]) {
+		test(`${name} at phase 3: a met cap stays met and a short one gets no shorter`, async ({ page }) => {
+			await openSim(page, spec);
+			await openSimTab(page, 'caps-tab');
+			await page.locator('#caps-tab select.priority-phase').selectOption('3');
+			await expect(rows(page).first()).toBeVisible();
+			const before = await readFloors(page);
+			expect(before.length, 'the page has a floor cap').toBeGreaterThan(0);
+
+			// the rows stay greyed out, with the old reforges, until the caps for the new gear arrive
+			const reforges = async () => {
+				await expect(page.locator('#caps-tab .reforge-table')).not.toHaveClass(/caps-loading/);
+				return rows(page).evaluateAll(trs => trs.map(tr => (tr as HTMLElement).dataset.current).join());
+			};
+			const reforgesBefore = await reforges();
+			const applyAll = page.locator('#caps-tab .reforge-apply-all');
+			if (await applyAll.isEnabled()) {
+				await applyAll.click();
+				await expect.poll(reforges).not.toBe(reforgesBefore);
+			}
+			const after = await readFloors(page);
+			expect(after.length).toBe(before.length);
+			after.forEach((cap, i) => {
+				const was = before[i];
+				expect(cap.surplus, `${cap.label} ${cap.hand}: was ${was.surplus}`).toBeGreaterThanOrEqual(Math.min(0, was.surplus));
+			});
+		});
+	}
+});
+
+test('the suggestions block says it keeps the caps you meet', async ({ page }) => {
+	await openSim(page, 'warrior');
+	await openSimTab(page, 'caps-tab');
+	await expect(page.locator('#caps-tab .reforge-floor-hint')).toHaveText('Suggestions keep every hit and expertise cap you meet.');
 });
