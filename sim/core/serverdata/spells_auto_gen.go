@@ -6545,6 +6545,27 @@ var spells = []Spell{
 			{Effect: 6, Aura: 140, BasePoints: -15, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Tidal Force
+	{
+		ID: 55166, Family: 11, FamilyFlags: [3]uint32{0, 0x1000, 0x1}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   20000, MaxDurationMs: 20000, StackAmount: 3,
+		ProcFlags: 0x4400, ProcChance: 100,
+		CastMods: ModBounds{FlatMin: -500},
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x1c0}},
+		},
+	},
+	// Tidal Force
+	{
+		ID: 55198, Family: 11, FamilyFlags: [3]uint32{0, 0, 0x1}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagPositive,
+		Attributes: [8]uint32{0, 0x10000000},
+		CooldownMs: 180000, DurationMs: 20000, MaxDurationMs: 20000,
+		ProcChance: 101, SpellLevel: 20, BaseLevel: 20,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 59, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x1c0}},
+		},
+	},
 	// Blade Barrier (Rank 5)
 	{
 		ID: 55226, Family: 15, SchoolMask: 1, Flags: FlagBinary | FlagPassive,
@@ -6741,6 +6762,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 26, DamageMultiplier: 1},
 			{Effect: 6, Aura: 3, AmplitudeMs: 1000, BasePoints: 45, DieSides: 23, DamageMultiplier: 1},
+		},
+	},
+	// Glyph of Healing Wave
+	{
+		ID: 55533, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0, 0, 0x80, 0, 0x8000000}, AttributesCu: 0x100,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Poison Spit (Rank 6)
@@ -9707,6 +9737,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 189, BasePoints: 199, DieSides: 1, DamageMultiplier: 1, MiscValue: 917504},
 		},
 	},
+	// Spiritual Trance
+	{
+		ID: 67388, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   15000, MaxDurationMs: 15000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 13, BasePoints: 233, DieSides: 1, DamageMultiplier: 1, MiscValue: 917630},
+			{Effect: 6, Aura: 135, BasePoints: 233, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
 	// Volcanic Fury
 	{
 		ID: 67391, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
@@ -10196,6 +10237,26 @@ var spells = []Spell{
 			{Effect: 80, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
+	// Rapid Currents
+	{
+		ID: 70806, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   10000, MaxDurationMs: 10000,
+		ProcFlags: 0x14000, ProcChance: 100, ProcCharges: 1, SpellLevel: 45, BaseLevel: 45,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 65, BasePoints: 19, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 917504},
+		},
+	},
+	// Chained Heal (Rank 1)
+	{
+		ID: 70809, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0, 0, 0x100000, 0, 0x8000000}, AttributesCu: 0x100000,
+		DurationMs: 9000, MaxDurationMs: 9000,
+		ProcChance: 101, SpellLevel: 20, BaseLevel: 20,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 8, AmplitudeMs: 3000, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Maelstrom Power
 	{
 		ID: 70831, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
@@ -10345,6 +10406,17 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 145, DieSides: 1, DamageMultiplier: 1, MiscValue: 1792},
+		},
+	},
+	// Energized
+	{
+		ID: 71220, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   15000, MaxDurationMs: 15000, StackAmount: 3,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 13, BasePoints: 84, DieSides: 1, DamageMultiplier: 1, MiscValue: 1918},
+			{Effect: 6, Aura: 135, BasePoints: 84, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
 	},
 	// Indomitable

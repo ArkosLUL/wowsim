@@ -119,7 +119,7 @@ test('the sim title menu links every sim page, and each one opens', async ({ pag
 	expect(paths).toContain('/wotlk/rankings/');
 	for (const spec of SPECS) {
 		// Unlaunched sims stay out of the menu.
-		if (['restoration_druid', 'restoration_shaman', 'holy_paladin'].includes(spec)) {
+		if (['restoration_druid', 'holy_paladin'].includes(spec)) {
 			expect(paths).not.toContain(`/wotlk/${spec}/`);
 		} else {
 			expect(paths).toContain(`/wotlk/${spec}/`);

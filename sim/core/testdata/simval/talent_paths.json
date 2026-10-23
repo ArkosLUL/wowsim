@@ -492,8 +492,10 @@
   {"talent":"healingGrace","rank":3,"spell":29191},
   {"talent":"tidalFocus","rank":5,"spell":16217},
   {"talent":"improvedWaterShield","rank":3,"spell":16198},
+  {"talent":"tidalForce","rank":1,"spell":55198},
   {"talent":"restorativeTotems","rank":3,"spell":16206},
   {"talent":"tidalMastery","rank":5,"spell":16221},
+  {"talent":"healingWay","rank":3,"spell":29202},
   {"talent":"naturesSwiftness","rank":1,"spell":16188},
   {"talent":"purification","rank":5,"spell":16213},
   {"talent":"manaTideTotem","rank":1,"spell":16190},
@@ -501,9 +503,10 @@
   {"talent":"improvedChainHeal","rank":2,"spell":30873},
   {"talent":"naturesBlessing","rank":3,"spell":30869},
   {"talent":"ancestralAwakening","rank":3,"spell":51558},
-  {"talent":"earthShield","rank":1,"spell":974,"filler":true},
+  {"talent":"earthShield","rank":1,"spell":974},
   {"talent":"improvedEarthShield","rank":2,"spell":51561},
-  {"talent":"tidalWaves","rank":5,"spell":51566}
+  {"talent":"tidalWaves","rank":5,"spell":51566},
+  {"talent":"riptide","rank":1,"spell":61295}
 ]},
 {"name":"MageArcane","class":8,"race":7,"spec":"mage","items":[],"auras":[42995],"steps": [
   {"talent":"arcaneSubtlety","rank":2,"spell":12592},

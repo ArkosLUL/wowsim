@@ -364,6 +364,8 @@ var threats = []Threat{
 	{SpellID: 54758, Targets: ThreatTargetsCaster},                                         // Hyperspeed Acceleration
 	{SpellID: 54845, Targets: ThreatTargetsCaster},                                         // Glyph of Starfire
 	{SpellID: 55018, Targets: ThreatTargetsCaster},                                         // Sonic Awareness
+	{SpellID: 55166, Targets: ThreatTargetsCaster},                                         // Tidal Force
+	{SpellID: 55198, Targets: ThreatTargetsCaster},                                         // Tidal Force
 	{SpellID: 55226, Targets: ThreatTargetsCaster},                                         // Blade Barrier (Rank 5)
 	{SpellID: 55233, Targets: ThreatTargetsCaster},                                         // Vampiric Blood
 	{SpellID: 55271, Row: 55271, FlatMod: 120, PctMod: 1},                                  // Scourge Strike (Rank 4)
@@ -375,6 +377,7 @@ var threats = []Threat{
 	{SpellID: 55487, Targets: ThreatTargetsEnemyArea},                                      // Demoralizing Screech (Rank 6)
 	{SpellID: 55499, Targets: ThreatTargetsCaster},                                         // Monstrous Bite (Rank 6)
 	{SpellID: 55503, Targets: ThreatTargetsCaster},                                         // Lifeblood (Rank 6)
+	{SpellID: 55533, Targets: ThreatTargetsCaster},                                         // Glyph of Healing Wave
 	{SpellID: 55637, Targets: ThreatTargetsCaster},                                         // Lightweave
 	{SpellID: 55640, Targets: ThreatTargetsCaster},                                         // Lightweave Embroidery
 	{SpellID: 55767, Targets: ThreatTargetsCaster},                                         // Darkglow
@@ -565,6 +568,7 @@ var threats = []Threat{
 	{SpellID: 67380, Targets: ThreatTargetsCaster},                                         // Evasion (Rank 1)
 	{SpellID: 67383, Targets: ThreatTargetsCaster},                                         // Unholy Force (Rank 1)
 	{SpellID: 67385, Targets: ThreatTargetsCaster},                                         // Energized
+	{SpellID: 67388, Targets: ThreatTargetsCaster},                                         // Spiritual Trance
 	{SpellID: 67391, Targets: ThreatTargetsCaster},                                         // Volcanic Fury
 	{SpellID: 67489, Targets: ThreatTargetsCaster},                                         // Runic Healing Injector
 	{SpellID: 67545, Targets: ThreatTargetsCaster},                                         // Empowered Fire
@@ -605,6 +609,7 @@ var threats = []Threat{
 	{SpellID: 70765, Targets: ThreatTargetsCaster},                                         // Item - Paladin T10 Retribution 2P Bonus
 	{SpellID: 70769, Targets: ThreatTargetsCaster},                                         // Divine Storm!
 	{SpellID: 70770, Targets: ThreatTargetsCaster},                                         // Item - Priest T10 Healer 2P Bonus
+	{SpellID: 70806, Targets: ThreatTargetsCaster},                                         // Rapid Currents
 	{SpellID: 70831, Targets: ThreatTargetsCaster},                                         // Maelstrom Power
 	{SpellID: 70840, Targets: ThreatTargetsCaster},                                         // Devious Minds
 	{SpellID: 70847, Targets: ThreatTargetsCaster},                                         // Item - Warrior T10 Melee 4P Bonus
@@ -618,6 +623,7 @@ var threats = []Threat{
 	{SpellID: 71187, Targets: ThreatTargetsCaster},                                         // Formidable
 	{SpellID: 71199, Targets: ThreatTargetsCaster},                                         // Furious
 	{SpellID: 71216, Targets: ThreatTargetsCaster},                                         // Enraged
+	{SpellID: 71220, Targets: ThreatTargetsCaster},                                         // Energized
 	{SpellID: 71227, Targets: ThreatTargetsCaster},                                         // Indomitable
 	{SpellID: 71229, Targets: ThreatTargetsCaster},                                         // Precognition
 	{SpellID: 71396, Targets: ThreatTargetsCaster},                                         // Rage of the Fallen

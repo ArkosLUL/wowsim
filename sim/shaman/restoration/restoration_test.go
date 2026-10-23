@@ -44,6 +44,7 @@ func TestRestoration(t *testing.T) {
 			},
 		}),
 		&core.SingleDpsTestGenerator{Name: "Talents-HealingGrace-Average", Request: healingGraceTalentsRequest()},
+		&core.SingleDpsTestGenerator{Name: "Rotation-Default-Average", Request: defaultAPLGoldenRequest()},
 	))
 }
 
