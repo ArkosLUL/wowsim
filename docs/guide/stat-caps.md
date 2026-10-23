@@ -135,6 +135,8 @@ loads it.
   that holds only after earlier ones (`alone: false`) gets no Apply of its own, only Apply all. A candidate
   moves a floor by its net
   change on the cap's `stat` (generic hit moves melee and spell hit). Soft caps and ceilings aren't floors.
+  `isFloor` holds this rule; `.reforge-floor-hint` names the floors the current caps hold (expertise once), in
+  table order, and hides with none, as on healer pages. A row's disabled Apply tooltip names the same floors.
 - **Noise:** a pick's gain must exceed 1e-6 and be at least 5% (`MIN_RELATIVE_GAIN`) of the value it gives up.
   Between statweights seeds a DPS swap ratio moves 0.4% (median), 2% (90th percentile), so 5% lets no DPS noise
   through and drops at most ~0.1 DPS a point. Tanks' TMI and TPS slopes are noisier: a few swaps pass on one seed
@@ -177,8 +179,9 @@ on the live server. Code: `acore_reforge.ts` (`planServerReforges`, `postReforge
 - `CapsTab` sits after the BiS Optimizer on every individual sim page, never in the raid sim.
 - It refreshes only while shown, debounced, dropping stale replies, on the player's stats, gear, buffs, talents
   and in-front setting, party and raid buffs, debuffs, tanks and the encounter.
-- "Your character" (sim server only, `simServerAvailable()`): a `.caps-character` dropdown of the page's class off
-  a `fetchServerRoster()` when the tab first opens, preselected from the last load or `acore-import.v1`. Picking a
+- "Your character" (sim server only, `simServerAvailable()`): a `.caps-character` dropdown of `acoreCandidates` off
+  a `fetchServerRoster()` when the tab first opens, labelled "<name> (<main tree>)" (bare name without talents;
+  the value stays the name), preselected from the last load or `acore-import.v1`. Picking a
   name reads a fresh roster and runs `importAcoreCharacter` (`importers.ts`); `.caps-character-reload` loads the
   shown one again, which is also how the preselected one loads. No window, no alert. The import's notes (and
   "Loaded <name> from the server (saved <exportedAt>)") sit in `.caps-import-notes`; errors show inline.
@@ -186,6 +189,12 @@ on the live server. Code: `acore_reforge.ts` (`planServerReforges`, `postReforge
   the result in `IndividualSimUI.lastAcoreImport` and fire `acoreImportEmitter`. Import errors in the window
   still alert. A name missing from the fresh roster fails; it never loads someone else. The JSON, 80U, Wowhead and
   addon importers keep their alerts and clear `lastAcoreImport`, so the send has no target after them.
+- Healer rule (`importers.ts`), for the dropdown, the window and `importAcoreCharacter`: a healer (main tree Holy
+  paladin, Discipline or Holy priest, Restoration shaman or druid; no talents isn't one) lists and loads only on an
+  `isHealingSpec` page, and only healers do there. Smite is a DPS page. The import refuses a misfit ("Holylight is
+  specced Holy: load them on a healer page."); a saved pick that fails isn't preselected; with no one left, the
+  tab's status and the window's only option say why ("No Priest healers on the server."). The raid sim's import
+  doesn't apply it.
 - Tests: `sim/statcaps/statcaps_test.go`, `sim/statslopes/statslopes_test.go`, `tools/uitest/tests/caps/`.
   `TestRequestsSideBySide` runs both RPCs beside `/computeStats` and `/raidSimAsync`, as the sim server does;
   after a concurrency change run `dock.sh test -race ./sim/statcaps/ ./sim/statslopes/`.

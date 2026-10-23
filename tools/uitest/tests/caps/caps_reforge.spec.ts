@@ -1,6 +1,6 @@
 import { expect, type Page, test } from '@playwright/test';
 
-import { StatCap, StatCapKind } from '../../../../ui/core/proto/api';
+import { StatCap, StatCapKind, StatCapsResult } from '../../../../ui/core/proto/api';
 import { ItemReforge, ItemSlot, Stat } from '../../../../ui/core/proto/common';
 import { UIItem } from '../../../../ui/core/proto/ui';
 import { type Reforging } from '../../../../ui/core/proto_utils/reforging';
@@ -8,7 +8,7 @@ import { suggestReforges } from '../../../../ui/core/stat_priority';
 import { type LiveValues, type ShippedPhase } from '../../../../ui/core/stat_values';
 import { closePicker, openPicker, picker, showTab, type Slot } from '../gear/gear';
 import { openSim, openSimTab } from '../lib/page';
-import { savedData } from '../settings/helpers';
+import { acceptDialogs, openSpec, savedData, select } from '../settings/helpers';
 
 const HIT = 31;
 const CRIT = 32;
@@ -306,7 +306,7 @@ test.describe('the suggestions block', () => {
 		await openCapsTab(page, HASTE_ONLY);
 		const leaning = page.locator('#caps-tab tr.reforge-row:has(.reforge-apply:disabled)');
 		await expect(leaning.first()).toBeVisible();
-		await expect(leaning.first().locator('.reforge-action')).toHaveAttribute('title', /Use Apply all/);
+		await expect(leaning.first().locator('.reforge-action')).toHaveAttribute('title', /^Alone this would drop your hit and expertise caps: .*Use Apply all\.$/);
 		await expect(page.locator('#caps-tab .reforge-apply-all')).toBeEnabled();
 	});
 
@@ -443,8 +443,53 @@ test.describe('Apply all keeps the floors', () => {
 	}
 });
 
-test('the suggestions block says it keeps the caps you meet', async ({ page }) => {
-	await openSim(page, 'warrior');
-	await openSimTab(page, 'caps-tab');
-	await expect(page.locator('#caps-tab .reforge-floor-hint')).toHaveText('Suggestions keep every hit and expertise cap you meet.');
+test.describe('the floor hint', () => {
+	test.afterEach(async ({ page }) => page.unrouteAll({ behavior: 'ignoreErrors' }));
+
+	const hint = (page: Page) => page.locator('#caps-tab .reforge-floor-hint');
+	const many = (list: string) => `Suggestions keep your ${list} caps once you meet them, and never take you further from them.`;
+	const one = (name: string) => `Suggestions keep your ${name} cap once you meet it, and never take you further from it.`;
+
+	const PAGES = [
+		{ spec: 'warrior', text: many('hit and expertise') },
+		{ spec: 'tank_deathknight', text: many('hit, expertise and Defense') },
+		{ spec: 'mage', text: one('spell hit') },
+	];
+	for (const { spec, text } of PAGES) {
+		test(`the ${spec} page names its floor caps`, async ({ page }) => {
+			await openSim(page, spec);
+			await openSimTab(page, 'caps-tab');
+			await expect(hint(page)).toHaveText(text);
+		});
+	}
+
+	test('a healer page holds no floor cap, so there is no hint', async ({ page }) => {
+		// the page alerts that the healing sim is experimental
+		acceptDialogs(page);
+		await openSim(page, 'healing_priest');
+		await openSimTab(page, 'caps-tab');
+		await expect(page.locator('#caps-tab tr.caps-row[data-label="Haste"]')).toBeVisible();
+		await expect(page.locator('#caps-tab .caps-table')).not.toHaveClass(/caps-loading/);
+		await expect(hint(page)).toBeHidden();
+	});
+
+	test('the hint follows the caps when they refresh, and a cap out of reach is no floor', async ({ page }) => {
+		let expertiseOutOfReach = false;
+		await page.route('**/statCaps', async route => {
+			const response = await route.fetch();
+			const result = StatCapsResult.fromBinary(await response.body());
+			if (expertiseOutOfReach) {
+				result.caps.filter(cap => cap.stat == Stat.StatExpertise).forEach(cap => (cap.needed = Infinity));
+			}
+			await route.fulfill({ response, body: Buffer.from(StatCapsResult.toBinary(result)) });
+		});
+		await openSpec(page, 'warrior', 'caps-tab');
+		await expect(hint(page)).toHaveText(many('hit and expertise'));
+
+		expertiseOutOfReach = true;
+		await openSimTab(page, 'settings-tab');
+		await select(page.locator('#settings-tab .player-settings'), 'Race').selectOption({ label: 'Dwarf' });
+		await openSimTab(page, 'caps-tab');
+		await expect(hint(page)).toHaveText(one('hit'));
+	});
 });

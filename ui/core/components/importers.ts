@@ -31,10 +31,10 @@ import {
 import { IndividualSimSettings } from '../proto/ui';
 import { Database } from '../proto_utils/database';
 import { classNames, nameToClass, nameToProfession,nameToRace } from '../proto_utils/names';
-import { getTalentTree, specNames } from '../proto_utils/utils';
+import { getTalentPoints, getTalentTree, isHealingSpec, specNames } from '../proto_utils/utils';
 import { SimSettingCategories } from '../sim';
 import { SimUI } from '../sim_ui';
-import { classGlyphsConfig, talentSpellIdsToTalentString } from '../talents/factory';
+import { classGlyphsConfig, classTalentsConfig, talentSpellIdsToTalentString } from '../talents/factory';
 import { GlyphConfig } from '../talents/glyphs_picker';
 import { TypedEvent } from '../typed_event';
 import { buf2hex, getEnumValues } from '../utils';
@@ -695,19 +695,19 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 
 	private refreshCharacters(data: string) {
 		const previous = this.characterPicker.value;
-		const playerClass = this.simUI.player.getClass();
-		let chars: Array<RosterCharacter> = [];
+		let all: Array<RosterCharacter> = [];
 		try {
-			chars = parseRoster(data).characters.filter(char => rosterClass(char.classId) == playerClass);
+			all = parseRoster(data).characters;
 		} catch {
 			// Nothing usable pasted yet; the Import button says why.
 		}
+		const chars = acoreCandidates(this.simUI, all);
 		const names = chars.map(char => char.name);
 
 		// Names come out of an uploaded file, so build the options instead of templating HTML.
 		this.characterPicker.innerHTML = '';
 		if (names.length == 0) {
-			this.characterPicker.appendChild(new Option(`No ${classNames.get(playerClass)} in this roster`, ''));
+			this.characterPicker.appendChild(new Option(noAcoreCandidates(this.simUI, all, 'in this roster'), ''));
 			return;
 		}
 		names.forEach(name => this.characterPicker.appendChild(new Option(name, name)));
@@ -751,6 +751,7 @@ export interface AcoreImport {
 
 // Loads one roster character onto the page: gear, race, talents, glyphs, professions, racials, pet, ammo,
 // consumes and Heroic Presence. Remembers the pick and publishes the result on the page's acoreImportEmitter.
+// Refuses a healer on a DPS or tank page, and anyone but a healer on a healer page.
 export async function importAcoreCharacter<SpecType extends Spec>(
 	simUI: IndividualSimUI<SpecType>,
 	roster: Roster,
@@ -760,13 +761,17 @@ export async function importAcoreCharacter<SpecType extends Spec>(
 	const db = await Database.loadLeftoversIfNecessary(rosterEquipmentSpec(roster));
 
 	const playerClass = simUI.player.getClass();
-	const candidates = roster.characters.filter(char => rosterClass(char.classId) == playerClass);
-	if (candidates.length == 0) {
+	const classmates = roster.characters.filter(char => rosterClass(char.classId) == playerClass);
+	if (classmates.length == 0) {
 		throw new Error(`This roster has no ${classNames.get(playerClass)} in it.`);
 	}
-	const picked = name ? candidates.find(char => char.name == name) : candidates[0];
+	const picked = name ? classmates.find(char => char.name == name) : acoreCandidates(simUI, classmates)[0];
 	if (!picked) {
-		throw new Error(`${name} isn't in this roster.`);
+		throw new Error(name ? `${name} isn't in this roster.` : `${noAcoreCandidates(simUI, classmates, 'in this roster')}.`);
+	}
+	const misfit = roleMisfit(simUI, picked);
+	if (misfit) {
+		throw new Error(misfit);
 	}
 	storePick(simUI, picked.name);
 
@@ -837,6 +842,55 @@ function setAcoreImport<SpecType extends Spec>(simUI: IndividualSimUI<SpecType>,
 	}
 	simUI.lastAcoreImport = result;
 	simUI.acoreImportEmitter.emit(TypedEvent.nextEventID(), undefined);
+}
+
+const HEALING_TREES: Partial<Record<Class, Array<number>>> = {
+	[Class.ClassPaladin]: [0],
+	[Class.ClassPriest]: [0, 1],
+	[Class.ClassShaman]: [2],
+	[Class.ClassDruid]: [2],
+};
+
+// The tree with the most points, e.g. 'Discipline', or '' without talents.
+export function mainTreeName(char: RosterCharacter): string {
+	if (getTalentPoints(char.talents) == 0) {
+		return '';
+	}
+	return classTalentsConfig[rosterClass(char.classId)][getTalentTree(char.talents)]?.name ?? '';
+}
+
+function isAcoreHealer(char: RosterCharacter): boolean {
+	return getTalentPoints(char.talents) > 0 && !!HEALING_TREES[rosterClass(char.classId)]?.includes(getTalentTree(char.talents));
+}
+
+// Healers load only on healer pages, and only healers load there. Returns why a character can't, or ''.
+function roleMisfit<SpecType extends Spec>(simUI: IndividualSimUI<SpecType>, char: RosterCharacter): string {
+	const healerPage = isHealingSpec(simUI.player.spec);
+	if (isAcoreHealer(char) == healerPage) {
+		return '';
+	}
+	const tree = mainTreeName(char);
+	return `${char.name} ${tree ? `is specced ${tree}` : 'has no talents'}: load them on a ${healerPage ? 'DPS or tank' : 'healer'} page.`;
+}
+
+export function acoreCandidates<SpecType extends Spec>(simUI: IndividualSimUI<SpecType>, characters: Array<RosterCharacter>): Array<RosterCharacter> {
+	const playerClass = simUI.player.getClass();
+	return characters.filter(char => rosterClass(char.classId) == playerClass && !roleMisfit(simUI, char));
+}
+
+// Why acoreCandidates found no one, e.g. 'No Priest healers in this roster'. No final period, since the
+// window shows it as an option.
+export function noAcoreCandidates<SpecType extends Spec>(
+	simUI: IndividualSimUI<SpecType>,
+	characters: Array<RosterCharacter>,
+	where: string,
+): string {
+	const playerClass = simUI.player.getClass();
+	const className = classNames.get(playerClass);
+	if (!characters.some(char => rosterClass(char.classId) == playerClass)) {
+		return `No ${className} ${where}`;
+	}
+	return isHealingSpec(simUI.player.spec) ? `No ${className} healers ${where}` : `Only ${className} healers ${where}: they load on a healer page`;
 }
 
 function pickKey(simUI: SimUI): string {
