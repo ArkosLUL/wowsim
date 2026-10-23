@@ -55,6 +55,15 @@ Runs in the [wave loop](../wave-loop/wave-loop.PLAN.md). The [RUNBOOK](../wave-l
 - Called "Caps & Priority", placed after BiS Optimizer.
 - Shown on every spec page, never inside the raid sim.
 
+**Wave Z17 (2026-10-23)**
+- **Caps are hard limits** for reforge suggestions: one you meet stays met, one you're short of never gets shorter. No checkbox.
+- **Apply on server:** a tab button. The sim server sends `.reforge apply` to the worldserver over SOAP.
+  - Online characters change at once; offline ones get the reforges at next login.
+  - Only core-raid characters (`AC_RAID_NAMES_FILE`).
+  - SOAP is published on `192.168.49.35:7878` and `127.0.0.1:7878` only, never the internet. The server is public; the user keeps 7878 unforwarded.
+  - A dedicated administrator account, created by the user. Its login sits in `.wowsim/prod.env` as `AC_SOAP_USER`, `AC_SOAP_PASSWORD`; agents never read it.
+- **mod-reforging commits:** its uncommitted thread-safety edits (September BiS dataset work, already live) go in first as their own commit, then CAP-SERVER's. Both are approved.
+
 ## Design
 
 ### Caps engine: `sim/statcaps`
@@ -208,7 +217,8 @@ It is synchronous, at about 15 environment builds per cap.
 
 | Wave | Items | Why |
 |---|---|---|
-| Z16 | CAP-TAB · CAP-ROSTER | the user's call, 2026-10-22, before Z15's follow-ups (Z17) |
+| Z16 | CAP-TAB · CAP-ROSTER | the user's call, 2026-10-22, before Z15's follow-ups (Z18) |
+| Z17 | CAP-FLOORS · CAP-SERVER | the user's call, 2026-10-23: Apply all dropped hit and expertise below their caps; reforges applied on the server |
 
 ## Work items
 
@@ -406,3 +416,56 @@ Plus an optional `UITEST_ACORE_LIVE=1` check against a dev server started with t
 - **Preselection:** the remembered pick (`{"character": name}`) when the roster holds it, else the best score: spec match 2, main-tree match 1, ties in roster order. A roster refresh keeps the current pick if still listed. The pick is saved on change and on Import.
 - **Heroic Presence:** `heroicPresenceSource(roster, char)` in `acore_roster.ts` returns the character or the first subgroup member with Draenei racials. Racials follow `swapRaceId` ([azerothcore-data](../guide/azerothcore-data.md#module-tables)): a Draenei swapped away gives none, a Night Elf swapped to Draenei does. Import sets the page party's buff and adds an "on"/"off" note naming who.
 - **Tests:** `tests/lib/acore.ts` holds `stubServer`, `errorReply`, their types, the server's error texts, and `dropServerRoster`. That aborts `/acoreRoster` for a test opening the importer without testing its fetch: `watchForErrors` counts a plain dev server's 503, not a dropped request. `roster_import.spec.ts`: 7 stubbed tests plus the live one, which passed against a dev server with prod's `--acore*` flags.
+
+### CAP-FLOORS (Z17; golden-neutral; stages: code)
+
+Apply all could leave hit or expertise below a cap: `suggestReforges` priced rating under a cap at the stat's value but never forbade it. Shipped values made it worse: hit 2.13 vs haste 2.14 per point (Unholy DW P3) moved every point of hit; dual wielders' hit was measured mostly past the yellow cap; some expertise partly above the dodge cap (Enhancement P1–P2, Unholy P3, Combat P1–P3, Ret P3–P4, up to 25%), tanks' fully. Live values had no cap rule, and a loss measured over its step was applied to any amount.
+
+**Floors**, in `suggestReforges` (`ui/core/stat_priority.ts`), for shipped and live values alike:
+- Every `StatCap` of kind `StatCapFloor` with a finite `needed`: hit, spell hit, each expertise row (hand, dodge, parry), Defense. Soft caps and ceilings aren't floors.
+- Start surplus = `Math.round(rating) - Math.round(needed)` (as `roomTo`); limit = `min(0, start)`.
+- A candidate moves each floor by its net change on the cap's `stat` (generic hit moves `MeleeHit` and `SpellHit`; expertise moves every hand's rows). The greedy skips any candidate taking a floor's running surplus below its limit.
+
+**Noise rule:** a candidate counts only when its gain is at least `MIN_RELATIVE_GAIN` (0.05) × the value it gives up (its negative `moveValue` parts); giving up nothing, it only has to beat `MIN_GAIN`.
+
+**Tab:** one hint line in the reforge block, "Suggestions keep every hit and expertise cap you meet." `priority()`, `livePriority()` and the cap notes stay. Re-measuring the shipped windows is a follow-up (the stat weights chain).
+
+**Tests:**
+- `caps_reforge.spec.ts` units: met hit and expertise caps stay met (shipped and live); a short cap never gets shorter; near-equal values are skipped; existing tests pass, or change only where the old greedy went under on purpose.
+- Page test on the item's dev server for Unholy DK (dual wield, P3), Fury, Combat rogue and Prot Paladin: Apply all, wait for fresh caps, no met cap is short.
+
+**Owns:** `suggestReforges` and its helpers in `stat_priority.ts`; the hint line in `caps_tab.ts`'s reforge block; `tools/uitest/tests/caps/caps_reforge.spec.ts`; [stat-caps](../guide/stat-caps.md)'s "Reforge suggestions"; this section's `#### As built`.
+
+### CAP-SERVER (Z17; golden-neutral; C++; stages: server, route, live, docs)
+
+A tab button sends the sim's reforges to a core-raid character on the live server. mod-reforging reads `character_reforging` into memory only at startup, so the change goes through a GM command over SOAP, never a DB write.
+
+**Stage 1, server command** (`[ac]/modules/mod-reforging`, edited in place; read [ac]'s `AGENTS.md` and `.agents/docs/cpp-guidelines.md` first):
+- `src/mod_reforging_commandscript.cpp`, registered in `mod_reforging_loader.cpp`: `.reforge apply <character> <slot>:<item>:<from>:<to> …`, `SEC_ADMINISTRATOR`, `Console::Yes`. Server equipment slots (`EQUIPMENT_SLOT_*`), ItemModType ids, `0:0` removes. SOAP runs commands on the world thread (`ACSoap.cpp` queues a `CliCommandHolder`).
+- New `ItemReforge` members, under `reforgingDataLock`:
+  - `ReforgeAmount(ItemTemplate const*, from, to)`: the amount, or 0 unless both stats are reforgeable, `from` is on the item with a positive value and `to` isn't, quality ≤ legendary, `StatsCount` in range, and `CalculateReforgePct(value) ≥ 1`;
+  - `GetReforgingData(uint32 itemGuid)`;
+  - `SetStoredReforge(ownerGuid, itemGuid, from, to, value)`, `EraseStoredReforge(itemGuid)`: map plus `DirectExecute` on `character_reforging`.
+- Lookup: `sCharacterCache->GetCharacterGuidByName`, then `ObjectAccessor::FindConnectedPlayer`.
+- Online, per slot: the item at `(INVENTORY_SLOT_BAG_0, slot)` must have that entry (else `mismatch`); the same reforge is `unchanged`; else `RemoveReforge`, then `Reforge` for a non-zero target (both re-apply stats and send the item packet); a failed `Reforge` puts the old one back and reports `failed`.
+- Offline: one `SELECT ci.slot, ci.item, ii.itemEntry FROM character_inventory ci JOIN item_instance ii ON ii.guid = ci.item WHERE ci.guid = ? AND ci.bag = 0`, `ReforgeAmount` on the template, then the stored-reforge members; `OnPlayerApplyItemModsBefore` applies them at login.
+- Reply: `character <name> online|offline`, then one line per slot, `<slot> <applied|removed|unchanged|mismatch|invalid|failed> <text>`. An unknown character fails the command (a SOAP fault).
+- Compile check: `PB_REPO=<module> sh ~/.claude/scripts/pb-syntax-check.sh <files>`, else the [azerothcore-server](../guide/azerothcore-server.md) fallback. No build: the live stage rebuilds.
+
+**Stage 2, route and dialog:**
+- `sim/web/acreforge`: `Config{SoapURL, SoapUser, SoapPassword, NamesFile}` with `WithEnv`, like `acroster.Config`: `AC_SOAP_URL` (`--acoreSoapUrl`), `AC_SOAP_USER` (`--acoreSoapUser`), `AC_SOAP_PASSWORD` (env only), the roster's names file. Wired in `sim/web/main.go` beside `/acoreRoster`; `compose.yaml`'s `x-acore-env` adds `AC_SOAP_URL: http://192.168.49.35:7878/`.
+- `POST /acoreReforge`, `Content-Type: application/json`: `{character, items: [{acSlot, itemId, from, to}]}`. The character must be in the names file; 1–19 items, unique `acSlot` 0–18; `from`/`to` reforgeable ids or both 0.
+- Builds the command and posts the `urn:AC` `executeCommand` envelope with basic auth; one request at a time, 30 s; parses `<result>` or `<faultstring>` (`encoding/xml`). Replies `{online, slots: [{acSlot, status, text}]}`.
+- Errors `{code, error}`: `bad_request` 400, `cross_site` 403 (`Sec-Fetch-Site`), `method_not_allowed` 405, `not_in_roster` 409, `not_configured` 503 (names what's missing), `soap` 502 (a 401/403 reads "the SOAP login was refused"; fault text passes through), `timeout` 504. The password never reaches a log, an error or a reply.
+- Tab: an "Apply reforges on server…" button in the "Your character" block, only on a sim server. Dialog (`acore_reforge_dialog.ts`, a `BaseModal`): a character dropdown of the page's class from a fresh `fetchServerRoster()`, preselected from the importer's saved pick (`acore-import.v1`); a row per equipped slot via `acSlotToItemSlot`: item, server reforge "as of last save", sim reforge, status (will change, same, or "different item on the server", left out). Send posts every matching slot, then shows each slot's reply. Notes: logged-out characters get them at next login; a bot redoes its own reforges when it refreshes its gear.
+- Tests: `dock.sh test ./sim/web/acreforge/` with an `httptest` SOAP server (auth header, command text, parsed reply, fault, 401, timeout, `not_in_roster`, `not_configured`, no password in any error); `tools/uitest/tests/caps/server_reforge.spec.ts` against stubbed `/acoreRoster` and `/acoreReforge` (preselection, a mismatched slot left out, the posted body, results, no button under fake wasm).
+
+**Stage 3, live** (returns `blocked`, naming what's missing, until the user has made the SOAP account and added its login to `prod.env`):
+- The orchestrator's config, before this stage: `[ac]/configurationOverrides/Soap.env` (`AC_SOAP_ENABLED=1`, `AC_SOAP_IP=0.0.0.0`), its `env_file` line and a `127.0.0.1:7878:7878` port in `[ac]/docker-compose.override.yml`, `DOCKER_SOAP_EXTERNAL_PORT=192.168.49.35:7878` in `[ac]/.env`. All gitignored.
+- Rebuild the worldserver once Deathsong is offline ([RUNBOOK](../wave-loop/wave-loop.RUNBOOK.md#standing-authorizations)); `docker port ac-worldserver` must list 7878 on `192.168.49.35` and `127.0.0.1` only.
+- A dev server with the `--acore*` flags and `--env-file` prod.env. If its container can't reach `192.168.49.35:7878`, switch to the AzerothCore Docker network (`ac-worldserver:7878`) and report it.
+- Round trip on **Angry** (the user's pick): read the roster, flip one item's reforge through `/acoreReforge`, check `/acoreRoster` shows it, put it back. Nothing else changes. Report whether the online or offline path ran.
+
+**Stage 4, docs** (via `/compact-docs-writer`): [stat-caps](../guide/stat-caps.md) "Apply on server"; [dev-environment](../guide/dev-environment.md) a `/acoreReforge` block beside `/acoreRoster` and prod.env's three lines; [azerothcore-server](../guide/azerothcore-server.md) SOAP on via `Soap.env` on those two addresses (drop "There's no SOAP" twice), `.reforge apply` in the mod-reforging row, the reboot caveat (if `192.168.49.35` isn't up when Docker starts the worldserver, Docker may refuse to start it); [sim-architecture](../guide/sim-architecture.md) a `sim/web/acreforge` row; the uitest README's new spec; `#### As built`.
+
+**Owns:** `[ac]/modules/mod-reforging/src/`; `sim/web/acreforge/` and its lines in `sim/web/main.go` and `compose.yaml`; the "Your character" block in `caps_tab.ts`, `acore_reforge_dialog.ts` and its styles in `_caps_tab.scss`; `tools/uitest/tests/caps/server_reforge.spec.ts`; the stage 4 docs.

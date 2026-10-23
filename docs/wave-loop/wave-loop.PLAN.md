@@ -94,7 +94,8 @@ G = changes goldens. FS = runs all 37 suites.
 | Z14 | EC-UPSTREAM (G, FS, live) · EC-CORE-FIX11 (G, FS, live) · EC-PET-FIX9 (G, live) · EC-CLASS-FIX10 (G) | ✔ |
 | Z15 | EC-CORE-FIX12 (G) · EC-PET-FIX10 (live) · EC-CLASS-FIX11 (G, live) · EC-TOOLS5 (C++, live) | ✔ |
 | Z16 | CAP-TAB · CAP-ROSTER | |
-| Z17 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | ✔ |
+| Z17 | CAP-FLOORS · CAP-SERVER (C++, live) | |
+| Z18 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
 before the class items in G, a class item can't build on a core fix merging in its own wave, and F already
@@ -170,8 +171,9 @@ in EC-TOOLS4's place, which waits for Z13, and the tank fixes and the hunter sho
 2026-10-15: Bulwark gems Agility, the tanks take resistance, and the chain's P1 hunters simmed NaN); the deferred BiS
 chain waits for Z12.
 Z16 is the user's call (2026-10-22): the [Caps & Priority tab](../caps-and-priority/caps-and-priority.PLAN.md), before
-Z15's follow-ups, which become Z17. Its items touch only the tab, its packages and tools, so goldens and BiS
-can't move, and it skips the re-baseline.
+Z15's follow-ups, which become Z18. Its items touch only the tab, its packages and tools, so goldens and BiS
+can't move, and it skips the re-baseline. Z17 is the user's call too (2026-10-23): reforge suggestions that keep
+the caps, and an "Apply on server" button over SOAP, also golden-neutral.
 
 **Where the specs are:**
 
@@ -189,9 +191,9 @@ can't move, and it skips the re-baseline.
 
 ## Current wave
 
-- Wave: Z16 (caps-and-priority PLAN; the user's go, 2026-10-22), landed. Base `6e24c717c`, run `wf_b6e64cf4-f8b`
-  (Z14's script); reports `.wave-loop\z16-run1\*.json` and `xreview.md`, item notes `.wave-loop\{cap-tab,cap-roster}-tmp`,
-  build `waveZ16-build.py`. Next: Z17 (Z15's follow-ups, specs in the e2e-coverage PLAN) on the user's go. The BiS
+- Wave: Z17 (caps-and-priority PLAN; the user's go, 2026-10-23), running. Base `3545a1099`; build `waveZ17-build.py`.
+  Z16 landed: run `wf_b6e64cf4-f8b`, reports `.wave-loop\z16-run1\`. Next: Z18 (Z15's follow-ups, specs in the
+  e2e-coverage PLAN) on the user's go. The BiS
   chain ran 2026-10-21 (BiS chain, below).
   spec-balance is closed (2026-10-22). Its `Player.playerbot` switch (`docs/guide/playerbot-rules.md`) stays on in
   presetgen, statweights' capture and the rankings, so the BiS chain optimizes under bot rules.
