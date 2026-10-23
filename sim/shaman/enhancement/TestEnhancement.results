@@ -285,6 +285,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestEnhancement-AllItems-EarthshatterRegalia"
+ value: {
+  dps: 6913.02217
+  tps: 4090.01078
+ }
+}
+dps_results: {
  key: "TestEnhancement-AllItems-EffulgentSkyflareDiamond"
  value: {
   dps: 8505.727
@@ -387,6 +394,13 @@ dps_results: {
  value: {
   dps: 9617.94833
   tps: 5944.79854
+ }
+}
+dps_results: {
+ key: "TestEnhancement-AllItems-FrostWitch'sGarb"
+ value: {
+  dps: 8271.48367
+  tps: 4918.63172
  }
 }
 dps_results: {
@@ -838,6 +852,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestEnhancement-AllItems-Thrall'sGarb"
+ value: {
+  dps: 7631.44967
+  tps: 4511.08471
+ }
+}
+dps_results: {
  key: "TestEnhancement-AllItems-Thrall'sRegalia"
  value: {
   dps: 7911.5895
@@ -894,6 +915,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestEnhancement-AllItems-TotemofCalmingTides-47665"
+ value: {
+  dps: 8602.566
+  tps: 5174.84611
+ }
+}
+dps_results: {
  key: "TestEnhancement-AllItems-TotemofElectrifyingWind-47666"
  value: {
   dps: 8892.627
@@ -919,6 +947,13 @@ dps_results: {
  value: {
   dps: 8668.593
   tps: 5225.27035
+ }
+}
+dps_results: {
+ key: "TestEnhancement-AllItems-TotemoftheSurgingSea-50464"
+ value: {
+  dps: 8602.566
+  tps: 5174.84611
  }
 }
 dps_results: {
@@ -968,6 +1003,13 @@ dps_results: {
  value: {
   dps: 7825.88833
   tps: 4652.17807
+ }
+}
+dps_results: {
+ key: "TestEnhancement-AllItems-WorldbreakerRegalia"
+ value: {
+  dps: 7185.01817
+  tps: 4251.25303
  }
 }
 dps_results: {
