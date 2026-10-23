@@ -43,6 +43,51 @@ character_stats_results: {
   final_stats: 0
  }
 }
+stat_weights_results: {
+ key: "TestHoly-StatWeights-Default"
+ value: {
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 1.0419
+  weights: 0.77341
+  weights: 0.72847
+  weights: 1.55422
+  weights: 0
+  weights: 0.21494
+  weights: 0.0183
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+  weights: 0
+ }
+}
 dps_results: {
  key: "TestHoly-AllItems-AbsolutionRegalia"
  value: {
