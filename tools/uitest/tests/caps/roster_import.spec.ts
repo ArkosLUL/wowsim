@@ -24,16 +24,21 @@ function regrouped(moves: Record<string, number>): string {
 
 const picker = (modal: Locator) => modal.locator('.acore-character-select');
 
-// Imports whoever the dialog picked off the server's roster, and returns the notes alert after 'Import successful!'.
+// Imports whoever the dialog picked off the server's roster, and returns the notes the Caps tab shows. No alert.
 async function importFromServer(page: Page, dialogs: string[], rosterText: string): Promise<string> {
-	const seen = dialogs.length;
 	const modal = await openImporter(page, 'AzerothCore');
 	await expect(modal.locator('.importer-textarea')).toHaveValue(rosterText);
 	await modal.locator('.import-button').click();
-	await expect.poll(() => dialogs.length, { timeout: 60_000 }).toBe(seen + 2);
-	await expect(modal).toHaveCount(0);
-	expect(dialogs[seen]).toMatch(/^Import successful/);
-	return dialogs[seen + 1];
+	await expect(modal).toHaveCount(0, { timeout: 60_000 });
+	expect(dialogs).toEqual([]);
+	return notesOnTab(page);
+}
+
+async function notesOnTab(page: Page): Promise<string> {
+	await openSimTab(page, 'caps-tab');
+	const notes = page.locator('#caps-tab .caps-import-notes');
+	await expect(notes).toContainText('Loaded ');
+	return notes.innerText();
 }
 
 const heroicPresence = async (page: Page) => (await storedSettings(page, SPEC)).partyBuffs?.heroicPresence ?? false;
@@ -156,8 +161,9 @@ test('a roster file still imports when the server refuses', async ({ page }) => 
 	await modal.locator('.importer-upload-input').setInputFiles(rosterPath());
 	await expect(picker(modal)).toHaveValue('Deathsong');
 	await modal.locator('.import-button').click();
-	await expect.poll(() => dialogs.length, { timeout: 60_000 }).toBe(2);
-	expect(dialogs[1]).toContain('Heroic Presence on');
+	await expect(modal).toHaveCount(0, { timeout: 60_000 });
+	expect(await notesOnTab(page)).toContain('Heroic Presence on');
+	expect(dialogs).toEqual([]);
 	expect((await storedSettings(page, SPEC)).player.talentsString).toBe(character('Deathsong').talents);
 });
 
@@ -225,9 +231,9 @@ test('the real route fills the dialog and imports the picked raider', async ({ p
 	const picked = await picker(modal).inputValue();
 
 	await modal.locator('.import-button').click();
-	await expect.poll(() => dialogs.length, { timeout: 60_000 }).toBe(2);
-	expect(dialogs[0]).toMatch(/^Import successful/);
-	expect(dialogs[1]).toMatch(new RegExp(`^${picked}:[\\s\\S]*Heroic Presence (on|off)`));
+	await expect(modal).toHaveCount(0, { timeout: 60_000 });
+	expect(dialogs).toEqual([]);
+	expect(await notesOnTab(page)).toMatch(new RegExp(`^Loaded ${picked}[\\s\\S]*Heroic Presence (on|off)`));
 	expect((await storedSettings(page, SPEC)).player.talentsString).toBe(JSON.parse(live).characters.find((char: any) => char.name == picked).talents);
 	expect(errors).toEqual([]);
 });

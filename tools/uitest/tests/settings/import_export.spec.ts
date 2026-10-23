@@ -316,7 +316,9 @@ test('the AzerothCore importer brings over the picked character', async ({ page 
 	await expect(picker.locator('option')).toHaveText(['Power', 'Smartface']);
 	await picker.selectOption('Smartface');
 	await modal.locator('.import-button').click();
-	await expect.poll(() => dialogs).toContain('Import successful!');
+	// the window closes without an alert; the Caps tab shows the notes
+	await expect(modal).toHaveCount(0, { timeout: 60_000 });
+	expect(dialogs).toEqual([]);
 
 	const imported = (await storedSettings(page, SPEC)).player;
 	expect(imported.talentsString).toBe(character.talents);

@@ -2,6 +2,7 @@ import { expect, type Page, test } from '@playwright/test';
 
 import { AsyncAPIResult, ProgressMetrics, StatSlope, StatSlopeMetrics, StatSlopesRequest, StatSlopesResult } from '../../../../ui/core/proto/api';
 import { Class, Stat } from '../../../../ui/core/proto/common';
+import { dropServerRoster } from '../lib/acore';
 import { openSim, openSimTab, watchForErrors } from '../lib/page';
 
 const STAT_VALUES = {
@@ -107,6 +108,7 @@ async function order(page: Page): Promise<string[]> {
 
 async function openCapsTab(page: Page, spec: string) {
 	await page.route('**/assets/statweights/stat_values.json', route => route.fulfill({ json: STAT_VALUES }));
+	await dropServerRoster(page);
 	await openSim(page, spec);
 	await openSimTab(page, 'caps-tab');
 }
@@ -195,6 +197,7 @@ test("a failed run says why and leaves the shipped values up", async ({ page }) 
 test('a real run on the sim server measures the default warrior', async ({ page }) => {
 	test.setTimeout(120_000);
 	const errors = watchForErrors(page);
+	await dropServerRoster(page);
 	await openSim(page, 'warrior');
 	await openSimTab(page, 'caps-tab');
 	await measureButton(page).click();

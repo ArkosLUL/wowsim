@@ -1,6 +1,7 @@
 import { expect, type Page, test } from '@playwright/test';
 
 import { StatCapKind, StatCapsResult } from '../../../../ui/core/proto/api';
+import { dropServerRoster } from '../lib/acore';
 import { openSim, openSimTab, watchForErrors } from '../lib/page';
 import { reloadSim } from '../settings/helpers';
 
@@ -73,6 +74,7 @@ async function order(page: Page): Promise<string[]> {
 }
 
 async function openCapsTab(page: Page, spec: string) {
+	await dropServerRoster(page);
 	await openSim(page, spec);
 	await openSimTab(page, 'caps-tab');
 }

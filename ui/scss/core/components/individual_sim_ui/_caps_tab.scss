@@ -183,13 +183,43 @@
 	}
 }
 
-.acore-reforge-dialog {
-	.acore-reforge-character {
+.caps-tab {
+	.caps-character-row {
+		display: flex;
+		align-items: center;
+	}
+
+	.caps-character {
 		max-width: 20rem;
 	}
 
-	.acore-reforge-table {
-		margin-top: map-get($spacers, 2);
+	.caps-character-status:empty {
+		display: none;
+	}
+
+	.caps-import-note-list {
+		font-size: 0.85rem;
+		opacity: 0.85;
+	}
+
+	.caps-send-preview {
+		margin-bottom: map-get($spacers, 2);
+		padding: map-get($spacers, 2);
+		border: 1px solid $border-color;
+
+		.caps-send-lines {
+			padding-left: map-get($spacers, 4);
+		}
+
+		.caps-send-skipped,
+		.caps-send-notes {
+			font-size: 0.85rem;
+			opacity: 0.75;
+		}
+
+		.caps-send-result:empty {
+			display: none;
+		}
 	}
 }
 

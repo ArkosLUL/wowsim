@@ -324,13 +324,17 @@ test('the individual importer sets the pet, ammo and consumables', async ({ page
 	const dialogs = collectDialogs(page);
 	await openSpec(page, 'hunter');
 	const pick = async (rosterText: string, name: string) => {
-		const seen = dialogs.length;
 		const modal = await openImporter(page, 'AzerothCore');
 		await paste(modal.locator('.importer-textarea'), rosterText);
 		await modal.locator('.acore-character-select').selectOption(name);
 		await modal.locator('.import-button').click();
-		await expect.poll(() => dialogs.length).toBe(seen + 2);
-		return dialogs[seen + 1];
+		await expect(modal).toHaveCount(0);
+		// no alert: the notes show in the Caps tab
+		expect(dialogs).toEqual([]);
+		await openSimTab(page, 'caps-tab');
+		const notes = page.locator('#caps-tab .caps-import-notes');
+		await expect(notes).toContainText(`Loaded ${name} from the server`);
+		return notes.innerText();
 	};
 	const hunter = async () => (await storedSettings(page, 'hunter')).player;
 

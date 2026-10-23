@@ -144,24 +144,28 @@ loads it.
 
 ## Apply on server
 
-The "Your character" block's "Apply reforges on server…" button (sim server only, hidden under wasm) opens
-`acore_reforge_dialog.ts`, which sends the sim's reforges to a core-raid character on the live server.
+The reforge block's `.reforge-apply-send` button ("Apply all and send…" with suggestions, "Send to server…"
+without; shown on a sim server once a character is loaded, even when nothing can be suggested) sends the sim's reforges to that core-raid character
+on the live server. Code: `acore_reforge.ts` (`planServerReforges`, `postReforges`) and `caps_tab.ts`.
 - mod-reforging reads `character_reforging` only at startup, so the change goes through the GM command
   `.reforge apply <character> <slot>:<item>:<from>:<to> …` over SOAP, never a DB write
   ([route](dev-environment.md#run), [server side](azerothcore-server.md#modules-that-affect-the-sim)).
   Slots are server `EQUIPMENT_SLOT_*` ids; `0:0` removes.
-- The dialog lists the page's class from a fresh `fetchServerRoster()`, preselecting the importer's saved pick
-  (`acore-import.v1`). A row per equipped slot (`acSlotToItemSlot`) shows the server reforge as of the
-  character's last save and the sim's, with a status:
-  - `Will change`, `Will remove` (a server reforge, none in the sim) or `Same`: sent;
-  - left out: different item on the server, nothing on the server, nothing in the sim, a sim reforge the
-    live server can't take, or a server reforge the sim's item can't take (the import drops it, so the sim's
-    none isn't the user's pick).
-  - Reforges are checked against `LIVE_REFORGING`, never the page's server settings: with reforging off
-    there, Send would strip every reforge.
-- Send posts every sent slot to `POST /acoreReforge`, then each row shows the server's `<status>: <text>`
-  (`applied`, `removed`, `unchanged`, `mismatch`, `invalid`) and whether the character was online or offline.
-  A timed-out request may still land: sending again reports each slot.
+- Click: apply the suggestions, read a fresh roster, plan against the loaded character's server gear. The inline
+  preview `.caps-send-preview` has a line per changing slot (`<server> → <sim>`, `(Will remove)` for a server
+  reforge with none in the sim), one line counting the left-out slots with reasons, `.caps-send-confirm` and
+  Cancel, plus the notes (last save, logged-out characters, bots). Nothing to change: "The server already has
+  these reforges.", no Confirm. Server gear is as of the character's last save.
+  - Sent: `Will change`, `Will remove`. `Same` slots are neither sent nor listed.
+  - Left out: different item on the server, nothing on the server, nothing in the sim, a sim reforge the live
+    server can't take, or a server reforge the sim's item can't take (the import drops it, so the sim's none
+    isn't the user's pick).
+  - Reforges are checked against `LIVE_REFORGING`, never the page's server settings: with reforging off there,
+    the send would strip every reforge.
+- A gear change or another AzerothCore load drops the preview, except while it posts. Confirm posts only the changing slots to `POST /acoreReforge`, then each line
+  shows the server's `<status>: <text>` (`applied`, `removed`, `unchanged`, `mismatch`, `invalid`) and whether the
+  character was online or offline. A refusal shows in the preview and Confirm stays. A timed-out request may still
+  land: sending again reports each slot.
 - Online, the item is re-reforged live (`ItemReforge::SetEquippedReforge`, one synchronous write). Offline, the
   stored reforge is written and applied at next login.
   A bot redoes its own reforges when it refreshes its gear.
@@ -173,8 +177,15 @@ The "Your character" block's "Apply reforges on server…" button (sim server on
 - `CapsTab` sits after the BiS Optimizer on every individual sim page, never in the raid sim.
 - It refreshes only while shown, debounced, dropping stale replies, on the player's stats, gear, buffs, talents
   and in-front setting, party and raid buffs, debuffs, tanks and the encounter.
-- "Import from roster…" calls `IndividualSimUI.openAcoreImporter()`, as the Import menu does; it shows only on a
-  sim server (`simServerAvailable()`).
+- "Your character" (sim server only, `simServerAvailable()`): a `.caps-character` dropdown of the page's class off
+  a `fetchServerRoster()` when the tab first opens, preselected from the last load or `acore-import.v1`. Picking a
+  name reads a fresh roster and runs `importAcoreCharacter` (`importers.ts`); `.caps-character-reload` loads the
+  shown one again, which is also how the preselected one loads. No window, no alert. The import's notes (and
+  "Loaded <name> from the server (saved <exportedAt>)") sit in `.caps-import-notes`; errors show inline.
+- `importAcoreCharacter` is also what the Import menu's AzerothCore window runs, without an alert: both leave
+  the result in `IndividualSimUI.lastAcoreImport` and fire `acoreImportEmitter`. Import errors in the window
+  still alert. A name missing from the fresh roster fails; it never loads someone else. The JSON, 80U, Wowhead and
+  addon importers keep their alerts and clear `lastAcoreImport`, so the send has no target after them.
 - Tests: `sim/statcaps/statcaps_test.go`, `sim/statslopes/statslopes_test.go`, `tools/uitest/tests/caps/`.
   `TestRequestsSideBySide` runs both RPCs beside `/computeStats` and `/raidSimAsync`, as the sim server does;
   after a concurrency change run `dock.sh test -race ./sim/statcaps/ ./sim/statslopes/`.

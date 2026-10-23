@@ -10,6 +10,7 @@ import {
 	heroicPresenceSource,
 	inferSpec,
 	parseRoster,
+	Roster,
 	RosterCharacter,
 	rosterClass,
 	rosterEquipmentSpec,
@@ -113,39 +114,8 @@ ${error?.message}`);
 		glyphs: Glyphs | null,
 		professions: Array<Profession>,
 	): Promise<void> {
-		const playerClass = simUI.player.getClass();
-		if (charClass != playerClass) {
-			throw new Error(`Wrong Class! Expected ${classNames.get(playerClass)} but found ${classNames.get(charClass)}!`);
-		}
-
-		await Database.loadLeftoversIfNecessary(equipmentSpec);
-
-		const gear = simUI.sim.db.lookupEquipmentSpec(equipmentSpec);
-
-		const expectedEnchantIds = equipmentSpec.items.map(item => item.enchant);
-		const foundEnchantIds = gear.asSpec().items.map(item => item.enchant);
-		const missingEnchants = expectedEnchantIds.filter(expectedId => expectedId != 0 && !foundEnchantIds.includes(expectedId));
-
-		const expectedItemIds = equipmentSpec.items.map(item => item.id);
-		const foundItemIds = gear.asSpec().items.map(item => item.id);
-		const missingItems = expectedItemIds.filter(expectedId => !foundItemIds.includes(expectedId));
-
-		// Now update settings using the parsed values.
-		const eventID = TypedEvent.nextEventID();
-		TypedEvent.freezeAllAndDo(() => {
-			simUI.player.setRace(eventID, race);
-			simUI.player.setRacialTraits(eventID, Race.RaceUnknown);
-			simUI.player.setGear(eventID, gear);
-			if (talentsStr && talentsStr != '--') {
-				simUI.player.setTalentsString(eventID, talentsStr);
-			}
-			if (glyphs) {
-				simUI.player.setGlyphs(eventID, glyphs);
-			}
-			if (professions.length > 0) {
-				simUI.player.setProfessions(eventID, professions);
-			}
-		});
+		const { missingItems, missingEnchants } = await applyIndividualImport(simUI, charClass, race, equipmentSpec, talentsStr, glyphs, professions);
+		setAcoreImport(simUI, null);
 
 		this.close();
 
@@ -159,6 +129,51 @@ ${error?.message}`);
 			);
 		}
 	}
+}
+
+// Puts the parsed character on the page. Throws on the wrong class; tells which ids the sim database lacks.
+async function applyIndividualImport<SpecType extends Spec>(
+	simUI: IndividualSimUI<SpecType>,
+	charClass: Class,
+	race: Race,
+	equipmentSpec: EquipmentSpec,
+	talentsStr: string,
+	glyphs: Glyphs | null,
+	professions: Array<Profession>,
+): Promise<{ missingItems: Array<number>; missingEnchants: Array<number> }> {
+	const playerClass = simUI.player.getClass();
+	if (charClass != playerClass) {
+		throw new Error(`Wrong Class! Expected ${classNames.get(playerClass)} but found ${classNames.get(charClass)}!`);
+	}
+
+	await Database.loadLeftoversIfNecessary(equipmentSpec);
+
+	const gear = simUI.sim.db.lookupEquipmentSpec(equipmentSpec);
+
+	const expectedEnchantIds = equipmentSpec.items.map(item => item.enchant);
+	const foundEnchantIds = gear.asSpec().items.map(item => item.enchant);
+	const missingEnchants = expectedEnchantIds.filter(expectedId => expectedId != 0 && !foundEnchantIds.includes(expectedId));
+
+	const expectedItemIds = equipmentSpec.items.map(item => item.id);
+	const foundItemIds = gear.asSpec().items.map(item => item.id);
+	const missingItems = expectedItemIds.filter(expectedId => !foundItemIds.includes(expectedId));
+
+	const eventID = TypedEvent.nextEventID();
+	TypedEvent.freezeAllAndDo(() => {
+		simUI.player.setRace(eventID, race);
+		simUI.player.setRacialTraits(eventID, Race.RaceUnknown);
+		simUI.player.setGear(eventID, gear);
+		if (talentsStr && talentsStr != '--') {
+			simUI.player.setTalentsString(eventID, talentsStr);
+		}
+		if (glyphs) {
+			simUI.player.setGlyphs(eventID, glyphs);
+		}
+		if (professions.length > 0) {
+			simUI.player.setProfessions(eventID, professions);
+		}
+	});
+	return { missingItems, missingEnchants };
 }
 
 interface UrlParseData {
@@ -244,6 +259,7 @@ export class IndividualJsonImporter<SpecType extends Spec> extends Importer {
 		} else {
 			this.simUI.fromProto(TypedEvent.nextEventID(), proto);
 		}
+		setAcoreImport(this.simUI, null);
 		this.close();
 	}
 }
@@ -619,7 +635,7 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 		this.body.prepend(pickerElem);
 		this.characterPicker = pickerElem.getElementsByClassName('acore-character-select')[0] as HTMLSelectElement;
 		this.serverStatus = pickerElem.getElementsByClassName('acore-server-status')[0] as HTMLElement;
-		this.characterPicker.addEventListener('change', () => this.storePick(this.characterPicker.value));
+		this.characterPicker.addEventListener('change', () => storePick(this.simUI, this.characterPicker.value));
 		this.refreshCharacters('');
 
 		simServerAvailable().then(available => {
@@ -701,7 +717,7 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 	// The last pick if the roster has them, else whoever plays this page's spec, on the page's main talent
 	// tree if possible.
 	private preferredCharacter(chars: Array<RosterCharacter>): string {
-		const saved = this.loadPick();
+		const saved = loadAcorePick(this.simUI);
 		if (chars.some(char => char.name == saved)) {
 			return saved;
 		}
@@ -719,94 +735,132 @@ export class IndividualAcoreImporter<SpecType extends Spec> extends Importer {
 		return chars.reduce((best, char) => (score(char) > score(best) ? char : best)).name;
 	}
 
-	private pickKey(): string {
-		return this.simUI.getStorageKey('acore-import.v1');
-	}
-
-	private loadPick(): string {
-		try {
-			const saved = JSON.parse(window.localStorage.getItem(this.pickKey()) || '{}');
-			return typeof saved?.character == 'string' ? saved.character : '';
-		} catch {
-			return '';
-		}
-	}
-
-	private storePick(name: string) {
-		if (!name) {
-			return;
-		}
-		try {
-			window.localStorage.setItem(this.pickKey(), JSON.stringify({ character: name }));
-		} catch {
-			// storage off: the spec match picks next time
-		}
-	}
-
 	async onImport(data: string) {
 		const roster = parseRoster(data);
-		await this.simUI.sim.waitForInit();
-		const db = await Database.loadLeftoversIfNecessary(rosterEquipmentSpec(roster));
+		await importAcoreCharacter(this.simUI, roster, this.characterPicker.value);
+		this.close();
+	}
+}
 
-		const playerClass = this.simUI.player.getClass();
-		const candidates = roster.characters.filter(char => rosterClass(char.classId) == playerClass);
-		if (candidates.length == 0) {
-			throw new Error(`This roster has no ${classNames.get(playerClass)} in it.`);
-		}
-		const picked = candidates.find(char => char.name == this.characterPicker.value) || candidates[0];
-		this.storePick(picked.name);
+// What the last server import left behind, for the Caps tab to show.
+export interface AcoreImport {
+	name: string;
+	exportedAt: string;
+	notes: Array<string>;
+}
 
-		const imported = buildCharacterImport(db, picked);
-		await this.finishIndividualImport(
-			this.simUI,
-			imported.playerClass,
-			imported.race,
-			imported.equipment,
-			imported.talentsString,
-			imported.glyphs,
-			imported.professions,
+// Loads one roster character onto the page: gear, race, talents, glyphs, professions, racials, pet, ammo,
+// consumes and Heroic Presence. Remembers the pick and publishes the result on the page's acoreImportEmitter.
+export async function importAcoreCharacter<SpecType extends Spec>(
+	simUI: IndividualSimUI<SpecType>,
+	roster: Roster,
+	name: string,
+): Promise<AcoreImport> {
+	await simUI.sim.waitForInit();
+	const db = await Database.loadLeftoversIfNecessary(rosterEquipmentSpec(roster));
+
+	const playerClass = simUI.player.getClass();
+	const candidates = roster.characters.filter(char => rosterClass(char.classId) == playerClass);
+	if (candidates.length == 0) {
+		throw new Error(`This roster has no ${classNames.get(playerClass)} in it.`);
+	}
+	const picked = name ? candidates.find(char => char.name == name) : candidates[0];
+	if (!picked) {
+		throw new Error(`${name} isn't in this roster.`);
+	}
+	storePick(simUI, picked.name);
+
+	const imported = buildCharacterImport(db, picked);
+	const { missingItems, missingEnchants } = await applyIndividualImport(
+		simUI,
+		imported.playerClass,
+		imported.race,
+		imported.equipment,
+		imported.talentsString,
+		imported.glyphs,
+		imported.professions,
+	);
+	const player = simUI.player;
+	player.setRacialTraits(TypedEvent.nextEventID(), imported.racialTraits);
+	// The pet talents picker swaps in its own talents when the pet moves to another talent tree, so
+	// the roster's go in after the pet type.
+	applyPetAndAmmo(player, imported.playerClass, { ...imported.loadout, petTalents: undefined }, TypedEvent.nextEventID());
+	applyPetAndAmmo(player, imported.playerClass, imported.loadout, TypedEvent.nextEventID());
+	applyConsumes(player, imported, TypedEvent.nextEventID());
+
+	const presence = heroicPresenceSource(roster, picked);
+	const party = player.getParty();
+	if (party) {
+		party.setBuffs(TypedEvent.nextEventID(), PartyBuffs.create({ ...party.getBuffs(), heroicPresence: !!presence }));
+	}
+
+	const notes = (roster.warnings || []).concat(picked.warnings || []).concat(imported.warnings);
+	if (imported.loadout.skipped.length) {
+		notes.unshift(`Kept, the sim has no value for: ${imported.loadout.skipped.join(', ')}.`);
+	}
+	if (!presence) {
+		notes.unshift(`Heroic Presence off: nobody in ${picked.name}'s party has Draenei racials.`);
+	} else if (presence == picked) {
+		notes.unshift(`Heroic Presence on: ${picked.name} has Draenei racials.`);
+	} else {
+		notes.unshift(`Heroic Presence on: ${presence.name} in ${picked.name}'s party has Draenei racials.`);
+	}
+	if (roster.version < 2) {
+		notes.unshift('The pet, ammo and consumables stay as they are: a version 1 roster has none.');
+	} else {
+		const petAndAmmo = describePetAndAmmo(imported);
+		const petLabel = imported.playerClass == Class.ClassWarlock ? 'Demon' : 'Pet and ammo';
+		const consumes = describeConsumeSource(imported);
+		notes.unshift(...[petAndAmmo && `${petLabel}: ${petAndAmmo}.`, consumes && `Consumables from ${consumes}.`].filter(line => line));
+	}
+	if (imported.spec != player.spec) {
+		notes.unshift(`${picked.name}'s talents look like ${specNames[imported.spec]}, but this is the ${specNames[player.spec]} page.`);
+	}
+	if (missingItems.length || missingEnchants.length) {
+		notes.push(
+			'Not in the sim database:' +
+				(missingItems.length ? ` items ${missingItems.join(', ')}` : '') +
+				(missingEnchants.length ? ` enchants ${missingEnchants.join(', ')}` : '') +
+				'.',
 		);
-		const player = this.simUI.player;
-		player.setRacialTraits(TypedEvent.nextEventID(), imported.racialTraits);
-		// The pet talents picker swaps in its own talents when the pet moves to another talent tree, so
-		// the roster's go in after the pet type.
-		applyPetAndAmmo(player, imported.playerClass, { ...imported.loadout, petTalents: undefined }, TypedEvent.nextEventID());
-		applyPetAndAmmo(player, imported.playerClass, imported.loadout, TypedEvent.nextEventID());
-		applyConsumes(player, imported, TypedEvent.nextEventID());
+	}
 
-		const presence = heroicPresenceSource(roster, picked);
-		const party = player.getParty();
-		if (party) {
-			party.setBuffs(TypedEvent.nextEventID(), PartyBuffs.create({ ...party.getBuffs(), heroicPresence: !!presence }));
-		}
+	const result = { name: picked.name, exportedAt: roster.exportedAt || '', notes };
+	setAcoreImport(simUI, result);
+	return result;
+}
 
-		const notes = (roster.warnings || []).concat(picked.warnings || []).concat(imported.warnings);
-		if (imported.loadout.skipped.length) {
-			notes.unshift(`Kept, the sim has no value for: ${imported.loadout.skipped.join(', ')}.`);
-		}
-		if (!presence) {
-			notes.unshift(`Heroic Presence off: nobody in ${picked.name}'s party has Draenei racials.`);
-		} else if (presence == picked) {
-			notes.unshift(`Heroic Presence on: ${picked.name} has Draenei racials.`);
-		} else {
-			notes.unshift(`Heroic Presence on: ${presence.name} in ${picked.name}'s party has Draenei racials.`);
-		}
-		if (roster.version < 2) {
-			notes.unshift('The pet, ammo and consumables stay as they are: a version 1 roster has none.');
-		} else {
-			const petAndAmmo = describePetAndAmmo(imported);
-			const petLabel = imported.playerClass == Class.ClassWarlock ? 'Demon' : 'Pet and ammo';
-			const consumes = describeConsumeSource(imported);
-			notes.unshift(
-				...[petAndAmmo && `${petLabel}: ${petAndAmmo}.`, consumes && `Consumables from ${consumes}.`].filter(line => line),
-			);
-		}
-		if (imported.spec != player.spec) {
-			notes.unshift(`${picked.name}'s talents look like ${specNames[imported.spec]}, but this is the ${specNames[player.spec]} page.`);
-		}
-		if (notes.length) {
-			alert(`${picked.name}:\n\n${notes.join('\n')}`);
-		}
+// The Caps tab sends reforges to this character, so any other import has to clear it.
+function setAcoreImport<SpecType extends Spec>(simUI: IndividualSimUI<SpecType>, result: AcoreImport | null) {
+	if (!result && !simUI.lastAcoreImport) {
+		return;
+	}
+	simUI.lastAcoreImport = result;
+	simUI.acoreImportEmitter.emit(TypedEvent.nextEventID(), undefined);
+}
+
+function pickKey(simUI: SimUI): string {
+	return simUI.getStorageKey('acore-import.v1');
+}
+
+// The character the user last loaded on this spec page, or ''.
+export function loadAcorePick(simUI: SimUI): string {
+	try {
+		const saved = JSON.parse(window.localStorage.getItem(pickKey(simUI)) || '{}');
+		return typeof saved?.character == 'string' ? saved.character : '';
+	} catch {
+		return '';
+	}
+}
+
+function storePick(simUI: SimUI, name: string) {
+	if (!name) {
+		return;
+	}
+	try {
+		window.localStorage.setItem(pickKey(simUI), JSON.stringify({ character: name }));
+	} catch {
+		// storage off: the spec match picks next time
 	}
 }
 

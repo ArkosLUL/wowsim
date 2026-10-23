@@ -192,6 +192,10 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 
 	readonly bt: BulkTab;
 
+	// The AzerothCore character the last import loaded, from the Caps tab or the Import menu. Any other importer clears it.
+	lastAcoreImport: Importers.AcoreImport | null = null;
+	readonly acoreImportEmitter = new TypedEvent<void>('AcoreImport');
+
 	constructor(
 		parentElem: HTMLElement,
 		player: Player<SpecType>,
@@ -420,11 +424,6 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 		new CapsTab(this.simTabContentsContainer, this);
 	}
 
-	// The Import menu's AzerothCore entry and the caps tab's roster button both open it here.
-	openAcoreImporter() {
-		new Importers.IndividualAcoreImporter(this.rootElem, this);
-	}
-
 	private addSettingsTab() {
 		new SettingsTab(this.simTabContentsContainer, this);
 	}
@@ -477,7 +476,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 		);
 		this.simHeader.addImportLink(
 			'AzerothCore',
-			_parent => this.openAcoreImporter(),
+			_parent => new Importers.IndividualAcoreImporter(this.rootElem, this),
 			true,
 		);
 

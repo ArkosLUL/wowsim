@@ -64,6 +64,12 @@ Runs in the [wave loop](../wave-loop/wave-loop.PLAN.md). The [RUNBOOK](../wave-l
   - A dedicated administrator account, created by the user. Its login sits in `.wowsim/prod.env` as `AC_SOAP_USER`, `AC_SOAP_PASSWORD`; agents never read it.
 - **mod-reforging commits:** its uncommitted thread-safety edits (September BiS dataset work, already live) go in first as their own commit, then CAP-SERVER's. Both are approved.
 
+**CAP-UX (2026-10-23)**
+- One character took 8 clicks (open importer, Import, two alerts, Apply all, open the server dialog, Send, close). Target: pick the character in the tab, "Apply all and send…", "Confirm send". No windows, no alerts.
+- Sending shows an inline preview first; a second click confirms.
+- The Import menu's AzerothCore window drops both alerts (success and notes); its notes show in the Caps tab. Import errors still alert.
+- A phase loop on branch `caps-and-priority-ux`, not a wave.
+
 ## Design
 
 ### Caps engine: `sim/statcaps`
@@ -517,3 +523,46 @@ A tab button sends the sim's reforges to a core-raid character on the live serve
 - Online round trip, same slot, Angry online, through prod's `/acoreReforge` on `c9b887a`: 32→37 replied
   `unchanged` with `online: true`; 32→31 `applied`, and `/acoreRoster` showed it at once; 32→37 `applied` restored
   it, then `unchanged`; item 45459 `mismatch` ("item 46151 is equipped"). Gear identical after; no worldserver errors.
+
+### CAP-UX (phase loop; golden-neutral; stages: code, docs)
+
+Load and send one character in three clicks (decisions above). Raid sim import, `/acoreRoster`, `/acoreReforge`, mod-reforging, suggestions and floors stay as they are.
+
+**Importer** (`ui/core/components/importers.ts`):
+- Split `Importer.finishIndividualImport`: `applyIndividualImport(...)` (class check, gear, race, talents, glyphs, professions; returns missing item and enchant ids; no `close()`, no alert); `finishIndividualImport` = apply, `close()`, today's alert, still used by the JSON, 80U and addon importers.
+- Export `importAcoreCharacter(simUI, roster, name): Promise<AcoreImport>` (`{name, exportedAt, notes}`) from `IndividualAcoreImporter.onImport`'s body: pick, `storePick`, `buildCharacterImport`, `applyIndividualImport`, racials, pet and ammo, consumes, Heroic Presence. Notes = today's list plus a "not in the sim database" line for missing ids.
+- It stores the result on `IndividualSimUI.lastAcoreImport` and fires a new `acoreImportEmitter`. The window's `onImport` calls it and closes, no alert.
+
+**"Your character" block** (`caps_tab.ts`), replacing both buttons; hidden without `simServerAvailable()`:
+- `.caps-character` dropdown: the page's class from `fetchServerRoster()` when the tab first opens, preselected from `acore-import.v1`. Picking a name reads a fresh roster and runs `importAcoreCharacter`; disabled while loading, with a status line.
+- `.caps-character-reload`: loads the shown character again (also how the preselected one loads).
+- `.caps-import-notes`: "Loaded <name> from the server (saved <exportedAt>)" plus the notes, from `lastAcoreImport` (so a window import shows too). Errors inline in red.
+
+**Send** (reforge block):
+- `.reforge-apply-send` beside Apply all, shown with a sim server and `lastAcoreImport`, enabled like Apply all. "Apply all and send…" with suggestions, "Send to server…" without.
+- Click: `applySuggestions(picked)`, fresh roster, then `planServerReforges(gear, char)` (the dialog's row logic, moved with `postReforges` into new `individual_sim_ui/acore_reforge.ts`). Preview `.caps-send-preview`: a line per changing slot ("Chest: none → 22 Expertise → Haste", "Will remove"), one line counting left-out slots with reasons, `.caps-send-confirm` and Cancel. Nothing to change: "The server already has these reforges.", no confirm.
+- Confirm posts only changing slots (buttons disabled meanwhile); lines become `<status>: <text>` plus the online/offline line. A gear change drops the preview (`markStale`).
+- `acore_reforge_dialog.ts` is removed; its notes text moves to the preview.
+
+**Tests** (dev server 3338, `wotlk-dev-cap-ux`, `/acoreRoster` and `/acoreReforge` stubbed): `tests/smoke.spec.ts`, `tests/caps/`, and the individual-window specs (`tests/raid/acore_import.spec.ts`, `tests/raid/acore_server.spec.ts`, `tests/raid/raid.ts`): pick imports without an alert and shows notes; Reload re-imports; the window imports without an alert and its notes reach the tab; an import error still alerts; the preview lists only changing slots and leaves a mismatched item out; Confirm posts exactly those and shows replies and online/offline; Cancel posts nothing; a gear change drops the preview; hidden without a sim server; `settings/import_export.spec.ts` still sees "Import successful!". Plus `dock.sh tsc` and eslint.
+
+**Docs** (via `/compact-docs-writer`): [stat-caps](../guide/stat-caps.md)'s "Your character" and "Apply on server"; the uitest README's specs.
+
+**Owns:** `importers.ts`'s AzerothCore and finish paths, `IndividualSimUI`'s new import state, `caps_tab.ts`'s "Your character" and send parts, `acore_reforge.ts` (and the removed dialog), `_caps_tab.scss`, the specs above, these docs, this `#### As built`.
+
+#### As built
+
+- Built as specced. Details the spec left open:
+  - `applyIndividualImport` is a module function in `importers.ts` (not a method), used by `finishIndividualImport` and `importAcoreCharacter`. The pick helpers (`loadAcorePick`, `storePick`) are module functions too.
+  - The "not in the sim database" note is the last note: `Not in the sim database: items 1, 2 enchants 3.`
+  - The dropdown loads when the tab first opens (or once the sim server answers, if the tab is already shown). Preselect order: `lastAcoreImport`, then `acore-import.v1`, then the first name. It never auto-imports. With no list yet (the fetch failed) Reload reads the list again.
+  - `.reforge-apply-send` is disabled while caps load (the picks it would apply aren't known yet; not under a blocker, which means no picks), while a preview is being read and while Confirm posts, so "Send to server…" works without suggestions. It sits beside Apply all but stays when a blocker (healer without a live run, reforging off, no shipped values) hides Apply all and the table.
+  - The preview lists a server reforge with none in the sim as `<server> → none (Will remove)`. `Same` slots appear nowhere. The left-out line is `N left out: Slot (reason), …`.
+  - After a successful Confirm the button hides and Cancel reads "Close"; a refusal keeps Confirm.
+  - The preview drops on `gearChangeEmitter` and `acoreImportEmitter`, not on any stale mark: `currentStatsEmitter` fires after every gear change, so that removed the preview a moment after it showed. While Confirm posts it stays, so the replies show.
+  - The preview carries the dialog's notes as `.caps-send-notes`.
+  - `importAcoreCharacter` throws when the named character isn't in the roster (it used to fall back to the first of the class). The 80U, Wowhead, addon and JSON importers clear `lastAcoreImport` (`setAcoreImport` in `importers.ts`). A window import moves the tab's dropdown to the loaded name.
+  - A tab opening on a sim server now fetches `/acoreRoster`. Specs that watch for console errors on the tab call `dropServerRoster` (`caps_tab` loop and menu test, `caps_priority`'s and `caps_live`'s tab opener and real run).
+- Specs: `server_reforge` rewritten (15 tests: the review added a held load and a vanished name, Reload after a failed list, a gear-tab change, another importer, and exact posted slots with reforging off so no suggestion moves them); `roster_import`, `caps_tab`, `raid/acore_import` (the individual importer test) and `settings/import_export` (the AzerothCore import) updated to no alert.
+- Verified: `dock.sh tsc` clean; eslint on the changed files shows only three old `importers.ts` unused-var warnings. Dev server `wotlk-dev-cap-ux` on 3338 with `/acoreRoster` and `/acoreReforge` stubbed: the whole uitest suite ran 475 passed, 3 skipped, 3 failed. The three (`gear_actions` unequip, `gems_enchants` fourth Dragon's Eye, `rankings` dropdown link) fail the same way on prod at master `1d4a488a9`, so they predate this item.
+- After the review fixes: `dock.sh tsc` clean, eslint the same three warnings; on `wotlk-dev-cap-ux` without prod.env, `smoke`, `caps/`, `raid/acore_import`, `raid/acore_server` and `settings/import_export` ran 150 passed, 2 skipped.

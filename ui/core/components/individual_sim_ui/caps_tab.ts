@@ -1,3 +1,5 @@
+import { parseRoster, rosterClass } from '../../../raid/acore_roster';
+import { fetchServerRoster } from '../../../raid/acore_server';
 import * as Mechanics from '../../constants/mechanics';
 import { IndividualSimUI } from '../../individual_sim_ui';
 import { MAX_CONTENT_PHASE, MIN_CONTENT_PHASE } from '../../optimizer/catalog';
@@ -22,8 +24,9 @@ import { LiveValues, liveValues, loadStatValues, ShippedPhase, StatValues } from
 import { TypedEvent } from '../../typed_event';
 import { getEnumValues } from '../../utils';
 import { ContentBlock } from '../content_block';
+import { importAcoreCharacter, loadAcorePick } from '../importers';
 import { SimTab } from '../sim_tab';
-import { AcoreReforgeDialog } from './acore_reforge_dialog';
+import { PlanRow, planServerReforges, postReforges } from './acore_reforge';
 import { button, formatNumber, newElement, PHASE_LABELS, simServerAvailable, tableRow } from './optimizer_tab';
 
 // long enough to fold a burst of changes (a gear set swap fires several) into one request
@@ -172,6 +175,24 @@ export class CapsTab extends SimTab {
 	private readonly reforgeTable: HTMLTableElement;
 	private readonly applyAllButton: HTMLButtonElement;
 	private suggestions: Array<ReforgeSuggestion> = [];
+	private suggestionsBlocked = false;
+
+	private readonly sendButton: HTMLButtonElement;
+	private readonly sendPreview: HTMLElement;
+	// bumped whenever the preview is dropped, so a send that was still reading the server can tell
+	private previewToken = 0;
+	private planning = false;
+	// a preview stays up while it posts, gear change or not, so the server's replies still show
+	private posting = false;
+
+	private readonly characterBlock: ContentBlock;
+	private readonly characterSelect: HTMLSelectElement;
+	private readonly characterReload: HTMLButtonElement;
+	private readonly characterStatus: HTMLElement;
+	private readonly importNotes: HTMLElement;
+	private hasServer = false;
+	private charactersRequested = false;
+	private loadingCharacter = false;
 
 	constructor(parentElem: HTMLElement, simUI: IndividualSimUI<Spec>) {
 		super(parentElem, simUI, { identifier: 'caps-tab', title: 'Caps & Priority' });
@@ -234,7 +255,11 @@ export class CapsTab extends SimTab {
 		this.applyAllButton = button('Apply all', 'btn-primary reforge-apply-all', () =>
 			this.applySuggestions(this.suggestions.filter(s => s.suggested !== undefined)),
 		);
-		this.reforgeControls.appendChild(this.applyAllButton);
+		this.sendButton = button('Send to server…', 'btn-outline-primary ms-2 reforge-apply-send', () => this.startSend());
+		this.sendButton.hidden = true;
+		this.sendPreview = newElement('div', 'caps-send-preview');
+		this.sendPreview.hidden = true;
+		this.reforgeControls.append(this.applyAllButton, this.sendButton);
 		reforgeBlock.bodyElement.append(
 			newElement(
 				'p',
@@ -245,17 +270,42 @@ export class CapsTab extends SimTab {
 			newElement('p', 'caps-hint reforge-floor-hint', 'Suggestions keep every hit and expertise cap you meet.'),
 			this.reforgeStatus,
 			this.reforgeControls,
+			this.sendPreview,
 			this.reforgeTable,
 		);
 
-		const rosterBlock = new ContentBlock(rightPanel, 'caps-tab-roster', { header: { title: 'Your character' } });
-		rosterBlock.bodyElement.append(
-			newElement('p', 'caps-hint', "Loads a raider from the server: gear with gems, enchants and reforges, talents, glyphs and racials."),
-			button('Import from roster…', 'btn-outline-primary caps-roster-import', () => this.simUI.openAcoreImporter()),
-			button('Apply reforges on server…', 'btn-outline-primary ms-2 caps-server-reforge', () => new AcoreReforgeDialog(this.simUI.rootElem, this.simUI)),
+		this.characterBlock = new ContentBlock(rightPanel, 'caps-tab-roster', { header: { title: 'Your character' } });
+		this.characterSelect = newElement('select', 'form-select caps-character');
+		this.characterSelect.disabled = true;
+		this.characterSelect.addEventListener('change', () => this.loadCharacter());
+		this.characterReload = button('Reload', 'btn-outline-primary ms-2 caps-character-reload', () => this.reloadCharacter());
+		this.characterReload.disabled = true;
+		const pickRow = newElement('div', 'caps-character-row');
+		pickRow.append(this.characterSelect, this.characterReload);
+		this.characterStatus = newElement('p', 'caps-character-status');
+		this.importNotes = newElement('div', 'caps-import-notes');
+		this.characterBlock.bodyElement.append(
+			newElement('p', 'caps-hint', 'Loads a raider from the server: gear with gems, enchants and reforges, talents, glyphs and racials.'),
+			pickRow,
+			this.characterStatus,
+			this.importNotes,
 		);
-		rosterBlock.rootElem.hidden = true;
-		simServerAvailable().then(available => (rosterBlock.rootElem.hidden = !available));
+		this.characterBlock.rootElem.hidden = true;
+		simServerAvailable().then(available => {
+			this.hasServer = available;
+			this.characterBlock.rootElem.hidden = !available;
+			this.updateSendButton();
+			if (this.isShown()) {
+				this.requestCharacters();
+			}
+		});
+		simUI.acoreImportEmitter.on(() => {
+			this.clearPreview();
+			this.renderImportNotes();
+			this.showLoadedCharacter();
+			this.updateSendButton();
+		});
+		this.renderImportNotes();
 
 		this.buildTabContent();
 
@@ -274,6 +324,8 @@ export class CapsTab extends SimTab {
 			raid.tanksChangeEmitter,
 			simUI.sim.encounter.changeEmitter,
 		]).on(() => this.markStale());
+		// a preview describes the gear it was planned for
+		player.gearChangeEmitter.on(() => this.clearPreview());
 		simUI.sim.phaseChangeEmitter.on(() => {
 			if (this.pickedPhase == null) {
 				this.renderValues();
@@ -281,6 +333,7 @@ export class CapsTab extends SimTab {
 		});
 		this.navLink.addEventListener('shown.bs.tab', () => {
 			this.requestValues();
+			this.requestCharacters();
 			if (this.stale) {
 				this.scheduleRefresh();
 			}
@@ -704,10 +757,12 @@ export class CapsTab extends SimTab {
 		const reforging = this.reforging();
 		const blocker = this.suggestionsBlocker(reforging);
 		this.reforgeStatus.textContent = blocker;
-		this.reforgeControls.hidden = !!blocker;
+		this.suggestionsBlocked = !!blocker;
+		this.applyAllButton.hidden = !!blocker;
 		this.reforgeTable.hidden = !!blocker;
 		if (blocker) {
 			this.suggestions = [];
+			this.updateSendButton();
 			return;
 		}
 		if (!this.capsFresh) {
@@ -716,9 +771,10 @@ export class CapsTab extends SimTab {
 			this.reforgeBlockButtons().forEach(b => (b.disabled = true));
 			if (this.suggestions.length == 0) {
 				this.reforgeStatus.textContent = 'Working out your caps…';
-				this.reforgeControls.hidden = true;
+				this.applyAllButton.hidden = true;
 				this.reforgeTable.hidden = true;
 			}
+			this.updateSendButton();
 			return;
 		}
 
@@ -738,6 +794,7 @@ export class CapsTab extends SimTab {
 		this.reforgeTable.classList.remove('caps-loading');
 		this.applyAllButton.textContent = picked.length > 0 ? `Apply all (${formatGain(this.metric, total)})` : 'Apply all';
 		this.applyAllButton.disabled = picked.length == 0;
+		this.updateSendButton();
 		if (this.suggestions.length == 0) {
 			this.reforgeStatus.textContent = 'Nothing you have equipped can be reforged.';
 		} else if (picked.length == 0) {
@@ -805,6 +862,234 @@ export class CapsTab extends SimTab {
 			gear = gear.withEquippedItem(s.slot, equipped.withReforge(s.suggested), player.canDualWield2H());
 		}
 		player.setGear(TypedEvent.nextEventID(), gear);
+	}
+
+	// shown even with nothing to suggest (healers before a live run, reforging off): hand-set reforges still go out
+	private updateSendButton() {
+		this.sendButton.hidden = !this.hasServer || !this.simUI.lastAcoreImport;
+		const picked = this.suggestions.some(s => s.suggested !== undefined);
+		this.sendButton.textContent = picked ? 'Apply all and send…' : 'Send to server…';
+		// until the caps come in, the picks it would apply aren't known yet
+		this.sendButton.disabled = this.planning || this.posting || (!this.capsFresh && !this.suggestionsBlocked);
+		this.reforgeControls.hidden = this.applyAllButton.hidden && this.sendButton.hidden;
+	}
+
+	private showLoadedCharacter() {
+		const name = this.simUI.lastAcoreImport?.name;
+		if (name && Array.from(this.characterSelect.options).some(option => option.value == name)) {
+			this.characterSelect.value = name;
+		}
+	}
+
+	// The core raid's characters of this page's class, in a dropdown. The character the page last
+	// loaded (or the importer's remembered pick) is preselected but not loaded until Reload.
+	private async requestCharacters() {
+		if (!this.hasServer || this.charactersRequested) {
+			return;
+		}
+		this.charactersRequested = true;
+		this.setCharacterStatus('Reading the core raid off the server…', false);
+		try {
+			const roster = parseRoster(await fetchServerRoster());
+			const playerClass = this.simUI.player.getClass();
+			const names = roster.characters.filter(char => rosterClass(char.classId) == playerClass).map(char => char.name);
+			if (names.length == 0) {
+				throw new Error('The core raid has no character of this class.');
+			}
+			// names come off the server, so build the options instead of templating HTML
+			this.characterSelect.replaceChildren(...names.map(name => new Option(name, name)));
+			const wanted = [this.simUI.lastAcoreImport?.name, loadAcorePick(this.simUI)];
+			this.characterSelect.value = wanted.find(name => name && names.includes(name)) ?? names[0];
+			this.setCharacterStatus('', false);
+		} catch (error: any) {
+			this.charactersRequested = false;
+			this.setCharacterStatus(`Couldn't read the roster off the server: ${error?.message}`, true);
+		}
+		this.updateCharacterControls();
+	}
+
+	private setCharacterStatus(text: string, failed: boolean) {
+		this.characterStatus.textContent = text;
+		this.characterStatus.classList.toggle('caps-error', failed);
+	}
+
+	private updateCharacterControls() {
+		const empty = this.characterSelect.options.length == 0;
+		this.characterSelect.disabled = this.loadingCharacter || empty;
+		// with no list yet, Reload tries the list again
+		this.characterReload.disabled = this.loadingCharacter;
+	}
+
+	private reloadCharacter() {
+		if (this.characterSelect.options.length == 0) {
+			this.requestCharacters();
+		} else {
+			this.loadCharacter();
+		}
+	}
+
+	private async loadCharacter() {
+		const name = this.characterSelect.value;
+		if (!name || this.loadingCharacter) {
+			return;
+		}
+		this.loadingCharacter = true;
+		this.updateCharacterControls();
+		this.setCharacterStatus(`Loading ${name} from the server…`, false);
+		try {
+			await importAcoreCharacter(this.simUI, parseRoster(await fetchServerRoster()), name);
+			this.setCharacterStatus('', false);
+		} catch (error: any) {
+			this.setCharacterStatus(`Couldn't load ${name}: ${error?.message}`, true);
+		}
+		this.loadingCharacter = false;
+		this.updateCharacterControls();
+	}
+
+	private renderImportNotes() {
+		const last = this.simUI.lastAcoreImport;
+		this.importNotes.replaceChildren();
+		if (!last) {
+			return;
+		}
+		const saved = last.exportedAt ? ` (saved ${last.exportedAt})` : '';
+		this.importNotes.appendChild(newElement('p', 'caps-import-loaded', `Loaded ${last.name} from the server${saved}`));
+		if (last.notes.length) {
+			const list = newElement('ul', 'caps-import-note-list');
+			list.append(...last.notes.map(note => newElement('li', undefined, note)));
+			this.importNotes.appendChild(list);
+		}
+	}
+
+	private clearPreview() {
+		if (this.posting) {
+			return;
+		}
+		this.previewToken++;
+		this.sendPreview.hidden = true;
+		this.sendPreview.replaceChildren();
+	}
+
+	// Applies the suggestions, then lays out what a send would change on the server.
+	private async startSend() {
+		const name = this.simUI.lastAcoreImport?.name;
+		if (!name || this.planning || this.posting) {
+			return;
+		}
+		this.applySuggestions(this.suggestions.filter(s => s.suggested !== undefined));
+		const token = this.previewToken;
+		this.planning = true;
+		this.updateSendButton();
+		this.showPreviewMessage(`Reading ${name} off the server…`, false);
+		try {
+			const character = parseRoster(await fetchServerRoster()).characters.find(char => char.name == name);
+			if (!character) {
+				throw new Error(`${name} is no longer in the core raid.`);
+			}
+			const rows = planServerReforges(this.simUI.player.getGear(), character);
+			if (token == this.previewToken) {
+				this.renderPreview(name, rows);
+			}
+		} catch (error: any) {
+			if (token == this.previewToken) {
+				this.showPreviewMessage(error?.message || "The sim server didn't answer", true);
+			}
+		}
+		this.planning = false;
+		this.updateSendButton();
+	}
+
+	private showPreviewMessage(text: string, failed: boolean) {
+		this.sendPreview.hidden = false;
+		const message = newElement('p', 'caps-send-message', text);
+		message.classList.toggle('caps-error', failed);
+		this.sendPreview.replaceChildren(message);
+	}
+
+	private renderPreview(name: string, rows: Array<PlanRow>) {
+		const changing = rows.filter(row => row.send);
+		const skipped = rows.filter(row => row.status == 'skip');
+		const slotName = (row: PlanRow) => slotNames.get(row.itemSlot) ?? `Slot ${row.acSlot}`;
+		const preview = this.sendPreview;
+		const lines = new Map<number, HTMLElement>();
+		preview.hidden = false;
+		preview.replaceChildren();
+
+		if (changing.length == 0) {
+			preview.appendChild(newElement('p', 'caps-send-message', 'The server already has these reforges.'));
+		} else {
+			preview.appendChild(newElement('p', 'caps-send-title', `${name} on the server would change:`));
+			const list = newElement('ul', 'caps-send-lines');
+			for (const row of changing) {
+				const item = newElement('li', 'caps-send-line');
+				item.dataset.acSlot = String(row.acSlot);
+				const text = newElement('span', 'caps-send-text', `${row.serverLabel} → ${row.simLabel}${row.status == 'remove' ? ' (Will remove)' : ''}`);
+				item.append(newElement('span', 'caps-send-slot', `${slotName(row)}: `), text);
+				lines.set(row.acSlot, text);
+				list.appendChild(item);
+			}
+			preview.appendChild(list);
+		}
+		if (skipped.length > 0) {
+			preview.appendChild(
+				newElement(
+					'p',
+					'caps-send-skipped',
+					`${skipped.length} left out: ${skipped.map(row => `${slotName(row)} (${row.note})`).join(', ')}.`,
+				),
+			);
+		}
+		if (changing.length == 0) {
+			return;
+		}
+
+		preview.appendChild(
+			newElement(
+				'p',
+				'caps-send-notes',
+				"The server's side is the character as of their last save. A character who is logged out gets the reforges at their " +
+					'next login. A bot redoes its own reforges when it refreshes its gear.',
+			),
+		);
+		const result = newElement('p', 'caps-send-result');
+		const confirm = button('Confirm send', 'btn-primary caps-send-confirm', () => send());
+		const cancel = button('Cancel', 'btn-outline-secondary ms-2 caps-send-cancel', () => this.clearPreview());
+		const actions = newElement('div', 'caps-send-actions');
+		actions.append(confirm, cancel);
+		preview.append(actions, result);
+
+		const send = async () => {
+			confirm.disabled = true;
+			cancel.disabled = true;
+			this.posting = true;
+			this.updateSendButton();
+			result.classList.remove('caps-error');
+			result.textContent = 'Sending to the server…';
+			try {
+				const reply = await postReforges(
+					name,
+					changing.map(row => row.send!),
+				);
+				const bySlot = new Map(reply.slots.map(slot => [slot.acSlot, slot]));
+				for (const row of changing) {
+					const slot = bySlot.get(row.acSlot);
+					const text = lines.get(row.acSlot)!;
+					text.textContent = slot ? `${slot.status}: ${slot.text}` : 'No answer for this slot';
+					text.dataset.status = slot?.status ?? 'none';
+				}
+				result.textContent = `${name} was ${reply.online ? 'online, so the reforges are in effect now' : 'offline, so they get the reforges at their next login'}.`;
+				confirm.hidden = true;
+				cancel.disabled = false;
+				cancel.textContent = 'Close';
+			} catch (error: any) {
+				result.textContent = error?.message || "The sim server didn't answer";
+				result.classList.add('caps-error');
+				confirm.disabled = false;
+				cancel.disabled = false;
+			}
+			this.posting = false;
+			this.updateSendButton();
+		};
 	}
 
 	private priorityRow(row: PriorityRow, live: boolean): HTMLTableRowElement {

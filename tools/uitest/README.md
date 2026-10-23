@@ -30,7 +30,7 @@ npx playwright show-trace test-results/<test>/trace.zip         # a failure's tr
 | `tests/lib/acore.ts` | `stubServer(page, reply)`, a stubbed `/acoreRoster`, with `errorReply` and the server's error texts; `dropServerRoster(page)` aborts it |
 | `tests/smoke.spec.ts` | every spec page, the raid page and the results page load without a console error; `watchForErrors` itself |
 | `tests/<area>/` | one directory per area (`results`, `gear`, `raid`, `settings`, `rankings`, `caps`), its helpers beside the specs |
-| `tests/caps/` | the Caps & Priority tab: `caps_tab` (caps), `caps_priority`, `caps_reforge` (also `suggestReforges` without a page), `caps_live` and `roster_import` (the AzerothCore importer's server fetch) and `server_reforge` (the "Apply reforges on server…" dialog, with `/acoreRoster` and `/acoreReforge` stubbed), which stub `stat_values.json`, `/statCaps` or `/statSlopesAsync` where a test needs fixed numbers |
+| `tests/caps/` | the Caps & Priority tab: `caps_tab` (caps), `caps_priority`, `caps_reforge` (also `suggestReforges` without a page), `caps_live` and `roster_import` (the AzerothCore window's server fetch) and `server_reforge` (the tab's character picker, send preview and Confirm, with `/acoreRoster` and `/acoreReforge` stubbed), which stub `stat_values.json`, `/statCaps` or `/statSlopesAsync` where a test needs fixed numbers |
 
 ## Fixtures
 
@@ -78,9 +78,9 @@ fixture, so sim changes don't break them.
 - `/acoreRoster` needs a live AzerothCore database, so stub it with a roster from
   `ui/raid/acore_harness/testdata` (`stubServer` in `tests/lib/acore.ts`); a dev server
   without `--acore*` flags then does. The page's AzerothCore importer fetches it on open, and that
-  server's 503 fails `watchForErrors`: a test opening the importer without a stub calls
-  `dropServerRoster`. Match it with a regex that takes a query string: `**/acoreRoster` lets one slip
-  past. The one test that asks the real route runs only with `UITEST_ACORE_LIVE=1`,
+  server's 503 fails `watchForErrors`: a test opening the importer or the Caps tab without a stub calls
+  `dropServerRoster` (the tab reads the roster when it first opens). Match it with a regex that takes a
+  query string: `**/acoreRoster` lets one slip past. The one test that asks the real route runs only with `UITEST_ACORE_LIVE=1`,
   against a server started with those flags; it only reads.
 - A page tells a sim server from wasm by fetching `sim_worker.js` (`simServerAvailable`). To fake wasm,
   stub only requests whose `resourceType()` is `fetch`, or the worker itself won't load. That only hides the

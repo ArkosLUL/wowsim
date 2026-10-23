@@ -1,5 +1,6 @@
 import { expect, type Locator, type Page, test } from '@playwright/test';
 
+import { dropServerRoster } from '../lib/acore';
 import { openRaid, openSim, openSimTab, SPECS, watchForErrors } from '../lib/page';
 import { addPreset, playerEditor, slot } from '../raid/raid';
 import { expectActive, icon, isActive, openMultiIcon, openSpec, select } from '../settings/helpers';
@@ -29,6 +30,7 @@ async function neededAfterChange(page: Page, label: string, before: number): Pro
 for (const spec of SPECS) {
 	test(`the ${spec} page has a Caps & Priority tab with its caps`, async ({ page }) => {
 		const errors = watchForErrors(page);
+		await dropServerRoster(page);
 		await openSim(page, spec);
 		await openSimTab(page, 'caps-tab');
 		await expect(page.locator('#caps-tab tr.caps-row').first()).toBeVisible();
@@ -54,23 +56,20 @@ test("a raider's Edit window in the raid sim has no caps tab", async ({ page }) 
 	await expect(editor.locator('.caps-tab')).toHaveCount(0);
 });
 
-test('the roster button and the Import menu open the same AzerothCore importer', async ({ page }) => {
+test('the tab has a character picker and the Import menu still opens the AzerothCore importer', async ({ page }) => {
+	await dropServerRoster(page);
 	await openSim(page, 'warrior');
 	const importer = page.locator('.modal.show', { has: page.locator('.importer') });
 
 	await openSimTab(page, 'caps-tab');
-	await page.locator('#caps-tab .caps-roster-import').click();
-	await expect(importer).toBeVisible();
-	await expect(importer).toContainText('AzerothCore Import');
-	await importer.locator('.close-button').first().click();
-	await expect(importer).toHaveCount(0);
+	await expect(page.locator('#caps-tab .caps-character')).toBeVisible();
 
 	await page.locator('.import-link').first().hover();
 	await page.locator('.import-dropdown .dropdown-item', { hasText: /^\s*AzerothCore\s*$/ }).first().click();
 	await expect(importer).toContainText('AzerothCore Import');
 });
 
-test('the roster button is hidden when the sim runs in the browser', async ({ page }) => {
+test('the character picker is hidden when the sim runs in the browser', async ({ page }) => {
 	// a page tells wasm from a sim server by fetching sim_worker.js; the worker itself still loads
 	await page.route('**/sim_worker.js', route =>
 		route.request().resourceType() == 'fetch' ? route.fulfill({ contentType: 'text/javascript', body: '' }) : route.fallback(),
@@ -78,7 +77,7 @@ test('the roster button is hidden when the sim runs in the browser', async ({ pa
 	await openSim(page, 'warrior');
 	await openSimTab(page, 'caps-tab');
 	await expect(capRow(page, 'Hit')).toBeVisible();
-	await expect(page.locator('#caps-tab .caps-roster-import')).toBeHidden();
+	await expect(page.locator('#caps-tab .caps-character')).toBeHidden();
 });
 
 test("Heroic Presence moves Fury's needed hit by 33", async ({ page }) => {
