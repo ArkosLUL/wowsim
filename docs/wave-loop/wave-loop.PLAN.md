@@ -174,6 +174,8 @@ Z16 is the user's call (2026-10-22): the [Caps & Priority tab](../caps-and-prior
 Z15's follow-ups, which become Z18. Its items touch only the tab, its packages and tools, so goldens and BiS
 can't move, and it skips the re-baseline. Z17 is the user's call too (2026-10-23): reforge suggestions that keep
 the caps, and an "Apply on server" button over SOAP, also golden-neutral.
+HL1 to HL3 are the user's call (2026-10-23), before Z18: the [healer pages](../healer-sims/healer-sims.PLAN.md),
+whose own registry lists their items. They move only healer suites and skip the re-baseline.
 
 **Where the specs are:**
 
@@ -188,13 +190,15 @@ the caps, and an "Apply on server" button over SOAP, also golden-neutral.
 | `TE-` | [test-enrichment PLAN, "Work items"](../test-enrichment/test-enrichment.PLAN.md) |
 | `EC-` | [e2e-coverage PLAN, "Work items"](../e2e-coverage/e2e-coverage.PLAN.md) |
 | `CAP-` | [caps-and-priority PLAN, "Work items"](../caps-and-priority/caps-and-priority.PLAN.md) |
+| `HEAL-` | [healer-sims PLAN, "Work items"](../healer-sims/healer-sims.PLAN.md) |
 
 ## Current wave
 
-- Wave: Z17 (caps-and-priority PLAN; the user's go, 2026-10-23), landed. Base `65cc430ed`, run `wf_7326f510-421`;
-  cross-review `.wave-loop\z17-run1\xreview.md`, build `waveZ17-build.py`. The server runs mod-reforging `c9b887a`;
-  `.reforge apply` passed live round trips online and offline. Next: Z18 (Z15's follow-ups, specs in the
-  e2e-coverage PLAN) on the user's go. The BiS
+- Wave: HL1 ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md); the user's go, 2026-10-23): HEAL-SHA,
+  HEAL-PRI, HEAL-TEST. Then HL2, HL3, then Z18 (Z15's follow-ups, specs in the e2e-coverage PLAN).
+  Z17 landed (base `65cc430ed`, run `wf_7326f510-421`, cross-review `.wave-loop\z17-run1\xreview.md`, build
+  `waveZ17-build.py`); the server runs mod-reforging `e2ef2a6`; `.reforge apply` passed live round trips online
+  and offline. The BiS
   chain ran 2026-10-21 (BiS chain, below).
   spec-balance is closed (2026-10-22). Its `Player.playerbot` switch (`docs/guide/playerbot-rules.md`) stays on in
   presetgen, statweights' capture and the rankings, so the BiS chain optimizes under bot rules.
