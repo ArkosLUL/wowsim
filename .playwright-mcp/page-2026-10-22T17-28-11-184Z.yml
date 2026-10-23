@@ -1,0 +1,172 @@
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - text: Cataclysm sim development has begun!
+    - link "Join our Discord" [ref=e6] [cursor=pointer]:
+      - /url: https://discord.gg/p3DgvmnDCS
+    - text: for more details or to contribute to the project.
+  - generic [ref=e7]:
+    - complementary [ref=e8]:
+      - button "WoWSims - WOTLK DPS Warrior" [ref=e12] [cursor=pointer]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: WoWSims - WOTLK
+          - generic [ref=e17]: DPS Warrior
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - generic [ref=e21]: Iterations
+            - textbox [ref=e22]: "3000"
+          - button "Simulate" [ref=e23] [cursor=pointer]
+          - button "Stat Weights" [ref=e24] [cursor=pointer]
+          - button "Suggest Gems" [ref=e25] [cursor=pointer]
+        - link "" [ref=e30] [cursor=pointer]:
+          - /url: javascript:void(0)
+        - generic [ref=e33]:
+          - generic [ref=e34]: Stats
+          - table [ref=e35]:
+            - row [ref=e36]:
+              - cell "Health" [ref=e37]
+              - cell [ref=e38]:
+                - button "37817" [ref=e39] [cursor=pointer]
+                - button "" [ref=e40] [cursor=pointer]
+            - row [ref=e42]:
+              - cell "Armor" [ref=e43]
+              - cell [ref=e44]:
+                - button "19504" [ref=e45] [cursor=pointer]
+                - button "" [ref=e46] [cursor=pointer]
+            - row [ref=e48]:
+              - cell "Stamina" [ref=e49]
+              - cell [ref=e50]:
+                - button "2762" [ref=e51] [cursor=pointer]
+                - button "" [ref=e52] [cursor=pointer]
+            - row [ref=e54]:
+              - cell "Strength" [ref=e55]
+              - cell [ref=e56]:
+                - button "2804" [ref=e57] [cursor=pointer]
+                - button "" [ref=e58] [cursor=pointer]
+            - row [ref=e60]:
+              - cell "Agility" [ref=e61]
+              - cell [ref=e62]:
+                - button "1233" [ref=e63] [cursor=pointer]
+                - button "" [ref=e64] [cursor=pointer]
+            - row [ref=e66]:
+              - cell "Attack Power" [ref=e67]
+              - cell [ref=e68]:
+                - button "9463" [ref=e69] [cursor=pointer]
+                - button "" [ref=e70] [cursor=pointer]
+            - row [ref=e72]:
+              - cell "Melee Hit" [ref=e73]
+              - cell [ref=e74]:
+                - button "271 (8.27%)" [ref=e75] [cursor=pointer]
+                - button "" [ref=e76] [cursor=pointer]
+            - row [ref=e78]:
+              - cell "Melee Crit" [ref=e79]
+              - cell [ref=e80]:
+                - button "2982 (64.95%)" [ref=e81] [cursor=pointer]
+                - button "" [ref=e82] [cursor=pointer]
+            - row [ref=e84]:
+              - cell "Melee Haste" [ref=e85]
+              - cell [ref=e86]:
+                - button "367 (11.19%)" [ref=e87] [cursor=pointer]
+                - button "" [ref=e88] [cursor=pointer]
+            - row [ref=e90]:
+              - cell "Armor Pen" [ref=e91]
+              - cell [ref=e92]:
+                - button "1394 (99.60%)" [ref=e93] [cursor=pointer]
+                - button "" [ref=e94] [cursor=pointer]
+            - row [ref=e96]:
+              - cell "Expertise" [ref=e97]
+              - cell [ref=e98]:
+                - button "214 (6.53%)" [ref=e99] [cursor=pointer]
+                - button "" [ref=e100] [cursor=pointer]
+            - row [ref=e102]:
+              - cell "Melee Crit Cap" [ref=e103]
+              - cell [ref=e104]:
+                - button "Under by 10.65%" [ref=e105] [cursor=pointer]
+        - generic [ref=e106]:
+          - link "" [ref=e107] [cursor=pointer]:
+            - /url: https://discord.gg/p3DgvmnDCS
+          - link "" [ref=e109] [cursor=pointer]:
+            - /url: https://github.com/wowsims/wotlk
+          - link " Patreon" [ref=e111] [cursor=pointer]:
+            - /url: https://patreon.com/wowsims
+            - generic [ref=e112]: 
+            - text: Patreon
+    - generic [ref=e113]:
+      - banner [ref=e114]:
+        - generic [ref=e115]:
+          - tablist [ref=e116]:
+            - tab "Gear" [ref=e117] [cursor=pointer]
+            - tab "BiS Optimizer" [ref=e118] [cursor=pointer]
+            - tab "Caps & Priority" [selected] [ref=e119] [cursor=pointer]
+            - tab "Settings" [ref=e120] [cursor=pointer]
+            - tab "Talents" [ref=e121] [cursor=pointer]
+            - tab "Rotation" [ref=e122] [cursor=pointer]
+            - listitem [ref=e123]:
+              - tab "Results" [ref=e124] [cursor=pointer]
+          - generic [ref=e125]:
+            - button " Import" [ref=e127] [cursor=pointer]:
+              - generic [ref=e128]: 
+              - text: Import
+            - button " Export" [ref=e130] [cursor=pointer]:
+              - generic [ref=e131]: 
+              - text: Export
+          - generic [ref=e132]:
+            - link "" [ref=e134] [cursor=pointer]:
+              - /url: https://github.com/wowsims/wotlk/issues/new/choose
+            - link "" [ref=e137] [cursor=pointer]:
+              - /url: javascript:void(0)
+            - generic [ref=e139]:
+              - link "" [ref=e141] [cursor=pointer]:
+                - /url: https://discord.gg/p3DgvmnDCS
+              - link "" [ref=e144] [cursor=pointer]:
+                - /url: https://github.com/wowsims/wotlk
+              - link " Patreon" [ref=e147] [cursor=pointer]:
+                - /url: https://patreon.com/wowsims
+                - generic [ref=e148]: 
+                - text: Patreon
+      - main [ref=e149]:
+        - text:     
+        - tabpanel [ref=e425]:
+          - generic [ref=e426]:
+            - generic [ref=e428]:
+              - heading "Caps" [level=6] [ref=e430]
+              - generic [ref=e431]:
+                - paragraph [ref=e432]: Rating from your gear, gems, enchants, food, elixirs and bonus stats, against what your race, talents, buffs and the target's debuffs leave for gear to cover. Click a row to see where its cap comes from.
+                - table [ref=e433]:
+                  - rowgroup [ref=e434]:
+                    - row [ref=e435]:
+                      - columnheader "Cap" [ref=e436]
+                      - columnheader "Yours" [ref=e437]
+                      - columnheader "Needed" [ref=e438]
+                      - columnheader "Over / short" [ref=e439]
+                  - rowgroup [ref=e440]:
+                    - row [ref=e441] [cursor=pointer]:
+                      - cell "Hit" [ref=e442]
+                      - cell "140" [ref=e443]
+                      - cell "131" [ref=e444]
+                      - cell "9 over" [ref=e445]
+                    - row [ref=e446] [cursor=pointer]:
+                      - cell "White hit (dual wield) soft" [ref=e447]:
+                        - text: White hit (dual wield)
+                        - generic [ref=e448]: soft
+                      - cell "140" [ref=e449]
+                      - cell "754" [ref=e450]
+                      - cell "614 short" [ref=e451]
+                    - row [ref=e452] [cursor=pointer]:
+                      - cell "Expertise (dodge)" [ref=e453]
+                      - cell "214 · 26.1 exp" [ref=e454]
+                      - cell "212 · 25.9 exp" [ref=e455]
+                      - cell "2 over" [ref=e456]
+                    - row [ref=e457] [cursor=pointer]:
+                      - cell "Armor penetration ceiling" [ref=e458]:
+                        - text: Armor penetration
+                        - generic [ref=e459]: ceiling
+                      - cell "1,394" [ref=e460]
+                      - cell "1,400" [ref=e461]
+                      - cell "6 under" [ref=e462]
+            - generic [ref=e464]:
+              - heading "Your character" [level=6] [ref=e466]
+              - generic [ref=e467]:
+                - paragraph [ref=e468]: "Loads a raider from the server: gear with gems, enchants and reforges, talents, glyphs and racials."
+                - button "Import from roster…" [ref=e469] [cursor=pointer]
+        - text:     

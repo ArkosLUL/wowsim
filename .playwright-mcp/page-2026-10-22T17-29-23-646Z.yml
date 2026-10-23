@@ -1,0 +1,213 @@
+- generic [ref=f3e3]:
+  - generic [ref=f3e5]:
+    - text: Cataclysm sim development has begun!
+    - link "Join our Discord" [ref=f3e6] [cursor=pointer]:
+      - /url: https://discord.gg/p3DgvmnDCS
+    - text: for more details or to contribute to the project.
+  - generic [ref=f3e7]:
+    - complementary [ref=f3e8]:
+      - button "WoWSims - WOTLK Protection Warrior" [ref=f3e12] [cursor=pointer]:
+        - generic [ref=f3e15]:
+          - generic [ref=f3e16]: WoWSims - WOTLK
+          - generic [ref=f3e17]: Protection Warrior
+      - generic [ref=f3e18]:
+        - generic [ref=f3e19]:
+          - generic [ref=f3e20]:
+            - generic [ref=f3e21]: Iterations
+            - textbox [ref=f3e22]: "3000"
+          - button "Simulate" [ref=f3e23] [cursor=pointer]
+          - button "Stat Weights" [ref=f3e24] [cursor=pointer]
+        - link "" [ref=f3e29] [cursor=pointer]:
+          - /url: javascript:void(0)
+        - generic [ref=f3e32]:
+          - generic [ref=f3e33]: Stats
+          - table [ref=f3e34]:
+            - row [ref=f3e35]:
+              - cell "Health" [ref=f3e36]
+              - cell [ref=f3e37]:
+                - button "59907" [ref=f3e38] [cursor=pointer]
+                - button "" [ref=f3e39] [cursor=pointer]
+            - row [ref=f3e41]:
+              - cell "Armor" [ref=f3e42]
+              - cell [ref=f3e43]:
+                - button "42185" [ref=f3e44] [cursor=pointer]
+                - button "" [ref=f3e45] [cursor=pointer]
+            - row [ref=f3e47]:
+              - cell "Bonus Armor" [ref=f3e48]
+              - cell [ref=f3e49]:
+                - button "7738" [ref=f3e50] [cursor=pointer]
+                - button "" [ref=f3e51] [cursor=pointer]
+            - row [ref=f3e53]:
+              - cell "Stamina" [ref=f3e54]
+              - cell [ref=f3e55]:
+                - button "4971" [ref=f3e56] [cursor=pointer]
+                - button "" [ref=f3e57] [cursor=pointer]
+            - row [ref=f3e59]:
+              - cell "Strength" [ref=f3e60]
+              - cell [ref=f3e61]:
+                - button "2358" [ref=f3e62] [cursor=pointer]
+                - button "" [ref=f3e63] [cursor=pointer]
+            - row [ref=f3e65]:
+              - cell "Agility" [ref=f3e66]
+              - cell [ref=f3e67]:
+                - button "490" [ref=f3e68] [cursor=pointer]
+                - button "" [ref=f3e69] [cursor=pointer]
+            - row [ref=f3e71]:
+              - cell "Attack Power" [ref=f3e72]
+              - cell [ref=f3e73]:
+                - button "7578" [ref=f3e74] [cursor=pointer]
+                - button "" [ref=f3e75] [cursor=pointer]
+            - row [ref=f3e77]:
+              - cell "Melee Hit" [ref=f3e78]
+              - cell [ref=f3e79]:
+                - button "271 (8.26%)" [ref=f3e80] [cursor=pointer]
+                - button "" [ref=f3e81] [cursor=pointer]
+            - row [ref=f3e83]:
+              - cell "Melee Crit" [ref=f3e84]
+              - cell [ref=f3e85]:
+                - button "999 (21.76%)" [ref=f3e86] [cursor=pointer]
+                - button "" [ref=f3e87] [cursor=pointer]
+            - row [ref=f3e89]:
+              - cell "Melee Haste" [ref=f3e90]
+              - cell [ref=f3e91]:
+                - button "48 (1.46%)" [ref=f3e92] [cursor=pointer]
+                - button "" [ref=f3e93] [cursor=pointer]
+            - row [ref=f3e95]:
+              - cell "Armor Pen" [ref=f3e96]
+              - cell [ref=f3e97]:
+                - button "0 (0.00%)" [ref=f3e98] [cursor=pointer]
+                - button "" [ref=f3e99] [cursor=pointer]
+            - row [ref=f3e101]:
+              - cell "Expertise" [ref=f3e102]
+              - cell [ref=f3e103]:
+                - button "423 (12.91%)" [ref=f3e104] [cursor=pointer]
+                - button "" [ref=f3e105] [cursor=pointer]
+            - row [ref=f3e107]:
+              - cell "Defense" [ref=f3e108]
+              - cell [ref=f3e109]:
+                - button "1007 (604)" [ref=f3e110] [cursor=pointer]
+                - button "" [ref=f3e111] [cursor=pointer]
+            - row [ref=f3e113]:
+              - cell "Block" [ref=f3e114]
+              - cell [ref=f3e115]:
+                - button "111 (19.93%)" [ref=f3e116] [cursor=pointer]
+                - button "" [ref=f3e117] [cursor=pointer]
+            - row [ref=f3e119]:
+              - cell "Block Value" [ref=f3e120]
+              - cell [ref=f3e121]:
+                - button "2285" [ref=f3e122] [cursor=pointer]
+                - button "" [ref=f3e123] [cursor=pointer]
+            - row [ref=f3e125]:
+              - cell "Dodge" [ref=f3e126]
+              - cell [ref=f3e127]:
+                - button "632 (31.12%)" [ref=f3e128] [cursor=pointer]
+                - button "" [ref=f3e129] [cursor=pointer]
+            - row [ref=f3e131]:
+              - cell "Parry" [ref=f3e132]
+              - cell [ref=f3e133]:
+                - button "446 (23.45%)" [ref=f3e134] [cursor=pointer]
+                - button "" [ref=f3e135] [cursor=pointer]
+            - row [ref=f3e137]:
+              - cell "Resilience" [ref=f3e138]
+              - cell [ref=f3e139]:
+                - button "0 (0.00%)" [ref=f3e140] [cursor=pointer]
+                - button "" [ref=f3e141] [cursor=pointer]
+            - row [ref=f3e143]:
+              - cell "Frost Resistance" [ref=f3e144]
+              - cell [ref=f3e145]:
+                - button "75" [ref=f3e146] [cursor=pointer]
+                - button "" [ref=f3e147] [cursor=pointer]
+            - row [ref=f3e149]:
+              - cell "Nature Resistance" [ref=f3e150]
+              - cell [ref=f3e151]:
+                - button "75" [ref=f3e152] [cursor=pointer]
+                - button "" [ref=f3e153] [cursor=pointer]
+            - row [ref=f3e155]:
+              - cell "Shadow Resistance" [ref=f3e156]
+              - cell [ref=f3e157]:
+                - button "130" [ref=f3e158] [cursor=pointer]
+                - button "" [ref=f3e159] [cursor=pointer]
+        - generic [ref=f3e161]:
+          - link "" [ref=f3e162] [cursor=pointer]:
+            - /url: https://discord.gg/p3DgvmnDCS
+          - link "" [ref=f3e164] [cursor=pointer]:
+            - /url: https://github.com/wowsims/wotlk
+          - link " Patreon" [ref=f3e166] [cursor=pointer]:
+            - /url: https://patreon.com/wowsims
+            - generic [ref=f3e167]: 
+            - text: Patreon
+    - generic [ref=f3e168]:
+      - banner [ref=f3e169]:
+        - generic [ref=f3e170]:
+          - tablist [ref=f3e171]:
+            - tab "Gear" [ref=f3e172] [cursor=pointer]
+            - tab "BiS Optimizer" [ref=f3e173] [cursor=pointer]
+            - tab "Caps & Priority" [selected] [ref=f3e174] [cursor=pointer]
+            - tab "Settings" [ref=f3e175] [cursor=pointer]
+            - tab "Talents" [ref=f3e176] [cursor=pointer]
+            - tab "Rotation" [ref=f3e177] [cursor=pointer]
+            - listitem [ref=f3e178]:
+              - tab "Results" [ref=f3e179] [cursor=pointer]
+          - generic [ref=f3e180]:
+            - button " Import" [ref=f3e182] [cursor=pointer]:
+              - generic [ref=f3e183]: 
+              - text: Import
+            - button " Export" [ref=f3e185] [cursor=pointer]:
+              - generic [ref=f3e186]: 
+              - text: Export
+          - generic [ref=f3e187]:
+            - link "" [ref=f3e189] [cursor=pointer]:
+              - /url: https://github.com/wowsims/wotlk/issues/new/choose
+            - link "" [ref=f3e192] [cursor=pointer]:
+              - /url: javascript:void(0)
+            - generic [ref=f3e194]:
+              - link "" [ref=f3e196] [cursor=pointer]:
+                - /url: https://discord.gg/p3DgvmnDCS
+              - link "" [ref=f3e199] [cursor=pointer]:
+                - /url: https://github.com/wowsims/wotlk
+              - link " Patreon" [ref=f3e202] [cursor=pointer]:
+                - /url: https://patreon.com/wowsims
+                - generic [ref=f3e203]: 
+                - text: Patreon
+      - main [ref=f3e204]:
+        - text:     
+        - tabpanel [ref=f3e467]:
+          - generic [ref=f3e468]:
+            - generic [ref=f3e470]:
+              - heading "Caps" [level=6] [ref=f3e472]
+              - generic [ref=f3e473]:
+                - paragraph [ref=f3e474]: Rating from your gear, gems, enchants, food, elixirs and bonus stats, against what your race, talents, buffs and the target's debuffs leave for gear to cover. Click a row to see where its cap comes from.
+                - table [ref=f3e475]:
+                  - rowgroup [ref=f3e476]:
+                    - row [ref=f3e477]:
+                      - columnheader "Cap" [ref=f3e478]
+                      - columnheader "Yours" [ref=f3e479]
+                      - columnheader "Needed" [ref=f3e480]
+                      - columnheader "Over / short" [ref=f3e481]
+                  - rowgroup [ref=f3e482]:
+                    - row [ref=f3e483] [cursor=pointer]:
+                      - cell "Hit" [ref=f3e484]
+                      - cell "238" [ref=f3e485]
+                      - cell "230" [ref=f3e486]
+                      - cell "8 over" [ref=f3e487]
+                    - row [ref=f3e488] [cursor=pointer]:
+                      - cell "Expertise (dodge)" [ref=f3e489]
+                      - cell "374 · 45.6 exp" [ref=f3e490]
+                      - cell "163 · 19.9 exp" [ref=f3e491]
+                      - cell "211 over" [ref=f3e492]
+                    - row [ref=f3e493] [cursor=pointer]:
+                      - cell "Expertise (parry)" [ref=f3e494]
+                      - cell "374 · 45.6 exp" [ref=f3e495]
+                      - cell "410 · 50.0 exp" [ref=f3e496]
+                      - cell "36 short" [ref=f3e497]
+                    - row [ref=f3e498] [cursor=pointer]:
+                      - cell "Defense (crit immunity)" [ref=f3e499]
+                      - cell "1,007" [ref=f3e500]
+                      - cell "689" [ref=f3e501]
+                      - cell "318 over" [ref=f3e502]
+            - generic [ref=f3e504]:
+              - heading "Your character" [level=6] [ref=f3e506]
+              - generic [ref=f3e507]:
+                - paragraph [ref=f3e508]: "Loads a raider from the server: gear with gems, enchants and reforges, talents, glyphs and racials."
+                - button "Import from roster…" [ref=f3e509] [cursor=pointer]
+        - text:     

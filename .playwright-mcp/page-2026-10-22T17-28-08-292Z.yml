@@ -1,0 +1,322 @@
+- generic [ref=e3]:
+  - generic [ref=e5]:
+    - text: Cataclysm sim development has begun!
+    - link "Join our Discord" [ref=e6] [cursor=pointer]:
+      - /url: https://discord.gg/p3DgvmnDCS
+    - text: for more details or to contribute to the project.
+  - generic [ref=e7]:
+    - complementary [ref=e8]:
+      - button "WoWSims - WOTLK DPS Warrior" [ref=e12] [cursor=pointer]:
+        - generic [ref=e15]:
+          - generic [ref=e16]: WoWSims - WOTLK
+          - generic [ref=e17]: DPS Warrior
+      - generic [ref=e18]:
+        - generic [ref=e19]:
+          - generic [ref=e20]:
+            - generic [ref=e21]: Iterations
+            - textbox [ref=e22]: "3000"
+          - button "Simulate" [ref=e23] [cursor=pointer]
+          - button "Stat Weights" [ref=e24] [cursor=pointer]
+          - button "Suggest Gems" [ref=e25] [cursor=pointer]
+        - link "" [ref=e30] [cursor=pointer]:
+          - /url: javascript:void(0)
+        - generic [ref=e33]:
+          - generic [ref=e34]: Stats
+          - table [ref=e35]:
+            - row [ref=e36]:
+              - cell "Health" [ref=e37]
+              - cell [ref=e38]:
+                - button "37817" [ref=e39] [cursor=pointer]
+                - button "" [ref=e40] [cursor=pointer]
+            - row [ref=e42]:
+              - cell "Armor" [ref=e43]
+              - cell [ref=e44]:
+                - button "19504" [ref=e45] [cursor=pointer]
+                - button "" [ref=e46] [cursor=pointer]
+            - row [ref=e48]:
+              - cell "Stamina" [ref=e49]
+              - cell [ref=e50]:
+                - button "2762" [ref=e51] [cursor=pointer]
+                - button "" [ref=e52] [cursor=pointer]
+            - row [ref=e54]:
+              - cell "Strength" [ref=e55]
+              - cell [ref=e56]:
+                - button "2804" [ref=e57] [cursor=pointer]
+                - button "" [ref=e58] [cursor=pointer]
+            - row [ref=e60]:
+              - cell "Agility" [ref=e61]
+              - cell [ref=e62]:
+                - button "1233" [ref=e63] [cursor=pointer]
+                - button "" [ref=e64] [cursor=pointer]
+            - row [ref=e66]:
+              - cell "Attack Power" [ref=e67]
+              - cell [ref=e68]:
+                - button "9463" [ref=e69] [cursor=pointer]
+                - button "" [ref=e70] [cursor=pointer]
+            - row [ref=e72]:
+              - cell "Melee Hit" [ref=e73]
+              - cell [ref=e74]:
+                - button "271 (8.27%)" [ref=e75] [cursor=pointer]
+                - button "" [ref=e76] [cursor=pointer]
+            - row [ref=e78]:
+              - cell "Melee Crit" [ref=e79]
+              - cell [ref=e80]:
+                - button "2982 (64.95%)" [ref=e81] [cursor=pointer]
+                - button "" [ref=e82] [cursor=pointer]
+            - row [ref=e84]:
+              - cell "Melee Haste" [ref=e85]
+              - cell [ref=e86]:
+                - button "367 (11.19%)" [ref=e87] [cursor=pointer]
+                - button "" [ref=e88] [cursor=pointer]
+            - row [ref=e90]:
+              - cell "Armor Pen" [ref=e91]
+              - cell [ref=e92]:
+                - button "1394 (99.60%)" [ref=e93] [cursor=pointer]
+                - button "" [ref=e94] [cursor=pointer]
+            - row [ref=e96]:
+              - cell "Expertise" [ref=e97]
+              - cell [ref=e98]:
+                - button "214 (6.53%)" [ref=e99] [cursor=pointer]
+                - button "" [ref=e100] [cursor=pointer]
+            - row [ref=e102]:
+              - cell "Melee Crit Cap" [ref=e103]
+              - cell [ref=e104]:
+                - button "Under by 10.65%" [ref=e105] [cursor=pointer]
+        - generic [ref=e106]:
+          - link "" [ref=e107] [cursor=pointer]:
+            - /url: https://discord.gg/p3DgvmnDCS
+          - link "" [ref=e109] [cursor=pointer]:
+            - /url: https://github.com/wowsims/wotlk
+          - link " Patreon" [ref=e111] [cursor=pointer]:
+            - /url: https://patreon.com/wowsims
+            - generic [ref=e112]: 
+            - text: Patreon
+    - generic [ref=e113]:
+      - banner [ref=e114]:
+        - generic [ref=e115]:
+          - tablist [ref=e116]:
+            - tab "Gear" [selected] [ref=e117] [cursor=pointer]
+            - tab "BiS Optimizer" [ref=e118] [cursor=pointer]
+            - tab "Caps & Priority" [ref=e119] [cursor=pointer]
+            - tab "Settings" [ref=e120] [cursor=pointer]
+            - tab "Talents" [ref=e121] [cursor=pointer]
+            - tab "Rotation" [ref=e122] [cursor=pointer]
+            - listitem [ref=e123]:
+              - tab "Results" [ref=e124] [cursor=pointer]
+          - generic [ref=e125]:
+            - button " Import" [ref=e127] [cursor=pointer]:
+              - generic [ref=e128]: 
+              - text: Import
+            - button " Export" [ref=e130] [cursor=pointer]:
+              - generic [ref=e131]: 
+              - text: Export
+          - generic [ref=e132]:
+            - link "" [ref=e134] [cursor=pointer]:
+              - /url: https://github.com/wowsims/wotlk/issues/new/choose
+            - link "" [ref=e137] [cursor=pointer]:
+              - /url: javascript:void(0)
+            - generic [ref=e139]:
+              - link "" [ref=e141] [cursor=pointer]:
+                - /url: https://discord.gg/p3DgvmnDCS
+              - link "" [ref=e144] [cursor=pointer]:
+                - /url: https://github.com/wowsims/wotlk
+              - link " Patreon" [ref=e147] [cursor=pointer]:
+                - /url: https://patreon.com/wowsims
+                - generic [ref=e148]: 
+                - text: Patreon
+      - main [ref=e149]:
+        - tabpanel [ref=e150]:
+          - generic [ref=e151]:
+            - generic [ref=e152]:
+              - generic [ref=e153]:
+                - generic [ref=e154]:
+                  - generic [ref=e155]:
+                    - generic [ref=e156]:
+                      - generic: "277"
+                      - button [ref=e157] [cursor=pointer]
+                    - generic [ref=e165]:
+                      - button "Sanctified Ymirjar Lord's Helmet[H]" [ref=e166] [cursor=pointer]
+                      - button "+50 Attack Power and +20 Critical Strike Rating" [ref=e167] [cursor=pointer]
+                      - button
+                  - generic [ref=e168]:
+                    - generic [ref=e169]:
+                      - generic: "284"
+                      - button [ref=e170] [cursor=pointer]
+                    - generic [ref=e175]:
+                      - button "Penumbra Pendant[H]" [ref=e176] [cursor=pointer]
+                      - button
+                      - 'button "Reforged: 29 Crit → Haste" [ref=e177] [cursor=pointer]'
+                  - generic [ref=e178]:
+                    - generic [ref=e179]:
+                      - generic: "277"
+                      - button [ref=e180] [cursor=pointer]
+                    - generic [ref=e185]:
+                      - button "Sanctified Ymirjar Lord's Shoulderplates[H]" [ref=e186] [cursor=pointer]
+                      - button "+120 Attack Power and +15 Crit Rating" [ref=e187] [cursor=pointer]
+                      - 'button "Reforged: 36 Crit → Hit" [ref=e188] [cursor=pointer]'
+                  - generic [ref=e189]:
+                    - generic [ref=e190]:
+                      - generic: "272"
+                      - button [ref=e191] [cursor=pointer]
+                    - generic [ref=e196]:
+                      - button "Vereesa's Dexterity[H]" [ref=e197] [cursor=pointer]
+                      - button "Swordguard Embroidery" [ref=e198] [cursor=pointer]
+                      - 'button "Reforged: 26 Crit → Haste" [ref=e199] [cursor=pointer]'
+                  - generic [ref=e200]:
+                    - generic [ref=e201]:
+                      - generic: "277"
+                      - button [ref=e202] [cursor=pointer]
+                    - generic [ref=e210]:
+                      - button "Sanctified Ymirjar Lord's Battleplate[H]" [ref=e211] [cursor=pointer]
+                      - button "+10 All Stats" [ref=e212] [cursor=pointer]
+                      - button
+                  - generic [ref=e213]:
+                    - generic [ref=e214]:
+                      - generic: "284"
+                      - button [ref=e215] [cursor=pointer]
+                    - generic [ref=e220]:
+                      - button "Umbrage Armbands[H]" [ref=e221] [cursor=pointer]
+                      - button "+130 Attack Power" [ref=e222] [cursor=pointer]
+                      - button
+                  - generic [ref=e223]:
+                    - generic [ref=e224]:
+                      - generic: "284"
+                      - button [ref=e225] [cursor=pointer]
+                    - generic [ref=e236]:
+                      - button "Glorenzelg, High-Blade of the Silver Hand[H]" [ref=e237] [cursor=pointer]
+                      - button "Berserking" [ref=e238] [cursor=pointer]
+                      - 'button "Reforged: 45 Expertise → Haste" [ref=e239] [cursor=pointer]'
+                  - generic [ref=e240]:
+                    - generic [ref=e241]:
+                      - generic: "284"
+                      - button [ref=e242] [cursor=pointer]
+                    - generic [ref=e253]:
+                      - button "Shadowmourne" [ref=e254] [cursor=pointer]
+                      - button "Berserking" [ref=e255] [cursor=pointer]
+                      - 'button "Reforged: 45 Crit → Expertise" [ref=e256] [cursor=pointer]'
+                  - generic [ref=e257]:
+                    - generic [ref=e258]:
+                      - generic: "284"
+                      - button [ref=e259] [cursor=pointer]
+                    - generic [ref=e264]:
+                      - button "Fal'inrush, Defender of Quel'thalas[H]" [ref=e265] [cursor=pointer]
+                      - button
+                      - button
+                - generic [ref=e266]:
+                  - generic [ref=e267]:
+                    - generic [ref=e268]:
+                      - generic: "277"
+                      - button [ref=e269] [cursor=pointer]
+                    - generic [ref=e277]:
+                      - button "Aldriana's Gloves of Secrecy[H]" [ref=e278] [cursor=pointer]
+                      - button "Hyperspeed Accelerators" [ref=e279] [cursor=pointer]
+                      - button
+                  - generic [ref=e280]:
+                    - generic [ref=e281]:
+                      - generic: "277"
+                      - button [ref=e282] [cursor=pointer]
+                    - generic [ref=e293]:
+                      - button "Astrylian's Sutured Cinch[H]" [ref=e294] [cursor=pointer]
+                      - button
+                      - 'button "Reforged: 36 Crit → Expertise" [ref=e295] [cursor=pointer]'
+                  - generic [ref=e296]:
+                    - generic [ref=e297]:
+                      - generic: "277"
+                      - button [ref=e298] [cursor=pointer]
+                    - generic [ref=e306]:
+                      - button "Sanctified Ymirjar Lord's Legplates[H]" [ref=e307] [cursor=pointer]
+                      - button "+75 Attack Power and +22 Critical Strike Rating" [ref=e308] [cursor=pointer]
+                      - 'button "Reforged: 42 Expertise → Haste" [ref=e309] [cursor=pointer]'
+                  - generic [ref=e310]:
+                    - generic [ref=e311]:
+                      - generic: "284"
+                      - button [ref=e312] [cursor=pointer]
+                    - generic [ref=e320]:
+                      - button "Apocalypse's Advance[H]" [ref=e321] [cursor=pointer]
+                      - button "+24 Critical Strike Rating" [ref=e322] [cursor=pointer]
+                      - 'button "Reforged: 32 Hit → Haste" [ref=e323] [cursor=pointer]'
+                  - generic [ref=e324]:
+                    - generic [ref=e325]:
+                      - generic: "277"
+                      - button [ref=e326] [cursor=pointer]
+                    - generic [ref=e331]:
+                      - button "Frostbrood Sapphire Ring[H]" [ref=e332] [cursor=pointer]
+                      - button "+40 Attack Power" [ref=e333] [cursor=pointer]
+                      - 'button "Reforged: 24 Crit → Haste" [ref=e334] [cursor=pointer]'
+                  - generic [ref=e335]:
+                    - generic [ref=e336]:
+                      - generic: "284"
+                      - button [ref=e337] [cursor=pointer]
+                    - generic [ref=e342]:
+                      - button "Signet of Twilight[H]" [ref=e343] [cursor=pointer]
+                      - button "+40 Attack Power" [ref=e344] [cursor=pointer]
+                      - 'button "Reforged: 22 Hit → Haste" [ref=e345] [cursor=pointer]'
+                  - generic [ref=e346]:
+                    - generic [ref=e347]:
+                      - generic: "284"
+                      - button [ref=e348] [cursor=pointer]
+                    - generic [ref=e349]:
+                      - button "Sharpened Twilight Scale[H]" [ref=e350] [cursor=pointer]
+                      - button
+                      - button
+                  - generic [ref=e351]:
+                    - generic [ref=e352]:
+                      - generic: "277"
+                      - button [ref=e353] [cursor=pointer]
+                    - generic [ref=e354]:
+                      - button "Deathbringer's Will[H]" [ref=e355] [cursor=pointer]
+                      - button
+                      - button
+              - generic [ref=e357]:
+                - generic [ref=e358]:
+                  - heading "Gem Summary" [level=6] [ref=e359]
+                  - button " Unequip All Gems" [ref=e360] [cursor=pointer]:
+                    - generic [ref=e361]: 
+                    - text: Unequip All Gems
+                - generic [ref=e362]:
+                  - generic [ref=e363]:
+                    - link "Relentless Earthsiege Diamond" [ref=e364] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=41398?lvl=80
+                    - generic [ref=e367]: "1"
+                  - generic [ref=e368]:
+                    - link "Bold Dragon's Eye" [ref=e369] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=42142?lvl=80
+                    - generic [ref=e372]: "1"
+                  - generic [ref=e373]:
+                    - link "Fractured Dragon's Eye" [ref=e374] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=42153?lvl=80
+                    - generic [ref=e377]: "2"
+                  - generic [ref=e378]:
+                    - link "Rigid King's Amber" [ref=e379] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=40125?lvl=80
+                    - generic [ref=e382]: "1"
+                  - generic [ref=e383]:
+                    - link "Bold Cardinal Ruby" [ref=e384] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=40111?lvl=80
+                    - generic [ref=e387]: "10"
+                  - generic [ref=e388]:
+                    - link "Nightmare Tear" [ref=e389] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=49110?lvl=80
+                    - generic [ref=e392]: "1"
+                  - generic [ref=e393]:
+                    - link "Inscribed Ametrine" [ref=e394] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=40142?lvl=80
+                    - generic [ref=e397]: "1"
+                  - generic [ref=e398]:
+                    - link "Fractured Cardinal Ruby" [ref=e399] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=40117?lvl=80
+                    - generic [ref=e402]: "9"
+            - generic [ref=e405]:
+              - heading "Gear Sets" [level=6] [ref=e407]
+              - generic [ref=e408]:
+                - generic [ref=e410]:
+                  - button "P1 Fury" [ref=e412] [cursor=pointer]
+                  - button "P2 Fury" [ref=e414] [cursor=pointer]
+                  - button "P3 Fury" [ref=e416] [cursor=pointer]
+                  - button "P4 Fury" [ref=e418] [cursor=pointer]
+                  - button "P5 Fury" [ref=e420] [cursor=pointer]
+                - generic [ref=e421]:
+                  - generic [ref=e422]: Gear Set Name
+                  - textbox "Name" [ref=e423]
+                  - button "Save Gear Set" [ref=e424] [cursor=pointer]
+        - text:         
