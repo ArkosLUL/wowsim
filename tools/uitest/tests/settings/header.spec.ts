@@ -13,6 +13,7 @@ import {
 	select,
 	setNumber,
 	storedSettings,
+	stubWowheadTooltips,
 } from './helpers';
 
 const SPEC = 'mage';
@@ -152,4 +153,26 @@ test('clicking a class name keeps the menu open instead of navigating', async ({
 	await warrior.click();
 	await expect(titleMenu(page)).toBeVisible();
 	await expect(page).toHaveURL(/\/wotlk\/mage\/$/);
+});
+
+const downloadLink = (page: Page) => page.locator('.sim-toolbar .downbin');
+
+// e.g. a laptop or phone opening the sim by the PC's LAN address
+test('a page the sim server serves has no download link under any host name', async ({ page, baseURL }) => {
+	const url = new URL(`/wotlk/${SPEC}/`, baseURL);
+	if (url.hostname == 'localhost') url.hostname = '127.0.0.1';
+	await stubWowheadTooltips(page);
+	const version = page.waitForResponse(response => new URL(response.url()).pathname == '/version');
+	await page.goto(url.toString());
+	await page.waitForLoadState('networkidle');
+	await expect(page.locator('.sim-ui')).toBeVisible();
+
+	await version;
+	await expect(downloadLink(page)).toHaveCount(0);
+});
+
+test('a static host without /version shows the download link', async ({ page }) => {
+	await page.route('**/version', route => route.fulfill({ status: 404, body: '404 page not found' }));
+	await openSpec(page, SPEC);
+	await expect(downloadLink(page)).toHaveCount(1);
 });

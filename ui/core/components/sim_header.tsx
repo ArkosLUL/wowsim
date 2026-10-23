@@ -186,33 +186,29 @@ export class SimHeader extends Component {
 		const icon = 'fas fa-gauge-high fa-lg';
 		const parent = this.simToolbar;
 
-		if (document.location.href.includes('localhost')) {
-			fetch('/version').then(resp => {
-				resp.json()
-					.then(versionInfo => {
-						if (versionInfo.outdated == 2) {
-							this.addToolbarLink({
-								href: href,
-								parent: parent,
-								icon: icon,
-								tooltip: 'Newer version of simulator available for download',
-								classes: 'downbin link-danger',
-							});
-						}
-					})
-					.catch(error => {
-						console.warn('No version info found!');
+		// only the sim server answers /version, so no JSON back means a static host
+		fetch('/version')
+			.then(resp => resp.json())
+			.then(versionInfo => {
+				if (versionInfo.outdated == 2) {
+					this.addToolbarLink({
+						href: href,
+						parent: parent,
+						icon: icon,
+						tooltip: 'Newer version of simulator available for download',
+						classes: 'downbin link-danger',
 					});
+				}
+			})
+			.catch(() => {
+				this.addToolbarLink({
+					href: href,
+					parent: parent,
+					icon: icon,
+					tooltip: 'Download simulator for faster simulating',
+					classes: 'downbin',
+				});
 			});
-		} else {
-			this.addToolbarLink({
-				href: href,
-				parent: parent,
-				icon: icon,
-				tooltip: 'Download simulator for faster simulating',
-				classes: 'downbin',
-			});
-		}
 	}
 
 	private addSimOptionsLink() {

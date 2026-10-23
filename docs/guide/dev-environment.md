@@ -77,6 +77,9 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     changes. After a rebuild, reload every open sim tab: a page from the old build keeps sending its old
     requests.
   - Keep the `/wotlk/` path behind a reverse proxy.
+  - Other LAN devices: `http://192.168.49.35:3333/wotlk/` (the host's static IP), with `http://` typed
+    out: a browser that tries https first (Brave) fails with `ERR_SSL_PROTOCOL_ERROR`. Docker Desktop's
+    firewall rule already lets the port in.
 - **`/acoreRoster` wiring**, shared by prod and dev: the AC client-data volume (external), `../.wowsim`
   and `../azerothcore-wotlk-pb/configurationOverrides/Playerbot.env`, relative to the checkout; override
   with `WOWSIM_DIR` and `AC_DIR`. The `--acore*` settings are env vars in `compose.yaml`.

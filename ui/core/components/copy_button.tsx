@@ -34,18 +34,19 @@ export class CopyButton extends Component {
 			if (clicked) return
 
 			const data = this.config.getContent()
-			if (navigator.clipboard == undefined) {
-				alert(data);
-			} else {
-				clicked = true
+			if (navigator.clipboard != undefined) {
 				navigator.clipboard.writeText(data);
-				const originalContent = button.innerHTML;
-				button.innerHTML = '<i class="fas fa-check me-1"></i>Copied';
-				setTimeout(() => {
-					button.innerHTML = originalContent;
-					clicked = false
-				}, 1500);
+			} else if (!copyBySelection(data, button)) {
+				alert(data);
+				return;
 			}
+			clicked = true
+			const originalContent = button.innerHTML;
+			button.innerHTML = '<i class="fas fa-check me-1"></i>Copied';
+			setTimeout(() => {
+				button.innerHTML = originalContent;
+				clicked = false
+			}, 1500);
 		});
 
 		if (config.tooltip) {
@@ -53,3 +54,28 @@ export class CopyButton extends Component {
 		}
   }
 };
+
+// For plain http, e.g. the sim opened by LAN address, where browsers leave out navigator.clipboard.
+// The textarea goes next to the button: a Bootstrap modal's focus trap pulls focus out of anything outside it.
+function copyBySelection(text: string, anchor: HTMLElement): boolean {
+	const field = document.createElement('textarea');
+	field.value = text;
+	field.readOnly = true;
+	field.style.position = 'fixed';
+	field.style.top = '0';
+	field.style.left = '0';
+	field.style.opacity = '0';
+	field.style.fontSize = '12pt'; // smaller and iOS zooms in on focus
+	anchor.after(field);
+	try {
+		field.focus();
+		field.select();
+		field.setSelectionRange(0, text.length); // iOS ignores select()
+		return document.execCommand('copy');
+	} catch {
+		return false;
+	} finally {
+		field.remove();
+		anchor.focus();
+	}
+}

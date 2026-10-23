@@ -20,6 +20,21 @@ async function captureClipboard(page: Page) {
 	});
 }
 
+// Like a page on plain http, which gets no navigator.clipboard. The copy lands in __copied, taken from
+// the focused field's selection, which is what execCommand('copy') would copy.
+async function captureCopyWithoutClipboard(page: Page) {
+	await page.addInitScript(() => {
+		(window as any).__copied = null;
+		Object.defineProperty(Navigator.prototype, 'clipboard', { get: () => undefined, configurable: true });
+		document.execCommand = (command: string) => {
+			const field = document.activeElement;
+			if (command != 'copy' || !(field instanceof HTMLTextAreaElement)) return false;
+			(window as any).__copied = field.value.slice(field.selectionStart, field.selectionEnd);
+			return true;
+		};
+	});
+}
+
 // Moves a mage away from its defaults, so a round trip that drops something shows.
 async function customize(page: Page) {
 	await openSimTab(page, 'talents-tab');
@@ -358,6 +373,43 @@ test('talents copy as their talent string', async ({ page }) => {
 	await page.locator('#talents-tab .copy-talents').click();
 	const settings = await storedSettings(page, SPEC);
 	await expect.poll(() => page.evaluate(() => (window as any).__copied)).toBe(settings.player.talentsString);
+});
+
+test('Copy works without the clipboard API, in an exporter and on the talents tab', async ({ page }) => {
+	await captureCopyWithoutClipboard(page);
+	const dialogs = acceptDialogs(page);
+	await openSpec(page, SPEC);
+
+	const modal = await openExporter(page, 'JSON');
+	const text = await modal.locator('.exporter-textarea').inputValue();
+	const copy = modal.locator('.copy-button, button:has-text("Copy")').first();
+	await copy.click();
+	await expect(copy).toContainText('Copied');
+	expect(await page.evaluate(() => (window as any).__copied)).toBe(text);
+	await modal.locator('.close-button').click();
+	await expect(page.locator('.modal.show')).toHaveCount(0);
+
+	await openSimTab(page, 'talents-tab');
+	await page.locator('#talents-tab .copy-talents').click();
+	const settings = await storedSettings(page, SPEC);
+	expect(await page.evaluate(() => (window as any).__copied)).toBe(settings.player.talentsString);
+	expect(dialogs).toEqual([]);
+});
+
+test('Copy shows the text in a dialog when the browser refuses to copy', async ({ page }) => {
+	await page.addInitScript(() => {
+		Object.defineProperty(Navigator.prototype, 'clipboard', { get: () => undefined, configurable: true });
+		document.execCommand = () => false;
+	});
+	const dialogs = acceptDialogs(page);
+	await openSpec(page, SPEC);
+
+	const modal = await openExporter(page, 'JSON');
+	const text = await modal.locator('.exporter-textarea').inputValue();
+	const copy = modal.locator('.copy-button, button:has-text("Copy")').first();
+	await copy.click();
+	await expect.poll(() => dialogs).toEqual([text]);
+	await expect(copy).not.toContainText('Copied');
 });
 
 test('a broken link opens the page with the settings it already had', async ({ page }) => {
