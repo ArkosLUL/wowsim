@@ -87,6 +87,8 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     real password, unquoted, the final `/` included. It stays outside the repo. Without it, only
     `/acoreRoster` fails (503). Compose expands `$` and cuts a ` #` comment in it, while
     `tools/bischain`'s `docker run --env-file` reads it raw: keep both out of the password.
+  - `/acoreReforge` also reads `AC_SOAP_USER` and `AC_SOAP_PASSWORD` from `prod.env`, two more lines of
+    the same format; `AC_SOAP_URL` is set in `compose.yaml`. Without them, only `/acoreReforge` fails (503).
   - The mounted volume blocks `docker compose down -v` in [ac] until the sim containers are removed.
 - **Dev server**: the `dev` service, container `wotlk-dev`, on :3334 since prod holds :3333. It builds
   the UI and server in the mounted checkout, then `--usefs` serves `./dist`; the first start takes
@@ -124,6 +126,25 @@ npx protoc --ts_out ui/core/proto --proto_path proto proto/ui.proto
     which would hand out `--acoreDsn`.
   - Item stats come from `wotlk/assets/database/db.json` in the files the server serves. It and the DBCs
     are cached by size and mtime, so a changed file needs no restart.
+- **`POST /acoreReforge`** (`application/json`) applies reforges to a core-raid character through the
+  worldserver's SOAP: `{character, items: [{acSlot, itemId, from, to}]}` becomes
+  `reforge apply <name> <slot>:<item>:<from>:<to> ...`, and the reply is `{online, slots: [{acSlot, status, text}]}`.
+  - The character must be in the names file; 1–19 items with unique `acSlot` 0–18; `from` and `to` are
+    a pair the live config allows (`core.LiveReforging`) or both 0. One request at a time, 30 s.
+  - Settings, each falling back to its env variable:
+
+    | Flag | Env | Required |
+    |---|---|---|
+    | `--acoreSoapUrl` | `AC_SOAP_URL` | yes |
+    | `--acoreSoapUser` | `AC_SOAP_USER` | yes |
+    | none | `AC_SOAP_PASSWORD` | yes; env only, so it never shows in the process list |
+    | `--acoreNamesFile` | `AC_RAID_NAMES_FILE` | yes; shared with the roster |
+
+  - Checks run in this order: 405 `method_not_allowed`, 403 `cross_site`, 503 `not_configured` (before the body
+    is read, so a `{}` POST tells a configured server from one that isn't), 400 `bad_request`, 409
+    `not_in_roster`. Then 502 `soap` (fault text passes through; 401/403 reads "the SOAP login was refused"; a
+    reply that isn't `character <name> online|offline` means mod-reforging is out of date) and 504 `timeout`.
+  - The password and user name are masked in every error and log line.
 - **API** (`/raidSim`, `/computeStats`) takes binary protobuf. `/version` returns JSON.
   - Encode and decode with the image's protoc: `protoc -I/p --encode=proto.RaidSimRequest /p/api.proto`,
     with `proto/` mounted at `/p`.

@@ -183,6 +183,16 @@
 	}
 }
 
+.acore-reforge-dialog {
+	.acore-reforge-character {
+		max-width: 20rem;
+	}
+
+	.acore-reforge-table {
+		margin-top: map-get($spacers, 2);
+	}
+}
+
 @include media-breakpoint-down(md) {
 	.caps-tab .caps-tab-top {
 		flex-direction: column;

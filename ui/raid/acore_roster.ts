@@ -193,7 +193,7 @@ const acRaceToRace: Record<number, Race> = {
 };
 
 // character_inventory slots, minus shirt (3) and tabard (18) which the export skips.
-const acSlotToItemSlot: Record<number, ItemSlot> = {
+export const acSlotToItemSlot: Record<number, ItemSlot> = {
 	0: ItemSlot.ItemSlotHead,
 	1: ItemSlot.ItemSlotNeck,
 	2: ItemSlot.ItemSlotShoulder,

@@ -1,11 +1,14 @@
-# /acoreRoster's wiring, shared by sim and dev. The server reads each --acore* flag from these env vars.
+# /acoreRoster's and /acoreReforge's wiring, shared by sim and dev. The server reads each --acore* flag
+# from these env vars.
 x-acore-env: &acore-env
   AC_DBC_DIR: /acdata/dbc
   AC_RAID_NAMES_FILE: /wowsim/core-raid.txt
   AC_RAID_LEADER: Deathsong
   AC_WORLD_BUFF_MATRIX: /acconf/Playerbot.env
+  AC_SOAP_URL: http://192.168.49.35:7878/
 
-# holds AC_DSN; without it /acoreRoster answers 503 and the rest of the sim works
+# holds AC_DSN, AC_SOAP_USER and AC_SOAP_PASSWORD; without them /acoreRoster or /acoreReforge answers 503
+# and the rest of the sim works
 x-acore-env-file: &acore-env-file
   - path: ${WOWSIM_DIR:-../.wowsim}/prod.env
     required: false

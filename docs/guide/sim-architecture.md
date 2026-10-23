@@ -64,6 +64,9 @@ Quirk: `UnitLevelFloat64` in `utils.go` treats every level outside 80–82 as +3
 - `sim/web/acroster`: the `/acoreRoster` route, which builds acraid's roster off the live server with
   `tools/database/azerothcore`. `New(cfg)` serves it; `NewWithBuilder` takes a fake builder for tests. The
   talent trees come embedded from `ui/core/talents/trees/embed.go`.
+- `sim/web/acreforge`: the `/acoreReforge` route, which sends a character's reforges to the live worldserver as
+  a `.reforge apply` command over SOAP ([stat-caps](stat-caps.md#apply-on-server)). Its `Config`/`WithEnv`,
+  error shape and `Sec-Fetch-Site` check follow `acroster`'s.
 - `sim/optimizer/`: the BiS gear optimizer ([PLAN](../bis-optimizer/bis-optimizer.PLAN.md)), with its
   contract in `types.go` and `proto/optimizer.proto`. `wowsimcli optimize`, `/optimizeGearAsync` and the
   wasm export run it. `evaluator.go` runs loadouts as paired, sharded sims behind the `Evaluator` seam;

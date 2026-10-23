@@ -30,6 +30,7 @@ import (
 	"github.com/wowsims/wotlk/sim/optimizer"
 	"github.com/wowsims/wotlk/sim/statcaps"
 	"github.com/wowsims/wotlk/sim/statslopes"
+	"github.com/wowsims/wotlk/sim/web/acreforge"
 	"github.com/wowsims/wotlk/sim/web/acroster"
 
 	googleProto "google.golang.org/protobuf/proto"
@@ -58,9 +59,12 @@ func main() {
 	// No defaults from the environment here: --help prints a flag's default, and the DSN holds a password.
 	var acoreDsn = flag.String("acoreDsn", "", "AzerothCore database DSN for /acoreRoster, without a database name; $AC_DSN when empty")
 	var acoreDbcDir = flag.String("acoreDbcDir", "", "directory holding the AzerothCore server's DBC files; $AC_DBC_DIR when empty")
-	var acoreNamesFile = flag.String("acoreNamesFile", "", "file listing the core raid for /acoreRoster, one character a line; $AC_RAID_NAMES_FILE when empty")
+	var acoreNamesFile = flag.String("acoreNamesFile", "", "file listing the core raid for /acoreRoster and /acoreReforge, one character a line; $AC_RAID_NAMES_FILE when empty")
 	var acoreLeader = flag.String("acoreLeader", "", "a member of the raid's group, whose parties the roster follows; $AC_RAID_LEADER when empty")
 	var acoreWorldBuffMatrix = flag.String("acoreWorldBuffMatrix", "", "file holding the bots' Playerbots.WorldBuffMatrix, e.g. Playerbot.env; $AC_WORLD_BUFF_MATRIX when empty")
+	// the SOAP password is env only (AC_SOAP_PASSWORD): a flag would show in the process list
+	var acoreSoapUrl = flag.String("acoreSoapUrl", "", "the AzerothCore worldserver's SOAP endpoint for /acoreReforge, e.g. http://192.168.49.35:7878/; $AC_SOAP_URL when empty")
+	var acoreSoapUser = flag.String("acoreSoapUser", "", "SOAP administrator account for /acoreReforge; $AC_SOAP_USER when empty")
 
 	flag.Parse()
 
@@ -108,6 +112,11 @@ func main() {
 			NamesFile:       *acoreNamesFile,
 			Leader:          *acoreLeader,
 			WorldBuffMatrix: *acoreWorldBuffMatrix,
+		}.WithEnv(os.Getenv),
+		acoreReforge: acreforge.Config{
+			SoapURL:   *acoreSoapUrl,
+			SoapUser:  *acoreSoapUser,
+			NamesFile: *acoreNamesFile,
 		}.WithEnv(os.Getenv),
 	}
 	s.runServer(*useFS, *host, *launch, *simName, *wasm, bufio.NewReader(os.Stdin))
@@ -164,6 +173,8 @@ type server struct {
 
 	// What /acoreRoster reads the AzerothCore server with. Left empty, the route answers 503.
 	acoreRoster acroster.Config
+	// What /acoreReforge reaches the worldserver with. Left empty, the route answers 503.
+	acoreReforge acreforge.Config
 }
 
 // net_worker.js polls every 500 ms; the rest is slack for throttled background tabs.
@@ -497,6 +508,7 @@ func (s *server) runServer(useFS bool, host string, launchBrowser bool, simName 
 		rosterConfig.Assets = dist.FS
 	}
 	mux.Handle("/acoreRoster", acroster.New(rosterConfig))
+	mux.Handle("/acoreReforge", acreforge.New(s.acoreReforge))
 
 	for route := range handlers {
 		mux.HandleFunc(route, handleAPI)
