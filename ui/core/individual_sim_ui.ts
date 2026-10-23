@@ -311,11 +311,14 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 			// first callback invoked from waitForInit().
 			this.sim.waitForInit().then(() => {
 				this.loadSettings();
-
-				if (isHealingSpec(this.player.spec)) {
-					alert(Tooltips.HEALING_SIM_DISCLAIMER);
-				}
 			});
+
+			if (isHealingSpec(this.player.spec)) {
+				this.addWarning({
+					updateOn: this.player.gearChangeEmitter,
+					getContent: () => Tooltips.HEALING_SIM_DISCLAIMER,
+				});
+			}
 		}
 
 		this.addSidebarComponents();
