@@ -128,6 +128,27 @@ G changes only the class's own healer suites (and, for HEAL-TEST, the four heale
 - `disc.apl.json` and `holy.apl.json` fill every GCD, no `spellCpm` caps; P5 presets; launch from Alpha.
 - **Owns:** `sim/priest/healing/`, `ui/healing_priest/`.
 
+#### As built
+
+- APLs: no `spellCpm` caps. Disc: Power Word: Shield on 2 targets, Prayer of Mending, Penance, Greater Heal
+  filler. Holy: Circle of Healing, Prayer of Mending, Renew on 3 targets, Greater Heal filler. A Flash Heal
+  filler spent no more mana, so Greater Heal stayed.
+- P5 presets (`p5_disc`, `p5_holy`): ICC heroic cloth plus the Ruby Sanctum cloak, ring and trinket, gems
+  matched to sockets. Both trees share one list. `p4_holy` was a copy of `p3_holy` (ToC gear); it now holds the
+  P4 list. The page is Launched; `header.spec.ts` needed no change (Alpha was already in the menu).
+- Measured on the page's setup (9 dummies, 180 s, P1 to P5 presets), time to OOM in seconds:
+
+  | | preraid | P1 | P2 | P3 | P4 | P5 |
+  |---|---|---|---|---|---|---|
+  | Disc | 161 | 174 | 187 | 214 | 497 | 433 |
+  | Holy | 98 | 112 | 102 | 64 | 187 | 146 |
+
+  Disc runs out of mana at preraid to P2 (3 s idle at P1, 1 s at P2) and not from P3; holy at every phase.
+- "Measure at my gear": every stat is nonzero except:
+  - Disc P4 and P5, Spirit and MP5 (0): the fight ends before mana does.
+  - Spell haste is slightly negative on disc P1 and P2 and on holy at every phase but P3 (+0.05): faster casts
+    spend mana the fight can't regain.
+
 ### HEAL-TEST (G; stages: code)
 
 - Golden StatWeights rows read HPS weights for healer specs (`sim/core/test_suite.go`, a test-enrichment carve-out).
