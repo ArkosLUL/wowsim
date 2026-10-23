@@ -193,7 +193,7 @@ the caps, and an "Apply on server" button over SOAP, also golden-neutral.
 
 - Wave: Z17 (caps-and-priority PLAN; the user's go, 2026-10-23), landed. Base `65cc430ed`, run `wf_7326f510-421`;
   cross-review `.wave-loop\z17-run1\xreview.md`, build `waveZ17-build.py`. The server runs mod-reforging `c9b887a`;
-  `.reforge apply`'s online path still awaits a live round trip. Next: Z18 (Z15's follow-ups, specs in the
+  `.reforge apply` passed live round trips online and offline. Next: Z18 (Z15's follow-ups, specs in the
   e2e-coverage PLAN) on the user's go. The BiS
   chain ran 2026-10-21 (BiS chain, below).
   spec-balance is closed (2026-10-22). Its `Player.playerbot` switch (`docs/guide/playerbot-rules.md`) stays on in

@@ -484,7 +484,7 @@ A tab button sends the sim's reforges to a core-raid character on the live serve
 - `ItemReforge` gained `ReforgeAmount`, `GetReforgingData(uint32)` (the `Item*` overload delegates), `SetStoredReforge`, `EraseStoredReforge` (map under `reforgingDataLock`, then `DirectExecute` on `character_reforging`, delete plus insert).
 - Command fails (SOAP fault) before touching anything on: reforging disabled, a malformed spec, no spec, unknown character, or an online character not in world.
 - Per-slot `invalid` before any lookup: slot ≥ 19, slot given twice, `from`/`to` not both 0 or both stats, same or non-reforgeable stats. Then `mismatch` ("item N is equipped" / "nothing is equipped"), `unchanged`, `invalid` (item can't take it, via `ReforgeAmount`), `applied`, `removed`, `failed`.
-- Online: `RemoveReforge` then `Reforge`; a failed `Reforge` re-applies the old one. Cross-review (uncommitted, needs a worldserver rebuild): online goes through new `SetEquippedReforge` (item mods off, stored-reforge member, mods on, item packet), so the row is written synchronously and doesn't depend on `WorkerThreads`; `SetStoredReforge` is one `REPLACE`; `failed` is gone. Offline: the plan's join query, as a formatted `CharacterDatabase.Query` (the module can't add prepared statements); the stored-reforge members write the result.
+- Online: `RemoveReforge` then `Reforge`; a failed `Reforge` re-applies the old one. Cross-review (mod-reforging `c9b887a`, live): online goes through new `SetEquippedReforge` (item mods off, stored-reforge member, mods on, item packet), so the row is written synchronously and doesn't depend on `WorkerThreads`; `SetStoredReforge` is one `REPLACE`; `failed` is gone. Offline: the plan's join query, as a formatted `CharacterDatabase.Query` (the module can't add prepared statements); the stored-reforge members write the result.
 - Reply: `character <name> online|offline`, then `<slot> <status> <text>` per spec, in input order. The name is normalized (first letter upper-case) before the lookup.
 - Working copies here are CRLF (`core.autocrlf`); the repo stores LF. The new file is LF.
 
@@ -514,7 +514,6 @@ A tab button sends the sim's reforges to a core-raid character on the live serve
   (value 24): 32→31 replied `applied` "Crit Rating -> Hit Rating", `character_reforging` and `/acoreRoster` showed
   32→31; 32→37 replied `applied` "Crit Rating -> Expertise" and restored the row exactly (32, 37, 24). Resending it
   replied `unchanged`, a wrong item id `mismatch` ("item 45459 is equipped"), an unknown name 409 `not_in_roster`.
-- The online path is compile-checked only: no character was online.
-- Hazard: online, `RemoveReforge`'s async DELETE must run before `Reforge`'s async INSERT, which holds with
-  `CharacterDatabase.WorkerThreads = 1` (live). With more workers a changed reforge could vanish at the next restart.
-  The cross-review's `SetEquippedReforge` removes it once the worldserver is rebuilt.
+- Online round trip, same slot, Angry online, through prod's `/acoreReforge` on `c9b887a`: 32→37 replied
+  `unchanged` with `online: true`; 32→31 `applied`, and `/acoreRoster` showed it at once; 32→37 `applied` restored
+  it, then `unchanged`; item 45459 `mismatch` ("item 46151 is equipped"). Gear identical after; no worldserver errors.
