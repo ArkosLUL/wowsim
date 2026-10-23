@@ -30,7 +30,7 @@ npx playwright show-trace test-results/<test>/trace.zip         # a failure's tr
 | `tests/lib/acore.ts` | `stubServer(page, reply)`, a stubbed `/acoreRoster`, with `errorReply` and the server's error texts; `dropServerRoster(page)` aborts it |
 | `tests/smoke.spec.ts` | every spec page, the raid page and the results page load without a console error; `watchForErrors` itself |
 | `tests/<area>/` | one directory per area (`results`, `gear`, `raid`, `settings`, `rankings`, `caps`), its helpers beside the specs |
-| `tests/caps/` | the Caps & Priority tab: `caps_tab` (caps), `caps_priority`, `caps_reforge` (also `suggestReforges` without a page), `caps_live` and `roster_import` (the AzerothCore importer's server fetch), which stub `stat_values.json`, `/statCaps` or `/statSlopesAsync` where a test needs fixed numbers |
+| `tests/caps/` | the Caps & Priority tab: `caps_tab` (caps), `caps_priority`, `caps_reforge` (also `suggestReforges` without a page), `caps_live` and `roster_import` (the AzerothCore importer's server fetch) and `server_reforge` (the "Apply reforges on server…" dialog, with `/acoreRoster` and `/acoreReforge` stubbed), which stub `stat_values.json`, `/statCaps` or `/statSlopesAsync` where a test needs fixed numbers |
 
 ## Fixtures
 

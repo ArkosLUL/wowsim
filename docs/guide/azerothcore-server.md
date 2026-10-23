@@ -20,7 +20,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
   | Container | Details |
   |---|---|
   | `ac-database` | mysql 8.4 on `127.0.0.1:3306`, stock `root`/`password`; DBs `acore_world`, `acore_characters`, `acore_auth`, `acore_playerbots` |
-  | `ac-worldserver` | :8085. 7878 is published, but SOAP is off |
+  | `ac-worldserver` | :8085; SOAP on 7878 (`configurationOverrides/Soap.env`) |
   | `ac-authserver` | :3724 |
   | `ac-db-import`, `ac-client-data-init` | one-shot |
 
@@ -39,8 +39,17 @@ The live server: where it runs, how to reach it, what's installed. For table and
   `/azerothcore/src` and run a module file's command from its `/azerothcore/build/compile_commands.json` with
   `-fsyntax-only`. mod-bis-tooltip's `test/syntax-check.sh` does this. A module file that
   `compile_commands.json` lacks compiles with any other module file's flags.
+- `/acoreReforge` needs the worldserver's SOAP, an administrator login: publish 7878 only on
+  `192.168.49.35` and `127.0.0.1`, never `0.0.0.0`: `DOCKER_SOAP_EXTERNAL_PORT=192.168.49.35:7878` in
+  `[ac]/.env`, plus a `127.0.0.1:7878:7878` port and `Soap.env`'s `env_file` line in
+  `[ac]/docker-compose.override.yml` (all gitignored). Sim containers reach it at `http://192.168.49.35:7878/`;
+  without a login, SOAP answers a 401 fault. If `192.168.49.35` isn't up when Docker starts the worldserver,
+  Docker may refuse to start it.
+- `.reforge apply` on an online character relies on `CharacterDatabase.WorkerThreads = 1`: `RemoveReforge`'s async
+  DELETE must reach `character_reforging` before `Reforge`'s async INSERT, or the new reforge is gone after a restart.
 - Character data reaches the DB only when a character saves. Before reading it, ask the user to run
-  `saveall` in the worldserver console. There's no SOAP, and don't `docker attach`.
+  `saveall` in the worldserver console. Agents have no SOAP login (only `prod.env` holds it), and don't
+  `docker attach`.
 
 ## DBCs
 
@@ -73,7 +82,7 @@ The live server: where it runs, how to reach it, what's installed. For table and
 | Module | On the server | In the sim |
 |---|---|---|
 | mod-individual-progression | Gates content by [progression tier](#progression-tiers). Its `data/sql/world/base/{tbc,vanilla}_item_changes.sql` is applied (438 TBC-era items at pre-3.0 stats). Its `optional/` SQL isn't. It has a damage penalty below tier 13 | items come from the server DB ([ADR 0002](../adr/0002-item-data-from-live-db.md)); item availability per tier from the server catalog ([ADR 0005](../adr/0005-server-item-catalog.md)); the penalty is ignored |
-| mod-reforging | moves 40% of one stat into another; stats 6, 13, 14, 31, 32, 36, 37; never into a stat the item already has | `ItemSpec.reforge` |
+| mod-reforging | moves 40% of one stat into another; stats 6, 13, 14, 31, 32, 36, 37; never into a stat the item already has. Reads `character_reforging` only at startup. `.reforge apply <character> <slot>:<item>:<from>:<to> …` (administrator, console and SOAP) sets or removes (`0:0`) equipped items' reforges, live for an online character, in `character_reforging` for an offline one | `ItemSpec.reforge`; the Caps tab's [Apply on server](stat-caps.md#apply-on-server) calls the command |
 | mod-racial-trait-swap | swaps racial abilities, not base stats or faction | `Player.racial_traits` |
 | mod-shared-professions | shares profession skills and spells per account, applied at login | any number of professions |
 | mod-dungeon-scale | raid creature stat multipliers; live boss health ×1.2 | server setting ([ADR 0004](../adr/0004-server-config-as-settings.md)), applied to targets ([server-parity](server-parity.md#other-measured-server-behaviour)) |

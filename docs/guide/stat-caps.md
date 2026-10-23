@@ -137,6 +137,30 @@ loads it.
 - **Apply:** `gear.withEquippedItem` and `player.setGear`, the gear picker's path; Apply all is one gear change.
   Rows disable from any change until fresh caps arrive.
 
+## Apply on server
+
+The "Your character" block's "Apply reforges on server…" button (sim server only, hidden under wasm) opens
+`acore_reforge_dialog.ts`, which sends the sim's reforges to a core-raid character on the live server.
+- mod-reforging reads `character_reforging` only at startup, so the change goes through the GM command
+  `.reforge apply <character> <slot>:<item>:<from>:<to> …` over SOAP, never a DB write
+  ([route](dev-environment.md#run), [server side](azerothcore-server.md#modules-that-affect-the-sim)).
+  Slots are server `EQUIPMENT_SLOT_*` ids; `0:0` removes.
+- The dialog lists the page's class from a fresh `fetchServerRoster()`, preselecting the importer's saved pick
+  (`acore-import.v1`). A row per equipped slot (`acSlotToItemSlot`) shows the server reforge as of the
+  character's last save and the sim's, with a status:
+  - `Will change` or `Same`: sent;
+  - left out: different item on the server, nothing on the server, nothing in the sim, or a sim reforge
+    the live server can't take.
+  - Reforges are checked against `LIVE_REFORGING`, never the page's server settings: with reforging off
+    there, Send would strip every reforge.
+- Send posts every `Will change` and `Same` slot to `POST /acoreReforge`, then each row shows the server's
+  `<status>: <text>` (`applied`, `removed`, `unchanged`, `mismatch`, `invalid`, `failed`) and whether the
+  character was online or offline.
+- Online, the item is re-reforged live. Offline, the stored reforge is written and applied at next login.
+  A bot redoes its own reforges when it refreshes its gear.
+- Tests: `sim/web/acreforge/handler_test.go` (against an `httptest` SOAP stub),
+  `tools/uitest/tests/caps/server_reforge.spec.ts` (stubbed `/acoreRoster` and `/acoreReforge`).
+
 ## The tab
 
 - `CapsTab` sits after the BiS Optimizer on every individual sim page, never in the raid sim.

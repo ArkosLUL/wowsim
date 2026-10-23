@@ -23,6 +23,7 @@ import { TypedEvent } from '../../typed_event';
 import { getEnumValues } from '../../utils';
 import { ContentBlock } from '../content_block';
 import { SimTab } from '../sim_tab';
+import { AcoreReforgeDialog } from './acore_reforge_dialog';
 import { button, formatNumber, newElement, PHASE_LABELS, simServerAvailable, tableRow } from './optimizer_tab';
 
 // long enough to fold a burst of changes (a gear set swap fires several) into one request
@@ -251,6 +252,7 @@ export class CapsTab extends SimTab {
 		rosterBlock.bodyElement.append(
 			newElement('p', 'caps-hint', "Loads a raider from the server: gear with gems, enchants and reforges, talents, glyphs and racials."),
 			button('Import from roster…', 'btn-outline-primary caps-roster-import', () => this.simUI.openAcoreImporter()),
+			button('Apply reforges on server…', 'btn-outline-primary ms-2 caps-server-reforge', () => new AcoreReforgeDialog(this.simUI.rootElem, this.simUI)),
 		);
 		rosterBlock.rootElem.hidden = true;
 		simServerAvailable().then(available => (rosterBlock.rootElem.hidden = !available));

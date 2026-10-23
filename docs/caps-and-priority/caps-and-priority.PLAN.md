@@ -475,3 +475,43 @@ A tab button sends the sim's reforges to a core-raid character on the live serve
 **Stage 4, docs** (via `/compact-docs-writer`): [stat-caps](../guide/stat-caps.md) "Apply on server"; [dev-environment](../guide/dev-environment.md) a `/acoreReforge` block beside `/acoreRoster` and prod.env's three lines; [azerothcore-server](../guide/azerothcore-server.md) SOAP on via `Soap.env` on those two addresses (drop "There's no SOAP" twice), `.reforge apply` in the mod-reforging row, the reboot caveat (if `192.168.49.35` isn't up when Docker starts the worldserver, Docker may refuse to start it); [sim-architecture](../guide/sim-architecture.md) a `sim/web/acreforge` row; the uitest README's new spec; `#### As built`.
 
 **Owns:** `[ac]/modules/mod-reforging/src/`; `sim/web/acreforge/` and its lines in `sim/web/main.go` and `compose.yaml`; the "Your character" block in `caps_tab.ts`, `acore_reforge_dialog.ts` and its styles in `_caps_tab.scss`; `tools/uitest/tests/caps/server_reforge.spec.ts`; the stage 4 docs.
+
+#### As built
+
+**Stage 1, server command** (`[ac]/modules/mod-reforging/src`, uncommitted; syntax-checked only, not built):
+- `mod_reforging_commandscript.cpp`: `.reforge apply <character> <slot>:<item>:<from>:<to> …`, `SEC_ADMINISTRATOR`, `Console::Yes`, registered in `mod_reforging_loader.cpp`.
+- `ItemReforge` gained `ReforgeAmount`, `GetReforgingData(uint32)` (the `Item*` overload delegates), `SetStoredReforge`, `EraseStoredReforge` (map under `reforgingDataLock`, then `DirectExecute` on `character_reforging`, delete plus insert).
+- Command fails (SOAP fault) before touching anything on: reforging disabled, a malformed spec, no spec, unknown character, or an online character not in world.
+- Per-slot `invalid` before any lookup: slot ≥ 19, slot given twice, `from`/`to` not both 0 or both stats, same or non-reforgeable stats. Then `mismatch` ("item N is equipped" / "nothing is equipped"), `unchanged`, `invalid` (item can't take it, via `ReforgeAmount`), `applied`, `removed`, `failed`.
+- Online: `RemoveReforge` then `Reforge`; a failed `Reforge` re-applies the old one. Offline: the plan's join query, as a formatted `CharacterDatabase.Query` (the module can't add prepared statements); the stored-reforge members write the result.
+- Reply: `character <name> online|offline`, then `<slot> <status> <text>` per spec, in input order. The name is normalized (first letter upper-case) before the lookup.
+- Working copies here are CRLF (`core.autocrlf`); the repo stores LF. The new file is LF.
+
+**Stage 2, route and dialog:**
+- `sim/web/acreforge/handler.go`: `Config`/`WithEnv` as in the spec. `AC_SOAP_PASSWORD` is env only (no flag); `--acoreNamesFile` is shared with the roster. `main.go` adds `--acoreSoapUrl`, `--acoreSoapUser` and mounts `/acoreReforge`; `compose.yaml` sets `AC_SOAP_URL`.
+- Check order: 405, 403 (`Sec-Fetch-Site`), 503 `not_configured` (names every missing setting, before the body is read), then 400 (`application/json`, unknown fields refused, 64 KB), then 409 `not_in_roster` (names file re-read per request, case-insensitive; the file's spelling goes into the command), then one request at a time.
+- Allowed pairs come from `core.LiveReforging()` (the generated live config, as the UI's `LIVE_REFORGING`); `itemId` must be positive. Items are sent sorted by slot as `reforge apply <name> <slot>:<item>:<from>:<to> ...` (no leading dot).
+- Replies: a `<faultstring>` is a 502 `soap` with the fault text; 401/403 is "the SOAP login was refused"; a reply not starting `character <name> online|offline` is a 502 saying mod-reforging may be out of date, quoting the first 300 chars. The password and user name are masked in every error and log line. Redirects aren't followed.
+- Tests: `sim/web/acreforge/handler_test.go` against an `httptest` SOAP stub.
+- UI: `acore_reforge_dialog.ts` (`AcoreReforgeDialog`) lists the page's class from a fresh `fetchServerRoster()`, preselects the importer's `acore-import.v1` pick. Rows go over the slots of `acSlotToItemSlot` (now exported from `ui/raid/acore_roster.ts`); reforges are checked with `isValidReforge` against `LIVE_REFORGING`, never the page's server settings. Status: `Will change`, `Same`, or left out (different item, nothing on the server, nothing in the sim, a sim reforge the live server can't take). Send posts every `Will change` and `Same` slot, then each row shows `<status>: <text>` and the line says online or offline. The button `.caps-server-reforge` sits in the "Your character" block, hidden with it under wasm.
+- Spec `tools/uitest/tests/caps/server_reforge.spec.ts` stubs `/acoreRoster` and `/acoreReforge`.
+- Live stage probe: POST `{}` answers 503 `not_configured` before reading the body, so it tells a configured server from one that isn't.
+
+**Stage 4, docs** (no live facts yet: which address the sim reaches SOAP on, the round trip):
+- [stat-caps](../guide/stat-caps.md) "Apply on server"; [dev-environment](../guide/dev-environment.md) a `POST /acoreReforge` block beside `/acoreRoster` and `AC_SOAP_USER`/`AC_SOAP_PASSWORD` in prod.env; [azerothcore-server](../guide/azerothcore-server.md) the mod-reforging row and the SOAP publish rule with the reboot caveat; [sim-architecture](../guide/sim-architecture.md) the `sim/web/acreforge` row; the uitest README lists `server_reforge`.
+- azerothcore-server's "SOAP is off" and "There's no SOAP" are gone (live stage).
+
+**Stage 3, live** (2026-10-23):
+- SOAP is on: `docker port ac-worldserver` lists 7878 on `192.168.49.35` and `127.0.0.1` only. The dev container
+  reaches `http://192.168.49.35:7878/` directly (no Docker-network fallback); an unauthenticated envelope gets a
+  `Error 401: HTTP 401 Unauthorized` fault.
+- A dev server with prod.env's login answers POST `{}` with 400 `bad_request` ("The request names no character").
+- The worldserver was rebuilt with `.reforge apply` once the playerbots session committed its in-progress edits (the
+  user's call; its Faction Champions commit `3c99c4394` went live too).
+- Round trip on Angry (offline, the offline path) slot 0, Conqueror's Siegebreaker Helmet 46151, reforged 32→37
+  (value 24): 32→31 replied `applied` "Crit Rating -> Hit Rating", `character_reforging` and `/acoreRoster` showed
+  32→31; 32→37 replied `applied` "Crit Rating -> Expertise" and restored the row exactly (32, 37, 24). Resending it
+  replied `unchanged`, a wrong item id `mismatch` ("item 45459 is equipped"), an unknown name 409 `not_in_roster`.
+- The online path is compile-checked only: no character was online.
+- Hazard: online, `RemoveReforge`'s async DELETE must run before `Reforge`'s async INSERT, which holds with
+  `CharacterDatabase.WorkerThreads = 1` (live). With more workers a changed reforge could vanish at the next restart.
