@@ -440,7 +440,7 @@ Apply all could leave hit or expertise below a cap: `suggestReforges` priced rat
 
 - `suggestReforges` builds floors (`floorsOf`) from the caps; `keepsFloors` skips any candidate taking one below `min(0, start surplus)`, counting earlier picks. `gainOf` also returns the value given up for the 5% noise rule.
 - The hint line is `p.reforge-floor-hint`. No Go change; goldens untouched.
-- Tests in `caps_reforge.spec.ts`: floor, short-cap, spell-hit, live and noise units; a page test per Unholy DK, Fury, rogue and Prot paladin (default gear, phase 3) checks no floor ends below `min(0, before)` after Apply all. Floors on the page are read from cap labels, since the row carries no kind.
+- Tests in `caps_reforge.spec.ts`: floor, short-cap, spell-hit, live and noise units; a page test per Unholy DK, Fury and Prot paladin (default gear) and Combat rogue (Combat Fists, P3 Combat gear), at phase 3, checks no floor ends below `min(0, before)` after Apply all. Floors on the page are read from cap labels, since the row carries no kind.
 
 ### CAP-SERVER (Z17; golden-neutral; C++; stages: server, route, live, docs)
 

@@ -356,8 +356,9 @@ const MIN_RELATIVE_GAIN = 0.05;
 
 interface Floor {
 	stat: Stat;
-	// rating past the cap now; the least the gear may be left at
+	// rating past the cap now, negative when short
 	start: number;
+	// the lowest the picks may take it
 	limit: number;
 }
 
@@ -396,7 +397,7 @@ export function suggestReforges(
 	const floors = floorsOf(caps);
 	const keepsFloors = (change: Map<Stat, number>) =>
 		floors.every(floor => floor.start + (moved.get(floor.stat) ?? 0) + (change.get(floor.stat) ?? 0) >= floor.limit);
-	// gain, and the part of it spent on value given up
+	// net gain, and what the rating taken away was worth
 	const gainOf = (change: Map<Stat, number>) => {
 		let gain = 0;
 		let given = 0;
