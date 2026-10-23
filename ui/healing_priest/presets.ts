@@ -44,6 +44,10 @@ import P4DiscGear from './gear_sets/p4_disc.gear.json';
 import P4HolyGear from './gear_sets/p4_holy.gear.json';
 export const DISC_P4_PRESET = PresetUtils.makePresetGear('Disc P4 Preset', P4DiscGear, { talentTree: 0 });
 export const HOLY_P4_PRESET = PresetUtils.makePresetGear('Holy P4 Preset', P4HolyGear, { talentTree: 1 });
+import P5DiscGear from './gear_sets/p5_disc.gear.json';
+import P5HolyGear from './gear_sets/p5_holy.gear.json';
+export const DISC_P5_PRESET = PresetUtils.makePresetGear('Disc P5 Preset', P5DiscGear, { talentTree: 0 });
+export const HOLY_P5_PRESET = PresetUtils.makePresetGear('Holy P5 Preset', P5HolyGear, { talentTree: 1 });
 
 import DiscApl from './apls/disc.apl.json';
 export const ROTATION_PRESET_DISC = PresetUtils.makePresetAPLRotation('Disc', DiscApl);

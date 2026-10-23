@@ -163,6 +163,10 @@ pets and guardians in [pets](pets.md).
   - Each bolt, 53000 or the heal's 52985, is a missile at 40 yd/s, rolled at the tick and dealt after its
     flight (`sim/priest/penance.go`; a KeepSim allowance on 53007's speed), a heal's to a friend or the priest
     as [missiles](missiles.md#flight-and-reach) give it.
+- **Healing Priest APLs** (`ui/healing_priest/apls`) cast on every GCD with no `spellCpm` caps; the mana pool
+  limits them. In the 180 s default fight disc runs out of mana at P1 and P2 and not from P3; holy runs out at
+  every phase. A stat that only matters while mana-bound (Spirit, MP5) measures 0 once the fight ends first, and
+  haste measures about 0 or below while the priest is mana-bound.
 - **Twisted Faith** at 5/5 gives 53% of Spirit as spell power, damage and healing (mod-spell-tweaks'
   `spell_dbc` row for 51167; stock 20%). Ranks 1–4 stay 4% a rank.
 - **Silent Resolve** cuts holy and arcane threat ([threat](threat.md)), so not Mind Blast's.
