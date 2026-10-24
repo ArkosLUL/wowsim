@@ -30,6 +30,11 @@ import P3Gear from './gear_sets/p3.gear.json';
 export const P3_PRESET = PresetUtils.makePresetGear('P3 Preset', P3Gear);
 import P4Gear from './gear_sets/p4.gear.json';
 export const P4_PRESET = PresetUtils.makePresetGear('P4 Preset', P4Gear);
+import P5Gear from './gear_sets/p5.gear.json';
+export const P5_PRESET = PresetUtils.makePresetGear('P5 Preset', P5Gear);
+
+import DefaultApl from './apls/default.apl.json';
+export const ROTATION_PRESET_DEFAULT = PresetUtils.makePresetAPLRotation('Default', DefaultApl);
 
 // Default talents. Uses the wowhead calculator format, make the talents on
 // https://wowhead.com/wotlk/talent-calc and copy the numbers in the url.
@@ -55,7 +60,7 @@ export const DefaultOptions = HolyPaladinOptions.create({
 });
 
 export const DefaultConsumes = Consumes.create({
-	defaultPotion: Potions.RunicManaPotion,
+	defaultPotion: Potions.RunicManaInjector,
 	flask: Flask.FlaskOfTheFrostWyrm,
 	food: Food.FoodFishFeast,
 });

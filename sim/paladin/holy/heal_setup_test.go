@@ -14,6 +14,7 @@ import (
 type healSetup struct {
 	talents string
 	items   []int32
+	glyphs  *proto.Glyphs
 	dummies int32
 	buffs   *proto.RaidBuffs
 	// the rotation's priority list as APL JSON; the default casts nothing
@@ -42,7 +43,12 @@ func (s healSetup) build(t *testing.T) (*core.Simulation, *HolyPaladin) {
 		Spec:          BasicOptions,
 		Rotation:      core.APLRotationFromJsonString(apl),
 		TalentsString: talents,
+		Glyphs:        s.glyphs,
 	}, nil, s.buffs, nil)
+	// a party holds five, the paladin and four dummies
+	for len(raid.Parties)*5 < 1+int(s.dummies) {
+		raid.Parties = append(raid.Parties, &proto.Party{})
+	}
 	raid.TargetDummies = s.dummies
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = 600

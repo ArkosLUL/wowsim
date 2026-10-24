@@ -58,12 +58,12 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHolyPaladin, {
 		gear: Presets.P1_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
 		epWeights: Stats.fromMap({
-			[Stat.StatIntellect]: 0.38,
-			[Stat.StatSpirit]: 0.34,
+			[Stat.StatIntellect]: 3.5,
+			[Stat.StatSpirit]: 0.05,
 			[Stat.StatSpellPower]: 1,
-			[Stat.StatSpellCrit]: 0.69,
-			[Stat.StatSpellHaste]: 0.77,
-			[Stat.StatMP5]: 0.00,
+			[Stat.StatSpellCrit]: 1.05,
+			[Stat.StatSpellHaste]: 0.3,
+			[Stat.StatMP5]: 3,
 		}),
 		// Default consumes settings.
 		consumes: Presets.DefaultConsumes,
@@ -73,47 +73,25 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHolyPaladin, {
 		specOptions: Presets.DefaultOptions,
 		// Default raid/party buffs settings.
 		raidBuffs: RaidBuffs.create({
-			giftOfTheWild: TristateEffect.TristateEffectImproved,
-			powerWordFortitude: TristateEffect.TristateEffectImproved,
-			strengthOfEarthTotem: TristateEffect.TristateEffectImproved,
 			arcaneBrilliance: true,
-			unleashedRage: true,
-			leaderOfThePack: TristateEffect.TristateEffectRegular,
-			icyTalons: true,
-			totemOfWrath: true,
-			demonicPactSp: 500,
-			swiftRetribution: true,
-			moonkinAura: TristateEffect.TristateEffectRegular,
+			divineSpirit: true,
+			giftOfTheWild: TristateEffect.TristateEffectImproved,
+			moonkinAura: TristateEffect.TristateEffectImproved,
 			sanctifiedRetribution: true,
-			manaSpringTotem: TristateEffect.TristateEffectRegular,
-			bloodlust: true,
-			thorns: TristateEffect.TristateEffectImproved,
-			devotionAura: TristateEffect.TristateEffectImproved,
-			shadowProtection: true,
 		}),
 		partyBuffs: PartyBuffs.create({
 		}),
 		individualBuffs: IndividualBuffs.create({
 			blessingOfKings: true,
-			blessingOfSanctuary: true,
 			blessingOfWisdom: TristateEffect.TristateEffectImproved,
-			blessingOfMight: TristateEffect.TristateEffectImproved,
+			vampiricTouch: true,
 		}),
 		debuffs: Debuffs.create({
-			judgementOfWisdom: true,
-			judgementOfLight: true,
-			misery: true,
 			faerieFire: TristateEffect.TristateEffectImproved,
-			ebonPlaguebringer: true,
-			totemOfWrath: true,
+			judgementOfWisdom: true,
+			misery: true,
+			curseOfElements: true,
 			shadowMastery: true,
-			bloodFrenzy: true,
-			mangle: true,
-			exposeArmor: true,
-			sunderArmor: true,
-			vindication: true,
-			thunderClap: TristateEffect.TristateEffectImproved,
-			insectSwarm: true,
 		}),
 	},
 
@@ -145,6 +123,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHolyPaladin, {
 			Presets.StandardTalents,
 		],
 		rotations: [
+			Presets.ROTATION_PRESET_DEFAULT,
 		],
 		// Preset gear configurations that the user can quickly select.
 		gear: [
@@ -153,11 +132,12 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHolyPaladin, {
 			Presets.P2_PRESET,
 			Presets.P3_PRESET,
 			Presets.P4_PRESET,
+			Presets.P5_PRESET,
 		],
 	},
 
 	autoRotation: (_player: Player<Spec.SpecHolyPaladin>): APLRotation => {
-		return APLRotation.create();
+		return Presets.ROTATION_PRESET_DEFAULT.rotation.rotation!;
 	},
 
 	raidSimPresets: [
@@ -182,12 +162,14 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHolyPaladin, {
 					2: Presets.P2_PRESET.gear,
 					3: Presets.P3_PRESET.gear,
 					4: Presets.P4_PRESET.gear,
+					5: Presets.P5_PRESET.gear,
 				},
 				[Faction.Horde]: {
 					1: Presets.P1_PRESET.gear,
 					2: Presets.P2_PRESET.gear,
 					3: Presets.P3_PRESET.gear,
 					4: Presets.P4_PRESET.gear,
+					5: Presets.P5_PRESET.gear,
 				},
 			},
 		},

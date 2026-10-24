@@ -2,6 +2,7 @@ package paladin
 
 import (
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 // registerSealJudgementSpell is 54158, which spell_pal_judgement casts beside the judgement's debuff under a seal
@@ -68,8 +69,10 @@ func (paladin *Paladin) registerSealSpell(aura *core.Aura) *core.Spell {
 		Flags:       core.SpellFlagAPL,
 
 		ManaCost: core.ManaCostOptions{
-			BaseCost:   0.14,
-			Multiplier: 1 - 0.02*float64(paladin.Talents.Benediction),
+			BaseCost: 0.14,
+			// Glyph of the Wise (57954) halves Seal of Wisdom's cost
+			Multiplier: 1 - 0.02*float64(paladin.Talents.Benediction) -
+				core.TernaryFloat64(aura == paladin.SealOfWisdomAura && paladin.HasMinorGlyph(proto.PaladinMinorGlyph_GlyphOfTheWise), 0.5, 0),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{

@@ -562,6 +562,63 @@ Stage shaman.
   Presets, launch.
 - **Owns:** the paladin's holy glyphs, sets and librams, `ui/holy_paladin/`, `sim/paladin/holy/`.
 
+#### As built
+
+Stage 1, items (uncommitted):
+- Glyphs, sets and librams in `sim/paladin/holy_items.go`, rules in [class-mechanics](../guide/class-mechanics.md#paladin)
+  and [damage and healing](../guide/damage-and-healing.md#healing); tests `sim/paladin/holy/items_test.go`.
+  - Glyphs: Holy Light (54968 on five others), Flash of Light, Holy Shock, Beacon of Light, Seal of Wisdom, Seal of
+    Light, the Wise. Divinity, Divine Plea and Lay on Hands were in. Cleansing and Salvation do nothing here.
+  - Sets T7 to T10 (Redemption Regalia, Aegis Regalia, Turalyon's / Liadrin's Garb, Lightsworn Garb), both bonuses
+    each; T8's Holy Mending 64891, T9's 66922 doubling, T10's Holiness 70757.
+  - Librams: Renewal, the Resolute, Mostly Holy Deeds, Veracity, Blinding Light. The TBC librams aren't in
+    `db.json`, so none is worn. Libram flats go after every percent (`flatHealing`).
+- `HasSetBonus` panics once the sim is built, so the bonuses the casts read are cached at registration.
+- Needs a live capture (stage 3): 54968 (data from Spell.dbc: heal, 5 targets, no crit). `gen_serverdata` rerun,
+  additions only. 71166 (T10 2 piece, +35% healing done) is in neither the dump nor the sim by id; its value is from Spell.dbc.
+- Also touched: `sim/optimizer/residuals.go` (5 libram ids), `serverdata_undeclared.go` (64891), `healSetup` (glyphs,
+  extra parties for more than four dummies).
+- Goldens: `TestHoly` Average-Default HPS 9974 to 11711 (+17.4%), TPS +10.6%, DPS -0.1%, from the standard glyphs:
+  Holy Light's 54968 (+90766 total), more Holy Light casts from Seal of Wisdom's cost cut (Flash of Light fewer),
+  Beacon at 90 s. Four new `AllItems` rows (the sets) in Holy, Protection and Retribution.
+
+Stage 2, page (uncommitted; numbers before HEAL-CORE):
+- Default APL `ui/holy_paladin/apls/default.apl.json` as `autoRotation` and the one rotation preset (rule and numbers in
+  [class-mechanics](../guide/class-mechanics.md#paladin)). Presets P1 to P4 kept (all in the server catalog by tier),
+  P5 added (Ruby Sanctum cloak, bracers, belt, boots, ring, trinket); Libram of Renewal stays in all (it out-heals the
+  later librams in HPS). Talents and glyphs kept; Runic Mana Injector as the potion; page buff and debuff defaults cut
+  to the shaman's; EP weights from the P1 slopes. Launched; `header.spec.ts` lists it in the menu and in the
+  no-alert test, new `tools/uitest/tests/settings/holy_paladin_page.spec.ts` runs a sim from the page (HPS > 1000).
+- `default_apl_test.go`: the page's request (9 dummies, 300 s) heals with every APL spell, P1 runs dry inside the
+  fight, every preset item is in the server catalog by its phase's tier. `TestHoly` runs the page APL (rows keep
+  their names); `statslopes`' Holy Paladin row runs it with `heals: true`.
+- Page request at 300 s (time to OOM s, s out of mana, HPS): preraid 127 (64) 9.9k, P1 150 (51) 12.3k, P2 205 (28)
+  17.9k, P3 226 (21) 20.6k, P4 none (2) 28.7k, P5 253 (12) 29.3k. "Measure at my gear" gains are nonzero except
+  Spirit (0 to 0.11) and haste (about 0 or below while mana-bound: P1, P5).
+- Goldens, `TestHoly` Average-Default against base: HPS 9974 to 11894 (+19.3%), DPS +0.9%, TPS +8.4%. Stage 1's glyphs
+  account for most of it; the page APL drops the Flash of Light filler (53653 and 48785 gone, 66922 with it) for
+  116 Holy Lights (+54968 on five others) and casts Divine Plea under 60% mana.
+
+Stage 3, live (uncommitted; server lock held 13:57 to 14:07 UTC, no rebuild):
+- Spell capture: 54968 captured (`TestSpelldumpCapture`) into `spelldump.jsonl` (additions only); `gen_serverdata` rerun
+  with no arguments; `spellids` reports only the two known unknowns (26545, 53258). The capture matches stage 1's
+  declaration: attribute `IGNORE_CASTER_MODIFIERS`, no coefficient, class mask 0, not crit capable.
+- Timing: a private copy of the e2e harness (not committed) took `.simval timing` of 12 holy spells and 7 new auras and
+  heals (187 records): bare; under each glyph (Holy Shock, Beacon, Seal of Wisdom with and without the seal up, Seal of
+  Light, the Wise), T7 to T10 bonus auras, Holiness, Libram of Renewal, and Holiness under Bloodlust. Replayed with the
+  set pieces and libram worn on the sim character. Every cast time, GCD, cooldown, cost and aura duration agrees:
+  Glyph of Holy Shock 5 s, Beacon 90 s, Seal of Wisdom -5% on Holy Light 1210, Flash of Light 291, Holy Shock 750 and
+  Beacon 1460 only while the seal is up, the Wise's Seal of Wisdom 307, T7 Holy Light 1210, Renewal 1161, T9 Judgements
+  of Light and Wisdom 30 s, Holy Mending 3 ticks of 3 s, Holiness 10 s, Veracity 15 s, Blessed 15 s.
+  - Holiness: Holy Light 2200 ms (1692 under Bloodlust) on the server. `Spell.CastTime()` doesn't run `ModifyCast`, so
+    the replay can't read it; `TestLightswornGarb4PieceHoliness` casts it and agrees.
+  - Not reachable by a probe: T8's 4 piece (a dummy aura read by the Sacred Shield script) and the libram flat heals.
+  - A probe of a seal takes the seal aura off, so probe it after the spells that need it up.
+- Talent and spell-mod sweeps not re-recorded: no talent or rank spell changed, glyph and set effects aren't in
+  `spellmod_spells.json`, and the committed `TestTalentSweepRecords` and `TestSpellModRecords` pass.
+- Fixed: nothing disagreed. Stage 1's comment on 54968 said "no damage class"; the capture shows a magic class, with
+  the ignore-caster-modifiers attribute doing the work. Comment corrected.
+
 ### HEAL-DRU-2 (G; stages: items, page, live)
 
 - Resto glyphs (Glyph of Swiftmend keeps the hot), T7 to T10 resto sets, healing idols.

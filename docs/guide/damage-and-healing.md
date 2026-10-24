@@ -128,8 +128,12 @@ rounding, caps and crit damage. Everything else the server does differently is i
   so each tick takes only aura 136 and the target's taken terms again (`sim/priest/prayer_of_healing.go`).
   Ancestral Awakening is `int32(crit × 10% a rank)` and ignores caster modifiers, Purification included
   (`sim/shaman/heals.go`).
-- **Paladin direct heals** carry Divinity and Healing Light in their multiplier; Avenging Wrath's 20% and Divine
+- **Paladin direct heals** carry Divinity and Healing Light in their multiplier, a libram's `SPELLMOD_DAMAGE` flat
+  comes after them (`flatHealing`); Avenging Wrath's 20% and Divine
   Plea's -50% (`SPELLMOD_DAMAGE` on Holy Light, Flash of Light and Holy Shock's heal) are read at the heal.
+- **Glyph of Holy Light**'s 54968 is `int32(heal × 10%)`, the Holy Light's final heal (crit and taken terms in), on up
+  to five other units. Class mask 0, ignores caster modifiers and no coefficient: no done terms, no crit, only the target's
+  taken terms. **Holy Mending** 64891 (T8) takes only aura 136 and the target's taken terms per tick.
 - **Infusion of Light**'s 66922: `CalculatePct(heal / 12, 50% a point)` a tick for 12 1 s ticks, heal being the
   Flash of Light's whole heal, taken terms and crit in. Family 0 and no damage class: each tick takes only the
   healing done percents and the target's taken percents.

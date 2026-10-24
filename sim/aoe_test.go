@@ -124,6 +124,7 @@ var aoeSpells = map[aoeKey]aoeSpell{
 	{53533, byPet}:    {chain: 1000},   // Swipe, the hunter pet's
 	// Hammer of the Righteous, its glyph
 	{53595, byPlayer}: {chain: 3, mods: map[int32]aoeValues{63219: {chain: 4}}},
+	{54968, byPlayer}: {maxTargets: 5},          // Glyph of Holy Light's heal
 	{55262, byPlayer}: {chain: 2, perJump: 0.5}, // Heart Strike
 	{55262, byPet}:    {chain: 2, perJump: 0.5}, // Heart Strike, the rune weapon's
 	{55362, byPlayer}: {capped: true},           // Living Bomb's explosion

@@ -8,6 +8,7 @@ import (
 )
 
 func (paladin *Paladin) registerHealingSpells() {
+	paladin.libramEffects()
 	paladin.registerBeaconOfLightSpell()
 	paladin.registerHolyLightSpell()
 	paladin.registerFlashOfLightSpell()
@@ -16,6 +17,7 @@ func (paladin *Paladin) registerHealingSpells() {
 	paladin.registerDivineFavorSpell()
 	paladin.registerDivineIlluminationSpell()
 	paladin.registerHolyTalentProcs()
+	paladin.registerHolyItems()
 }
 
 // healingDoneMultiplier is the healing done percents (aura 136) a direct heal carries in its own multiplier:
@@ -31,6 +33,9 @@ func (paladin *Paladin) healingDoneFactor(underPlea bool) float64 {
 	if paladin.AvengingWrathAura != nil && paladin.AvengingWrathAura.IsActive() {
 		factor *= 1.2
 	}
+	if paladin.DivineIlluminationAura != nil && paladin.DivineIlluminationAura.IsActive() && paladin.holyItems.t10DivineIllumination {
+		factor *= 1.35
+	}
 	if underPlea && paladin.DivinePleaAura != nil && paladin.DivinePleaAura.IsActive() {
 		factor *= 0.5
 	}
@@ -42,6 +47,10 @@ func (paladin *Paladin) healingDoneFactor(underPlea bool) float64 {
 func (paladin *Paladin) directHeal(sim *core.Simulation, target *core.Unit, spell *core.Spell, baseHealing float64,
 	copySpell *core.Spell) {
 	baseHealing *= paladin.healingDoneFactor(true)
+	// SPELLMOD_DAMAGE flats come after every percent
+	if flat := paladin.flatHealing(spell); flat != 0 {
+		baseHealing += flat / spell.CasterHealingMultiplier()
+	}
 	infusionCrit := 0.0
 	if spell == paladin.HolyLight {
 		infusionCrit = paladin.infusionHolyLightCrit()
@@ -64,6 +73,7 @@ func (paladin *Paladin) directHeal(sim *core.Simulation, target *core.Unit, spel
 			paladin.infusionOfLight.aura.Deactivate(sim)
 		}
 		paladin.lightsGraceOnHolyLight(sim)
+		paladin.onHolyLight(sim, target, heal)
 		if crit {
 			paladin.illuminate(sim, 29)
 		}
@@ -73,6 +83,7 @@ func (paladin *Paladin) directHeal(sim *core.Simulation, target *core.Unit, spel
 			paladin.illuminate(sim, 7)
 		}
 	case paladin.HolyShockHeal:
+		paladin.onHolyShockHeal(sim, target, crit, heal)
 		if crit {
 			paladin.illuminate(sim, 18)
 			paladin.infusionOnHolyShockCrit(sim)
@@ -93,6 +104,9 @@ func (paladin *Paladin) registerHolyLightSpell() {
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost: 0.29,
+			FlatMod:  paladin.holyItems.holyLightCostFlat,
+			// T7's 4 piece, 5%
+			Multiplier: 1 - core.TernaryFloat64(paladin.HasSetBonus(ItemSetRedemptionRegalia, 4), 0.05, 0),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -101,6 +115,7 @@ func (paladin *Paladin) registerHolyLightSpell() {
 			},
 			ModifyCast: func(_ *core.Simulation, _ *core.Spell, cast *core.Cast) {
 				paladin.lightsGraceCastTime(cast)
+				paladin.holinessCastTime(cast)
 			},
 		},
 
@@ -138,6 +153,7 @@ func (paladin *Paladin) registerFlashOfLightSpell() {
 			},
 		},
 
+		BonusCritRating:  paladin.glyphOfFlashOfLightCrit(),
 		DamageMultiplier: paladin.healingDoneMultiplier() * paladin.healingLightMultiplier(),
 		CritMultiplier:   paladin.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: 1,
@@ -229,6 +245,8 @@ func (paladin *Paladin) registerDivineIlluminationSpell() {
 		return
 	}
 	actionID := core.ActionID{SpellID: 31842}
+	// T10's 2 piece casts 71166 beside it, 35% healing done
+	t10 := paladin.HasSetBonus(ItemSetLightswornGarb, 2)
 
 	// aura 72 on every school but physical: the cost multiplier, not a spell mod
 	paladin.DivineIlluminationAura = paladin.RegisterAura(core.Aura{
@@ -237,9 +255,15 @@ func (paladin *Paladin) registerDivineIlluminationSpell() {
 		Duration: time.Second * 15,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.AddSchoolCostMultiplier(core.SpellSchoolMagic, -0.5)
+			if t10 {
+				aura.Unit.AddHealingDonePct(35)
+			}
 		},
 		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Unit.AddSchoolCostMultiplier(core.SpellSchoolMagic, 0.5)
+			if t10 {
+				aura.Unit.RemoveHealingDonePct(35)
+			}
 		},
 	})
 

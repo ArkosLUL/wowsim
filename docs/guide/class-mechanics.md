@@ -179,8 +179,36 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 - **Seal of Wisdom / Light**: a judgement also casts 54158 (`spell_pal_judgement`: no effect-2 seal judgement).
   Melee hits, 54158 included (`SPELL_ATTR3_NOT_A_PROC`), roll 12 / 10 PPM off the main hand's speed for 4% of
   max mana / a self heal of 15% AP + 15% SP (no crit). Holy has a main hand for it but never swings.
+- **Holy glyphs:** Holy Light's (54937) casts 54968 on the heal's target: 10% of the final heal on the five
+  lowest-health other living raid units (raid order among equals), no spell power, mods or crit. Flash of Light
+  +5% crit; Holy Shock -1 s cooldown; Beacon of Light 90 s. While the seal is up: Seal of Wisdom's takes 5% off
+  Holy Light, Flash of Light, Holy Shock and Beacon; Seal of Light's adds 5% (`SPELLMOD_DAMAGE`) to Holy Light,
+  Flash of Light and Holy Shock's heal. Glyph of the Wise halves Seal of Wisdom's cost.
+- **Holy sets:** T7 (Redemption Regalia) +10% Holy Shock crit; 5% off Holy Light's cost. T8 (Aegis Regalia): a Holy
+  Shock crit puts Holy Mending 64891 on its target, 3 ticks of `int32(int32(heal × 15%) / 3)` with the healing done
+  percents; Sacred Shield's absorb comes every 4 s, whatever Divine Guardian says. T9 (Turalyon's / Liadrin's
+  Garb): Judgements of Light and Wisdom last 10 s longer; 66922's tick doubles. T10 (Lightsworn Garb): +35%
+  healing done under Divine Illumination (71166); a Holy Shock heal gives Holiness 70757, 0.3 s off Holy Light's
+  cast for 10 s.
+- **Healing librams:** Renewal takes 113 off Holy Light's cost; the Resolute adds 160 to Holy Light and Mostly Holy
+  Deeds 69 to Holy Shock's heal (`SPELLMOD_DAMAGE` flats, after every percent). Veracity: a Holy Light has 70%
+  (8 s apart) for 234 spell power, 15 s (67364). Blinding Light: a Holy Shock heal gives a stack of 85 spell
+  power, 3 stacks, 15 s (71192). The TBC librams aren't in db.json.
 - Holy's rotation casts with no target go to the first target dummy. A judgement there isn't cast (the server
   refuses one on a friend): target the boss. Exorcism and damaging on-use items aren't cast there either.
+- **Holy page** (`ui/holy_paladin/apls/default.apl.json`): Seal of Wisdom and a self Beacon before the pull, then Divine
+  Illumination, Divine Favor, Beacon when it's gone, Sacred Shield when its target lacks it, Judgement of Wisdom on
+  the boss, Holy Shock, Divine Plea under 60% mana, Holy Light. A Flash of Light under Infusion of Light on a
+  Sacred Shield target healed 3% less at P1 and P4, so none is cast.
+  - P1 to P4 gear is upstream's, all in the server catalog by tier; P5 swaps in the Ruby Sanctum cloak, bracers,
+    belt, boots, one ring and a trinket. Every socket takes an Int gem: Int gains ~3.5 times Spell Power's HPS.
+  - Libram of Renewal beats the Resolute, Veracity and Blinding Light in HPS at P2 to P5 (its 113 mana off Holy
+    Light outweighs the others), so every preset wears it.
+  - The page's request, 300 s, 3000 iterations, seed 424242, before HEAL-CORE. Time to OOM in s (s out of mana), HPS: preraid 127
+    (64) 9.9k, P1 150 (51) 12.3k, P2 205 (28) 17.9k, P3 226 (21) 20.6k, P4 none (2) 28.7k, P5 253 (12) 29.3k.
+  - "Measure at my gear" before HEAL-CORE, HPS a point (Int / SP / crit / MP5 / haste), gain: P1 8.22 / 2.35 / 2.52 / 7.24 / 0.05;
+    P3 13.45 / 5.23 / 5.23 / 10.75 / 3.11; P5 15.10 / 4.65 / 6.51 / 13.04 / -0.71. Spirit gains 0 to 0.11 at every
+    phase (exactly 0 at P4, which doesn't run dry). Haste is about 0 or below while mana-bound (P1, P5).
 - **Judgement of Light**'s 20185 procs like Judgement of Wisdom's (15 PPM, landed damaging hits, no triggered
   casts): 20267 heals the attacker for 2% of his max health through his healing taken percents. Its original
   caster, the judging paladin, gets the healing and its threat, so the sim credits nobody.

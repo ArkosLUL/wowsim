@@ -11,6 +11,8 @@ import (
 type sacredShieldState struct {
 	target  *core.Unit
 	standIn *core.HitTakenStandIn
+	// T8's 4 piece, read at registration: HasSetBonus can't be called once the sim is built
+	setCooldown bool
 }
 
 // sacredShieldEffectMultiplier is Divine Guardian's SPELLMOD_EFFECT1, 10% a point on effect 0 of 53601 and 58597.
@@ -26,6 +28,10 @@ func (paladin *Paladin) sacredShieldDuration(base time.Duration) time.Duration {
 // SacredShieldCooldown is spell_pal_sacred_shield_dummy's cooldown: 53601's effect 0 in seconds, which Divine
 // Guardian's effect mod reaches too, whole.
 func (paladin *Paladin) SacredShieldCooldown() time.Duration {
+	// T8's 4 piece (64895) sets it to its own 4, spell_pal_sacred_shield_dummy takes the amount whole
+	if paladin.sacredShield.setCooldown {
+		return 4 * time.Second
+	}
 	return time.Duration(int32(float32(6)*paladin.sacredShieldEffectMultiplier())) * time.Second
 }
 
@@ -57,8 +63,9 @@ func (paladin *Paladin) sacredShieldFlashCrit(target *core.Unit) float64 {
 // aura starting the cooldown over and a refresh keeping it.
 func (paladin *Paladin) registerSacredShieldSpell() {
 	actionID := core.ActionID{SpellID: 53601}
-	cooldown := paladin.SacredShieldCooldown()
 	state := &paladin.sacredShield
+	state.setCooldown = paladin.HasSetBonus(ItemSetAegisRegalia, 4)
+	cooldown := paladin.SacredShieldCooldown()
 
 	paladin.SacredShieldAbsorb = paladin.RegisterSpell(core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 58597},
