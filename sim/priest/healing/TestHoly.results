@@ -420,8 +420,8 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-GnomishLightningGenerator-41121"
  value: {
-  tps: 1384.79533
-  hps: 4301.70083
+  tps: 1385.05992
+  hps: 4302.32517
  }
 }
 dps_results: {
@@ -735,8 +735,8 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-TalismanofTrollDivinity-37734"
  value: {
-  tps: 1410.76167
-  hps: 4376.89783
+  tps: 1422.99617
+  hps: 4406.84967
  }
 }
 dps_results: {

@@ -441,8 +441,8 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-AllItems-GnomishLightningGenerator-41121"
  value: {
-  tps: 1951.0945
-  hps: 5865.64533
+  tps: 1939.73316
+  hps: 5849.67133
  }
 }
 dps_results: {
@@ -854,8 +854,8 @@ dps_results: {
 dps_results: {
  key: "TestRestoration-AllItems-TalismanofTrollDivinity-37734"
  value: {
-  tps: 1979.3545
-  hps: 5972.57767
+  tps: 1995.90703
+  hps: 6019.84
  }
 }
 dps_results: {
