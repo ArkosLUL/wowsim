@@ -120,19 +120,14 @@ test('the sim title menu links every sim page, and each one opens', async ({ pag
 	expect(paths).toContain('/wotlk/raid/');
 	expect(paths).toContain('/wotlk/rankings/');
 	for (const spec of SPECS) {
-		// Unlaunched sims stay out of the menu.
-		if (spec === 'restoration_druid') {
-			expect(paths).not.toContain(`/wotlk/${spec}/`);
-		} else {
-			expect(paths).toContain(`/wotlk/${spec}/`);
-		}
+		expect(paths).toContain(`/wotlk/${spec}/`);
 	}
 	for (const href of new Set(hrefs)) {
 		expect((await page.request.get(href)).status(), href).toBe(200);
 	}
 });
 
-for (const spec of ['healing_priest', 'restoration_shaman', 'holy_paladin']) {
+for (const spec of ['healing_priest', 'holy_paladin', 'restoration_druid', 'restoration_shaman']) {
 	test(`the ${spec} page says how it models healing in its warnings, with no alert`, async ({ page }) => {
 		const dialogs = acceptDialogs(page);
 		await openSpec(page, spec);

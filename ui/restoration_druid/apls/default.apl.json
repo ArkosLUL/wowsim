@@ -1,0 +1,13 @@
+{
+    "type": "TypeAPL",
+    "priorityList": [
+        {"action":{"autocastOtherCooldowns":{}}},
+        {"action":{"condition":{"cmp":{"op":"OpLt","lhs":{"auraNumStacks":{"sourceUnit":{"type":"CurrentTarget"},"auraId":{"spellId":48451}}},"rhs":{"const":{"val":"3"}}}},"castSpell":{"spellId":{"spellId":48451}}}},
+        {"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":48441}}}}},"castSpell":{"spellId":{"spellId":48441}}}},
+        {"action":{"castSpell":{"spellId":{"spellId":53251}}}},
+        {"action":{"castSpell":{"spellId":{"spellId":18562}}}},
+        {"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":48443}}}}},"castSpell":{"spellId":{"spellId":48443}}}},
+        {"action":{"condition":{"auraIsActive":{"auraId":{"spellId":16870}}},"castSpell":{"spellId":{"spellId":48378}}}},
+        {"action":{"castSpell":{"spellId":{"spellId":50464}}}}
+    ]
+}

@@ -28,6 +28,9 @@ var hardCodedItemIDs = map[int32]bool{
 	25667: true, 45270: true, 27744: true, 23198: true, 38365: true, 28372: true, 39757: true,
 	29390: true, 40713: true, 27518: true, 40321: true, 31025: true, 40712: true,
 	45509: true, 47668: true, 50456: true,
+	// druid: Restoration idols in resto_items.go
+	33508: true, 40342: true, 38366: true, 40711: true, 46138: true, 47671: true, 50454: true,
+	33841: true, 35021: true, 42576: true, 42577: true, 42578: true, 42579: true, 42580: true, 51423: true,
 	// paladin: librams in the spell files, gladiator's gloves in items.go
 	27917: true, 40337: true, 31033: true, 40191: true, 45510: true, 38362: true, 29388: true,
 	40798: true, 40802: true, 40805: true, 40808: true, 40812: true, 51475: true,

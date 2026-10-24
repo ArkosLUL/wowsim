@@ -72,6 +72,9 @@ type Druid struct {
 	Swiftmend      *DruidSpell
 	WildGrowth     *DruidSpell
 
+	// T10 Restoration 4 piece's hot
+	BlessingOfTheEternal *DruidSpell
+
 	CatForm    *DruidSpell
 	BearForm   *DruidSpell
 	TreeOfLife *DruidSpell
@@ -116,6 +119,12 @@ type Druid struct {
 	disabledMCDs []*core.MajorCooldown
 
 	lifeblooms []lifebloomState
+
+	t8RejuvenationHeal      *DruidSpell
+	glyphOfRejuvenationHeal *DruidSpell
+	// the base points the next Glyph of Rejuvenation heal and Blessing of the Eternal cast carry
+	glyphHealAmount float64
+	blessingHeal    float64
 }
 
 type SelfBuffs struct {
@@ -249,6 +258,7 @@ func (druid *Druid) RegisterRestorationSpells() {
 	druid.registerTreeOfLife()
 	druid.registerLivingSeed()
 	druid.applyRevitalize()
+	druid.registerRestorationItems()
 }
 
 func (druid *Druid) RegisterFeralCatSpells() {

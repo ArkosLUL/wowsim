@@ -19,7 +19,11 @@
     {"id":48466,"name":"Hurricane","ops":["DAMAGE"]},
     {"id":48467,"name":"Hurricane","ops":["DAMAGE"]},
     {"id":48468,"name":"Insect Swarm","ops":["DOT"]},
-    {"id":53251,"name":"Wild Growth","ops":["DOT"]}
+    {"id":53251,"name":"Wild Growth","ops":["DOT"]},
+    {"id":64801,"name":"Rejuvenation","ops":["DOT"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"DOT","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]},
  {"ranks":[57811],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[6292178,67108880,0]},{"effect":1,"type":"pct","op":"DAMAGE","classMask":[4194432,0,0]}],
   "spells": [
@@ -33,7 +37,11 @@
     {"id":48466,"name":"Hurricane","ops":["DAMAGE","DOT"]},
     {"id":48467,"name":"Hurricane","ops":["DAMAGE","DOT"]},
     {"id":48468,"name":"Insect Swarm","ops":["DOT"]},
-    {"id":53251,"name":"Wild Growth","ops":["DOT"]}
+    {"id":53251,"name":"Wild Growth","ops":["DOT"]},
+    {"id":64801,"name":"Rejuvenation","ops":["DOT"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"DOT","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]}
 ]},
 {"class":"druid","tree":"Balance","talent":"moonglow","passive":true,"groups": [
@@ -49,7 +57,11 @@
     {"id":50464,"name":"Nourish","ops":["COST"]},
     {"id":53190,"name":"Starfall","ops":["COST"]},
     {"id":53195,"name":"Starfall","ops":["COST"]},
-    {"id":53201,"name":"Starfall","ops":["COST"]}
+    {"id":53201,"name":"Starfall","ops":["COST"]},
+    {"id":64801,"name":"Rejuvenation","ops":["COST"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"COST","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]}
 ]},
 {"class":"druid","tree":"Balance","talent":"naturesMajesty","passive":true,"groups": [
@@ -86,7 +98,9 @@
     {"id":48443,"name":"Regrowth","ops":["DURATION"]},
     {"id":48451,"name":"Lifebloom","ops":["DURATION"]},
     {"id":48463,"name":"Moonfire","ops":["DURATION"]},
-    {"id":48468,"name":"Insect Swarm","ops":["DURATION"]}
+    {"id":48468,"name":"Insect Swarm","ops":["DURATION"]},
+    {"id":64801,"name":"Rejuvenation","ops":["DURATION"]},
+    {"id":70691,"name":"Rejuvenation","ops":["DURATION"]}
   ]}
 ]},
 {"class":"druid","tree":"Balance","talent":"vengeance","passive":true,"groups": [
@@ -259,7 +273,12 @@
     {"id":50464,"name":"Nourish","ops":["THREAT"]},
     {"id":53251,"name":"Wild Growth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
     {"id":53307,"name":"Thorns","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":64801,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
     {"id":64823,"name":"Elune's Wrath","ops":["THREAT","RESIST_DISPEL_CHANCE"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"THREAT","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"},
+    {"id":70691,"name":"Rejuvenation","op":"RESIST_DISPEL_CHANCE","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]},
  {"ranks":[17119],"mods":[{"effect":0,"type":"pct","op":"THREAT","classMask":[262384,235405334,0]},{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[2359634,204214292,0]}],
   "spells": [
@@ -283,7 +302,12 @@
     {"id":50464,"name":"Nourish","ops":["THREAT"]},
     {"id":53251,"name":"Wild Growth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
     {"id":53307,"name":"Thorns","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":64801,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
     {"id":64823,"name":"Elune's Wrath","ops":["THREAT","RESIST_DISPEL_CHANCE"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"THREAT","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"},
+    {"id":70691,"name":"Rejuvenation","op":"RESIST_DISPEL_CHANCE","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]},
  {"ranks":[17120],"mods":[{"effect":0,"type":"pct","op":"THREAT","classMask":[262384,239603734,8192]},{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[2359634,204214292,4096]}],
   "spells": [
@@ -307,7 +331,12 @@
     {"id":50464,"name":"Nourish","ops":["THREAT"]},
     {"id":53251,"name":"Wild Growth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
     {"id":53307,"name":"Thorns","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":64801,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
     {"id":64823,"name":"Elune's Wrath","ops":["THREAT","RESIST_DISPEL_CHANCE"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"THREAT","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"},
+    {"id":70691,"name":"Rejuvenation","op":"RESIST_DISPEL_CHANCE","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]}
 ]},
 {"class":"druid","tree":"Restoration","talent":"naturalShapeshifter","passive":true,"groups": [
@@ -330,7 +359,11 @@
  {"ranks":[17111,17112,17113],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[16,0,0]}],
   "spells": [
     {"id":26982,"name":"Rejuvenation","ops":["DOT"]},
-    {"id":48441,"name":"Rejuvenation","ops":["DOT"]}
+    {"id":48441,"name":"Rejuvenation","ops":["DOT"]},
+    {"id":64801,"name":"Rejuvenation","ops":["DOT"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"DOT","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]}
 ]},
 {"class":"druid","tree":"Restoration","talent":"naturesSwiftness","passive":false,"groups": [
@@ -353,7 +386,11 @@
     {"id":48443,"name":"Regrowth","ops":["DAMAGE","DOT"]},
     {"id":48451,"name":"Lifebloom","ops":["DAMAGE","DOT"]},
     {"id":50464,"name":"Nourish","ops":["DAMAGE"]},
-    {"id":53251,"name":"Wild Growth","ops":["DOT"]}
+    {"id":53251,"name":"Wild Growth","ops":["DOT"]},
+    {"id":64801,"name":"Rejuvenation","ops":["DOT"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"DOT","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]}
 ]},
 {"class":"druid","tree":"Restoration","talent":"empoweredTouch","passive":true,"groups": [
@@ -378,7 +415,11 @@
     {"id":48441,"name":"Rejuvenation","ops":["BONUS_MULTIPLIER"]},
     {"id":48443,"name":"Regrowth","ops":["BONUS_MULTIPLIER"]},
     {"id":48451,"name":"Lifebloom","ops":["BONUS_MULTIPLIER"]},
-    {"id":53251,"name":"Wild Growth","ops":["BONUS_MULTIPLIER"]}
+    {"id":53251,"name":"Wild Growth","ops":["BONUS_MULTIPLIER"]},
+    {"id":64801,"name":"Rejuvenation","ops":["BONUS_MULTIPLIER"]}
+  ],
+  "excluded": [
+    {"id":70691,"name":"Rejuvenation","op":"BONUS_MULTIPLIER","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]}
 ]},
 {"class":"druid","tree":"Restoration","talent":"revitalize","passive":true,"groups": [

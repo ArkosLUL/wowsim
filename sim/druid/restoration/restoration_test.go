@@ -12,7 +12,7 @@ func init() {
 	RegisterRestorationDruid()
 }
 
-// A rotation that casts every heal on a target dummy.
+// The page's default APL healing a target dummy.
 func TestRestoration(t *testing.T) {
 	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
 		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
@@ -101,18 +101,5 @@ var PlayerOptionsStandard = &proto.Player_RestorationDruid{
 	},
 }
 
-// Lifebloom goes to 3 stacks and is left to bloom, Healing Touch takes the Clearcastings, Nourish fills.
-var DefaultRotation = core.APLRotationFromJsonString(`{
-	"type": "TypeAPL",
-	"priorityList": [
-		{"action":{"castSpell":{"spellId":{"spellId":33891}}}},
-		{"action":{"autocastOtherCooldowns":{}}},
-		{"action":{"castSpell":{"spellId":{"spellId":53251}}}},
-		{"action":{"castSpell":{"spellId":{"spellId":18562}}}},
-		{"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":48441}}}}},"castSpell":{"spellId":{"spellId":48441}}}},
-		{"action":{"condition":{"cmp":{"op":"OpLt","lhs":{"auraNumStacks":{"sourceUnit":{"type":"CurrentTarget"},"auraId":{"spellId":48451}}},"rhs":{"const":{"val":"3"}}}},"castSpell":{"spellId":{"spellId":48451}}}},
-		{"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":48443}}}}},"castSpell":{"spellId":{"spellId":48443}}}},
-		{"action":{"condition":{"auraIsActive":{"auraId":{"spellId":16870}}},"castSpell":{"spellId":{"spellId":48378}}}},
-		{"action":{"castSpell":{"spellId":{"spellId":50464}}}}
-	]
-}`)
+// The page's default APL.
+var DefaultRotation = core.GetAplRotation("../../../ui/restoration_druid/apls", "default").Rotation
