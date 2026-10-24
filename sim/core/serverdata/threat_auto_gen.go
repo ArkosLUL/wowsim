@@ -163,9 +163,12 @@ var threats = []Threat{
 	{SpellID: 33154, Targets: ThreatTargetsCaster},                                         // Surge of Light (Rank 2)
 	{SpellID: 33697, Targets: ThreatTargetsCaster},                                         // Blood Fury (Racial)
 	{SpellID: 33776, Targets: ThreatTargetsCaster},                                         // Spiritual Attunement (Rank 2)
+	{SpellID: 33778, Targets: ThreatTargetsCaster},                                         // Lifebloom
 	{SpellID: 33831, Targets: ThreatTargetsEnemyArea},                                      // Force of Nature
+	{SpellID: 33891, Targets: ThreatTargetsCaster},                                         // Tree of Life (Shapeshift)
 	{SpellID: 34026, Targets: ThreatTargetsCaster},                                         // Kill Command
 	{SpellID: 34074, Targets: ThreatTargetsCaster},                                         // Aspect of the Viper
+	{SpellID: 34123, Targets: ThreatTargetsCaster},                                         // Tree of Life (Passive)
 	{SpellID: 34300, Targets: ThreatTargetsCaster},                                         // Improved Leader of the Pack (Rank 2)
 	{SpellID: 34433, Targets: ThreatTargetsCaster},                                         // Shadowfiend
 	{SpellID: 34471, Targets: ThreatTargetsCaster},                                         // The Beast Within
@@ -272,6 +275,10 @@ var threats = []Threat{
 	{SpellID: 48467, Targets: ThreatTargetsCaster},                                         // Hurricane (Rank 5)
 	{SpellID: 48480, Row: 48480, FlatMod: 422, PctMod: 1},                                  // Maul (Rank 10)
 	{SpellID: 48485, Targets: ThreatTargetsCaster},                                         // Infected Wounds (Rank 3)
+	{SpellID: 48496, Targets: ThreatTargetsCaster},                                         // Living Seed (Rank 1)
+	{SpellID: 48499, Targets: ThreatTargetsCaster},                                         // Living Seed (Rank 2)
+	{SpellID: 48500, Targets: ThreatTargetsCaster},                                         // Living Seed (Rank 3)
+	{SpellID: 48503, Targets: ThreatTargetsCaster},                                         // Living Seed
 	{SpellID: 48511, Targets: ThreatTargetsCaster},                                         // Earth and Moon (Rank 3)
 	{SpellID: 48517, Targets: ThreatTargetsCaster},                                         // Eclipse (Solar)
 	{SpellID: 48518, Targets: ThreatTargetsCaster},                                         // Eclipse (Lunar)
@@ -527,6 +534,7 @@ var threats = []Threat{
 	{SpellID: 63737, Targets: ThreatTargetsCaster},                                         // Serendipity (Rank 3)
 	{SpellID: 64181, Targets: ThreatTargetsCaster},                                         // Rapid Recuperation
 	{SpellID: 64371, Targets: ThreatTargetsCaster},                                         // Eradication
+	{SpellID: 64372, Targets: ThreatTargetsCaster},                                         // Lifebloom
 	{SpellID: 64411, Targets: ThreatTargetsCaster},                                         // Blessing of Ancient Kings
 	{SpellID: 64415, Targets: ThreatTargetsCaster},                                         // Val'anyr Hammer of Ancient Kings - Equip Effect
 	{SpellID: 64544, Targets: ThreatTargetsEnemyArea},                                      // Frozen Blows

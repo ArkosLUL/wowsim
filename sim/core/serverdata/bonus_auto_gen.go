@@ -16,6 +16,7 @@ var bonuses = []Bonus{
 	{SpellID: 31707, Row: 31707, Direct: 0.83},                                           // Waterbolt
 	{SpellID: 31803, Row: 31803, Dot: 0.013, APDot: 0.025},                               // Holy Vengeance (Rank 1)
 	{SpellID: 31804, Row: 31804, Direct: 0.22, AP: 0.14},                                 // Judgement of Vengeance (Rank 1)
+	{SpellID: 33778, Row: 33778, Direct: 0.655},                                          // Lifebloom
 	{SpellID: 34433, Row: 34433, Direct: 0.65},                                           // Shadowfiend
 	{SpellID: 35295, Row: 35295, Direct: 0.119658, AP: 0.07},                             // Gore (Rank 6)
 	{SpellID: 42833, Row: 42833, Direct: 1},                                              // Fireball (Rank 16)
@@ -65,6 +66,10 @@ var bonuses = []Bonus{
 	{SpellID: 48158, Row: 48158, Direct: 0.4286},                                         // Shadow Word: Death (Rank 4)
 	{SpellID: 48160, Row: 48160, Dot: 0.4},                                               // Vampiric Touch (Rank 5)
 	{SpellID: 48300, Row: 48300, Dot: 0.18},                                              // Devouring Plague (Rank 9)
+	{SpellID: 48378, Row: 48378, Direct: 1.61},                                           // Healing Touch (Rank 15)
+	{SpellID: 48441, Row: 48441, Dot: 0.376},                                             // Rejuvenation (Rank 15)
+	{SpellID: 48443, Row: 48443, Direct: 0.3, Dot: 0.1878},                               // Regrowth (Rank 12)
+	{SpellID: 48451, Row: 48451, Dot: 0.09518},                                           // Lifebloom (Rank 3)
 	{SpellID: 48461, Row: 48461, Direct: 0.571},                                          // Wrath (Rank 12)
 	{SpellID: 48463, Row: 48463, Direct: 0.13, Dot: 0.13},                                // Moonfire (Rank 14)
 	{SpellID: 48465, Row: 48465, Direct: 1},                                              // Starfire (Rank 10)
@@ -100,6 +105,7 @@ var bonuses = []Bonus{
 	{SpellID: 49284, Row: 49284, Direct: 0.5371},                                         // Earth Shield (Rank 5)
 	{SpellID: 49909, Row: 49909, AP: 0.1},                                                // Icy Touch (Rank 5)
 	{SpellID: 49941, Row: 49941, AP: 0.06},                                               // Blood Boil (Rank 4)
+	{SpellID: 50464, Row: 50464, Direct: 0.672},                                          // Nourish (Rank 1)
 	{SpellID: 50590, Row: 50590, Direct: 0.143},                                          // Immolation (Rank 1)
 	{SpellID: 50842, Row: 50842, AP: 0.04},                                               // Pestilence
 	{SpellID: 51411, Row: 51411, AP: 0.2},                                                // Howling Blast (Rank 4)

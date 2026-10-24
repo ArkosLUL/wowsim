@@ -12,36 +12,73 @@ func init() {
 	RegisterRestorationDruid()
 }
 
-// The APL only autocasts cooldowns and never heals, so the suite checks stats and item heals only.
+// A rotation that casts every heal on a target dummy.
 func TestRestoration(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class: proto.Class_ClassDruid,
-		Race:  proto.Race_RaceTauren,
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:    proto.Class_ClassDruid,
+			Race:     proto.Race_RaceTauren,
+			IsHealer: true,
 
-		GearSet:     core.GetGearSet("../../../ui/restoration_druid/gear_sets", "p1"),
-		Talents:     StandardTalents,
-		Glyphs:      StandardGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Standard", SpecOptions: PlayerOptionsStandard},
-		Rotation:    core.RotationCombo{Label: "Default", Rotation: DefaultRotation},
+			GearSet:     core.GetGearSet("../../../ui/restoration_druid/gear_sets", "p1"),
+			Talents:     StandardTalents,
+			Glyphs:      StandardGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Standard", SpecOptions: PlayerOptionsStandard},
+			Rotation:    core.RotationCombo{Label: "Default", Rotation: DefaultRotation},
 
-		ItemFilter: core.ItemFilter{
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeDagger,
-				proto.WeaponType_WeaponTypeMace,
-				proto.WeaponType_WeaponTypeOffHand,
-				proto.WeaponType_WeaponTypeStaff,
-				proto.WeaponType_WeaponTypePolearm,
+			ItemFilter: core.ItemFilter{
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeDagger,
+					proto.WeaponType_WeaponTypeMace,
+					proto.WeaponType_WeaponTypeOffHand,
+					proto.WeaponType_WeaponTypeStaff,
+					proto.WeaponType_WeaponTypePolearm,
+				},
+				ArmorType: proto.ArmorType_ArmorTypeLeather,
+				RangedWeaponTypes: []proto.RangedWeaponType{
+					proto.RangedWeaponType_RangedWeaponTypeIdol,
+				},
 			},
-			ArmorType: proto.ArmorType_ArmorTypeLeather,
-			RangedWeaponTypes: []proto.RangedWeaponType{
-				proto.RangedWeaponType_RangedWeaponTypeIdol,
-			},
-		},
-	}))
+		}),
+		&core.SingleDpsTestGenerator{Name: "Talents-LivingSeed-Average", Request: livingSeedTalentsRequest()},
+	))
 }
 
 var StandardTalents = "05320031103--230023312131502331050313051"
+
+// StandardTalents with Improved Tree of Life's 3 points in Living Seed, which no other build takes
+var LivingSeedTalents = "05320031103--230023312131502331053310051"
+
+// TestRestoration's default player on LivingSeedTalents, healing a target dummy
+func livingSeedTalentsRequest() *proto.RaidSimRequest {
+	rsr := &proto.RaidSimRequest{
+		Raid: core.SinglePlayerRaidProto(
+			&proto.Player{
+				Race:               proto.Race_RaceTauren,
+				Class:              proto.Class_ClassDruid,
+				Equipment:          core.GetGearSet("../../../ui/restoration_druid/gear_sets", "p1").GearSet,
+				Consumes:           FullConsumes,
+				Spec:               PlayerOptionsStandard,
+				Buffs:              core.FullIndividualBuffs,
+				Rotation:           DefaultRotation,
+				TalentsString:      LivingSeedTalents,
+				Glyphs:             StandardGlyphs,
+				Profession1:        proto.Profession_Engineering,
+				DistanceFromTarget: 30,
+				ReactionTimeMs:     150,
+				ChannelClipDelayMs: 50,
+			},
+			core.FullPartyBuffs,
+			core.FullRaidBuffs,
+			core.FullDebuffs),
+		Encounter:  core.MakeSingleTargetEncounter(5),
+		SimOptions: core.AverageDefaultSimTestOptions,
+	}
+	rsr.Raid.TargetDummies = 1
+	return rsr
+}
+
 var StandardGlyphs = &proto.Glyphs{
 	Major1: int32(proto.DruidMajorGlyph_GlyphOfWildGrowth),
 	Major2: int32(proto.DruidMajorGlyph_GlyphOfSwiftmend),
@@ -64,9 +101,18 @@ var PlayerOptionsStandard = &proto.Player_RestorationDruid{
 	},
 }
 
+// Lifebloom goes to 3 stacks and is left to bloom, Healing Touch takes the Clearcastings, Nourish fills.
 var DefaultRotation = core.APLRotationFromJsonString(`{
 	"type": "TypeAPL",
 	"priorityList": [
-		{"action":{"autocastOtherCooldowns":{}}}
+		{"action":{"castSpell":{"spellId":{"spellId":33891}}}},
+		{"action":{"autocastOtherCooldowns":{}}},
+		{"action":{"castSpell":{"spellId":{"spellId":53251}}}},
+		{"action":{"castSpell":{"spellId":{"spellId":18562}}}},
+		{"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":48441}}}}},"castSpell":{"spellId":{"spellId":48441}}}},
+		{"action":{"condition":{"cmp":{"op":"OpLt","lhs":{"auraNumStacks":{"sourceUnit":{"type":"CurrentTarget"},"auraId":{"spellId":48451}}},"rhs":{"const":{"val":"3"}}}},"castSpell":{"spellId":{"spellId":48451}}}},
+		{"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":48443}}}}},"castSpell":{"spellId":{"spellId":48443}}}},
+		{"action":{"condition":{"auraIsActive":{"auraId":{"spellId":16870}}},"castSpell":{"spellId":{"spellId":48378}}}},
+		{"action":{"castSpell":{"spellId":{"spellId":50464}}}}
 	]
 }`)

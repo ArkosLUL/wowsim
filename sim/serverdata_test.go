@@ -176,6 +176,11 @@ var serverDataPresets = []serverDataPreset{
 			int32(proto.DruidMajorGlyph_GlyphOfSwiftmend), int32(proto.DruidMajorGlyph_GlyphOfNourish)),
 		&proto.Player_RestorationDruid{RestorationDruid: &proto.RestorationDruid{Options: &proto.RestorationDruid_Options{
 			InnervateTarget: &proto.UnitReference{Type: proto.UnitReference_Player, Index: 0}}}}, false},
+	{"Talents-LivingSeed", proto.Class_ClassDruid, proto.Race_RaceTauren, "restoration_druid", "p1", "",
+		"05320031103--230023312131502331053310051", glyphs(int32(proto.DruidMajorGlyph_GlyphOfWildGrowth),
+			int32(proto.DruidMajorGlyph_GlyphOfSwiftmend), int32(proto.DruidMajorGlyph_GlyphOfNourish)),
+		&proto.Player_RestorationDruid{RestorationDruid: &proto.RestorationDruid{Options: &proto.RestorationDruid_Options{
+			InnervateTarget: &proto.UnitReference{Type: proto.UnitReference_Player, Index: 0}}}}, false},
 	{"FeralTank", proto.Class_ClassDruid, proto.Race_RaceTauren, "feral_tank_druid", "p1", "default",
 		"-503232132322010353120300313511-20350001", glyphs(int32(proto.DruidMajorGlyph_GlyphOfMaul),
 			int32(proto.DruidMajorGlyph_GlyphOfSurvivalInstincts), int32(proto.DruidMajorGlyph_GlyphOfFrenziedRegeneration)),

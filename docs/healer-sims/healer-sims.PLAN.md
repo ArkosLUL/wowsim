@@ -396,6 +396,65 @@ HL2's class items both regenerate `spells_auto_gen.go`, `implemented_talents.jso
 `spellmod_spells.json`, and add to `spelldump.jsonl` and the sweep records: at integration, the second merge
 keeps both items' lines and reruns the generators on the merged tree instead of resolving them by hand.
 
+#### As built
+
+Stage 1, spells (uncommitted):
+- Healing Touch, Regrowth, Rejuvenation, Lifebloom with its bloom (33778) and mana (64372), Nourish, Wild Growth,
+  Swiftmend and Tree of Life (form, raid aura 34123, passive 5420), registered for Restoration only
+  (`RegisterRestorationSpells`); rules in [caster-mechanics](../guide/caster-mechanics.md#druid) and
+  [damage-and-healing](../guide/damage-and-healing.md#healing). The druid heals its first target dummy.
+- Also taken now on the heals: the already implemented Genesis, Moonglow, Nature's Majesty, Nature's Splendor,
+  Naturalist and Natural Shapeshifter (the spell-mod list's mods on them). Left for stage 2: the Missing list's
+  talents, Master Shapeshifter's tree form, Gift of the Earthmother, Subtlety.
+- Core: `Dot.HotTickHealing` (`sim/core/healing_done.go`) for Swiftmend.
+- Regenerated (additions only): `gen_serverdata`, `implemented_talents.json` (swiftmend, treeOfLife,
+  wildGrowth), `talent_paths.json`, `spellmod_spells.json`. Nothing missing from the capture.
+- `TestRestoration` runs an in-test APL casting every heal, with `IsHealer`: Average HPS 0 to 3862, HPS weights
+  nonzero. Tests: `lifebloom_test.go`, `heals_test.go`, `tree_of_life_test.go`.
+
+Stage 2, talents (uncommitted):
+- The Missing list's talents plus Master Shapeshifter's tree form, Gift of the Earthmother and Subtlety (on
+  Innervate too); rules in [caster-mechanics](../guide/caster-mechanics.md#druid). Living Seed and Revitalize in
+  `sim/druid/resto_talents.go`; tests in `talents_test.go`. Nature's Focus does nothing.
+- Hots no longer read the spell's `DamageMultiplier` (the direct heal's). Tree of Life now goes on in
+  `Druid.Reset`, not its OnReset, so Master Shapeshifter survives the spells' reset.
+- Needs a live capture (stage 3): 48503, 48504, 48540 to 48543 (`tmp/spellids-missing.txt`; 48541 beyond the
+  Context's list), then `gen_serverdata`; after it `rollsOmenOffFamily` decides Omen on 48503 and 48504.
+- New golden row `Talents-LivingSeed-Average` (`LivingSeedTalents`: Improved Tree of Life's points in Living Seed)
+  and its `serverDataPresets` entry (`sim/serverdata_test.go`). Average HPS 3862 to 6079.
+- Regenerated: `gen_serverdata` (Living Seed's procs), `implemented_talents.json`, `talent_paths.json`,
+  `spellmod_spells.json`.
+
+Stage 3, live (uncommitted; server lock held 21:37 to 21:52 UTC, no rebuild):
+- Captured 48503, 48504, 48540 to 48543 (`TestSpelldumpCapture`), added to `spelldump.jsonl`; `gen_serverdata`
+  rerun (additions only: 48504's proc row, 48503's threat row); `spellids` reports only 26545 and 53258;
+  `spellmod_spells.json` unchanged.
+- With its data, 48503 rolls Omen of Clarity ([caster-mechanics](../guide/caster-mechanics.md#druid)):
+  `Talents-LivingSeed-Average` HPS 6100 to 6236, all from it (checked by turning it off).
+- Talent sweep, DruidFeralBear and DruidRestoration (`SIMVAL_TALENT_ONLY`), trimmed into `talents.jsonl`: every
+  step agrees or moves no field. Improved Tree of Life moves nothing: no path takes the form.
+- Spell-mod sweep, the four druid paths, their lines replaced in `spellmods.jsonl`. The heals compare as
+  `restoration_druid` (`timingExtraSpecs`, `tools/simval/timing.go`). Druid: 74 agree, 73 move nothing, 42 not
+  compared, 1 disagrees (Berserk on Mangle, already dropped). Agree: Moonglow and Tranquil Spirit cost, Nature's
+  Majesty and Nature's Bounty crit, Nature's Splendor durations and ticks, Naturalist and Nature's Swiftness cast
+  time, Gift of Nature and Genesis on Healing Touch and Regrowth, Empowered Touch and Rejuvenation coefficients,
+  Gift of the Earthmother's Lifebloom GCD. The scripted hots' and Nourish's amounts aren't compared (shaped).
+- Timing: a private copy of the e2e harness (not committed) took 123 `.simval timing` records of Healing Touch,
+  Regrowth, Rejuvenation, Lifebloom, its bloom, Nourish, Wild Growth, Swiftmend, Tree of Life, 48504 and 48503:
+  bare, under Naturalist, Moonglow, Nature's Splendor, Tranquil Spirit, Gift of the Earthmother, Natural
+  Shapeshifter and 5420 each alone, all together, with Bloodlust on top, and under Clearcasting. Replayed through
+  `replayTiming`: every cast time, GCD, cooldown, cost, duration and tick count agrees (e.g. Lifebloom's GCD
+  1227 ms under Gift of the Earthmother; cost mods add, Healing Touch 933; Clearcasting frees every heal, not
+  Tree of Life). Nothing needed fixing.
+- Not checked live: Tree of Life's form effects, Living Seed's and Revitalize's procs, the hots' amounts (unit
+  tests cover them).
+
+Review fixes (uncommitted):
+- 34123 reaches the whole raid (effect 65), not the party (`TestTreeOfLifeHealsTheRaidMore`).
+- Swiftmend eats another druid's Rejuvenation or Regrowth when the druid has none
+  (`TestSwiftmendFallsBackToAnotherDruidsHot`).
+- Goldens unchanged by both: the suite's one dummy shares the druid's party, and no other druid plays.
+
 ### HEAL-PAL-2 (G; stages: code, live)
 
 - Holy glyphs, T7 to T10 holy sets, healing librams, the APL (Beacon kept up, Sacred Shield, Holy Shock on

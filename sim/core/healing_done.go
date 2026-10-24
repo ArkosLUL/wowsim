@@ -49,3 +49,12 @@ func (dot *Dot) hotTick() float64 {
 	amount := wholeHeal(dot.SnapshotBaseDamage * dot.SnapshotAttackerMultiplier)
 	return float64(int32(float32(float32(amount) * dot.Spell.Unit.healingDoneMultiplier())))
 }
+
+// HotTickHealing is what a tick of the hot heals for as its caster deals it, before the target's terms, for
+// a script that reads the tick (Swiftmend).
+func (dot *Dot) HotTickHealing() float64 {
+	if dot.healingDoneAtTick {
+		return dot.hotTick()
+	}
+	return wholeHeal(dot.SnapshotBaseDamage * dot.SnapshotAttackerMultiplier)
+}

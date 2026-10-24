@@ -61,8 +61,20 @@ type Druid struct {
 	Typhoon              *DruidSpell
 	Wrath                *DruidSpell
 
-	CatForm  *DruidSpell
-	BearForm *DruidSpell
+	HealingTouch   *DruidSpell
+	Lifebloom      *DruidSpell
+	LifebloomBloom *DruidSpell
+	LivingSeed     *DruidSpell
+	LivingSeedHeal *DruidSpell
+	Nourish        *DruidSpell
+	Regrowth       *DruidSpell
+	Rejuvenation   *DruidSpell
+	Swiftmend      *DruidSpell
+	WildGrowth     *DruidSpell
+
+	CatForm    *DruidSpell
+	BearForm   *DruidSpell
+	TreeOfLife *DruidSpell
 
 	BarkskinAura             *core.Aura
 	BearFormAura             *core.Aura
@@ -84,6 +96,7 @@ type Druid struct {
 	SolarEclipseProcAura     *core.Aura
 	LunarEclipseProcAura     *core.Aura
 	OwlkinFrenzyAura         *core.Aura
+	TreeOfLifeAura           *core.Aura
 
 	BleedCategories core.ExclusiveCategoryArray
 
@@ -101,6 +114,8 @@ type Druid struct {
 
 	form         DruidForm
 	disabledMCDs []*core.MajorCooldown
+
+	lifeblooms []lifebloomState
 }
 
 type SelfBuffs struct {
@@ -223,6 +238,19 @@ func (druid *Druid) RegisterBalanceSpells() {
 	druid.registerForceOfNatureCD()
 }
 
+func (druid *Druid) RegisterRestorationSpells() {
+	druid.registerHealingTouchSpell()
+	druid.registerRegrowthSpell()
+	druid.registerRejuvenationSpell()
+	druid.registerLifebloomSpell()
+	druid.registerNourishSpell()
+	druid.registerWildGrowthSpell()
+	druid.registerSwiftmendSpell()
+	druid.registerTreeOfLife()
+	druid.registerLivingSeed()
+	druid.applyRevitalize()
+}
+
 func (druid *Druid) RegisterFeralCatSpells() {
 	druid.registerBerserkCD()
 	druid.registerCatFormSpell()
@@ -259,13 +287,19 @@ func (druid *Druid) RegisterFeralTankSpells() {
 	druid.registerSwipeBearSpell()
 }
 
-func (druid *Druid) Reset(_ *core.Simulation) {
+func (druid *Druid) Reset(sim *core.Simulation) {
 	druid.BleedsActive = 0
 	druid.form = druid.StartingForm
 	druid.disabledMCDs = []*core.MajorCooldown{}
 	druid.RebirthUsed = false
 	druid.LunarICD.Timer.Reset()
 	druid.SolarICD.Timer.Reset()
+
+	// here and not in the aura's OnReset: the spells reset after the auras, which would undo Master
+	// Shapeshifter's healing done on the heals
+	if druid.TreeOfLifeAura != nil && druid.StartingForm.Matches(Tree) {
+		druid.TreeOfLifeAura.Activate(sim)
+	}
 }
 
 func New(char *core.Character, form DruidForm, selfBuffs SelfBuffs, talents string) *Druid {
@@ -277,6 +311,9 @@ func New(char *core.Character, form DruidForm, selfBuffs SelfBuffs, talents stri
 		form:         form,
 	}
 	core.FillTalentsProto(druid.Talents.ProtoReflect(), talents, TalentTreeSizes)
+	if form.Matches(Tree) && !druid.Talents.TreeOfLife {
+		druid.StartingForm, druid.form = Humanoid, Humanoid
+	}
 	druid.EnableManaBar()
 
 	if druid.Talents.ForceOfNature {

@@ -38,7 +38,43 @@ pets and guardians in [pets](pets.md).
   triggered one (Starfall's stars, Typhoon's 53227) the hit phase only (`rollNaturesGrace`). The hit phase rolls
   once for each target the cast crits. Its mask has
   Healing Touch, Regrowth, Nourish and Swiftmend too: the aura reads heals, so one needs only
-  `SpellFlagNaturesGrace` (the sim registers none of the four).
+  `SpellFlagNaturesGrace`.
+- **Resto heals** (`sim/druid/heals.go`, `lifebloom.go`, `wild_growth.go`; amounts in
+  [damage and healing](damage-and-healing.md#healing)):
+  - All cast in Tree of Life: the form has `SHAPESHIFT_FLAG_STANCE`, so acts as no form, and their StancesNot
+    lists only Moonkin.
+  - Omen of Clarity rolls on every landing, a hot's with nothing to heal too (`CheckProc` passes any druid
+    spell but a shapeshift): Wild Growth once a target, Lifebloom's bloom (`CAN_PROC_FROM_PROCS`).
+    Clearcasting covers every heal, not Tree of Life.
+  - Balance talents reach them: Genesis +1% a point on the hots, Moonglow -3% cost on Healing Touch,
+    Rejuvenation, Regrowth and Nourish, Nature's Majesty +2% crit on Healing Touch and Nourish, Nature's
+    Splendor +3/6/2 s on Rejuvenation, Regrowth and Lifebloom, Naturalist -0.1 s on Healing Touch.
+  - Resto talents, a point each (`sim/druid/heals.go`, `resto_talents.go`): Gift of Nature +2% on Healing Touch,
+    Regrowth's heal, Nourish and the bloom (not Swiftmend) and on the hots; Improved Rejuvenation +5% on
+    Rejuvenation; Empowered Touch +0.2 and +0.1 coefficient on Healing Touch and Nourish; Empowered Rejuvenation
+    +4% coefficient on the hots, Regrowth's heal and the bloom; Nature's Bounty +5% crit on Regrowth and Nourish;
+    Tranquil Spirit -2% cost on Healing Touch and Nourish; Subtlety -10% threat on every heal, and on Innervate at
+    ranks 1 and 3 only (rank 2's mask lacks it); Gift of the Earthmother +2% cast speed (multiplying Celestial
+    Focus) and -30 ms on Lifebloom's GCD before haste. Nature's Focus does nothing (no pushback).
+  - In Tree of Life only: Master Shapeshifter's 48422, +2% a point healing done (aura 136); Improved Tree of Life,
+    5% a point of Spirit as spell power (the sim has no healing-only power) and +67/133/200% item armor. A druid
+    starting in the form takes it in `Druid.Reset`, since the spells reset after the auras.
+  - **Living Seed** (`spell_dru_living_seed`): a crit of Healing Touch, Regrowth's heal, Nourish or Swiftmend has
+    33% a point to put 48504 on the target (15 s, one charge, a new one replacing the old) for 30% of the heal.
+    The target's next hit, a stand-in at 30 a minute (`core.HitTakenStandIn` from the seed's gain), spends it on
+    48503 ([damage and healing](damage-and-healing.md#healing)). 48503 rolls Omen of Clarity (family 0, magic,
+    direct heal; the druid is its proc actor through `originalCaster`); 48504 doesn't.
+  - **Revitalize** (`spell_dru_revitalize`): each Rejuvenation or Wild Growth tick rolls 5% a point to give its
+    target, by power type, 1% of max mana (48542), 4 rage, 8 energy or 16 runic power; the druid makes the
+    energize's threat. A dummy has no power, so only the druid's own Wild Growth gains.
+  - **Lifebloom:** each cast adds a stack, up to 3, and restarts the ticks; a tick heals one stack's whole
+    amount × stacks. Only running out blooms (`AURA_REMOVE_BY_EXPIRE`), never a refresh or the fight's end:
+    mana back first (int 28 × base mana × stacks / 100 / 2), then 33778.
+  - **Wild Growth** (`spell_dru_wild_growth`): past 5, the living raid units and pets lowest in health
+    percent, a tie to raid order.
+  - **Tree of Life** (33891, 13% base mana less Natural Shapeshifter): its 34123 gives every raid unit +6%
+    healing taken (effect 65, a raid area aura). Tree of Life Passive (5420, -20% cost on Rejuvenation, Regrowth, Lifebloom and Wild Growth)
+    has no Stances, so holds in any form. A Resto druid with the talent starts in the form.
 - **Savage Defense** holds one charge, which the druid's crits refill at their own rate: the slower the boss
   swings, the fewer swings find it down.
 - **Hurricane**'s cast is a hit without damage on the druid's side: one Illustration of the Dragon Soul stack,

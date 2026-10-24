@@ -1235,6 +1235,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 77, DamageMultiplier: 1, MiscValue: 30},
 		},
 	},
+	// Swiftmend
+	{
+		ID: 18562, Family: 7, FamilyFlags: [3]uint32{0, 0x2}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0x80000}, AttributesCu: 0x100100,
+		GCDMs: 1500, GCDCategory: 133, CooldownMs: 15000,
+		ProcChance: 101, ManaCostPct: 16, SpellLevel: 1,
+		CooldownMods: ModBounds{FlatMin: -2000},
+		Effects: [3]Effect{
+			{Effect: 10, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Lightning
 	{
 		ID: 18979, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
@@ -2495,6 +2506,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, BasePoints: 9, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Lifebloom
+	{
+		ID: 33778, Family: 7, FamilyFlags: [3]uint32{0, 0x10}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPositive,
+		Attributes: [8]uint32{0x9000000, 0x420, 0x10004000, 0x10000}, AttributesCu: 0x100,
+		ProcChance: 101, BaseLevel: 64, MaxLevel: 69,
+		GCDMods: ModBounds{FlatMin: -150},
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Force of Nature
 	{
 		ID: 33831, Family: 7, FamilyFlags: [3]uint32{0, 0x200}, SchoolMask: 8, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagTargetsArea,
@@ -2504,6 +2525,17 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 28, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, MiscValue: 1964, MiscValueB: 1562},
 			{Effect: 6, Aura: 226, AmplitudeMs: 200, DamageMultiplier: 1},
+		},
+	},
+	// Tree of Life (Shapeshift)
+	{
+		ID: 33891, Family: 7, FamilyFlags: [3]uint32{0, 0x10000}, SchoolMask: 1, Flags: FlagPositive,
+		Attributes: [8]uint32{0x50010, 0x18000, 0, 0, 0x200000},
+		GCDMs:      1500, GCDCategory: 133, DurationMs: -1, MaxDurationMs: -1,
+		ProcFlags: 0x2aa20, ProcChance: 100, ManaCostPct: 13, SpellLevel: 50, BaseLevel: 50,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 36, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 2},
+			{Effect: 6, Aura: 77, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 17},
 		},
 	},
 	// Kill Command
@@ -2527,6 +2559,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 21, AmplitudeMs: 3000, BasePoints: 3, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 6, Aura: 79, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 			{Effect: 6, Aura: 4, DamageMultiplier: 1},
+		},
+	},
+	// Tree of Life (Passive)
+	{
+		ID: 34123, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0x400, 0x10000000, 0, 0x100000, 0, 0x4000000, 0x10000000}, AttributesCu: 0x100000,
+		DurationMs: -1, MaxDurationMs: -1,
+		ProcChance: 101, SpellLevel: 50, BaseLevel: 50,
+		Effects: [3]Effect{
+			{Effect: 65, Aura: 118, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
 	},
 	// Improved Leader of the Pack (Rank 2)
@@ -4353,6 +4395,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 118, BasePoints: -21, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
 	},
+	// Healing Touch (Rank 15)
+	{
+		ID: 48378, Family: 7, FamilyFlags: [3]uint32{0x20}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000}, AttributesCu: 0x100100,
+		CastMs: 3000, BaseCastMs: 3000, GCDMs: 1500, GCDCategory: 133,
+		ProcChance: 101, ManaCostPct: 33, SpellLevel: 79, BaseLevel: 79, MaxLevel: 83,
+		CastMods: ModBounds{FlatMin: -2000},
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 3749, DieSides: 679, PointsPerLevel: 11.4, DamageMultiplier: 1, BonusMultiplier: 1.61},
+		},
+	},
 	// Owlkin Frenzy
 	{
 		ID: 48391, Family: 7, SchoolMask: 1, Flags: FlagAlwaysHit | FlagPositive,
@@ -4382,6 +4435,40 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 240, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, ClassMask: [3]uint32{0x1000}},
 			{Effect: 6, Aura: 108, BasePoints: -81, DieSides: 1, DamageMultiplier: 1, MiscValue: 30, ClassMask: [3]uint32{0x800000, 0x10000080}},
+		},
+	},
+	// Rejuvenation (Rank 15)
+	{
+		ID: 48441, Family: 7, FamilyFlags: [3]uint32{0x10}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0x80000, 0x80, 0x100000, 0, 0x4000000}, AttributesCu: 0x100000,
+		GCDMs: 1500, GCDCategory: 133, DurationMs: 15000, MaxDurationMs: 15000,
+		ProcChance: 101, ManaCostPct: 18, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 8, AmplitudeMs: 3000, BasePoints: 337, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.376},
+		},
+	},
+	// Regrowth (Rank 12)
+	{
+		ID: 48443, Family: 7, FamilyFlags: [3]uint32{0x40}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0x80000, 0x80, 0x100000, 0, 0x4000000}, AttributesCu: 0x100100,
+		CastMs: 2000, BaseCastMs: 2000, GCDMs: 1500, GCDCategory: 133, DurationMs: 21000, MaxDurationMs: 21000,
+		ProcChance: 101, ManaCostPct: 29, SpellLevel: 77, BaseLevel: 77, MaxLevel: 81,
+		CastMods: ModBounds{FlatMin: -400},
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 2233, DieSides: 261, PointsPerLevel: 7.7, DamageMultiplier: 1, BonusMultiplier: 0.538},
+			{Effect: 6, Aura: 8, AmplitudeMs: 3000, BasePoints: 334, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.188},
+		},
+	},
+	// Lifebloom (Rank 3)
+	{
+		ID: 48451, Family: 7, FamilyFlags: [3]uint32{0, 0x10}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0x80000, 0x80, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		GCDMs: 1500, GCDCategory: 133, DurationMs: 7000, MaxDurationMs: 7000, StackAmount: 3,
+		ProcChance: 101, ManaCostPct: 28, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		GCDMods: ModBounds{FlatMin: -150},
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 8, AmplitudeMs: 1000, BasePoints: 52, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.0952},
+			{Effect: 6, Aura: 4, BasePoints: 775, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Wrath (Rank 12)
@@ -4491,6 +4578,52 @@ var spells = []Spell{
 			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 58181},
 		},
 	},
+	// Living Seed (Rank 1)
+	{
+		ID: 48496, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1c0},
+		ProcFlags:  0x4000, ProcChance: 33,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
+	// Living Seed (Rank 2)
+	{
+		ID: 48499, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1c0},
+		ProcFlags:  0x4000, ProcChance: 66,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
+	// Living Seed (Rank 3)
+	{
+		ID: 48500, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1c0},
+		ProcFlags:  0x4000, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
+	// Living Seed
+	{
+		ID: 48503, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPositive,
+		Attributes: [8]uint32{0x8040000, 0x400, 0x20000004, 0x20000000}, AttributesCu: 0x100,
+		ProcChance: 101, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Living Seed
+	{
+		ID: 48504, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPositive,
+		Attributes: [8]uint32{0x8040000, 0x400, 0x20000004, 0x20000000},
+		DurationMs: 15000, MaxDurationMs: 15000,
+		ProcFlags: 0xa22a8, ProcChance: 100, ProcCharges: 1, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Earth and Moon (Rank 3)
 	{
 		ID: 48511, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
@@ -4519,6 +4652,42 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 107, BasePoints: 39, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0x4}},
+		},
+	},
+	// Revitalize
+	{
+		ID: 48540, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0, 0x4}, AttributesCu: 0x100010,
+		ProcChance: 101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 30, BasePoints: 7, DieSides: 1, DamageMultiplier: 1, MiscValue: 3},
+		},
+	},
+	// Revitalize
+	{
+		ID: 48541, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0, 0x4}, AttributesCu: 0x100010,
+		ProcChance: 101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 30, BasePoints: 39, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+		},
+	},
+	// Revitalize
+	{
+		ID: 48542, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0, 0x4}, AttributesCu: 0x100010,
+		ProcChance: 101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 30, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Revitalize
+	{
+		ID: 48543, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0, 0x4}, AttributesCu: 0x100010,
+		ProcChance: 101, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 30, BasePoints: 159, DieSides: 1, DamageMultiplier: 1, MiscValue: 6},
 		},
 	},
 	// Revitalize (Rank 3)
@@ -5470,6 +5639,16 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 31, BasePoints: 24, DieSides: 1, DamageMultiplier: 1},
 			{Effect: 58, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Nourish (Rank 1)
+	{
+		ID: 50464, Family: 7, FamilyFlags: [3]uint32{0, 0x2000000}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagResetsAutoAttack | FlagHasteGCD | FlagPositive,
+		Attributes: [8]uint32{0x10000}, AttributesCu: 0x100100,
+		CastMs: 1500, BaseCastMs: 1500, GCDMs: 1500, GCDCategory: 133,
+		ProcChance: 101, ManaCostPct: 18, SpellLevel: 80, BaseLevel: 80, MaxLevel: 85,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: 1882, DieSides: 305, PointsPerLevel: 9.7, DamageMultiplier: 1, BonusMultiplier: 0.672},
 		},
 	},
 	// Blood Presence
@@ -9273,6 +9452,15 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 65, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x1000267, 0x3800020, 0x200}},
+		},
+	},
+	// Lifebloom
+	{
+		ID: 64372, Family: 7, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x29000000, 0x420, 0x10004000, 0, 0, 0, 0, 0x10000}, AttributesCu: 0x100010,
+		ProcChance: 101, SpellLevel: 64, BaseLevel: 64, MaxLevel: 69,
+		Effects: [3]Effect{
+			{Effect: 30, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Shattering Throw

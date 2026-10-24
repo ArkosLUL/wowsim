@@ -146,8 +146,8 @@ var timingTaughtSpells = map[int32]string{
 }
 
 // timingExtraSpecs are specs beyond the damage replay's that register a spell the probes use, by server
-// class id: Healing Wave is the shaman's.
-var timingExtraSpecs = map[uint8][]protoreflect.Name{7: {"restoration_shaman"}}
+// class id: Healing Wave is the shaman's, the heals are the resto druid's.
+var timingExtraSpecs = map[uint8][]protoreflect.Name{7: {"restoration_shaman"}, 11: {"restoration_druid"}}
 
 // timingSim is the record's character with the spell the record is about.
 type timingSim struct {

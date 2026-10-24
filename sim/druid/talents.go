@@ -30,6 +30,7 @@ func (druid *Druid) ApplyTalents() {
 	druid.AddStat(stats.SpellHit, float64(druid.Talents.BalanceOfPower)*2*core.SpellHitRatingPerHitChance)
 	druid.AddStat(stats.SpellCrit, float64(druid.Talents.NaturalPerfection)*1*core.CritRatingPerCritChance)
 	druid.PseudoStats.CastSpeedMultiplier *= 1 + (float64(druid.Talents.CelestialFocus) * 0.01)
+	druid.PseudoStats.CastSpeedMultiplier *= 1 + (float64(druid.Talents.GiftOfTheEarthmother) * 0.02)
 	druid.PseudoStats.DamageDealtMultiplier *= 1 + (float64(druid.Talents.EarthAndMoon) * 0.02)
 	druid.PseudoStats.SpiritRegenRateCasting = float64(druid.Talents.Intensity) * (0.5 / 3)
 	druid.PseudoStats.SchoolDamageDealtMultiplier[stats.SchoolIndexPhysical] *= 1 + 0.02*float64(druid.Talents.Naturalist)
@@ -367,6 +368,15 @@ func (druid *Druid) applyOmenOfClarity() {
 				druid.Shred,
 				druid.SwipeBear,
 				druid.SwipeCat,
+
+				// Restoration
+				druid.HealingTouch,
+				druid.Lifebloom,
+				druid.Nourish,
+				druid.Regrowth,
+				druid.Rejuvenation,
+				druid.Swiftmend,
+				druid.WildGrowth,
 			}, func(spell *DruidSpell) bool { return spell != nil })
 		},
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {

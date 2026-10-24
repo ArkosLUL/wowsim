@@ -11,6 +11,10 @@
   "spells": [
     {"id":26982,"name":"Rejuvenation","ops":["DOT"]},
     {"id":27013,"name":"Insect Swarm","ops":["DOT"]},
+    {"id":33778,"name":"Lifebloom","ops":["DOT"]},
+    {"id":48441,"name":"Rejuvenation","ops":["DOT"]},
+    {"id":48443,"name":"Regrowth","ops":["DOT"]},
+    {"id":48451,"name":"Lifebloom","ops":["DOT"]},
     {"id":48463,"name":"Moonfire","ops":["DOT"]},
     {"id":48466,"name":"Hurricane","ops":["DAMAGE"]},
     {"id":48467,"name":"Hurricane","ops":["DAMAGE"]},
@@ -21,6 +25,10 @@
   "spells": [
     {"id":26982,"name":"Rejuvenation","ops":["DOT"]},
     {"id":27013,"name":"Insect Swarm","ops":["DOT"]},
+    {"id":33778,"name":"Lifebloom","ops":["DOT"]},
+    {"id":48441,"name":"Rejuvenation","ops":["DOT"]},
+    {"id":48443,"name":"Regrowth","ops":["DOT"]},
+    {"id":48451,"name":"Lifebloom","ops":["DOT"]},
     {"id":48463,"name":"Moonfire","ops":["DOT"]},
     {"id":48466,"name":"Hurricane","ops":["DAMAGE","DOT"]},
     {"id":48467,"name":"Hurricane","ops":["DAMAGE","DOT"]},
@@ -32,9 +40,13 @@
  {"ranks":[16845,16846,16847],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[119,41943040,0]}],
   "spells": [
     {"id":26982,"name":"Rejuvenation","ops":["COST"]},
+    {"id":48378,"name":"Healing Touch","ops":["COST"]},
+    {"id":48441,"name":"Rejuvenation","ops":["COST"]},
+    {"id":48443,"name":"Regrowth","ops":["COST"]},
     {"id":48461,"name":"Wrath","ops":["COST"]},
     {"id":48463,"name":"Moonfire","ops":["COST"]},
     {"id":48465,"name":"Starfire","ops":["COST"]},
+    {"id":50464,"name":"Nourish","ops":["COST"]},
     {"id":53190,"name":"Starfall","ops":["COST"]},
     {"id":53195,"name":"Starfall","ops":["COST"]},
     {"id":53201,"name":"Starfall","ops":["COST"]}
@@ -43,8 +55,10 @@
 {"class":"druid","tree":"Balance","talent":"naturesMajesty","passive":true,"groups": [
  {"ranks":[35363,35364],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[37,41943040,0]}],
   "spells": [
+    {"id":48378,"name":"Healing Touch","ops":["CRITICAL_CHANCE"]},
     {"id":48461,"name":"Wrath","ops":["CRITICAL_CHANCE"]},
     {"id":48465,"name":"Starfire","ops":["CRITICAL_CHANCE"]},
+    {"id":50464,"name":"Nourish","ops":["CRITICAL_CHANCE"]},
     {"id":53190,"name":"Starfall","ops":["CRITICAL_CHANCE"]},
     {"id":53195,"name":"Starfall","ops":["CRITICAL_CHANCE"]},
     {"id":53201,"name":"Starfall","ops":["CRITICAL_CHANCE"]}
@@ -67,6 +81,10 @@
   "spells": [
     {"id":26982,"name":"Rejuvenation","ops":["DURATION"]},
     {"id":27013,"name":"Insect Swarm","ops":["DURATION"]},
+    {"id":33778,"name":"Lifebloom","ops":["DURATION"]},
+    {"id":48441,"name":"Rejuvenation","ops":["DURATION"]},
+    {"id":48443,"name":"Regrowth","ops":["DURATION"]},
+    {"id":48451,"name":"Lifebloom","ops":["DURATION"]},
     {"id":48463,"name":"Moonfire","ops":["DURATION"]},
     {"id":48468,"name":"Insect Swarm","ops":["DURATION"]}
   ]}
@@ -214,21 +232,166 @@
 ]},
 {"class":"druid","tree":"Restoration","talent":"naturalist","passive":true,"groups": [
  {"ranks":[17069,17070,17071,17072,17073],"mods":[{"effect":0,"type":"flat","op":"CASTING_TIME","classMask":[32,0,0]}],
-  "spells": []}
+  "spells": [
+    {"id":48378,"name":"Healing Touch","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"subtlety","passive":true,"groups": [
+ {"ranks":[17118],"mods":[{"effect":0,"type":"pct","op":"THREAT","classMask":[262384,239603734,0]},{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[2359634,204214292,4096]}],
+  "spells": [
+    {"id":16864,"name":"Omen of Clarity","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":16870,"name":"Clearcasting","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":16886,"name":"Nature's Grace","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":17116,"name":"Nature's Swiftness","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":18562,"name":"Swiftmend","ops":["THREAT"]},
+    {"id":22812,"name":"Barkskin","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":26982,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":27013,"name":"Insect Swarm","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":29166,"name":"Innervate","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":33778,"name":"Lifebloom","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48378,"name":"Healing Touch","ops":["THREAT"]},
+    {"id":48441,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48443,"name":"Regrowth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48451,"name":"Lifebloom","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48463,"name":"Moonfire","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48468,"name":"Insect Swarm","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48470,"name":"Gift of the Wild","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":50464,"name":"Nourish","ops":["THREAT"]},
+    {"id":53251,"name":"Wild Growth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":53307,"name":"Thorns","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":64823,"name":"Elune's Wrath","ops":["THREAT","RESIST_DISPEL_CHANCE"]}
+  ]},
+ {"ranks":[17119],"mods":[{"effect":0,"type":"pct","op":"THREAT","classMask":[262384,235405334,0]},{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[2359634,204214292,0]}],
+  "spells": [
+    {"id":16864,"name":"Omen of Clarity","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":16870,"name":"Clearcasting","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":16886,"name":"Nature's Grace","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":17116,"name":"Nature's Swiftness","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":18562,"name":"Swiftmend","ops":["THREAT"]},
+    {"id":22812,"name":"Barkskin","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":26982,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":27013,"name":"Insect Swarm","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":29166,"name":"Innervate","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":33778,"name":"Lifebloom","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48378,"name":"Healing Touch","ops":["THREAT"]},
+    {"id":48441,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48443,"name":"Regrowth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48451,"name":"Lifebloom","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48463,"name":"Moonfire","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48468,"name":"Insect Swarm","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48470,"name":"Gift of the Wild","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":50464,"name":"Nourish","ops":["THREAT"]},
+    {"id":53251,"name":"Wild Growth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":53307,"name":"Thorns","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":64823,"name":"Elune's Wrath","ops":["THREAT","RESIST_DISPEL_CHANCE"]}
+  ]},
+ {"ranks":[17120],"mods":[{"effect":0,"type":"pct","op":"THREAT","classMask":[262384,239603734,8192]},{"effect":1,"type":"flat","op":"RESIST_DISPEL_CHANCE","classMask":[2359634,204214292,4096]}],
+  "spells": [
+    {"id":16864,"name":"Omen of Clarity","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":16870,"name":"Clearcasting","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":16886,"name":"Nature's Grace","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":17116,"name":"Nature's Swiftness","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":18562,"name":"Swiftmend","ops":["THREAT"]},
+    {"id":22812,"name":"Barkskin","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":26982,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":27013,"name":"Insect Swarm","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":29166,"name":"Innervate","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":33778,"name":"Lifebloom","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48378,"name":"Healing Touch","ops":["THREAT"]},
+    {"id":48441,"name":"Rejuvenation","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48443,"name":"Regrowth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48451,"name":"Lifebloom","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":48463,"name":"Moonfire","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48468,"name":"Insect Swarm","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":48470,"name":"Gift of the Wild","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":50464,"name":"Nourish","ops":["THREAT"]},
+    {"id":53251,"name":"Wild Growth","ops":["THREAT","RESIST_DISPEL_CHANCE"]},
+    {"id":53307,"name":"Thorns","ops":["RESIST_DISPEL_CHANCE"]},
+    {"id":64823,"name":"Elune's Wrath","ops":["THREAT","RESIST_DISPEL_CHANCE"]}
+  ]}
 ]},
 {"class":"druid","tree":"Restoration","talent":"naturalShapeshifter","passive":true,"groups": [
  {"ranks":[16833,16834,16835],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[3758096384,122880,0]}],
   "spells": [
     {"id":768,"name":"Cat Form","ops":["COST"]},
     {"id":9634,"name":"Dire Bear Form","ops":["COST"]},
-    {"id":24858,"name":"Moonkin Form","ops":["COST"]}
+    {"id":24858,"name":"Moonkin Form","ops":["COST"]},
+    {"id":33891,"name":"Tree of Life","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"tranquilSpirit","passive":true,"groups": [
+ {"ranks":[24968,24969,24970,24971,24972],"mods":[{"effect":0,"type":"pct","op":"COST","classMask":[160,33554432,0]}],
+  "spells": [
+    {"id":48378,"name":"Healing Touch","ops":["COST"]},
+    {"id":50464,"name":"Nourish","ops":["COST"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"improvedRejuvenation","passive":true,"groups": [
+ {"ranks":[17111,17112,17113],"mods":[{"effect":0,"type":"pct","op":"DOT","classMask":[16,0,0]}],
+  "spells": [
+    {"id":26982,"name":"Rejuvenation","ops":["DOT"]},
+    {"id":48441,"name":"Rejuvenation","ops":["DOT"]}
   ]}
 ]},
 {"class":"druid","tree":"Restoration","talent":"naturesSwiftness","passive":false,"groups": [
  {"ranks":[17116],"mods":[{"effect":0,"type":"pct","op":"CASTING_TIME","classMask":[268436065,33554464,32768]}],
   "spells": [
+    {"id":48378,"name":"Healing Touch","ops":["CASTING_TIME"]},
+    {"id":48443,"name":"Regrowth","ops":["CASTING_TIME"]},
     {"id":48461,"name":"Wrath","ops":["CASTING_TIME"]},
-    {"id":48477,"name":"Rebirth","ops":["CASTING_TIME"]}
+    {"id":48477,"name":"Rebirth","ops":["CASTING_TIME"]},
+    {"id":50464,"name":"Nourish","ops":["CASTING_TIME"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"giftOfNature","passive":true,"groups": [
+ {"ranks":[17104,24943,24944,24945,24946],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[224,33554448,0]},{"effect":1,"type":"pct","op":"DOT","classMask":[80,67108880,0]}],
+  "spells": [
+    {"id":26982,"name":"Rejuvenation","ops":["DOT"]},
+    {"id":33778,"name":"Lifebloom","ops":["DAMAGE","DOT"]},
+    {"id":48378,"name":"Healing Touch","ops":["DAMAGE"]},
+    {"id":48441,"name":"Rejuvenation","ops":["DOT"]},
+    {"id":48443,"name":"Regrowth","ops":["DAMAGE","DOT"]},
+    {"id":48451,"name":"Lifebloom","ops":["DAMAGE","DOT"]},
+    {"id":50464,"name":"Nourish","ops":["DAMAGE"]},
+    {"id":53251,"name":"Wild Growth","ops":["DOT"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"empoweredTouch","passive":true,"groups": [
+ {"ranks":[33879,33880],"mods":[{"effect":0,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[32,0,0]},{"effect":1,"type":"flat","op":"BONUS_MULTIPLIER","classMask":[0,33554432,0]}],
+  "spells": [
+    {"id":48378,"name":"Healing Touch","ops":["BONUS_MULTIPLIER"]},
+    {"id":50464,"name":"Nourish","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"naturesBounty","passive":true,"groups": [
+ {"ranks":[17074,17075,17076,17077,17078],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[64,33554432,0]}],
+  "spells": [
+    {"id":48443,"name":"Regrowth","ops":["CRITICAL_CHANCE"]},
+    {"id":50464,"name":"Nourish","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"empoweredRejuvenation","passive":true,"groups": [
+ {"ranks":[33886,33887,33888,33889,33890],"mods":[{"effect":0,"type":"pct","op":"BONUS_MULTIPLIER","classMask":[208,67108880,0]}],
+  "spells": [
+    {"id":26982,"name":"Rejuvenation","ops":["BONUS_MULTIPLIER"]},
+    {"id":33778,"name":"Lifebloom","ops":["BONUS_MULTIPLIER"]},
+    {"id":48441,"name":"Rejuvenation","ops":["BONUS_MULTIPLIER"]},
+    {"id":48443,"name":"Regrowth","ops":["BONUS_MULTIPLIER"]},
+    {"id":48451,"name":"Lifebloom","ops":["BONUS_MULTIPLIER"]},
+    {"id":53251,"name":"Wild Growth","ops":["BONUS_MULTIPLIER"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"revitalize","passive":true,"groups": [
+ {"ranks":[48539,48544,48545],"mods":[{"effect":1,"type":"flat","op":"EFFECT2","classMask":[0,67108864,0]}],
+  "spells": [
+    {"id":53251,"name":"Wild Growth","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"druid","tree":"Restoration","talent":"giftOfTheEarthmother","passive":true,"groups": [
+ {"ranks":[51179,51180,51181,51182,51183],"mods":[{"effect":1,"type":"flat","op":"GLOBAL_COOLDOWN","classMask":[0,16,0]}],
+  "spells": [
+    {"id":33778,"name":"Lifebloom","ops":["GLOBAL_COOLDOWN"]},
+    {"id":48451,"name":"Lifebloom","ops":["GLOBAL_COOLDOWN"]}
   ]}
 ]},
 {"class":"hunter","tree":"Beast Mastery","talent":"improvedAspectOfTheHawk","passive":true,"groups": [
