@@ -194,9 +194,10 @@ whose own registry lists their items. They move only healer suites and skip the 
 
 ## Current wave
 
-- Wave: HL2 running ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-FIGHT, HEAL-PAL-1, HEAL-DRU-1;
-  base `b7a4e4af7`, args `waveHL2-build.py`, run `wf_cb624648-495`). Prod rebuilds after HL2 (the user, 2026-10-23).
-  Then HL3, then Z18 (Z15's follow-ups, specs in the e2e-coverage PLAN).
+- Wave: HL2 landed ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-FIGHT, HEAL-PAL-1, HEAL-DRU-1;
+  base `b7a4e4af7`, args `waveHL2-build.py`, run `wf_cb624648-495`). Cross-review `.wave-loop\hl2-run1\xreview.md`
+  (brief `waveHL2-xreview-brief.md`). Prod rebuilds after HL2 (the user, 2026-10-23). Next HL3 on the user's go,
+  then Z18 (Z15's follow-ups, specs in the e2e-coverage PLAN).
   HL1 landed (HEAL-SHA, HEAL-PRI, HEAL-TEST; base `149c6a726`, args `waveHL1-build.py`, run `wf_d9e3f4f8-cee`, cut
   off by a PC restart; HEAL-SHA resumed as `wf_7a88f74d-116` via `waveHL1-resume-build.py`). Cross-review
   `.wave-loop\hl1-run1\xreview.md` (brief `waveHL1-xreview-brief.md`); HEAL-SHA's notes `.wave-loop\hl1-run1\heal-sha-tmp`.
