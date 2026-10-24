@@ -74,8 +74,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-Bandit'sInsignia-40371"
  value: {
-  dps: 7866.11067
-  tps: 5796.82874
+  dps: 7865.841
+  tps: 5796.63728
  }
 }
 dps_results: {
@@ -182,22 +182,22 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-DeathKnight'sAnguish-38212"
  value: {
-  dps: 7838.341
-  tps: 5779.90069
+  dps: 7841.56833
+  tps: 5782.05477
  }
 }
 dps_results: {
  key: "TestAssassination-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 8087.48067
-  tps: 5955.39936
+  dps: 8068.15483
+  tps: 5941.29485
  }
 }
 dps_results: {
  key: "TestAssassination-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 8151.486
-  tps: 6000.92773
+  dps: 8145.983
+  tps: 5997.0001
  }
 }
 dps_results: {
@@ -441,8 +441,8 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-MeteoriteWhetstone-37390"
  value: {
-  dps: 7916.65717
-  tps: 5837.24984
+  dps: 7914.87383
+  tps: 5835.12959
  }
 }
 dps_results: {
@@ -693,15 +693,15 @@ dps_results: {
 dps_results: {
  key: "TestAssassination-AllItems-TinyAbominationinaJar-50351"
  value: {
-  dps: 8074.13017
-  tps: 5962.08417
+  dps: 8030.2755
+  tps: 5929.47777
  }
 }
 dps_results: {
  key: "TestAssassination-AllItems-TinyAbominationinaJar-50706"
  value: {
-  dps: 8132.45283
-  tps: 6006.32676
+  dps: 8075.11117
+  tps: 5963.3281
  }
 }
 dps_results: {

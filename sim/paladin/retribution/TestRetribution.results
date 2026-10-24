@@ -265,16 +265,16 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 9147.242
-  tps: 6613.4369
+  dps: 9133.286
+  tps: 6603.34375
   dtps: 8.911
  }
 }
 dps_results: {
  key: "TestRetribution-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 9201.40417
-  tps: 6651.15599
+  dps: 9190.47067
+  tps: 6643.2741
   dtps: 8.911
  }
 }
@@ -817,8 +817,8 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-Shadowmourne-49623"
  value: {
-  dps: 10500.57767
-  tps: 7559.25902
+  dps: 10439.52817
+  tps: 7516.6297
   dtps: 8.911
  }
 }
@@ -961,16 +961,16 @@ dps_results: {
 dps_results: {
  key: "TestRetribution-AllItems-TinyAbominationinaJar-50351"
  value: {
-  dps: 9490.25133
-  tps: 6863.91457
+  dps: 9197.55567
+  tps: 6654.04465
   dtps: 8.911
  }
 }
 dps_results: {
  key: "TestRetribution-AllItems-TinyAbominationinaJar-50706"
  value: {
-  dps: 9546.9705
-  tps: 6904.82303
+  dps: 9281.82767
+  tps: 6713.8667
   dtps: 8.911
  }
 }

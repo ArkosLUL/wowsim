@@ -291,17 +291,17 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 166.72383
-  tps: 1565.22055
-  hps: 10991.98933
+  dps: 165.74717
+  tps: 1563.01078
+  hps: 10962.65583
  }
 }
 dps_results: {
  key: "TestHoly-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 168.2065
-  tps: 1576.08812
-  hps: 11059.916
+  dps: 166.949
+  tps: 1580.95526
+  hps: 11114.10567
  }
 }
 dps_results: {
@@ -651,9 +651,9 @@ dps_results: {
 dps_results: {
  key: "TestHoly-AllItems-LightswornGarb"
  value: {
-  dps: 188.56883
-  tps: 1922.92482
-  hps: 13830.437
+  dps: 188.35417
+  tps: 1928.25617
+  hps: 13881.6615
  }
 }
 dps_results: {
@@ -941,7 +941,7 @@ dps_results: {
  value: {
   dps: 162.27917
   tps: 1564.58634
-  hps: 11005.7195
+  hps: 10995.47883
  }
 }
 dps_results: {

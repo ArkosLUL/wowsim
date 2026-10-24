@@ -74,8 +74,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralApl-AllItems-Bandit'sInsignia-40371"
  value: {
-  dps: 12055.45167
-  tps: 8609.91634
+  dps: 12050.988
+  tps: 8606.75047
  }
 }
 dps_results: {
@@ -189,22 +189,22 @@ dps_results: {
 dps_results: {
  key: "TestFeralApl-AllItems-DeathKnight'sAnguish-38212"
  value: {
-  dps: 11908.584
-  tps: 8504.04031
+  dps: 11906.848
+  tps: 8502.80775
  }
 }
 dps_results: {
  key: "TestFeralApl-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 12520.11
-  tps: 8938.33708
+  dps: 12521.33733
+  tps: 8939.20849
  }
 }
 dps_results: {
  key: "TestFeralApl-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 12607.842
-  tps: 9000.62015
+  dps: 12607.94633
+  tps: 9000.69423
  }
 }
 dps_results: {
@@ -420,15 +420,15 @@ dps_results: {
 dps_results: {
  key: "TestFeralApl-AllItems-Heartpierce-49982"
  value: {
-  dps: 12575.64383
-  tps: 8980.87514
+  dps: 12620.48267
+  tps: 9012.75551
  }
 }
 dps_results: {
  key: "TestFeralApl-AllItems-Heartpierce-50641"
  value: {
-  dps: 12673.11533
-  tps: 9051.03994
+  dps: 12674.44483
+  tps: 9051.91302
  }
 }
 dps_results: {
@@ -595,8 +595,8 @@ dps_results: {
 dps_results: {
  key: "TestFeralApl-AllItems-MeteoriteWhetstone-37390"
  value: {
-  dps: 12064.97083
-  tps: 8615.53661
+  dps: 12056.139
+  tps: 8609.28434
  }
 }
 dps_results: {
@@ -889,15 +889,15 @@ dps_results: {
 dps_results: {
  key: "TestFeralApl-AllItems-TinyAbominationinaJar-50351"
  value: {
-  dps: 12025.12283
-  tps: 8587.80971
+  dps: 12069.18167
+  tps: 8619.06382
  }
 }
 dps_results: {
  key: "TestFeralApl-AllItems-TinyAbominationinaJar-50706"
  value: {
-  dps: 12064.53083
-  tps: 8615.64671
+  dps: 12062.12683
+  tps: 8613.96104
  }
 }
 dps_results: {

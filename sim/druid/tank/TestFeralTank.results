@@ -465,16 +465,16 @@ dps_results: {
 dps_results: {
  key: "TestFeralTank-AllItems-Heartpierce-49982"
  value: {
-  dps: 2823.28983
-  tps: 5766.54304
+  dps: 2830.4275
+  tps: 5776.76267
   dtps: 6.75617
  }
 }
 dps_results: {
  key: "TestFeralTank-AllItems-Heartpierce-50641"
  value: {
-  dps: 2839.1645
-  tps: 5784.32746
+  dps: 2840.05067
+  tps: 5794.9968
   dtps: 6.75617
  }
 }

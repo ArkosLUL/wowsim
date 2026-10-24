@@ -74,8 +74,8 @@ dps_results: {
 dps_results: {
  key: "TestSubtlety-AllItems-Bandit'sInsignia-40371"
  value: {
-  dps: 6272.75217
-  tps: 4608.78362
+  dps: 6269.8105
+  tps: 4606.53012
  }
 }
 dps_results: {
@@ -196,22 +196,22 @@ dps_results: {
 dps_results: {
  key: "TestSubtlety-AllItems-DeathKnight'sAnguish-38212"
  value: {
-  dps: 6128.05167
-  tps: 4504.56568
+  dps: 6127.81267
+  tps: 4504.39599
  }
 }
 dps_results: {
  key: "TestSubtlety-AllItems-Deathbringer'sWill-50362"
  value: {
-  dps: 6406.441
-  tps: 4703.62703
+  dps: 6406.45117
+  tps: 4703.63425
  }
 }
 dps_results: {
  key: "TestSubtlety-AllItems-Deathbringer'sWill-50363"
  value: {
-  dps: 6448.4155
-  tps: 4733.52234
+  dps: 6448.51783
+  tps: 4733.59499
  }
 }
 dps_results: {
@@ -456,8 +456,8 @@ dps_results: {
 dps_results: {
  key: "TestSubtlety-AllItems-MeteoriteWhetstone-37390"
  value: {
-  dps: 6252.63833
-  tps: 4596.12622
+  dps: 6258.88533
+  tps: 4600.70709
  }
 }
 dps_results: {
@@ -694,8 +694,8 @@ dps_results: {
 dps_results: {
  key: "TestSubtlety-AllItems-TheFistsofFury"
  value: {
-  dps: 5231.45717
-  tps: 3857.50409
+  dps: 5275.056
+  tps: 3888.93443
  }
 }
 dps_results: {
@@ -715,15 +715,15 @@ dps_results: {
 dps_results: {
  key: "TestSubtlety-AllItems-TinyAbominationinaJar-50351"
  value: {
-  dps: 6495.629
-  tps: 4780.32342
+  dps: 6469.43617
+  tps: 4760.91226
  }
 }
 dps_results: {
  key: "TestSubtlety-AllItems-TinyAbominationinaJar-50706"
  value: {
-  dps: 6553.69283
-  tps: 4822.44299
+  dps: 6549.33
+  tps: 4818.88355
  }
 }
 dps_results: {

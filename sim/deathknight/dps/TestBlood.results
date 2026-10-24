@@ -97,29 +97,29 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Beast-tamer'sShoulders-30892"
  value: {
-  dps: 10917.52467
-  tps: 5362.71517
+  dps: 10882.0695
+  tps: 5341.30874
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedBattlegearofUndeadSlaying"
  value: {
-  dps: 8372.042
-  tps: 4137.09238
+  dps: 8312.40783
+  tps: 4114.53656
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedGarboftheUndeadSlayer"
  value: {
-  dps: 8194.714
-  tps: 4050.51797
+  dps: 8206.97367
+  tps: 4060.9099
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 7877.932
-  tps: 3894.51918
+  dps: 7934.61533
+  tps: 3919.20326
  }
 }
 dps_results: {
@@ -132,15 +132,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Bryntroll,theBoneArbiter-50415"
  value: {
-  dps: 13624.885
-  tps: 6761.06273
+  dps: 13660.9185
+  tps: 6784.45744
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Bryntroll,theBoneArbiter-50709"
  value: {
-  dps: 13738.9955
-  tps: 6819.17748
+  dps: 13776.43533
+  tps: 6843.40406
  }
 }
 dps_results: {
@@ -196,15 +196,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-DarkrunedBattlegear"
  value: {
-  dps: 9310.5535
-  tps: 4587.54793
+  dps: 9338.38
+  tps: 4608.52807
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-DarkrunedPlate"
  value: {
-  dps: 8253.54517
-  tps: 4073.89338
+  dps: 8225.98217
+  tps: 4056.64609
  }
 }
 dps_results: {
@@ -456,15 +456,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-LastWord-50179"
  value: {
-  dps: 13638.46233
-  tps: 6798.649
+  dps: 13653.4705
+  tps: 6807.62069
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-LastWord-50708"
  value: {
-  dps: 13713.044
-  tps: 6835.40009
+  dps: 13728.49367
+  tps: 6844.56951
  }
 }
 dps_results: {
@@ -610,29 +610,29 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-ScourgeborneBattlegear"
  value: {
-  dps: 9138.291
-  tps: 4498.74416
+  dps: 9101.294
+  tps: 4478.24623
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-ScourgebornePlate"
  value: {
-  dps: 8323.14667
-  tps: 4096.82691
+  dps: 8179.73817
+  tps: 4029.09196
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Scourgelord'sBattlegear"
  value: {
-  dps: 11120.84733
-  tps: 5487.46738
+  dps: 11095.78483
+  tps: 5484.48773
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Scourgelord'sPlate"
  value: {
-  dps: 9087.89517
-  tps: 4468.93154
+  dps: 8971.7185
+  tps: 4411.18698
  }
 }
 dps_results: {
@@ -645,8 +645,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Shadowmourne-49623"
  value: {
-  dps: 15050.71067
-  tps: 7464.73173
+  dps: 15076.17133
+  tps: 7489.05245
  }
 }
 dps_results: {
@@ -750,8 +750,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-StormshroudArmor"
  value: {
-  dps: 7851.96083
-  tps: 3888.78837
+  dps: 7885.56783
+  tps: 3908.96926
  }
 }
 dps_results: {
@@ -792,15 +792,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-Thassarian'sBattlegear"
  value: {
-  dps: 9754.0235
-  tps: 4800.88413
+  dps: 9819.4945
+  tps: 4846.08218
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Thassarian'sPlate"
  value: {
-  dps: 8510.13233
-  tps: 4189.63507
+  dps: 8422.29233
+  tps: 4151.06988
  }
 }
 dps_results: {
@@ -813,8 +813,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 9684.79
-  tps: 4856.62226
+  dps: 9700.32367
+  tps: 4872.78484
  }
 }
 dps_results: {
@@ -876,15 +876,15 @@ dps_results: {
 dps_results: {
  key: "TestBlood-AllItems-UndeadSlayer'sBlessedArmor"
  value: {
-  dps: 8220.1535
-  tps: 4062.06648
+  dps: 8228.296
+  tps: 4074.24184
  }
 }
 dps_results: {
  key: "TestBlood-AllItems-Val'anyr,HammerofAncientKings-46017"
  value: {
-  dps: 8271.9535
-  tps: 4059.19872
+  dps: 8276.54117
+  tps: 4062.46773
  }
 }
 dps_results: {
@@ -1079,8 +1079,8 @@ dps_results: {
 dps_results: {
  key: "TestBlood-SwitchInFrontOfTarget-Default"
  value: {
-  dps: 11230.72067
-  tps: 5530.32863
+  dps: 11258.77933
+  tps: 5555.62821
  }
 }
 ability_results: {

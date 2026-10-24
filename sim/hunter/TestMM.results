@@ -139,15 +139,15 @@ dps_results: {
 dps_results: {
  key: "TestMM-AllItems-BlessedGarboftheUndeadSlayer"
  value: {
-  dps: 7249.32117
-  tps: 6219.9535
+  dps: 7251.4505
+  tps: 6223.36117
  }
 }
 dps_results: {
  key: "TestMM-AllItems-BlessedRegaliaofUndeadCleansing"
  value: {
-  dps: 7007.04267
-  tps: 6011.72967
+  dps: 7000.231
+  tps: 6004.91267
  }
 }
 dps_results: {
@@ -427,8 +427,8 @@ dps_results: {
 dps_results: {
  key: "TestMM-AllItems-Gronnstalker'sArmor"
  value: {
-  dps: 6746.955
-  tps: 5767.26717
+  dps: 6740.2275
+  tps: 5760.49783
  }
 }
 dps_results: {
@@ -721,8 +721,8 @@ dps_results: {
 dps_results: {
  key: "TestMM-AllItems-StormshroudArmor"
  value: {
-  dps: 6768.946
-  tps: 5787.2915
+  dps: 6767.477
+  tps: 5786.9715
  }
 }
 dps_results: {
@@ -840,8 +840,8 @@ dps_results: {
 dps_results: {
  key: "TestMM-AllItems-UndeadSlayer'sBlessedArmor"
  value: {
-  dps: 7157.606
-  tps: 6138.34067
+  dps: 7153.942
+  tps: 6135.318
  }
 }
 dps_results: {
