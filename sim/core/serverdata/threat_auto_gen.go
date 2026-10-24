@@ -594,6 +594,7 @@ var threats = []Threat{
 	{SpellID: 67354, Targets: ThreatTargetsCaster},                                         // Evasion (Rank 5)
 	{SpellID: 67355, Targets: ThreatTargetsCaster},                                         // Agile
 	{SpellID: 67360, Targets: ThreatTargetsCaster},                                         // Blessing of the Moon Goddess
+	{SpellID: 67364, Targets: ThreatTargetsCaster},                                         // Holy Judgement
 	{SpellID: 67365, Targets: ThreatTargetsCaster},                                         // Item - Paladin T9 Retribution Relic (Seal of Vengeance)
 	{SpellID: 67371, Targets: ThreatTargetsCaster},                                         // Holy Strength
 	{SpellID: 67380, Targets: ThreatTargetsCaster},                                         // Evasion (Rank 1)
@@ -637,6 +638,7 @@ var threats = []Threat{
 	{SpellID: 70747, Targets: ThreatTargetsCaster},                                         // Quad Core
 	{SpellID: 70748, Targets: ThreatTargetsCaster},                                         // Item - Mage T10 4P Bonus
 	{SpellID: 70752, Targets: ThreatTargetsCaster},                                         // Item - Mage T10 2P Bonus
+	{SpellID: 70757, Targets: ThreatTargetsCaster},                                         // Holiness (Rank 5)
 	{SpellID: 70765, Targets: ThreatTargetsCaster},                                         // Item - Paladin T10 Retribution 2P Bonus
 	{SpellID: 70769, Targets: ThreatTargetsCaster},                                         // Divine Storm!
 	{SpellID: 70770, Targets: ThreatTargetsCaster},                                         // Item - Priest T10 Healer 2P Bonus
@@ -652,6 +654,7 @@ var threats = []Threat{
 	{SpellID: 71175, Targets: ThreatTargetsCaster},                                         // Agile
 	{SpellID: 71177, Targets: ThreatTargetsCaster},                                         // Vicious
 	{SpellID: 71187, Targets: ThreatTargetsCaster},                                         // Formidable
+	{SpellID: 71192, Targets: ThreatTargetsCaster},                                         // Blessed
 	{SpellID: 71199, Targets: ThreatTargetsCaster},                                         // Furious
 	{SpellID: 71216, Targets: ThreatTargetsCaster},                                         // Enraged
 	{SpellID: 71220, Targets: ThreatTargetsCaster},                                         // Energized

@@ -24,7 +24,7 @@ func TestHoly(t *testing.T) {
 		Glyphs:      StandardGlyphs,
 		Consumes:    FullConsumes,
 		SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: BasicOptions},
-		Rotation:    core.RotationCombo{Label: "Default", Rotation: DefaultRotation},
+		Rotation:    core.RotationCombo{Label: "Default", Rotation: core.GetAplRotation("../../../ui/holy_paladin/apls", "default").Rotation},
 
 		IsHealer:        true,
 		InFrontOfTarget: true,
@@ -99,23 +99,3 @@ var FullConsumes = &proto.Consumes{
 	PrepopPotion:    proto.Potions_IndestructiblePotion,
 	DefaultConjured: proto.Conjured_ConjuredDarkRune,
 }
-
-var DefaultRotation = core.APLRotationFromJsonString(`{
-	"type": "TypeAPL",
-	"prepullActions": [
-		{"action":{"castSpell":{"spellId":{"spellId":20166}}},"doAtValue":{"const":{"val":"-3s"}}},
-		{"action":{"castSpell":{"spellId":{"spellId":53563},"target":{"type":"Self"}}},"doAtValue":{"const":{"val":"-1.5s"}}}
-	],
-	"priorityList": [
-		{"action":{"autocastOtherCooldowns":{}}},
-		{"action":{"castSpell":{"spellId":{"spellId":31842}}}},
-		{"action":{"castSpell":{"spellId":{"spellId":20216}}}},
-		{"action":{"condition":{"not":{"val":{"auraIsActive":{"auraId":{"spellId":53563},"sourceUnit":{"type":"Self"}}}}},"castSpell":{"spellId":{"spellId":53563},"target":{"type":"Self"}}}},
-		{"action":{"condition":{"not":{"val":{"auraIsActive":{"auraId":{"spellId":53601},"sourceUnit":{"type":"CurrentTarget"}}}}},"castSpell":{"spellId":{"spellId":53601}}}},
-		{"action":{"castSpell":{"spellId":{"spellId":53408},"target":{"type":"Target"}}}},
-		{"action":{"condition":{"cmp":{"op":"OpLt","lhs":{"currentManaPercent":{}},"rhs":{"const":{"val":"60%"}}}},"castSpell":{"spellId":{"spellId":54428}}}},
-		{"action":{"castSpell":{"spellId":{"spellId":48825}}}},
-		{"action":{"condition":{"cmp":{"op":"OpLt","lhs":{"currentManaPercent":{}},"rhs":{"const":{"val":"40%"}}}},"castSpell":{"spellId":{"spellId":48785}}}},
-		{"action":{"castSpell":{"spellId":{"spellId":48782}}}}
-	]
-}`)

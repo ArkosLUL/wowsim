@@ -245,6 +245,10 @@ func (paladin *Paladin) infusionOnFlashOfLight(sim *core.Simulation, target *cor
 		return
 	}
 	infusion.hotAmount = float64(uint32(float32(uint32(heal)/12) * float32(infusion.hotPct) / 100))
+	// T9's 4 piece (67191) adds its 100% to the tick
+	if paladin.holyItems.t9InfusionHot {
+		infusion.hotAmount *= 2
+	}
 	infusion.hot.Cast(sim, target)
 }
 

@@ -19,7 +19,7 @@ func (paladin *Paladin) registerHolyShockSpell() {
 		ProcMask:    core.ProcMaskSpellHealing,
 		Flags:       core.SpellFlagHelpful | core.SpellFlagNoOnCastComplete,
 
-		BonusCritRating:  paladin.sanctifiedLightCrit(),
+		BonusCritRating:  paladin.sanctifiedLightCrit() + paladin.setHolyShockCrit(),
 		DamageMultiplier: paladin.healingDoneMultiplier() * paladin.healingLightMultiplier(),
 		CritMultiplier:   paladin.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: 1,
@@ -38,7 +38,7 @@ func (paladin *Paladin) registerHolyShockSpell() {
 		ProcMask:    core.ProcMaskSpellDamage,
 		Flags:       core.SpellFlagNoOnCastComplete,
 
-		BonusCritRating:  paladin.sanctifiedLightCrit(),
+		BonusCritRating:  paladin.sanctifiedLightCrit() + paladin.setHolyShockCrit(),
 		DamageMultiplier: paladin.healingLightMultiplier(),
 		CritMultiplier:   paladin.SpellCritMultiplier(),
 		ThreatMultiplier: 1,
@@ -75,7 +75,7 @@ func (paladin *Paladin) registerHolyShockSpell() {
 			},
 			CD: core.Cooldown{
 				Timer:    paladin.NewTimer(),
-				Duration: time.Second * 6,
+				Duration: time.Second*6 - paladin.glyphOfHolyShockCooldown(),
 			},
 		},
 

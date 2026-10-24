@@ -84,6 +84,7 @@ type Paladin struct {
 	lightsGrace     lightsGrace
 	infusionOfLight infusionOfLight
 	illumination    illumination
+	holyItems       holyItems
 
 	ArtOfWarInstantCast *core.Aura
 

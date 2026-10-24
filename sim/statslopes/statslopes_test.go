@@ -78,7 +78,7 @@ func holyPaladin() *proto.Player {
 		Race:          proto.Race_RaceHuman,
 		Class:         proto.Class_ClassPaladin,
 		Equipment:     core.GetGearSet("../../ui/holy_paladin/gear_sets", "p1").GearSet,
-		Rotation:      castsNothing,
+		Rotation:      core.GetAplRotation("../../ui/holy_paladin/apls", "default").Rotation,
 		TalentsString: "50350151020013053100515221-50023131203",
 		Spec: &proto.Player_HolyPaladin{HolyPaladin: &proto.HolyPaladin{Options: &proto.HolyPaladin_Options{
 			Judgement: proto.PaladinJudgement_JudgementOfWisdom,
@@ -312,7 +312,7 @@ func TestHealerIsMeasuredInHPS(t *testing.T) {
 		heals bool
 	}{
 		{"HealingPriest", holyPriest, true},
-		{"HolyPaladin", holyPaladin, false},
+		{"HolyPaladin", holyPaladin, true},
 		{"RestorationDruid", restorationDruid, false},
 		{"RestorationShaman", restorationShaman, true},
 	} {

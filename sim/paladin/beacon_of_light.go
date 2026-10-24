@@ -34,7 +34,7 @@ func (paladin *Paladin) registerBeaconOfLightSpell() {
 		return unit.RegisterAura(core.Aura{
 			Label:    "Beacon of Light-" + strconv.Itoa(int(paladin.UnitIndex)),
 			ActionID: actionID,
-			Duration: time.Minute,
+			Duration: time.Minute + paladin.glyphOfBeaconDuration(),
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
 				paladin.beacon.target = aura.Unit
 			},

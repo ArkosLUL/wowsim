@@ -7033,6 +7033,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, MiscValue: 1, ClassMask: [3]uint32{0, 0x800000}},
 		},
 	},
+	// Glyph of Holy Light
+	{
+		ID: 54968, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
+		Attributes: [8]uint32{0, 0, 0x20000004, 0x20000000}, AttributesCu: 0x100100,
+		ProcChance: 101, MaxTargets: 5, SpellLevel: 1, BaseLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Sonic Awareness
 	{
 		ID: 55018, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -9762,6 +9771,16 @@ var spells = []Spell{
 			{Effect: 6, Aura: 158, BasePoints: 224, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Holy Mending
+	{
+		ID: 64891, Family: 10, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0, 0, 0, 0x80, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		DurationMs: 9000, MaxDurationMs: 9000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 8, AmplitudeMs: 3000, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Hymn of Hope
 	{
 		ID: 64901, Family: 6, FamilyFlags: [3]uint32{0, 0, 0x10}, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagHasteAffectsPeriodic | FlagHasteGCD | FlagChanneled | FlagPositive,
@@ -10247,6 +10266,17 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 199, DieSides: 1, DamageMultiplier: 1, MiscValue: 1792},
+		},
+	},
+	// Holy Judgement
+	{
+		ID: 67364, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   15000, MaxDurationMs: 15000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 135, BasePoints: 233, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+			{Effect: 6, Aura: 13, BasePoints: 233, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 		},
 	},
 	// Item - Paladin T9 Retribution Relic (Seal of Vengeance)
@@ -10762,6 +10792,17 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, BasePoints: 14, DieSides: 1, DamageMultiplier: 1, TriggerSpell: -1, ClassMask: [3]uint32{0, 0x4000000}},
 		},
 	},
+	// Holiness (Rank 5)
+	{
+		ID: 70757, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x50010}, AttributesCu: 0x100000,
+		DurationMs: 10000, MaxDurationMs: 10000,
+		ProcFlags: 0x4000, ProcChance: 100, ProcCharges: 1, SpellLevel: 20, BaseLevel: 20,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: -301, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x80000000}},
+			{Effect: 3, BasePoints: 5, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Item - Paladin T10 Retribution 2P Bonus
 	{
 		ID: 70765, Family: 10, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
@@ -10947,6 +10988,17 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 29, BasePoints: 43, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Blessed
+	{
+		ID: 71192, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   15000, MaxDurationMs: 15000, StackAmount: 3,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 13, BasePoints: 84, DieSides: 1, DamageMultiplier: 1, MiscValue: 1918},
+			{Effect: 6, Aura: 135, BasePoints: 84, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
 	},
 	// Furious

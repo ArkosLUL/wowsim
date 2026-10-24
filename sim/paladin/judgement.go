@@ -53,6 +53,7 @@ func (paladin *Paladin) registerJudgementOfWisdomSpell(cdTimer *core.Timer) {
 			} else {
 				jow.Activate(sim)
 			}
+			paladin.lengthenJudgement(sim, jow)
 			spell.CalcAndDealOutcome(sim, target, spell.OutcomeRangedHit)
 		},
 
@@ -99,6 +100,7 @@ func (paladin *Paladin) registerJudgementOfLightSpell(cdTimer *core.Timer) {
 			} else {
 				jol.Activate(sim)
 			}
+			paladin.lengthenJudgement(sim, jol)
 			spell.CalcAndDealOutcome(sim, target, spell.OutcomeRangedHit)
 		},
 
