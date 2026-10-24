@@ -60,6 +60,14 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestRetribution-AllItems-AegisRegalia"
+ value: {
+  dps: 6874.473
+  tps: 5017.06154
+  dtps: 8.59467
+ }
+}
+dps_results: {
  key: "TestRetribution-AllItems-Althor'sAbacus-50359"
  value: {
   dps: 8817.421
@@ -607,6 +615,14 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestRetribution-AllItems-LightswornGarb"
+ value: {
+  dps: 7350.92233
+  tps: 5356.87483
+  dtps: 8.78183
+ }
+}
+dps_results: {
  key: "TestRetribution-AllItems-LightswornPlate"
  value: {
   dps: 7935.815
@@ -724,6 +740,14 @@ dps_results: {
   dps: 7237.68033
   tps: 5260.56807
   dtps: 8.2535
+ }
+}
+dps_results: {
+ key: "TestRetribution-AllItems-RedemptionRegalia"
+ value: {
+  dps: 6810.53817
+  tps: 4968.95162
+  dtps: 8.78183
  }
 }
 dps_results: {
@@ -1003,6 +1027,14 @@ dps_results: {
  value: {
   dps: 8235.4155
   tps: 5966.93423
+  dtps: 8.78183
+ }
+}
+dps_results: {
+ key: "TestRetribution-AllItems-Turalyon'sGarb"
+ value: {
+  dps: 6887.82467
+  tps: 5024.53208
   dtps: 8.78183
  }
 }
