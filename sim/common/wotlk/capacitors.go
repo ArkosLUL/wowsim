@@ -163,10 +163,12 @@ func init() {
 	NewItemEffectWithHeroic(func(isHeroic bool) {
 		name := "Tiny Abomination in a Jar"
 		itemID := int32(50351)
+		procSpellID := int32(71406)
 		maxStacks := int32(8)
 		if isHeroic {
 			name += " H"
 			itemID = 50706
+			procSpellID = 71545
 			maxStacks = 7
 		}
 
@@ -234,12 +236,12 @@ func init() {
 			})
 
 			core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-				Name:       name + " Trigger",
-				Callback:   core.CallbackOnSpellHitDealt,
-				ProcMask:   core.ProcMaskMeleeOrProc,
-				Outcome:    core.OutcomeLanded,
-				ActionID:   core.ActionID{ItemID: itemID},
-				ProcChance: 0.5,
+				Name:        name + " Trigger",
+				Callback:    core.CallbackOnSpellHitDealt,
+				ProcMask:    core.ProcMaskMeleeOrProc,
+				Outcome:     core.OutcomeLanded,
+				ActionID:    core.ActionID{ItemID: itemID},
+				ProcSpellID: procSpellID,
 				Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 					if spell == mhSpell || spell == ohSpell { // can't proc itself
 						return

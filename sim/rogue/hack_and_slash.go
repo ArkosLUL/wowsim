@@ -9,6 +9,7 @@ func (rogue *Rogue) registerHackAndSlash(mask core.ProcMask) {
 	var hackAndSlashSpell *core.Spell
 	// spell_proc's -13960 has no cooldown and keeps each rank's own chance
 	procChance := 0.01 * float64(rogue.Talents.HackAndSlash)
+	serverProc := core.ServerProcFor(13964)
 
 	rogue.RegisterAura(core.Aura{
 		Label:    "Hack and Slash",
@@ -22,7 +23,7 @@ func (rogue *Rogue) registerHackAndSlash(mask core.ProcMask) {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Landed() {
+			if !result.Landed() || !serverProc.AllowsEvent(spell, result, false) {
 				return
 			}
 			if !spell.ProcMask.Matches(mask) {

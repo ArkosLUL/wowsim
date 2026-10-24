@@ -39,7 +39,8 @@ func (druid *Druid) registerTreeOfLife() {
 	// carry in their own multiplier and the hots take at each tick
 	shapeshifterPct := 2 * druid.Talents.MasterShapeshifter
 	shapeshifter := 1 + float64(shapeshifterPct)/100
-	directHeals := core.FilterSlice([]*DruidSpell{druid.HealingTouch, druid.Regrowth, druid.Nourish, druid.LifebloomBloom},
+	directHeals := core.FilterSlice([]*DruidSpell{druid.HealingTouch, druid.Regrowth, druid.Nourish, druid.LifebloomBloom,
+		druid.t8RejuvenationHeal},
 		func(spell *DruidSpell) bool { return spell != nil })
 
 	// Improved Tree of Life holds only in the form (its Stances): 5% a point of Spirit as healing power, and

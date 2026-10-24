@@ -67,6 +67,7 @@ var ItemSetLightswornGarb = core.NewItemSet(core.ItemSet{
 const (
 	libramOfMostlyHolyDeeds   = 38364
 	libramOfRenewal           = 40705
+	libramOfTolerance         = 40268
 	libramOfTheResolute       = 45436
 	libramOfVeracity          = 47662
 	libramOfBlindingLight     = 50460
@@ -91,19 +92,23 @@ type holyItems struct {
 	holyMendingAmount float64
 
 	holiness *core.Aura
+	// the Holy Light being cast had its cast time cut by Holiness
+	holinessUsed bool
 
 	veracityAura *core.Aura
 	veracityIcd  core.Cooldown
 	blessedAura  *core.Aura
 }
 
-// libramEffects reads the worn libram once: the flat heal and cost mods the spells are declared with.
+// libramEffects reads the set bonuses the casts check and the worn libram's flat heal and cost mods, once.
 func (paladin *Paladin) libramEffects() {
 	items := &paladin.holyItems
 	items.t9Judgements = paladin.HasSetBonus(ItemSetTuralyonsGarb, 2)
 	items.t9InfusionHot = paladin.HasSetBonus(ItemSetTuralyonsGarb, 4)
 	items.t10DivineIllumination = paladin.HasSetBonus(ItemSetLightswornGarb, 2)
 	switch paladin.Ranged().ID {
+	case libramOfTolerance:
+		items.flatHolyLight = 141
 	case libramOfTheResolute:
 		items.flatHolyLight = 160
 	case libramOfMostlyHolyDeeds:
@@ -216,8 +221,8 @@ func (paladin *Paladin) registerGlyphOfHolyLightHeal() {
 		SpellSchool: core.SpellSchoolHoly,
 		ProcMask:    core.ProcMaskSpellHealing,
 		Flags:       core.SpellFlagHelpful | core.SpellFlagNoOnCastComplete | core.SpellFlagIgnoreAttackerModifiers,
-		// no spell_bonus_data row
-		HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(0),
+		// no spell_bonus_data row, and an area heal gets half an instant's 1.5 s
+		HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(float32(750) / 3500),
 
 		DamageMultiplier: 1,
 		CritMultiplier:   1,
@@ -322,21 +327,27 @@ func (paladin *Paladin) holyMendingOnCrit(sim *core.Simulation, target *core.Uni
 	items.holyMending.Cast(sim, target)
 }
 
-// registerHoliness is T10's 4 piece: a Holy Shock heal puts 70757 on the paladin, 0.3 s off Holy Light's cast for
-// 10 s. Its trigger has no charge to use up.
+// registerHoliness is T10's 4 piece: a Holy Shock heal puts 70757 on the paladin, 0.3 s off the next Holy Light's
+// cast within 10 s. Its one charge goes on the hit of the Holy Light it sped up (PROC_ATTR_REQ_SPELLMOD).
 func (paladin *Paladin) registerHoliness() {
 	if !paladin.HasSetBonus(ItemSetLightswornGarb, 4) {
 		return
 	}
-	paladin.holyItems.holiness = paladin.RegisterAura(core.Aura{
+	items := &paladin.holyItems
+	items.holiness = paladin.RegisterAura(core.Aura{
 		Label:    "Holiness",
 		ActionID: core.ActionID{SpellID: 70757},
 		Duration: time.Second * 10,
+		OnExpire: func(aura *core.Aura, sim *core.Simulation) {
+			items.holinessUsed = false
+		},
 	})
 }
 
 func (paladin *Paladin) holinessCastTime(cast *core.Cast) {
-	if aura := paladin.holyItems.holiness; aura != nil && aura.IsActive() {
+	items := &paladin.holyItems
+	items.holinessUsed = items.holiness != nil && items.holiness.IsActive()
+	if items.holinessUsed {
 		cast.CastTime = max(0, cast.CastTime-300*time.Millisecond)
 	}
 }
@@ -366,6 +377,10 @@ func (paladin *Paladin) registerLibramProcs() {
 func (paladin *Paladin) onHolyLight(sim *core.Simulation, target *core.Unit, heal float64) {
 	items := &paladin.holyItems
 	paladin.glyphOfHolyLight(sim, target, heal)
+	if items.holinessUsed {
+		items.holinessUsed = false
+		items.holiness.Deactivate(sim)
+	}
 	if items.veracityAura != nil && items.veracityIcd.IsReady(sim) && sim.RandomFloat("Libram of Veracity") < 0.7 {
 		items.veracityIcd.Use(sim)
 		items.veracityAura.Activate(sim)

@@ -147,7 +147,11 @@ class by simval.
   - **Spell type mask:** an event's type is a heal, else damage, else (a miss, or a hot or debuff landing that
     deals nothing) `NO_DMG_HEAL`; an entry with a `SpellTypeMask` takes only those (`ServerProc.SpellTypeMask`,
     `ProcTrigger.SpellTypeMask`, filled by `ProcSpellID`; hand-rolled procs call `ServerProc.AllowsEvent`).
-    White swings skip the check, and the sim's hits carry no absorb.
+    Melee swings skip the check, Auto Shot doesn't. A cast or finish phase event takes every type, so an entry
+    without the hit phase never filters (`ServerProcFor`). The sim takes an absorb off the damage, so a hit
+    absorbed in full counts as dealing nothing.
+  - **No procs at all** off a spell with `SPELL_ATTR3_SUPPRESS_CASTER_PROCS` (Lifebloom's bloom 33778):
+    `SpellFlagNoOnDamageDealt` drops its hit, tick and heal callbacks.
   - **Landed casts:** `Spell::DoAllEffectOnTarget` raises a hit-phase proc for every target a cast lands on,
     whatever it did there. A proc that reads that registers `Unit.RegisterOnCastLanded`
     (`sim/core/cast_landed.go`): raised once a spell, target and instant by every landed direct hit or heal and

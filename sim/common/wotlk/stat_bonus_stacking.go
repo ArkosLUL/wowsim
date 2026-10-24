@@ -162,13 +162,12 @@ func init() {
 		})
 
 		triggerAura := core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-			Name:       "Death Knight's Anguish",
-			Callback:   core.CallbackOnSpellHitDealt,
-			ProcMask:   core.ProcMaskMeleeOrRanged,
-			Outcome:    core.OutcomeLanded,
-			ProcChance: 0.1,
-			ActionID:   core.ActionID{SpellID: 54696},
-			ICD:        time.Second * 45,
+			Name:        "Death Knight's Anguish",
+			Callback:    core.CallbackOnSpellHitDealt,
+			ProcMask:    core.ProcMaskMeleeOrRanged,
+			Outcome:     core.OutcomeLanded,
+			ProcSpellID: 54695,
+			ActionID:    core.ActionID{SpellID: 54696},
 			Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
 				procAura.Activate(sim)
 			},

@@ -57,7 +57,7 @@ func init() {
 			},
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				// https://wotlk.wowhead.com/spell=15600/hand-of-justice, proc mask = 20.
-				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMelee) {
+				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMelee) || !handOfJustice.AllowsEvent(spell, result, false) {
 					return
 				}
 
@@ -93,7 +93,7 @@ func init() {
 				aura.Activate(sim)
 			},
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				if !result.Landed() {
+				if !result.Landed() || !dragonspine.AllowsEvent(spell, result, false) {
 					return
 				}
 
@@ -159,7 +159,7 @@ func init() {
 				aura.Activate(sim)
 			},
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				if !result.Landed() {
+				if !result.Landed() || !madness.AllowsEvent(spell, result, false) {
 					return
 				}
 
@@ -170,6 +170,7 @@ func init() {
 		})
 	})
 
+	sliver := core.ServerProcFor(45355)
 	core.NewItemEffect(34427, func(agent core.Agent) {
 		character := agent.GetCharacter()
 
@@ -207,7 +208,7 @@ func init() {
 			},
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 				// mask 340
-				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) {
+				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) || !sliver.AllowsEvent(spell, result, false) {
 					return
 				}
 				if !icd.IsReady(sim) {
@@ -223,6 +224,7 @@ func init() {
 		})
 	})
 
+	shardOfContempt := core.ServerProcFor(45354)
 	core.NewItemEffect(34472, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		procAura := character.NewTemporaryStatsAura("Shard of Contempt Proc", core.ActionID{ItemID: 34472}, stats.Stats{stats.AttackPower: 230, stats.RangedAttackPower: 230}, time.Second*20)
@@ -240,7 +242,7 @@ func init() {
 				aura.Activate(sim)
 			},
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) {
+				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) || !shardOfContempt.AllowsEvent(spell, result, false) {
 					return
 				}
 				if !icd.IsReady(sim) {

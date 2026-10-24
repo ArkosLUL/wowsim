@@ -130,7 +130,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecRestorationDruid, {
 			iconUrl: getSpecIcon(Class.ClassDruid, 2),
 
 			talents: Presets.CelestialFocusTalents.data,
-			specOptions: Presets.DefaultOptions,
+			specOptions: Presets.RaidSimOptions,
 			consumes: Presets.DefaultConsumes,
 			defaultFactionRaces: {
 				[Faction.Unknown]: Race.RaceUnknown,

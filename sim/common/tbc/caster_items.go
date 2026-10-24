@@ -12,6 +12,7 @@ func init() {
 	// Proc effects. Keep these in order by item ID.
 	core.AddEffectsToTest = false
 
+	eternalSage := core.ServerProcFor(35083)
 	core.NewItemEffect(29305, func(agent core.Agent) {
 		character := agent.GetCharacter()
 		procAura := character.NewTemporaryStatsAura("Band of the Eternal Sage Proc", core.ActionID{ItemID: 29305}, stats.Stats{stats.SpellPower: 95}, time.Second*10)
@@ -33,7 +34,7 @@ func init() {
 				if spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) {
 					return
 				}
-				if !result.Landed() {
+				if !result.Landed() || !eternalSage.AllowsEvent(spell, result, false) {
 					return
 				}
 				if !icd.IsReady(sim) || sim.RandomFloat("Band of the Eternal Sage") > proc { // can't activate if on CD or didn't proc

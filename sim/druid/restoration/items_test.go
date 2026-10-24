@@ -226,7 +226,7 @@ func TestT7RestorationBonus(t *testing.T) {
 }
 
 // T8: Swiftmend heals 10% more (2 pieces), and a Rejuvenation cast heals for 169 and 0.188 of the healing power
-// (4 pieces, 64801).
+// (4 pieces, 64801). 64801 can't crit and takes Master Shapeshifter's healing done in Tree of Life.
 func TestT8RestorationBonuses(t *testing.T) {
 	sim, druid := healSetup{dummies: 1, items: t8Regalia[:2]}.build(t)
 	startFight(sim)
@@ -239,6 +239,16 @@ func TestT8RestorationBonuses(t *testing.T) {
 		math.Trunc(float64(float32(untouched)*(float32(1)+float32(10)/100))), 0)
 
 	t.Run("4 pieces", func(t *testing.T) { t8Rejuvenation(t) })
+	t.Run("4 pieces in Tree of Life", func(t *testing.T) {
+		sim, druid := healSetup{talents: restoTalents(true), dummies: 1, items: t8Regalia[:4]}.build(t)
+		startFight(sim)
+		target := targetDummies(sim)[0]
+		neverCrit(sim, druid)
+		druid.Rejuvenation.SkipCastAndApplyEffects(sim, target)
+		heal := druid.GetSpell(core.ActionID{SpellID: 64801})
+		want := 169 + core.PowerBonus(0.188*rank(5, 0.04), heal.HealingPower(target))
+		near(t, "the T8 heal in Tree of Life", healed(heal, target), math.Floor(math.Floor(want*shapeshifter)*1.06), 1)
+	})
 }
 
 func t8Rejuvenation(t *testing.T) {
@@ -252,6 +262,14 @@ func t8Rejuvenation(t *testing.T) {
 	near(t, "the T8 heal", healed(heal, target), math.Floor(want), 1)
 	druid.Rejuvenation.SkipCastAndApplyEffects(sim, target)
 	near(t, "the T8 heals after a refresh", healed(heal, target), 2*math.Floor(want), 2)
+
+	// SPELL_ATTR2_CANT_CRIT holds at a certain crit too
+	druid.AddStatDynamic(sim, stats.SpellCrit, 2e6)
+	druid.Rejuvenation.SkipCastAndApplyEffects(sim, target)
+	near(t, "the T8 heals at a certain crit", healed(heal, target), 3*math.Floor(want), 3)
+	if crits := heal.SpellMetrics[target.UnitIndex].Crits; crits != 0 {
+		t.Errorf("the T8 heal crit %d times", crits)
+	}
 }
 
 // T9: Nourish crits 5% more (2 pieces), Rejuvenation's ticks can crit (4).
@@ -264,77 +282,165 @@ func TestT9RestorationBonuses(t *testing.T) {
 	if bare.Rejuvenation.Hot(target).TicksCanCrit || two.Rejuvenation.Hot(target).TicksCanCrit || !four.Rejuvenation.Hot(target).TicksCanCrit {
 		t.Error("Rejuvenation's ticks crit bare or with 2 pieces, or can't with 4")
 	}
+
+	// the ticks crit on the chance the hot took as it went on or refreshed
+	sim, four = healSetup{dummies: 1, items: t9Garb[:4]}.build(t)
+	startFight(sim)
+	target = targetDummies(sim)[0]
+	neverCrit(sim, four)
+	four.Rejuvenation.SkipCastAndApplyEffects(sim, target)
+	hot := four.Rejuvenation.Hot(target)
+	amount := math.Floor(hot.SnapshotBaseDamage * hot.SnapshotAttackerMultiplier)
+	four.AddStatDynamic(sim, stats.SpellCrit, 2e6)
+	hot.TickOnce(sim)
+	near(t, "a tick of a Rejuvenation that went on at no crit", healed(four.Rejuvenation.Spell, target), amount, 0)
+	four.Rejuvenation.SkipCastAndApplyEffects(sim, target)
+	hot.TickOnce(sim)
+	near(t, "a tick after a refresh at a certain crit", healed(four.Rejuvenation.Spell, target)-amount, math.Floor(amount*1.5), 1)
 }
 
-// spell_dru_wild_growth_aura: T10's 2 piece takes 30% off the 2 percent a tick the bonus declines by.
+// spell_dru_wild_growth_aura: T10's 2 piece takes 30% off the 2 percent a tick the bonus declines by. The script
+// keeps the decay on the aura and takes the 30% off again whenever the amount is worked out, so a refresh slows it
+// once more and only a new aura starts over.
 func TestT10WildGrowthDecaysSlower(t *testing.T) {
-	total := func(items []int32) (sum float64, base float32) {
-		sim, druid := healSetup{dummies: 1, items: items}.build(t)
-		startFight(sim)
-		target := targetDummies(sim)[0]
-		neverCrit(sim, druid)
+	ticks := func(base float32, decay float32, n int) (sum float64) {
+		for tick := range n {
+			bonus := float32(6) - decay*float32(tick)
+			sum += float64(int32(base + float32(base*bonus)/100))
+		}
+		return sum
+	}
+	cut := func(decay float32) float32 { return decay + float32(decay*-30)/100 }
+
+	sim, druid := healSetup{dummies: 1, items: t10Garb[:2]}.build(t)
+	startFight(sim)
+	target := targetDummies(sim)[0]
+	neverCrit(sim, druid)
+	hot := druid.WildGrowth.Hot(target)
+	castAndRun := func(until time.Duration) float64 {
+		before := healed(druid.WildGrowth.Spell, target)
 		druid.WildGrowth.SkipCastAndApplyEffects(sim, target)
-		base = float32(druid.WildGrowth.Hot(target).SnapshotBaseDamage * druid.WildGrowth.Hot(target).SnapshotAttackerMultiplier)
-		runUntil(sim, 8*time.Second)
-		return healed(druid.WildGrowth.Spell, target), base
+		runUntil(sim, until)
+		return healed(druid.WildGrowth.Spell, target) - before
 	}
-	sum, base := total(t10Garb[:2])
-	var want, bare float64
-	for tick := range 7 {
-		bonus := float32(6) - float32(1.4)*float32(tick)
-		want += float64(int32(base + float32(base*bonus)/100))
-		bare += float64(int32(base + float32(base*float32(6-2*tick))/100))
+
+	first := castAndRun(6500 * time.Millisecond)
+	base := float32(hot.SnapshotBaseDamage * hot.SnapshotAttackerMultiplier)
+	near(t, "6 ticks of a new Wild Growth", first, ticks(base, cut(2), 6), 3)
+	near(t, "7 ticks after a refresh at 6.5 s", castAndRun(14*time.Second), ticks(base, cut(cut(2)), 7), 3)
+	near(t, "7 ticks of the next new one", castAndRun(22*time.Second), ticks(base, cut(2), 7), 3)
+	if ticks(base, cut(2), 7) <= ticks(base, 2, 7) {
+		t.Errorf("the slower decay heals no more than the bare one")
 	}
-	near(t, "the 7 ticks with T10", sum, want, 3)
-	if want <= bare {
-		t.Errorf("the slower decay heals %v, no more than %v", want, bare)
-	}
+
+	sim, bare := healSetup{dummies: 1}.build(t)
+	startFight(sim)
+	target = targetDummies(sim)[0]
+	neverCrit(sim, bare)
+	bare.WildGrowth.SkipCastAndApplyEffects(sim, target)
+	runUntil(sim, 6500*time.Millisecond)
+	before := healed(bare.WildGrowth.Spell, target)
+	bare.WildGrowth.SkipCastAndApplyEffects(sim, target)
+	bareHot := bare.WildGrowth.Hot(target)
+	base = float32(bareHot.SnapshotBaseDamage * bareHot.SnapshotAttackerMultiplier)
+	runUntil(sim, 14*time.Second)
+	near(t, "7 ticks after a refresh without T10", healed(bare.WildGrowth.Spell, target)-before, ticks(base, 2, 7), 3)
 }
 
 // spell_dru_t10_restoration_4p_bonus_dummy: 2% of Rejuvenation's ticks cast Blessing of the Eternal for the tick's
-// heal, on the raid member with the lowest health that has no Regrowth.
+// heal. spell_dru_t10_restoration_4p_bonus puts it on the raid member with the lowest health percent that has no
+// Regrowth, a tie in raid order, the healed one included. 70691 ignores the caster's modifiers, so each of its
+// ticks is the Rejuvenation tick's heal, and Nature's Splendor makes it 6 ticks.
 func TestT10BlessingOfTheEternal(t *testing.T) {
 	sim, druid := healSetup{dummies: 3, items: t10Garb[:4]}.build(t)
 	startFight(sim)
 	dummies := targetDummies(sim)
 	neverCrit(sim, druid)
 	blessing := druid.BlessingOfTheEternal
+	casts := func(unit *core.Unit) int32 { return blessing.SpellMetrics[unit.UnitIndex].Casts }
 
 	druid.Rejuvenation.SkipCastAndApplyEffects(sim, dummies[0])
 	hot := druid.Rejuvenation.Hot(dummies[0])
-	for range 3000 {
+	const tickCount = 3000
+	for range tickCount {
 		hot.TickOnce(sim)
 	}
-	var casts int32
+	all := casts(&druid.Unit)
 	for _, d := range dummies {
-		casts += blessing.SpellMetrics[d.UnitIndex].Casts
+		all += casts(d)
 	}
-	casts += blessing.SpellMetrics[druid.UnitIndex].Casts
-	if casts < 35 || casts > 90 {
-		t.Errorf("%d procs in 3000 ticks, want about 60", casts)
+	if all < 35 || all > 90 {
+		t.Errorf("%d procs in %d ticks, want about 60", all, tickCount)
 	}
-	if blessing.SpellMetrics[dummies[0].UnitIndex].Casts != 0 {
-		t.Error("Blessing of the Eternal went on the target that was healed")
+	// all at full health: the druid is first in raid order
+	if got := casts(&druid.Unit); got != all {
+		t.Errorf("%d of %d went on the druid", got, all)
+	}
+	tick := healed(druid.Rejuvenation.Spell, dummies[0]) / tickCount
+	onDruid := blessing.Hot(&druid.Unit)
+	near(t, "Blessing of the Eternal's tick", onDruid.SnapshotBaseDamage*onDruid.SnapshotAttackerMultiplier, tick, 0)
+	if got, want := onDruid.NumberOfTicks, hot.NumberOfTicks; got != want {
+		t.Errorf("Blessing of the Eternal has %d ticks, want Rejuvenation's %d", got, want)
 	}
 
-	// the lowest health percent without a Regrowth gets it, the one with a Regrowth doesn't
+	// a Regrowth keeps it off the hurt druid, and the healed dummy is the first of the rest
 	druid.RemoveHealth(sim, druid.MaxHealth()/2)
 	druid.Regrowth.SkipCastAndApplyEffects(sim, &druid.Unit)
-	atDruid := blessing.SpellMetrics[druid.UnitIndex].Casts
-	atDummies := func() int32 {
-		return blessing.SpellMetrics[dummies[1].UnitIndex].Casts + blessing.SpellMetrics[dummies[2].UnitIndex].Casts
-	}
-	before := atDummies()
-	for atDummies() == before {
+	atDruid, before := casts(&druid.Unit), casts(dummies[0])
+	for i := 0; casts(dummies[0]) == before && i < 100*tickCount; i++ {
 		hot.TickOnce(sim)
 	}
-	if blessing.SpellMetrics[druid.UnitIndex].Casts != atDruid {
-		t.Error("Blessing of the Eternal went on a target that has a Regrowth")
+	if casts(dummies[0]) == before {
+		t.Error("Blessing of the Eternal never went on the healed dummy")
+	}
+	if casts(&druid.Unit) != atDruid || casts(dummies[1])+casts(dummies[2]) != 0 {
+		t.Error("Blessing of the Eternal went on the druid, who has a Regrowth, or past the first dummy")
+	}
+}
+
+// Swiftmend can eat Blessing of the Eternal, which has Rejuvenation's family flag, and Revitalize rolls on its
+// ticks.
+func TestBlessingOfTheEternalCountsAsARejuvenation(t *testing.T) {
+	sim, druid := healSetup{dummies: 1, items: t10Garb[:4]}.build(t)
+	startFight(sim)
+	target := targetDummies(sim)[0]
+	druid.PseudoStats.SpiritRegenMultiplier = 0
+	druid.UpdateManaRegenRates()
+	drain := druid.NewManaMetrics(core.ActionID{OtherID: 1})
+	druid.SpendMana(sim, druid.CurrentMana(), drain)
+
+	druid.Rejuvenation.SkipCastAndApplyEffects(sim, target)
+	hot := druid.Rejuvenation.Hot(target)
+	blessing := druid.BlessingOfTheEternal.Hot(&druid.Unit)
+	for i := 0; !blessing.IsActive() && i < 10000; i++ {
+		hot.TickOnce(sim)
+	}
+	if !blessing.IsActive() {
+		t.Fatal("Blessing of the Eternal never went on the druid")
+	}
+	hot.Cancel(sim)
+
+	const ticks = 600
+	for range ticks {
+		blessing.TickOnce(sim)
+	}
+	gains := druid.CurrentMana() / math.Floor(druid.MaxMana()/100)
+	if se := math.Sqrt(ticks * 0.15 * 0.85); math.Abs(gains-0.15*ticks) > 5*se {
+		t.Errorf("Revitalize gave mana on %v of %v Blessing of the Eternal ticks, want about %v", gains, ticks, 0.15*ticks)
+	}
+
+	druid.AddMana(sim, druid.MaxMana(), drain)
+	if !druid.Swiftmend.CanCast(sim, &druid.Unit) {
+		t.Fatal("Swiftmend can't be cast on a target with only Blessing of the Eternal")
+	}
+	druid.Swiftmend.SkipCastAndApplyEffects(sim, &druid.Unit)
+	if blessing.IsActive() {
+		t.Error("Swiftmend left Blessing of the Eternal up")
 	}
 }
 
 // The relics' flat mods: Budding Life and Awakening cost, Pure Thoughts' Rejuvenation tick, Lush Moss' Lifebloom
-// tick, the Tenacity idols' bloom and the Flourishing Life's Nourish power.
+// tick and the Flourishing Life's Nourish heal.
 func TestRelicFlatMods(t *testing.T) {
 	_, bare := healSetup{dummies: 1}.build(t)
 	for _, c := range []struct {
@@ -357,8 +463,9 @@ func TestRelicFlatMods(t *testing.T) {
 	}
 	rejuv := func(d *RestorationDruid) *core.Spell { return d.Rejuvenation.Spell }
 	bloom := func(d *RestorationDruid) *core.Spell { return d.Lifebloom.Spell }
-	near(t, "Pure Thoughts' Rejuvenation tick", tick([]int32{38366}, rejuv)-tick(nil, rejuv), 33*rejuvMods, 1)
-	near(t, "Lush Moss' Lifebloom tick", tick([]int32{40711}, bloom)-tick(nil, bloom), 17*hotMods, 1)
+	// Player::ApplySpellMod adds a flat after the percents
+	near(t, "Pure Thoughts' Rejuvenation tick", tick([]int32{38366}, rejuv)-tick(nil, rejuv), 33, 1)
+	near(t, "Lush Moss' Lifebloom tick", tick([]int32{40711}, bloom)-tick(nil, bloom), 17, 1)
 
 	nourish := func(items []int32) float64 {
 		sim, druid := healSetup{dummies: 1, items: items}.build(t)
@@ -366,7 +473,7 @@ func TestRelicFlatMods(t *testing.T) {
 		neverCrit(sim, druid, druid.Nourish.Spell)
 		return castHeal(sim, druid.Nourish.Spell, targetDummies(sim)[0])
 	}
-	near(t, "the Flourishing Life's Nourish", nourish([]int32{46138})-nourish(nil), 187*nourishSP*giftOfNature, 1.5)
+	near(t, "the Flourishing Life's Nourish", nourish([]int32{46138})-nourish(nil), 187, 1)
 }
 
 // Idol of Tenacity: a flat SPELLMOD_EFFECT2 on the bloom, per stack.

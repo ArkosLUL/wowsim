@@ -630,12 +630,14 @@ func (spell *Spell) dealHealingInternal(sim *Simulation, isPeriodic bool, result
 		}
 	}
 
-	if isPeriodic {
-		spell.Unit.OnPeriodicHealDealt(sim, spell, result)
-		result.Target.OnPeriodicHealTaken(sim, spell, result)
-	} else {
-		spell.Unit.OnHealDealt(sim, spell, result)
-		result.Target.OnHealTaken(sim, spell, result)
+	if !spell.Flags.Matches(SpellFlagNoOnDamageDealt) {
+		if isPeriodic {
+			spell.Unit.OnPeriodicHealDealt(sim, spell, result)
+			result.Target.OnPeriodicHealTaken(sim, spell, result)
+		} else {
+			spell.Unit.OnHealDealt(sim, spell, result)
+			result.Target.OnHealTaken(sim, spell, result)
+		}
 	}
 	spell.landResult(sim, isPeriodic, result)
 

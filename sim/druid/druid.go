@@ -255,6 +255,7 @@ func (druid *Druid) RegisterRestorationSpells() {
 	druid.registerNourishSpell()
 	druid.registerWildGrowthSpell()
 	druid.registerSwiftmendSpell()
+	druid.registerRejuvenationT8()
 	druid.registerTreeOfLife()
 	druid.registerLivingSeed()
 	druid.applyRevitalize()

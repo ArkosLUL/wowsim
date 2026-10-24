@@ -74,7 +74,7 @@ var pageGlyphs = &proto.Glyphs{
 	Major1: int32(proto.PaladinMajorGlyph_GlyphOfHolyLight),
 	Major2: int32(proto.PaladinMajorGlyph_GlyphOfSealOfWisdom),
 	Major3: int32(proto.PaladinMajorGlyph_GlyphOfBeaconOfLight),
-	Minor1: int32(proto.PaladinMinorGlyph_GlyphOfSenseUndead),
+	Minor1: int32(proto.PaladinMinorGlyph_GlyphOfTheWise),
 	Minor2: int32(proto.PaladinMinorGlyph_GlyphOfLayOnHands),
 	Minor3: int32(proto.PaladinMinorGlyph_GlyphOfBlessingOfKings),
 }
@@ -103,13 +103,17 @@ func TestDefaultAPLHeals(t *testing.T) {
 	}
 	for name, id := range map[string]int32{
 		"Holy Light": 48782, "Holy Shock": 48825, "Beacon of Light": 53563, "Sacred Shield": 53601,
-		"Judgement of Wisdom": 53408, "Divine Illumination": 31842, "Divine Favor": 20216,
+		"Judgement of Wisdom": 53408, "Divine Illumination": 31842, "Divine Favor": 20216, "Divine Plea": 54428,
 	} {
 		if casts, _ := healedBy(unit, id); casts == 0 {
 			t.Errorf("%s is never cast", name)
 		}
 	}
-	for name, id := range map[string]int32{"Holy Light": 48782, "Holy Shock heal": 48821, "Sacred Shield": 58597} {
+	// the beacon sits on another unit than the heals, or Light's Beacon copies nothing
+	for name, id := range map[string]int32{
+		"Holy Light": 48782, "Holy Shock heal": 48821, "Sacred Shield": 58597, "Holy Light's beacon copy": 53652,
+		"Holy Shock's beacon copy": 53654, "Glyph of Holy Light": 54968,
+	} {
 		if _, healing := healedBy(unit, id); healing == 0 {
 			t.Errorf("%s heals nothing", name)
 		}

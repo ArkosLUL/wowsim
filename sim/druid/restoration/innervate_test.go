@@ -11,7 +11,8 @@ import (
 
 const autocast = `{"type": "TypeAPL", "priorityList": [{"action":{"autocastOtherCooldowns":{}}}]}`
 
-const innervateMana = 3496 * 2.25
+// spell_dru_innervate's int32 per tick drops the 0.6 of 786.6
+const innervateMana = 10 * 786
 
 // innervateGained is the mana the unit has gained from Innervate so far, not the cost of casting it on itself.
 func innervateGained(unit *core.Unit) float64 {

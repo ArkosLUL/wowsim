@@ -24,7 +24,9 @@ func (druid *Druid) registerWildGrowthSpell() {
 	targets := make([]*core.Unit, 0, len(units))
 	periodic := druid.periodicHealMultiplier()
 	maxTargets := wildGrowthTargets + core.TernaryInt(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfWildGrowth), int(serverBonus(spellGlyphOfWildGrowth, 0)), 0)
-	decay := druid.wildGrowthDecay()
+	t10Cut := druid.wildGrowthT10Cut()
+	// the decay each target's Wild Growth has reached
+	decays := make([]float32, len(druid.Env.AllUnits))
 
 	druid.WildGrowth = druid.RegisterSpell(healForms, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 53251},
@@ -62,10 +64,15 @@ func (druid *Druid) registerWildGrowthSpell() {
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = wholeHot(sim, target, dot, periodic, 0)
 				dot.SnapshotHotMultiplier(1)
+				decay := float32(wildGrowthTickDecay)
+				if dot.IsActive() {
+					decay = decays[target.UnitIndex]
+				}
+				decays[target.UnitIndex] = wildGrowthDecay(decay, t10Cut)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 				base := dot.SnapshotBaseDamage
-				dot.SnapshotBaseDamage = wildGrowthTick(base, dot.TickCount, decay)
+				dot.SnapshotBaseDamage = wildGrowthTick(base, dot.TickCount, decays[target.UnitIndex])
 				dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)
 				dot.SnapshotBaseDamage = base
 			},
@@ -88,8 +95,8 @@ func wildGrowthTick(base float64, tick int32, decay float32) float64 {
 	return float64(int32(float32(b + float32(float32(b*bonus)/100))))
 }
 
-// wildGrowthPick is spell_dru_wild_growth's pick: past five living raid members and pets, the five with the
-// lowest health percent, a stable sort so a tie keeps raid order. The area is 15 yd round the target, which
+// wildGrowthPick is spell_dru_wild_growth's pick: past maxTargets living raid members and pets, the maxTargets with
+// the lowest health percent, a stable sort so a tie keeps raid order. The area is 15 yd round the target, which
 // is everyone with no positions in the sim.
 func wildGrowthPick(targets []*core.Unit, units []*core.Unit, maxTargets int) []*core.Unit {
 	for _, unit := range units {

@@ -243,6 +243,13 @@ const (
 	ProcSpellTypeNoDmgHeal uint32 = 0x4
 )
 
+// ProcSpellPhaseMask (SpellMgr.h), for Proc.SpellPhaseMask.
+const (
+	ProcSpellPhaseCast   uint32 = 0x1
+	ProcSpellPhaseHit    uint32 = 0x2
+	ProcSpellPhaseFinish uint32 = 0x4
+)
+
 // ProcFlagAttributes (SpellMgr.h), for Proc.AttributesMask.
 const (
 	ProcAttrReqExpOrHonor        uint32 = 0x1

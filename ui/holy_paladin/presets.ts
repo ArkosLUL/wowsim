@@ -48,7 +48,7 @@ export const StandardTalents = {
 			major2: PaladinMajorGlyph.GlyphOfSealOfWisdom,
 			major3: PaladinMajorGlyph.GlyphOfBeaconOfLight,
 			minor2: PaladinMinorGlyph.GlyphOfLayOnHands,
-			minor1: PaladinMinorGlyph.GlyphOfSenseUndead,
+			minor1: PaladinMinorGlyph.GlyphOfTheWise,
 			minor3: PaladinMinorGlyph.GlyphOfBlessingOfKings
 		}
 	}),

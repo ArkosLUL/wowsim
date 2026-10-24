@@ -39,6 +39,10 @@ func TestGlyphOfHolyLightHealsFiveOthers(t *testing.T) {
 	setCrit(sim, holy, -100)
 	fixRolls(holy.HolyLight)
 	glyph := holy.GetSpell(core.ActionID{SpellID: 54968})
+	// 1000 flat healing taken through an area heal's default coefficient, 0.75 s of 3.5 × 1.88
+	flatTaken := targetDummies(sim)[1]
+	flatTaken.PseudoStats.BonusHealingTaken = 1000
+	const flatShare = 402
 
 	heal := castHeal(sim, holy.HolyLight, holy.HolyLight, target)
 	want := math.Trunc(heal / 10)
@@ -50,10 +54,17 @@ func TestGlyphOfHolyLightHealsFiveOthers(t *testing.T) {
 		if got := healed(glyph, unit); got != 0 {
 			units++
 			total += int(got)
+			want := want
+			if unit == flatTaken {
+				want += flatShare
+			}
 			if want := math.Trunc(want * unit.PseudoStats.HealingTakenMultiplier); got != want {
 				t.Errorf("%s got %v from the glyph, want %v", unit.Label, got, want)
 			}
 		}
+	}
+	if healed(glyph, flatTaken) == 0 {
+		t.Errorf("the glyph skipped the unit with flat healing taken")
 	}
 	if units != 5 {
 		t.Errorf("the glyph healed %d units, want 5", units)
@@ -224,9 +235,14 @@ func TestAegisRegalia2PieceHolyMending(t *testing.T) {
 
 // T8 holy 4 piece: Sacred Shield's absorb comes every 4 s whatever Divine Guardian says.
 func TestAegisRegalia4PieceSacredShieldCooldown(t *testing.T) {
-	_, holy := healSetup{items: aegisRegalia, talents: ""}.build(t)
+	_, holy := healSetup{items: aegisRegalia}.build(t)
+	_, bare := healSetup{}.build(t)
 	if got := holy.SacredShieldCooldown(); got != 4*time.Second {
 		t.Errorf("Sacred Shield's cooldown is %v with the 4 piece, want 4 s", got)
+	}
+	// the standard build's 2 points of Divine Guardian
+	if got := bare.SacredShieldCooldown(); got != 7*time.Second {
+		t.Errorf("Sacred Shield's cooldown is %v without the set, want 7 s", got)
 	}
 }
 
@@ -294,7 +310,8 @@ func TestLightswornGarb2PieceAddsHealingUnderDivineIllumination(t *testing.T) {
 	}
 }
 
-// T10 holy 4 piece (70756): a Holy Shock heal gives Holiness (70757), 0.3 s off Holy Light's cast for 10 s.
+// T10 holy 4 piece (70756): a Holy Shock heal gives Holiness (70757), 0.3 s off the next Holy Light's cast within
+// 10 s. Its one charge goes on that Holy Light.
 func TestLightswornGarb4PieceHoliness(t *testing.T) {
 	sim, holy := healSetup{items: lightswornGarb, dummies: 1, talents: holyTalents(talentLightsGrace, 0)}.build(t)
 	startFight(sim)
@@ -307,6 +324,11 @@ func TestLightswornGarb4PieceHoliness(t *testing.T) {
 	if cut := plain - boosted; cut < 250*time.Millisecond || cut > 340*time.Millisecond {
 		t.Errorf("Holy Light takes %v under Holiness, %v without; want 0.3 s less", boosted, plain)
 	}
+	if got := hardcast(t, sim, holy, holy.HolyLight, target); (got - plain).Abs() > 40*time.Millisecond {
+		t.Errorf("the Holy Light after the sped up one takes %v, want %v", got, plain)
+	}
+
+	cast(sim, holy.HolyShock, target)
 	runUntil(sim, sim.CurrentTime+11*time.Second)
 	if got := hardcast(t, sim, holy, holy.HolyLight, target); (got - plain).Abs() > 40*time.Millisecond {
 		t.Errorf("Holy Light takes %v after Holiness, want %v", got, plain)
@@ -334,6 +356,7 @@ func TestLibramsAddFlatHealing(t *testing.T) {
 		spell func(*HolyPaladin) (*core.Spell, *core.Spell)
 		flat  float64
 	}{
+		{40268, func(h *HolyPaladin) (*core.Spell, *core.Spell) { return h.HolyLight, h.HolyLight }, 141},
 		{45436, func(h *HolyPaladin) (*core.Spell, *core.Spell) { return h.HolyLight, h.HolyLight }, 160},
 		{38364, func(h *HolyPaladin) (*core.Spell, *core.Spell) { return h.HolyShock, h.HolyShockHeal }, 69},
 	} {
@@ -375,10 +398,17 @@ func TestLibramOfVeracity(t *testing.T) {
 		castHeal(sim, holy.HolyLight, holy.HolyLight, target)
 		if spellPowerGain(holy, base) == 234 {
 			procs++
-			// the 8 s cooldown holds a second proc back inside it
-			runUntil(sim, sim.CurrentTime+7*time.Second)
+			procAt := sim.CurrentTime
+			// a Holy Light inside the 8 s cooldown can't refresh it
+			runUntil(sim, procAt+7*time.Second)
+			castHeal(sim, holy.HolyLight, holy.HolyLight, target)
+			runUntil(sim, procAt+14*time.Second)
 			if aura := holy.GetAura("Holy Judgement"); !aura.IsActive() {
 				t.Fatalf("the buff ended inside 15 s")
+			}
+			runUntil(sim, procAt+15*time.Second+100*time.Millisecond)
+			if aura := holy.GetAura("Holy Judgement"); aura.IsActive() {
+				t.Fatalf("a Holy Light 7 s after the proc procced it again")
 			}
 		}
 		runUntil(sim, sim.CurrentTime+16*time.Second)

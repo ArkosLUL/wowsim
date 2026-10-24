@@ -91,6 +91,7 @@ func (hunter *Hunter) registerAspectOfTheViperSpell() {
 	manaPerMHHitMultiplier := baseManaRegenMultiplier * hunter.AutoAttacks.MH().SwingSpeed
 	manaPerOHHitMultiplier := baseManaRegenMultiplier * hunter.AutoAttacks.OH().SwingSpeed
 	var tickPA *core.PendingAction
+	serverProc := core.ServerProcFor(34074)
 
 	hasCryptstalker4pc := hunter.HasSetBonus(ItemSetCryptstalkerBattlegear, 4)
 
@@ -119,6 +120,9 @@ func (hunter *Hunter) registerAspectOfTheViperSpell() {
 			tickPA = nil
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+			if !result.Landed() || !serverProc.AllowsEvent(spell, result, false) {
+				return
+			}
 			if spell.ProcMask.Matches(core.ProcMaskRanged) {
 				hunter.AddMana(sim, manaPerRangedHitMultiplier*hunter.MaxMana(), hunter.AspectOfTheViper.ResourceMetrics)
 			} else if spell.ProcMask.Matches(core.ProcMaskMeleeMH) {

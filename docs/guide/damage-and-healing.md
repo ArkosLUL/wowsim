@@ -133,7 +133,8 @@ rounding, caps and crit damage. Everything else the server does differently is i
   Plea's -50% (`SPELLMOD_DAMAGE` on Holy Light, Flash of Light and Holy Shock's heal) are read at the heal.
 - **Glyph of Holy Light**'s 54968 is `int32(heal × 10%)`, the Holy Light's final heal (crit and taken terms in), on up
   to five other units. Class mask 0, ignores caster modifiers and no coefficient: no done terms, no crit, only the target's
-  taken terms. **Holy Mending** 64891 (T8) takes only aura 136 and the target's taken terms per tick.
+  taken terms. Its flat term's default coefficient is an area heal's: `GetCastingTimeForBonus` halves the 1.5 s,
+  0.75 / 3.5 × 1.88. **Holy Mending** 64891 (T8) takes only aura 136 and the target's taken terms per tick.
 - **Infusion of Light**'s 66922: `CalculatePct(heal / 12, 50% a point)` a tick for 12 1 s ticks, heal being the
   Flash of Light's whole heal, taken terms and crit in. Family 0 and no damage class: each tick takes only the
   healing done percents and the target's taken percents.
@@ -145,9 +146,11 @@ rounding, caps and crit damage. Everything else the server does differently is i
   Guardian's 10% a point, then +30% under Strength of Wrynn; no healing done percent (`spell_pal_sacred_shield`).
 - **Druid heal scripts** ([caster mechanics](caster-mechanics.md#druid)):
   - Direct heals carry SPELLMOD_DAMAGE and Master Shapeshifter's aura 136 in `DamageMultiplier`; a hot's amount
-    takes only its SPELLMOD_DOT percents (`hotSnapshot`), aura 136 at each tick. A flat SPELLMOD_DOT (Idols of
-    Pure Thoughts and Lush Moss) joins the roll and healing power before those percents.
-  - With T9's 4-piece a Rejuvenation tick rolls the druid's current crit chance at the tick (`tickRejuvenation`).
+    takes only its SPELLMOD_DOT percents (`hotSnapshot`), aura 136 at each tick. A flat SPELLMOD_DOT or
+    SPELLMOD_DAMAGE (Idols of Pure Thoughts, Lush Moss, the Flourishing Life) comes after the percents
+    (`Player::ApplySpellMod`: base × percents + flat).
+  - With T9's 4-piece a Rejuvenation tick rolls the crit chance the hot took as it went on or refreshed
+    (`AuraEffect::CalculatePeriodicData`, `tickRejuvenation`).
     Nourish's glyph adds its percent to the finished heal, truncated in float32, before the crit.
   - Living Seed's 48503: base points `uint32(float32(crit heal) × 30 / 100)`, the overheal in; it never crits
     (`SPELL_ATTR2_CANT_CRIT`), ignores caster modifiers and makes no threat, so only the target's taken terms

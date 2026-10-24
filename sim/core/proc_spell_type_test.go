@@ -101,12 +101,17 @@ func TestProcTriggerSpellTypeMask(t *testing.T) {
 	}
 }
 
-// A white swing carries no spell on the server, so its flags aren't spell flags and the type check skips it.
+// A melee swing carries no spell on the server, so its flags aren't spell flags and the type check skips it.
+// Auto Shot is a spell, and DONE_RANGED_AUTO_ATTACK is in SPELL_PROC_FLAG_MASK.
 func TestProcSpellTypeSkipsWhiteSwings(t *testing.T) {
 	swing := &Spell{ProcMask: ProcMaskMeleeMHAuto}
 	miss := &SpellResult{Outcome: OutcomeMiss}
 	if !procSpellTypeAllows(typeDamage, swing, miss, false) {
 		t.Error("a white swing that dealt nothing was refused by a damage only entry")
+	}
+	autoShot := &Spell{ProcMask: ProcMaskRangedAuto}
+	if procSpellTypeAllows(typeDamage, autoShot, miss, false) {
+		t.Error("an Auto Shot that dealt nothing was taken by a damage only entry")
 	}
 	special := &Spell{ProcMask: ProcMaskMeleeMHSpecial}
 	if procSpellTypeAllows(typeDamage, special, miss, false) {
@@ -117,6 +122,13 @@ func TestProcSpellTypeSkipsWhiteSwings(t *testing.T) {
 // The generated entries carry their masks: the Ashen Band's is damage only, Pandora's Plea's own is damage and heal.
 func TestServerProcCarriesTheSpellTypeMask(t *testing.T) {
 	for id, want := range map[int32]uint32{72413: typeDamage, 64742: typeDamage | typeHeal, 15600: typeDamage} {
+		if got := ServerProcFor(id).SpellTypeMask; got != want {
+			t.Errorf("spell %d: type mask %d, want %d", id, got, want)
+		}
+	}
+	// a cast phase event has every type, so Alacrity of the Elements' damage only mask never filters; a taken
+	// entry (Judgement of Wisdom's, phase 0) is typed on the hit
+	for id, want := range map[int32]uint32{65005: 0, 64714: typeDamage, 20186: typeDamage} {
 		if got := ServerProcFor(id).SpellTypeMask; got != want {
 			t.Errorf("spell %d: type mask %d, want %d", id, got, want)
 		}

@@ -20,7 +20,8 @@ type ServerProc struct {
 
 // procEventSpellType is the spell type ProcSkillsAndAuras gives a spell event: a heal, else damage
 // (absorbed damage counts), else NO_DMG_HEAL for a hit that did neither, misses and landing debuffs and
-// hots included. The sim's hits carry no absorb, so the amount is the damage.
+// hots included. The sim takes an absorb off the damage itself, so a hit absorbed in full counts as dealing
+// nothing here.
 func procEventSpellType(amount float64, healing bool) uint32 {
 	switch {
 	case amount <= 0:
@@ -32,13 +33,13 @@ func procEventSpellType(amount float64, healing bool) uint32 {
 }
 
 // AllowsEvent is CanSpellTriggerProcOnEvent's spell type check for a damage or heal event of spell.
-// White swings skip it: their proc flags aren't spell flags.
+// Melee swings skip it: their proc flags aren't in SPELL_PROC_FLAG_MASK, unlike Auto Shot's.
 func (sp ServerProc) AllowsEvent(spell *Spell, result *SpellResult, healing bool) bool {
 	return procSpellTypeAllows(sp.SpellTypeMask, spell, result, healing)
 }
 
 func procSpellTypeAllows(mask uint32, spell *Spell, result *SpellResult, healing bool) bool {
-	if mask == 0 || result == nil || spell.ProcMask.Matches(ProcMaskWhiteHit) {
+	if mask == 0 || result == nil || spell.ProcMask.Matches(ProcMaskMeleeMHAuto|ProcMaskMeleeOHAuto) {
 		return true
 	}
 	return mask&procEventSpellType(result.Damage, healing) != 0
@@ -56,8 +57,11 @@ func ServerProcFor(spellID int32) ServerProc {
 		Chance: fromFloat32(proc.Chance) / 100,
 		PPM:    fromFloat32(proc.ProcsPerMinute),
 		ICD:    time.Duration(proc.CooldownMs) * time.Millisecond,
-
-		SpellTypeMask: proc.SpellTypeMask,
+	}
+	// ProcSkillsAndAuras gives a cast or finish phase event every type, so only an entry that procs on hits
+	// (or a taken one, phase 0) ever filters by it
+	if proc.SpellPhaseMask == 0 || proc.SpellPhaseMask&serverdata.ProcSpellPhaseHit != 0 {
+		sp.SpellTypeMask = proc.SpellTypeMask
 	}
 	// Aura::CalcProcChance: 1/30 less per level past 60
 	if proc.AttributesMask&serverdata.ProcAttrReduceProc60 != 0 {

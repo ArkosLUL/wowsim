@@ -34,7 +34,7 @@ var hardCodedItemIDs = map[int32]bool{
 	// paladin: librams in the spell files, gladiator's gloves in items.go
 	27917: true, 40337: true, 31033: true, 40191: true, 45510: true, 38362: true, 29388: true,
 	40798: true, 40802: true, 40805: true, 40808: true, 40812: true, 51475: true,
-	45436: true, 38364: true, 40705: true, 47662: true, 50460: true,
+	45436: true, 38364: true, 40705: true, 47662: true, 50460: true, 40268: true,
 	// shaman: totems in the spell files
 	32330: true, 23199: true, 28248: true, 40267: true, 42598: true, 42597: true, 42596: true,
 	42595: true, 28523: true, 38368: true, 45114: true, 40709: true, 38361: true, 45255: true,

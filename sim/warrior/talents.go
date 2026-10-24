@@ -455,6 +455,8 @@ func (warrior *Warrior) registerSwordSpecialization(procMask core.ProcMask) {
 		Duration: time.Second * 6,
 	}
 	procChance := 0.02 * float64(warrior.Talents.SwordSpecialization)
+	// every rank shares spell_proc -12281
+	serverProc := core.ServerProcFor(12281)
 
 	warrior.RegisterAura(core.Aura{
 		Label:    "Sword Specialization",
@@ -468,7 +470,7 @@ func (warrior *Warrior) registerSwordSpecialization(procMask core.ProcMask) {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Landed() {
+			if !result.Landed() || !serverProc.AllowsEvent(spell, result, false) {
 				return
 			}
 			if !spell.ProcMask.Matches(procMask) {
@@ -612,6 +614,7 @@ func (warrior *Warrior) applySuddenDeath() {
 
 	minRageKept := []float64{0, 3, 7, 10}[warrior.Talents.SuddenDeath]
 	procChance := []float64{0, 0.03, 0.06, 0.09}[warrior.Talents.SuddenDeath]
+	serverProc := core.ServerProcFor([]int32{0, 29723, 29725, 29724}[warrior.Talents.SuddenDeath])
 
 	warrior.SuddenDeathAura = warrior.RegisterAura(core.Aura{
 		Label:    "Sudden Death Proc",
@@ -662,7 +665,7 @@ func (warrior *Warrior) applySuddenDeath() {
 			aura.Activate(sim)
 		},
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMelee) {
+			if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMelee) || !serverProc.AllowsEvent(spell, result, false) {
 				return
 			}
 

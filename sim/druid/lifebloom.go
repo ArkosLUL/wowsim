@@ -33,12 +33,13 @@ func (druid *Druid) registerLifebloomSpell() {
 	bloomPerStack += druid.lifebloomBloomBonus()
 
 	// 33778 heals for what spell_dru_lifebloom hands it, which already holds the caster's and the target's terms
-	// (Spell::EffectHeal skips them for it), and crits on the druid's chance
+	// (Spell::EffectHeal skips them for it), and crits on the druid's chance. It has SPELL_ATTR3_SUPPRESS_CASTER_PROCS:
+	// nothing procs off it, not Omen of Clarity nor an item.
 	druid.LifebloomBloom = druid.RegisterSpell(Any, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 33778},
 		SpellSchool: core.SpellSchoolNature,
 		ProcMask:    core.ProcMaskSpellHealing,
-		Flags:       core.SpellFlagHelpful | core.SpellFlagNoOnCastComplete | SpellFlagOmenTrigger,
+		Flags:       core.SpellFlagHelpful | core.SpellFlagNoOnCastComplete | core.SpellFlagNoOnDamageDealt,
 
 		DamageMultiplier: druid.directHealMultiplier(),
 		CritMultiplier:   druid.DefaultHealingCritMultiplier(),

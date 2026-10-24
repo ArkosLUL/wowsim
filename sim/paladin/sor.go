@@ -71,6 +71,7 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 
 	// Seal of Righteousness aura.
 	auraActionID := core.ActionID{SpellID: 21084}
+	serverProc := core.ServerProcFor(21084)
 	paladin.SealOfRighteousnessAura = paladin.RegisterAura(core.Aura{
 		Label:    "Seal of Righteousness",
 		Tag:      "Seal",
@@ -94,7 +95,7 @@ func (paladin *Paladin) registerSealOfRighteousnessSpellAndAura() {
 					onSpecialOrSwingProc.Cast(sim, result.Target)
 				}
 			} else {
-				if paladin.sealCanProcOn(spell) {
+				if paladin.sealCanProcOn(spell) && serverProc.AllowsEvent(spell, result, false) {
 					onSpecialOrSwingProc.Cast(sim, result.Target)
 				}
 			}

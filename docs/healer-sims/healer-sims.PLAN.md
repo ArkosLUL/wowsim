@@ -523,6 +523,23 @@ Stage core (the shaman stage adds its own lines below).
 - Not covered (outside this item's paths): hand-rolled procs in `sim/common/tbc` (Hand of Justice, Dragonspine
   Trophy, Madness of the Betrayer, Fists of Fury, Twin Blades) and the paladin seals roll on any landed hit.
 
+Cross-review (wave HL3, uncommitted):
+- The mask reached only 17 `ProcSpellID` items. Now 44 more item procs take their equip spell's entry (numbers
+  equal to the hard-coded ones, so only the mask moves them): Meteorite Whetstone, Grim Toll, Banner of
+  Victory, Deathbringer's Will, Ashen Band of Destruction, Tiny Abomination, Heartpierce, Death Knight's Anguish,
+  the `ProcDamageEffect` trinkets and others; Shadowmourne, the tbc trinkets, bands and sets, the seals, Sword
+  Specialization, Sudden Death, Hack and Slash, Bloodworms and Aspect of the Viper call `AllowsEvent` (the last
+  two also skipped misses). `gen_serverdata` rerun: 50 proc rows, additions only.
+- A cast or finish phase entry never filters (its events take every type); Auto Shot is checked, melee swings
+  aren't. Lifebloom's bloom (`SPELL_ATTR3_SUPPRESS_CASTER_PROCS`) now procs nothing, Talisman stacks and Omen
+  of Clarity included (`SpellFlagNoOnDamageDealt` covers heals). Innervate gives 786 a tick (int32), not 786.6.
+- Goldens (not promoted, with the paladin and druid fixes): 19 of 37 suites move. Restoration Average-Default
+  HPS -1.7% (the bloom's Omen and procs, Innervate); Arms -0.11% (Sword Specialization and Sudden Death off Rend
+  and Sunder landings), Fury -0.03%, Feral -0.007% (Grim Toll off Rip and Faerie Fire), Enhancement +0.016%, BM
+  and SV about 0; Survival NoBuffs rows -1 to -2.2% (Viper mana off misses); single AllItems rows to -3.1% (Tiny
+  Abomination off judgements on Retribution). Blood, Blood Tank, Feral Apl and Tank, MM, Holy, Protection,
+  Assassination, Combat, Subtlety and Protection Warrior: AllItems, set or talent rows only.
+
 Stage shaman.
 - `ui/restoration_shaman/apls/default.apl.json` drops its Healing Wave line (Tidal Waves condition, 49273).
   `TestDefaultAPLHeals` now asserts Healing Wave is never cast. Healing Wave stays a registered spell.
@@ -582,7 +599,7 @@ Stage 1, items (uncommitted):
   Holy Light's 54968 (+90766 total), more Holy Light casts from Seal of Wisdom's cost cut (Flash of Light fewer),
   Beacon at 90 s. Four new `AllItems` rows (the sets) in Holy, Protection and Retribution.
 
-Stage 2, page (uncommitted; numbers before HEAL-CORE):
+Stage 2, page (uncommitted):
 - Default APL `ui/holy_paladin/apls/default.apl.json` as `autoRotation` and the one rotation preset (rule and numbers in
   [class-mechanics](../guide/class-mechanics.md#paladin)). Presets P1 to P4 kept (all in the server catalog by tier),
   P5 added (Ruby Sanctum cloak, bracers, belt, boots, ring, trinket); Libram of Renewal stays in all (it out-heals the
@@ -592,8 +609,9 @@ Stage 2, page (uncommitted; numbers before HEAL-CORE):
 - `default_apl_test.go`: the page's request (9 dummies, 300 s) heals with every APL spell, P1 runs dry inside the
   fight, every preset item is in the server catalog by its phase's tier. `TestHoly` runs the page APL (rows keep
   their names); `statslopes`' Holy Paladin row runs it with `heals: true`.
-- Page request at 300 s (time to OOM s, s out of mana, HPS): preraid 127 (64) 9.9k, P1 150 (51) 12.3k, P2 205 (28)
-  17.9k, P3 226 (21) 20.6k, P4 none (2) 28.7k, P5 253 (12) 29.3k. "Measure at my gear" gains are nonzero except
+- Page request at 300 s (time to OOM s, s out of mana, HPS; HL3 cross-review, merged tree): preraid 127 (64) 9.9k,
+  P1 151 (51) 12.3k, P2 205 (28) 17.9k, P3 226 (21) 20.6k, P4 none (1) 28.7k, P5 252 (12) 29.3k; HEAL-CORE moved
+  them by at most 1 s and 0.1%. "Measure at my gear" gains are nonzero except
   Spirit (0 to 0.11) and haste (about 0 or below while mana-bound: P1, P5).
 - Goldens, `TestHoly` Average-Default against base: HPS 9974 to 11894 (+19.3%), DPS +0.9%, TPS +8.4%. Stage 1's glyphs
   account for most of it; the page APL drops the Flash of Light filler (53653 and 48785 gone, 66922 with it) for
@@ -619,6 +637,20 @@ Stage 3, live (uncommitted; server lock held 13:57 to 14:07 UTC, no rebuild):
 - Fixed: nothing disagreed. Stage 1's comment on 54968 said "no damage class"; the capture shows a magic class, with
   the ignore-caster-modifiers attribute doing the work. Comment corrected.
 
+HL3 cross-review (uncommitted):
+- Holiness (70757) has one charge (`spell_proc`: `Charges` 1, `PROC_ATTR_REQ_SPELLMOD`): only the next Holy Light is
+  0.3 s faster, not every one for 10 s. Fixed in `holy_items.go`; `TestLightswornGarb4PieceHoliness` checks the
+  second Holy Light. No preset wears T10's 4 piece.
+- 54968's flat healing taken coefficient is an area heal's, 0.75 s of 3.5 × 1.88, not an instant's
+  (`TestGlyphOfHolyLightHealsFiveOthers`).
+- Libram of Tolerance (40268, P1 tier, +141 Holy Light `SPELLMOD_DAMAGE`, 60792) was missing; added. Renewal still
+  out-heals it and the Resolute at every phase.
+- Page glyphs: the Wise for Sense Undead, the only minor glyph that does anything here (+3 to +16 HPS).
+- Tests tightened: Veracity's 8 s cooldown, T8's 4 piece against the 7 s without it, the page APL's beacon copies,
+  54968 and Divine Plea.
+- Goldens (not promoted): `TestHoly` AllItems-LightswornGarb HPS +0.37% (Holiness), AllItems-TalismanofTrollDivinity
+  -0.09% (54968's coefficient). Protection and Retribution unchanged.
+
 ### HEAL-DRU-2 (G; stages: items, page, live)
 
 - Resto glyphs (Glyph of Swiftmend keeps the hot), T7 to T10 resto sets, healing idols.
@@ -633,7 +665,7 @@ Stage 3, live (uncommitted; server lock held 13:57 to 14:07 UTC, no rebuild):
 
 Stage 1, items (uncommitted; numbers before HEAL-CORE):
 - Innervate: `registerInnervateCD`'s `ExtraCastCondition` is no longer inverted. `TestInnervateCastsOncePerCooldown`
-  (self and another player): one cast and 7866 mana per 3 minutes. No Balance, Feral, Tank or raid golden holds an
+  (self and another player): one cast and 7860 mana per 3 minutes. No Balance, Feral, Tank or raid golden holds an
   Innervate target, so none moves from it; Restoration's does (self Innervate).
 - Glyphs (`sim/druid/resto_items.go`, rules in [caster-mechanics](../guide/caster-mechanics.md#druid)): Healing
   Touch, Lifebloom, Nourish, Rapid Rejuvenation, Regrowth, Rejuvenation, Swiftmend, Wild Growth, Innervate. T7 to
@@ -690,3 +722,19 @@ Stage 3, live (uncommitted; server lock held 13:40 to 14:03 UTC, no rebuild; num
 - Left: T7's 4-piece (60137) has no server code; Glyph of Rejuvenation 54754, Blessing of the Eternal and the
   Flaring Growth and Black Willow idols are modelled from the scripts and `spell_proc` rows, not measured live
   (the harness probes no heals' amounts).
+
+Cross-review (wave HL3, uncommitted; numbers on the merged tree, after HEAL-CORE):
+- Fixed against [ac]: Blessing of the Eternal took the druid's spell mods (it ignores caster modifiers), had 5
+  ticks with Nature's Splendor (6) and no Rapid Rejuvenation haste, and never went on the healed unit (the cast
+  has no explicit target); Swiftmend now eats it and Revitalize rolls on it. T8's 64801 crit (it can't) and
+  missed Master Shapeshifter. Pure Thoughts', Lush Moss' and the Flourishing Life's flats went before the
+  percents (the last as healing power). T10's Wild Growth decay now loses 30% again at each refresh. T9's tick
+  crit rolls the chance snapshotted at apply. 54755 took flat healing taken.
+- Goldens (not promoted): `TestRestoration` AllItems-NightsongRegalia HPS +0.068%, AllItems-LasherweaveGarb
+  +0.378%; the other 5 druid suites unchanged. Balance and Feral with self Innervate never reach its threshold
+  (P1 to P3, 180 and 300 s), so they don't move.
+- Page request (3000 iterations, seed 424242): preraid 128 s 6938, P1 174 s 9078, P2 to P5 12375 / 13425 / 20413
+  / 20680 (average time to OOM past 300 s). "Measure at my gear": P1 4.10 / 2.55 / 2.32 / 0.28 / -0.43 / 6.77;
+  P3 0.52 / 0.73 / 2.79 / 0.73 / 0.05 / 0.37; P5 1.16 / 1.42 / 3.77 / 1.08 / 0.17 / 0.96. HEAL-CORE moved none of
+  stage 2's numbers past noise. The druid fixes moved P2 to P5 by -0.2% to +0.3%; the bloom procing nothing
+  (HEAL-CORE's cross-review) and Innervate's 786 a tick then took 1 to 3% off, P2 9% (fewer Val'anyr bubbles).

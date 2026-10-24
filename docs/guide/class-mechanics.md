@@ -188,9 +188,9 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   Shock crit puts Holy Mending 64891 on its target, 3 ticks of `int32(int32(heal × 15%) / 3)` with the healing done
   percents; Sacred Shield's absorb comes every 4 s, whatever Divine Guardian says. T9 (Turalyon's / Liadrin's
   Garb): Judgements of Light and Wisdom last 10 s longer; 66922's tick doubles. T10 (Lightsworn Garb): +35%
-  healing done under Divine Illumination (71166); a Holy Shock heal gives Holiness 70757, 0.3 s off Holy Light's
-  cast for 10 s.
-- **Healing librams:** Renewal takes 113 off Holy Light's cost; the Resolute adds 160 to Holy Light and Mostly Holy
+  healing done under Divine Illumination (71166); a Holy Shock heal gives Holiness 70757, 0.3 s off the next Holy Light's
+  cast within 10 s; that Holy Light's hit uses up its one charge.
+- **Healing librams:** Renewal takes 113 off Holy Light's cost; Tolerance adds 141 and the Resolute 160 to Holy Light, Mostly Holy
   Deeds 69 to Holy Shock's heal (`SPELLMOD_DAMAGE` flats, after every percent). Veracity: a Holy Light has 70%
   (8 s apart) for 234 spell power, 15 s (67364). Blinding Light: a Holy Shock heal gives a stack of 85 spell
   power, 3 stacks, 15 s (71192). The TBC librams aren't in db.json.
@@ -202,12 +202,13 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   Sacred Shield target healed 3% less at P1 and P4, so none is cast.
   - P1 to P4 gear is upstream's, all in the server catalog by tier; P5 swaps in the Ruby Sanctum cloak, bracers,
     belt, boots, one ring and a trinket. Every socket takes an Int gem: Int gains ~3.5 times Spell Power's HPS.
-  - Libram of Renewal beats the Resolute, Veracity and Blinding Light in HPS at P2 to P5 (its 113 mana off Holy
-    Light outweighs the others), so every preset wears it.
-  - The page's request, 300 s, 3000 iterations, seed 424242, before HEAL-CORE. Time to OOM in s (s out of mana), HPS: preraid 127
-    (64) 9.9k, P1 150 (51) 12.3k, P2 205 (28) 17.9k, P3 226 (21) 20.6k, P4 none (2) 28.7k, P5 253 (12) 29.3k.
-  - "Measure at my gear" before HEAL-CORE, HPS a point (Int / SP / crit / MP5 / haste), gain: P1 8.22 / 2.35 / 2.52 / 7.24 / 0.05;
-    P3 13.45 / 5.23 / 5.23 / 10.75 / 3.11; P5 15.10 / 4.65 / 6.51 / 13.04 / -0.71. Spirit gains 0 to 0.11 at every
+  - Libram of Renewal beats Tolerance and the Resolute at every phase, Veracity and Blinding Light at P2 to P5
+    (its 113 mana off Holy Light outweighs the others), so every preset wears it.
+  - Glyph of the Wise is the one minor glyph that does anything here (~300 mana off the pre-pull seal).
+  - The page's request, 300 s, 3000 iterations, seed 424242. Time to OOM in s (s out of mana), HPS: preraid 127
+    (64) 9.9k, P1 151 (51) 12.3k, P2 205 (28) 17.9k, P3 226 (21) 20.6k, P4 none (1) 28.7k, P5 252 (12) 29.3k.
+  - "Measure at my gear", HPS a point (Int / SP / crit / MP5 / haste), gain: P1 8.26 / 2.35 / 2.54 / 7.38 / 0.05;
+    P3 13.46 / 5.23 / 5.24 / 10.71 / 3.09; P5 15.04 / 4.65 / 6.50 / 12.97 / -0.72. Spirit gains 0 to 0.11 at every
     phase (exactly 0 at P4, which doesn't run dry). Haste is about 0 or below while mana-bound (P1, P5).
 - **Judgement of Light**'s 20185 procs like Judgement of Wisdom's (15 PPM, landed damaging hits, no triggered
   casts): 20267 heals the attacker for 2% of his max health through his healing taken percents. Its original

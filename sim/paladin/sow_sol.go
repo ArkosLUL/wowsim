@@ -37,7 +37,7 @@ func (paladin *Paladin) registerSealJudgementSpell() {
 // registerSealAura is a seal of 30 minutes whose judgement is 54158 and whose melee hits roll onProc at its
 // spell_proc PPM. spell_pal_seal_of_light keeps it off hits on the paladin himself, which the sim never deals.
 func (paladin *Paladin) registerSealAura(label string, spellID int32, onProc func(sim *core.Simulation)) *core.Aura {
-	ppm := core.ServerProcFor(spellID).PPM
+	serverProc := core.ServerProcFor(spellID)
 	return paladin.RegisterAura(core.Aura{
 		Label:    label,
 		Tag:      "Seal",
@@ -53,7 +53,8 @@ func (paladin *Paladin) registerSealAura(label string, spellID int32, onProc fun
 				return
 			}
 			// 54158 is melee class with SPELL_ATTR3_NOT_A_PROC, so it rolls too
-			if paladin.sealCanProcOn(spell) && sim.RandomFloat(label) < paladin.AuraPPMProcChance(ppm, spell) {
+			if paladin.sealCanProcOn(spell) && serverProc.AllowsEvent(spell, result, false) &&
+				sim.RandomFloat(label) < paladin.AuraPPMProcChance(serverProc.PPM, spell) {
 				onProc(sim)
 			}
 		},

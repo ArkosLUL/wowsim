@@ -152,7 +152,8 @@ var revitalizeEnergizes = []revitalizeEnergize{
 }
 
 // applyRevitalize is spell_dru_revitalize: each tick of the druid's Rejuvenation or Wild Growth rolls the rank's
-// 5% a point to energize its target by its power type. The energize makes the druid assist threat.
+// 5% a point to energize its target by its power type. The energize makes the druid assist threat. T10's Blessing
+// of the Eternal has Rejuvenation's family flag, so its ticks roll too.
 func (druid *Druid) applyRevitalize() {
 	if druid.Talents.Revitalize == 0 || (druid.Rejuvenation == nil && druid.WildGrowth == nil) {
 		return
@@ -183,7 +184,9 @@ func (druid *Druid) applyRevitalize() {
 			aura.Activate(sim)
 		},
 		OnPeriodicHealDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !druid.Rejuvenation.IsEqual(spell) && !druid.WildGrowth.IsEqual(spell) {
+			// the proc entry's spell type is heal only
+			if !druid.Rejuvenation.IsEqual(spell) && !druid.WildGrowth.IsEqual(spell) &&
+				!druid.BlessingOfTheEternal.IsEqual(spell) || result.Damage <= 0 {
 				return
 			}
 			target := result.Target

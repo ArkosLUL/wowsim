@@ -202,13 +202,12 @@ func init() {
 			}
 
 			triggerAura := core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-				Name:       name,
-				Callback:   core.CallbackOnSpellHitDealt,
-				ProcMask:   core.ProcMaskMeleeOrRanged | core.ProcMaskProc,
-				Outcome:    core.OutcomeLanded,
-				ProcChance: 0.35,
-				ActionID:   core.ActionID{ItemID: itemID},
-				ICD:        time.Second * 105,
+				Name:        name,
+				Callback:    core.CallbackOnSpellHitDealt,
+				ProcMask:    core.ProcMaskMeleeOrRanged | core.ProcMaskProc,
+				Outcome:     core.OutcomeLanded,
+				ProcSpellID: core.TernaryInt32(isHeroic, 71562, 71519),
+				ActionID:    core.ActionID{ItemID: itemID},
 				Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
 					rand := sim.RandomFloat("Deathbringer's Will")
 					if rand < 1.0/3.0 {
@@ -651,11 +650,11 @@ func init() {
 			})
 
 			core.MakeProcTriggerAura(&character.Unit, core.ProcTrigger{
-				Name:     name + " Trigger",
-				Callback: core.CallbackOnSpellHitDealt,
-				ProcMask: core.ProcMaskMelee,
-				PPM:      1,
-				ActionID: core.ActionID{ItemID: itemID},
+				Name:        name + " Trigger",
+				Callback:    core.CallbackOnSpellHitDealt,
+				ProcMask:    core.ProcMaskMelee,
+				ProcSpellID: core.TernaryInt32(isHeroic, 71892, 71880),
+				ActionID:    core.ActionID{ItemID: itemID},
 
 				Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
 					if !result.Landed() {

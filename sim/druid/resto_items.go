@@ -183,22 +183,28 @@ func (druid *Druid) lifebloomBloomBonus() int32 {
 	return 0
 }
 
-// nourishRelicPower is Idol of the Flourishing Life's healing power on Nourish.
-func (druid *Druid) nourishRelicPower() float64 {
+// nourishRelicFlat is Idol of the Flourishing Life's flat SPELLMOD_DAMAGE on Nourish, which goes on after the
+// percents. Its healing power branch in Unit::SpellDamageBonusDone never sees a heal.
+func (druid *Druid) nourishRelicFlat() float64 {
 	if druid.Ranged().ID == idolOfTheFlourishingLfe {
 		return serverBonus(spellFlourishing, 0)
 	}
 	return 0
 }
 
-// wildGrowthDecay is the percent Wild Growth's bonus drops each tick: 2, less T10's 30%.
-func (druid *Druid) wildGrowthDecay() float32 {
-	decay := float32(wildGrowthTickDecay)
+// wildGrowthT10Cut is the T10 2 piece's percent off Wild Growth's decay, 0 without it.
+func (druid *Druid) wildGrowthT10Cut() float32 {
 	if druid.HasSetBonus(ItemSetLasherweaveGarb, 2) {
-		pct := float32(-serverBonus(spellT10Restoration2P, 0))
-		decay += float32(decay*pct) / 100
+		return float32(-serverBonus(spellT10Restoration2P, 0))
 	}
-	return decay
+	return 0
+}
+
+// wildGrowthDecay is the percent Wild Growth's bonus drops each tick once spell_dru_wild_growth_aura has worked
+// out the amount: the T10 cut comes off what the aura held before. The script keeps the decay over a refresh,
+// which works the amount out again, so each refresh takes the cut off once more.
+func wildGrowthDecay(decay float32, cut float32) float32 {
+	return decay + float32(decay*cut)/100
 }
 
 // targetHasRegrowth is whether any druid's Regrowth is on the target, which is what Glyph of Regrowth looks for.
@@ -224,13 +230,15 @@ func (druid *Druid) countHots(target *core.Unit) int {
 	return n
 }
 
+// tickRejuvenation rolls a T9 crit on the chance the hot took as it went on or refreshed
+// (AuraEffect::CalculatePeriodicData), not the druid's chance at the tick.
 func tickRejuvenation(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 	if !dot.TicksCanCrit {
 		tickHot(sim, target, dot)
 		return
 	}
 	dot.CalcAndDealPeriodicSnapshotHealing(sim, target, func(sim *core.Simulation, result *core.SpellResult, _ *core.AttackTable) {
-		if dot.Spell.HealingCritCheck(sim) {
+		if sim.UnitRandomFloat(dot.Spell.Unit, "Healing Crit Roll") < dot.SnapshotCritChance {
 			result.Outcome = core.OutcomeCrit
 			result.Damage *= dot.Spell.CritMultiplier
 			dot.Spell.SpellMetrics[result.Target.UnitIndex].Crits++
@@ -240,19 +248,20 @@ func tickRejuvenation(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 	})
 }
 
-// registerRestorationItems registers what only some gear and glyphs add: T8's Rejuvenation heal, T10's hot, the
-// Glyph of Rejuvenation's heal and the procs on Rejuvenation's ticks.
+// registerRestorationItems registers what only some gear and glyphs add: T10's hot, the Glyph of Rejuvenation's
+// heal and the procs on Rejuvenation's ticks.
 func (druid *Druid) registerRestorationItems() {
-	druid.registerRejuvenationT8()
 	druid.registerBlessingOfTheEternal()
 	druid.registerRejuvenationProcs()
 }
 
+// registerRejuvenationT8 goes before Tree of Life, which lists the direct heals Master Shapeshifter raises.
 func (druid *Druid) registerRejuvenationT8() {
 	if !druid.HasSetBonus(ItemSetNightsongRegalia, 4) {
 		return
 	}
-	// 64801 takes Rejuvenation's mask: Empowered Rejuvenation's coefficient, nothing of Gift of Nature's
+	// 64801 takes Rejuvenation's mask: Empowered Rejuvenation's coefficient, nothing of Gift of Nature's. It has
+	// SPELL_ATTR2_CANT_CRIT.
 	druid.t8RejuvenationHeal = druid.RegisterSpell(Any, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellT8RejuvenationHl},
 		SpellSchool: core.SpellSchoolNature,
@@ -260,7 +269,6 @@ func (druid *Druid) registerRejuvenationT8() {
 		Flags:       core.SpellFlagHelpful | core.SpellFlagNoOnCastComplete,
 
 		DamageMultiplier: 1,
-		CritMultiplier:   druid.DefaultHealingCritMultiplier(),
 		ThreatMultiplier: druid.healThreatMultiplier(),
 
 		Direct: core.SpellEffect{Effect: 0, SP: 0.188},
@@ -269,7 +277,7 @@ func (druid *Druid) registerRejuvenationT8() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			// half of Rejuvenation's unmodified tick
 			base := float64(int32(float32(rejuvenationTickBase) * 50 / 100))
-			spell.CalcAndDealHealing(sim, target, base+core.PowerBonus(spell.Direct.SP, spell.HealingPower(target)), spell.OutcomeHealingCrit)
+			spell.CalcAndDealHealing(sim, target, base+core.PowerBonus(spell.Direct.SP, spell.HealingPower(target)), spell.OutcomeHealing)
 		},
 	})
 }
@@ -285,8 +293,9 @@ func (druid *Druid) registerBlessingOfTheEternal() {
 	if !druid.HasSetBonus(ItemSetLasherweaveGarb, 4) {
 		return
 	}
-	periodic := druid.periodicHealMultiplier(0.05 * float64(druid.Talents.ImprovedRejuvenation))
-	// spell_proc_dru_t10 hands the cast its heal as base points, with no healing power of its own
+	// spell_dru_t10_restoration_4p_bonus_dummy hands the cast its heal as base points. 70691 has
+	// SPELL_ATTR3_IGNORE_CASTER_MODIFIERS: no spell mods but the duration ones (Nature's Splendor, through
+	// Rejuvenation's family flag), no healing power, only the healing done percents each tick takes.
 	druid.BlessingOfTheEternal = druid.RegisterSpell(Any, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellBlessing},
 		SpellSchool: core.SpellSchoolNature,
@@ -298,13 +307,16 @@ func (druid *Druid) registerBlessingOfTheEternal() {
 
 		Hot: core.DotConfig{
 			Aura:          core.Aura{Label: "Blessing of the Eternal"},
-			NumberOfTicks: 5,
+			NumberOfTicks: 5 + core.TernaryInt32(druid.Talents.NaturesSplendor, 1, 0),
 			TickLength:    time.Second * 3,
-			TicksCanCrit:  false,
-			Tick:          core.SpellEffect{Effect: 0},
+			// Glyph of Rapid Rejuvenation's SPELL_AURA_PERIODIC_HASTE takes it by the same family flag
+			AffectedByCastSpeed: druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfRapidRejuvenation),
+			TickHaste:           core.SpellHasteScalesBoth,
+			TicksCanCrit:        false,
+			Tick:                core.SpellEffect{Effect: 0},
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
 				dot.SnapshotBaseDamage = druid.blessingHeal
-				dot.SnapshotHotMultiplier(periodic)
+				dot.SnapshotHotMultiplier(1)
 			},
 			OnTick: tickHot,
 		},
@@ -316,18 +328,16 @@ func (druid *Druid) registerBlessingOfTheEternal() {
 }
 
 // blessingTarget is spell_dru_t10_restoration_4p_bonus' pick: grouped, the raid member with the lowest health
-// percent and no Regrowth, other than the one that was healed; alone, the druid.
-func (druid *Druid) blessingTarget(healed *core.Unit) *core.Unit {
+// percent and no Regrowth; alone, the druid. The proc casts 70691 with no target, so the healed unit can get it too:
+// the script only leaves out the cast's explicit target, which there isn't.
+func (druid *Druid) blessingTarget() *core.Unit {
 	units := druid.Env.Raid.AllUnits
 	if len(units) <= 1 {
-		if healed == &druid.Unit {
-			return nil
-		}
 		return &druid.Unit
 	}
 	var pick *core.Unit
 	for _, unit := range units {
-		if unit == healed || !unit.IsEnabled() || (unit.HasHealthBar() && unit.CurrentHealth() <= 0) || druid.targetHasRegrowth(unit) {
+		if !unit.IsEnabled() || (unit.HasHealthBar() && unit.CurrentHealth() <= 0) || druid.targetHasRegrowth(unit) {
 			continue
 		}
 		if pick == nil || healthPctOrder(unit) < healthPctOrder(pick) {
@@ -338,14 +348,13 @@ func (druid *Druid) blessingTarget(healed *core.Unit) *core.Unit {
 }
 
 func (druid *Druid) registerGlyphOfRejuvenationHeal() {
-	// 54755 has no healing power coefficient, ignores healing done percents and can't crit (SPELL_ATTR2_CANT_CRIT)
+	// 54755 has no damage class and no spell_bonus_data row, so it takes no healing power, no healing done percents
+	// and no flat healing taken, only the taken percents. It can't crit (SPELL_ATTR2_CANT_CRIT).
 	druid.glyphOfRejuvenationHeal = druid.RegisterSpell(Any, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: spellGlyphOfRejuvHeal},
 		SpellSchool: core.SpellSchoolNature,
 		ProcMask:    core.ProcMaskSpellHealing,
 		Flags:       core.SpellFlagHelpful | core.SpellFlagNoOnCastComplete | core.SpellFlagIgnoreAttackerModifiers,
-
-		HealingTakenCoefficient: core.DefaultHealingTakenCoefficient(0),
 
 		DamageMultiplier: 1,
 		ThreatMultiplier: 1,
@@ -427,7 +436,7 @@ func (druid *Druid) registerRejuvenationProcs() {
 			}
 			if t10 && !isBlessing && (len(druid.Env.Raid.AllUnits) > 1 || target != &druid.Unit) &&
 				sim.RandomFloat("Druid T10 Restoration 4P Bonus") < t10Chance {
-				if pick := druid.blessingTarget(target); pick != nil {
+				if pick := druid.blessingTarget(); pick != nil {
 					druid.blessingHeal = heal
 					druid.BlessingOfTheEternal.Cast(sim, pick)
 				}

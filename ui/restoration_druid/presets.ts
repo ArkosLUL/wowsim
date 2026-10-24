@@ -80,6 +80,11 @@ export const DefaultOptions = RestorationDruidOptions.create({
 	}),
 });
 
+// in the raid sim, player 0 is the raid's first player, not the druid
+export const RaidSimOptions = RestorationDruidOptions.create({
+	innervateTarget: UnitReference.create(),
+});
+
 export const DefaultConsumes = Consumes.create({
 	defaultPotion: Potions.RunicManaPotion,
 	flask: Flask.FlaskOfTheFrostWyrm,

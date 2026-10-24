@@ -52,7 +52,7 @@ var ItemSetFistsOfFury = core.NewItemSet(core.ItemSet{
 					aura.Activate(sim)
 				},
 				OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-					if !result.Landed() {
+					if !result.Landed() || !fistsOfFury.AllowsEvent(spell, result, false) {
 						return
 					}
 
@@ -161,7 +161,7 @@ var ItemSetTwinBladesOfAzzinoth = core.NewItemSet(core.ItemSet{
 					aura.Activate(sim)
 				},
 				OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-					if !result.Landed() {
+					if !result.Landed() || !twinBladesOfAzzinoth.AllowsEvent(spell, result, false) {
 						return
 					}
 

@@ -2113,6 +2113,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 86, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Sudden Death (Rank 1)
+	{
+		ID: 29723, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcFlags: 0x14, ProcChance: 3, SpellLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, MiscValue: 11, TriggerSpell: 52437, ClassMask: [3]uint32{0x2010, 0x8}},
+		},
+	},
 	// Sudden Death (Rank 3)
 	{
 		ID: 29724, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
@@ -2120,6 +2129,15 @@ var spells = []Spell{
 		ProcFlags: 0x14, ProcChance: 9, SpellLevel: 1,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 42, BasePoints: 8, DieSides: 1, DamageMultiplier: 1, MiscValue: 11, TriggerSpell: 52437, ClassMask: [3]uint32{0x2010, 0x8}},
+		},
+	},
+	// Sudden Death (Rank 2)
+	{
+		ID: 29725, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcFlags: 0x14, ProcChance: 6, SpellLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, MiscValue: 11, TriggerSpell: 52437, ClassMask: [3]uint32{0x2010, 0x8}},
 		},
 	},
 	// Blood Frenzy (Rank 2)
@@ -2477,6 +2495,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 235, BasePoints: 64, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0x2bbc16f, 0x1649}},
 		},
 	},
+	// Reflection of Torment
+	{
+		ID: 33648, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60065},
+		},
+	},
 	// Blood Fury (Racial)
 	{
 		ID: 33697, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -2536,6 +2563,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 36, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 2},
 			{Effect: 6, Aura: 77, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, MiscValue: 17},
+		},
+	},
+	// Essence of Life
+	{
+		ID: 33953, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x40, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		ProcFlags: 0x44000, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 60062},
 		},
 	},
 	// Kill Command
@@ -2699,6 +2735,47 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 30, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, MiscValue: 2},
+		},
+	},
+	// Band of the Eternal Champion
+	{
+		ID: 35080, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		DurationMs: -1, MaxDurationMs: -1,
+		ProcFlags: 0x154, ProcChance: 100, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 35081},
+		},
+	},
+	// Band of the Eternal Champion
+	{
+		ID: 35081, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   10000, MaxDurationMs: 10000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 99, BasePoints: 159, DieSides: 1, DamageMultiplier: 1},
+			{Effect: 6, Aura: 124, BasePoints: 159, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Band of the Eternal Sage
+	{
+		ID: 35083, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x10000, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 35084},
+		},
+	},
+	// Band of the Eternal Sage
+	{
+		ID: 35084, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   10000, MaxDurationMs: 10000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 13, BasePoints: 94, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
+			{Effect: 6, Aura: 135, BasePoints: 94, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 		},
 	},
 	// Gore (Rank 6)
@@ -3449,6 +3526,38 @@ var spells = []Spell{
 			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
+	// Battle Trance
+	{
+		ID: 45040, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagPositive,
+		Attributes: [8]uint32{0x40000},
+		DurationMs: 20000, MaxDurationMs: 20000,
+		ProcFlags: 0x154, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 45041},
+		},
+	},
+	// Combat Insight
+	{
+		ID: 45041, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		DurationMs: -1, MaxDurationMs: -1, StackAmount: 10,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 99, BasePoints: 43, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
+			{Effect: 6, Aura: 124, BasePoints: 43, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Disdain
+	{
+		ID: 45053, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   20000, MaxDurationMs: 20000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 99, BasePoints: 229, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+			{Effect: 6, Aura: 124, BasePoints: 229, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
 	// Master Poisoner - increase crit chance
 	{
 		ID: 45176, Family: 8, SchoolMask: 1,
@@ -3477,6 +3586,24 @@ var spells = []Spell{
 		CastMods: ModBounds{FlatMin: -500}, CooldownMods: ModBounds{FlatMin: -2500},
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 95, DieSides: 13, PointsPerLevel: 0.95, DamageMultiplier: 0.7, BonusMultiplier: 0.2855, ChainTargets: 3},
+		},
+	},
+	// Item - Sunwell Dungeon Melee Trinket
+	{
+		ID: 45354, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 45053},
+		},
+	},
+	// Item - T7 Melee Trinket Base
+	{
+		ID: 45355, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 45040},
 		},
 	},
 	// Death Strike
@@ -5192,6 +5319,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 226, AmplitudeMs: 1000, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 		},
 	},
+	// Bloodworms (Rank 1)
+	{
+		ID: 49027, Family: 15, SchoolMask: 8, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcFlags: 0x14, ProcChance: 3,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 231, BasePoints: 1, DieSides: 3, DamageMultiplier: 1, MiscValue: 7252, TriggerSpell: 50452, ClassMask: [3]uint32{0, 0x800}},
+		},
+	},
 	// Dancing Rune Weapon
 	{
 		ID: 49028, Family: 15, FamilyFlags: [3]uint32{0x40000000}, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagHasteGCD,
@@ -5440,6 +5576,15 @@ var spells = []Spell{
 		ProcFlags:  0x10, ProcChance: 15,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 4, DamageMultiplier: 1},
+		},
+	},
+	// Bloodworms (Rank 2)
+	{
+		ID: 49542, Family: 15, SchoolMask: 8, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcFlags: 0x14, ProcChance: 6,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 231, BasePoints: 1, DieSides: 3, DamageMultiplier: 1, MiscValue: 7252, TriggerSpell: 50452, ClassMask: [3]uint32{0, 0x800}},
 		},
 	},
 	// Bloodworms (Rank 3)
@@ -6991,6 +7136,15 @@ var spells = []Spell{
 			{Effect: 3, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, ChainTargets: 2},
 		},
 	},
+	// Item - Death Knight's Anguish Base
+	{
+		ID: 54695, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 54696},
+		},
+	},
 	// Wracking Pains
 	{
 		ID: 54696, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagPositive,
@@ -7009,6 +7163,15 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 14, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 1792},
+		},
+	},
+	// Sonic Awareness (DND)
+	{
+		ID: 54707, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1c0},
+		ProcFlags:  0x3c, ProcChance: 35,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 55018},
 		},
 	},
 	// Firestarter
@@ -7454,6 +7617,15 @@ var spells = []Spell{
 	},
 	// Argent Fury
 	{
+		ID: 55747, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x1154, ProcChance: 15, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 55748},
+		},
+	},
+	// Argent Fury
+	{
 		ID: 55748, SchoolMask: 2, DmgClass: DmgClassMagic,
 		AttributesCu: 0x1100,
 		ProcChance:   101, SpellLevel: 60, BaseLevel: 60,
@@ -7617,6 +7789,15 @@ var spells = []Spell{
 		ProcFlags: 0x10, ProcChance: 101, ProcCharges: 1, SpellLevel: 67, BaseLevel: 67,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 4, ClassMask: [3]uint32{0, 0x20000000}},
+		},
+	},
+	// Darkmoon Card: Death
+	{
+		ID: 57352, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		ProcFlags: 0x55554, ProcChance: 15,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 1849, DieSides: 301, DamageMultiplier: 1, TriggerSpell: 60203},
 		},
 	},
 	// Stampede (Rank 6)
@@ -8218,6 +8399,15 @@ var spells = []Spell{
 	},
 	// Tears of Anguish
 	{
+		ID: 58901, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 58904},
+		},
+	},
+	// Tears of Anguish
+	{
 		ID: 58904, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
 		AttributesCu: 0x100000,
 		DurationMs:   10000, MaxDurationMs: 10000,
@@ -8309,6 +8499,15 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 78999, DieSides: 2001, DamageMultiplier: 1},
+		},
+	},
+	// Chagrin
+	{
+		ID: 59345, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0, 0x100000}, AttributesCu: 0x100000,
+		ProcFlags: 0x154, ProcChance: 15,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 257, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 8388608, TriggerSpell: 61671},
 		},
 	},
 	// The Art of War (Rank 2)
@@ -8457,6 +8656,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 189, BasePoints: 504, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 917504},
 		},
 	},
+	// Now is the Time!
+	{
+		ID: 60063, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x40, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		ProcFlags: 0x14000, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 60064},
+		},
+	},
 	// Now is the time!
 	{
 		ID: 60064, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -8570,12 +8778,30 @@ var spells = []Spell{
 	},
 	// Meteorite Whetstone
 	{
+		ID: 60301, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 15, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60302},
+		},
+	},
+	// Meteorite Whetstone
+	{
 		ID: 60302, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
 		AttributesCu: 0x100000,
 		DurationMs:   10000, MaxDurationMs: 10000,
 		ProcFlags: 0x15550, ProcChance: 100, SpellLevel: 60, BaseLevel: 60,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 443, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 917504},
+		},
+	},
+	// Vestige of Haldor
+	{
+		ID: 60306, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x1154, ProcChance: 15, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60307},
 		},
 	},
 	// Vestige of Haldor
@@ -8597,6 +8823,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 99, BasePoints: 15, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{},
 			{Effect: 6, Aura: 124, BasePoints: 15, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
+	// Signet of Edward the Odd
+	{
+		ID: 60317, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 15, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60318},
 		},
 	},
 	// Edward's Insight
@@ -8631,12 +8866,30 @@ var spells = []Spell{
 	},
 	// Grim Toll
 	{
+		ID: 60436, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 15, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60437},
+		},
+	},
+	// Grim Toll
+	{
 		ID: 60437, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
 		AttributesCu: 0x100000,
 		DurationMs:   10000, MaxDurationMs: 10000,
 		ProcFlags: 0x15550, ProcChance: 100, SpellLevel: 60, BaseLevel: 60,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 611, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 16777216},
+		},
+	},
+	// Bandit's Insignia
+	{
+		ID: 60442, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x1154, ProcChance: 15, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60443},
 		},
 	},
 	// Bandit's Insignia
@@ -8650,6 +8903,15 @@ var spells = []Spell{
 	},
 	// Forge Ember
 	{
+		ID: 60473, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x40}, AttributesCu: 0x100000,
+		ProcFlags: 0x14000, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 60479},
+		},
+	},
+	// Forge Ember
+	{
 		ID: 60479, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
 		AttributesCu: 0x100000,
 		DurationMs:   10000, MaxDurationMs: 10000,
@@ -8657,6 +8919,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 13, BasePoints: 511, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 917630},
 			{Effect: 6, Aura: 135, BasePoints: 511, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Pendulum of Telluric Currents
+	{
+		ID: 60482, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000, 0, 0x4000000},
+		ProcFlags:  0x50000, ProcChance: 15, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60483},
 		},
 	},
 	// Pendulum of Telluric Currents
@@ -8681,6 +8952,15 @@ var spells = []Spell{
 	},
 	// Extract of Necromatic Power
 	{
+		ID: 60487, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x40000, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60488},
+		},
+	},
+	// Extract of Necromatic Power
+	{
 		ID: 60488, SchoolMask: 32, DmgClass: DmgClassMagic, Flags: FlagHasteGCD,
 		Attributes: [8]uint32{0x10000}, AttributesCu: 0x1100,
 		CastMs: 2200, BaseCastMs: 2200, GCDMs: 1500, GCDCategory: 133,
@@ -8697,6 +8977,15 @@ var spells = []Spell{
 		ProcFlags: 0x15550, ProcChance: 100, SpellLevel: 60, BaseLevel: 60,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 504, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 917504},
+		},
+	},
+	// Dying Curse
+	{
+		ID: 60493, Family: 3, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		ProcFlags: 0x54000, ProcChance: 15,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 60494},
 		},
 	},
 	// Dying Curse
@@ -9249,6 +9538,15 @@ var spells = []Spell{
 	},
 	// Tentacles
 	{
+		ID: 61618, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1c0, 0, 0, 0, 0x100000}, AttributesCu: 0x100000,
+		ProcFlags: 0x154, ProcChance: 15,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 257, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 8388608, TriggerSpell: 61619},
+		},
+	},
+	// Tentacles
+	{
 		ID: 61619, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
 		AttributesCu: 0x100000,
 		DurationMs:   10000, MaxDurationMs: 10000,
@@ -9368,6 +9666,15 @@ var spells = []Spell{
 		ProcChance: 101, PowerType: 3, ManaCost: 50, SpellLevel: 71, BaseLevel: 71,
 		Effects: [3]Effect{
 			{Effect: 31, BasePoints: 249, DieSides: 1, DamageMultiplier: 1, ChainTargets: 1000},
+		},
+	},
+	// Strength of the Titans
+	{
+		ID: 62115, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x154, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 60065},
 		},
 	},
 	// Unflinching Valor
@@ -9490,6 +9797,15 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 327, DieSides: 1, DamageMultiplier: 1, MiscValue: 1792},
+		},
+	},
+	// Glory of the Jouster
+	{
+		ID: 63251, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x55554, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 63250},
 		},
 	},
 	// Totem of Wrath
@@ -10637,6 +10953,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 22, BasePoints: 7055, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 1},
 		},
 	},
+	// Coliseum 5 Tank Trinket
+	{
+		ID: 67653, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000, 0, 0x4000000},
+		ProcFlags:  0x28, ProcChance: 25, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 67631},
+		},
+	},
 	// Mana Mana
 	{
 		ID: 67666, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -10666,6 +10991,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 135, BasePoints: 589, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 		},
 	},
+	// Coliseum 5 CasterTrinket
+	{
+		ID: 67670, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000, 0, 0x4000000},
+		ProcFlags:  0x10000, ProcChance: 25, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 67669},
+		},
+	},
 	// Fury
 	{
 		ID: 67671, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -10675,6 +11009,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 1007, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 124, BasePoints: 1007, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Coliseum 5 Melee Trinket
+	{
+		ID: 67672, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000, 0, 0x4000000},
+		ProcFlags:  0x154, ProcChance: 20, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 67671},
 		},
 	},
 	// Energized
@@ -11382,6 +11725,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 124, BasePoints: 1099, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
+	// Item - Icecrown 10 Normal Melee Trinket
+	{
+		ID: 71402, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x51154, ProcChance: 35,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 71401},
+		},
+	},
 	// Fatal Flaws
 	{
 		ID: 71403, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -11390,6 +11742,24 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 677, DieSides: 1, DamageMultiplier: 1, MiscValue: 16777216},
+		},
+	},
+	// Item - Icecrown Dungeon Melee Trinket
+	{
+		ID: 71404, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000, 0, 0x4000000},
+		ProcFlags:  0x154, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 71403},
+		},
+	},
+	// Anger Capacitor
+	{
+		ID: 71406, Family: 10, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x14, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 2, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 18350, ClassMask: [3]uint32{0x800000}},
 		},
 	},
 	// Mote of Anger
@@ -11477,6 +11847,24 @@ var spells = []Spell{
 			{Effect: 6, Aura: 189, BasePoints: 599, DieSides: 1, DamageMultiplier: 1, MiscValue: 917504},
 		},
 	},
+	// Item - Icecrown 25 Normal Melee Trinket
+	{
+		ID: 71519, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x154, ProcChance: 35,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Item - Icecrown 10 Heroic Melee Trinket
+	{
+		ID: 71540, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x51154, ProcChance: 35,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 71541},
+		},
+	},
 	// Icy Rage
 	{
 		ID: 71541, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -11486,6 +11874,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 1249, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 124, BasePoints: 1249, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
+	// Anger Capacitor
+	{
+		ID: 71545, Family: 10, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x14, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 18350, ClassMask: [3]uint32{0x800000}},
 		},
 	},
 	// Agility of the Vrykul
@@ -11542,6 +11939,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 56, DamageMultiplier: 1, MiscValue: 38273},
 			{Effect: 6, Aura: 29, BasePoints: 699, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Item - Icecrown 25 Heroic Melee Trinket
+	{
+		ID: 71562, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x154, ProcChance: 35,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
 	// Cultivated Power
@@ -11617,6 +12023,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 135, BasePoints: 1073, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 		},
 	},
+	// Item - Icecrown 25 Normal Caster Trinket 2
+	{
+		ID: 71606, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x40000, ProcChance: 30, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 71605},
+		},
+	},
 	// Release of Light
 	{
 		ID: 71607, SchoolMask: 2, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -11644,6 +12059,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 13, BasePoints: 1206, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 135, BasePoints: 1206, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Item - Icecrown 25 Heroic Caster Trinket 2
+	{
+		ID: 71637, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x40000, ProcChance: 30, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 71636},
 		},
 	},
 	// Echoes of Light
@@ -11810,6 +12234,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 4, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x1000}},
 		},
 	},
+	// Item - Icecrown 25 Normal Dagger Proc
+	{
+		ID: 71880, Family: 10, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x14, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 71870, ClassMask: [3]uint32{0x800000}},
+		},
+	},
 	// Invigoration
 	{
 		ID: 71881, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -11868,6 +12301,24 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 24, AmplitudeMs: 2000, BasePoints: 119, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Item - Icecrown 25 Heroic Dagger Proc
+	{
+		ID: 71892, Family: 10, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x14, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 71870, ClassMask: [3]uint32{0x800000}},
+		},
+	},
+	// Item - Shadowmourne Legendary
+	{
+		ID: 71903, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x14, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0x800000}},
 		},
 	},
 	// Chaos Bane
@@ -11939,6 +12390,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 135, BasePoints: 284, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 126},
 		},
 	},
+	// Item - Icecrown Reputation Ring Caster Trigger
+	{
+		ID: 72417, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0x10000000},
+		ProcFlags:  0x10000, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 72416},
+		},
+	},
 	// Frost Breath
 	{
 		ID: 73061, SchoolMask: 16, DmgClass: DmgClassMagic, Flags: FlagResetsAutoAttack | FlagTargetsArea,
@@ -11960,6 +12420,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 29, BasePoints: 269, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Item - Chamber of Aspects 25 Melee Trinket
+	{
+		ID: 75455, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x51154, ProcChance: 35,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 75458},
+		},
+	},
 	// Piercing Twilight
 	{
 		ID: 75456, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -11971,6 +12440,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 124, BasePoints: 1471, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
+	// Item - Chamber of Aspects 25 Heroic Melee Trinket
+	{
+		ID: 75457, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000},
+		ProcFlags:  0x51154, ProcChance: 35,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 75456},
+		},
+	},
 	// Piercing Twilight
 	{
 		ID: 75458, SchoolMask: 64, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -11980,6 +12458,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 99, BasePoints: 1303, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 			{Effect: 6, Aura: 124, BasePoints: 1303, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
+	// Item - Chamber of Aspects 25 Nuker Trinket
+	{
+		ID: 75465, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000, 0x80}, AttributesCu: 0x100000,
+		ProcFlags: 0x50000, ProcChance: 10,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 75466, ClassMask: [3]uint32{0x800000}},
 		},
 	},
 	// Twilight Flames
@@ -12002,6 +12489,15 @@ var spells = []Spell{
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 13, BasePoints: 860, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 			{Effect: 6, Aura: 135, BasePoints: 860, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+		},
+	},
+	// Item - Chamber of Aspects 25 Heroic Nuker Trinket
+	{
+		ID: 75474, Family: 10, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x4000000}, AttributesCu: 0x100000,
+		ProcFlags: 0x50000, ProcChance: 10,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 75473, ClassMask: [3]uint32{0x800000}},
 		},
 	},
 	// Twilight Renewal

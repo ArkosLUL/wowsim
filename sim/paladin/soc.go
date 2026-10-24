@@ -113,6 +113,7 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 
 	// Seal of Command aura.
 	auraActionID := core.ActionID{SpellID: 20375}
+	serverProc := core.ServerProcFor(20375)
 	paladin.SealOfCommandAura = paladin.RegisterAura(core.Aura{
 		Label:    "Seal of Command",
 		Tag:      "Seal",
@@ -137,7 +138,7 @@ func (paladin *Paladin) registerSealOfCommandSpellAndAura() {
 					// For SoC this is a cleave.
 					onSpecialOrSwingProcCleave.Cast(sim, result.Target)
 				}
-			} else if paladin.sealCanProcOn(spell) {
+			} else if paladin.sealCanProcOn(spell) && serverProc.AllowsEvent(spell, result, false) {
 				// Temporary check to avoid AOE double procing.
 				if spell.SpellID == paladin.HammerOfTheRighteous.SpellID || spell.SpellID == paladin.DivineStorm.SpellID {
 					onSpecialOrSwingProc.Cast(sim, result.Target)

@@ -65,13 +65,6 @@ func holyPriest() *proto.Player {
 	}
 }
 
-var castsNothing = core.APLRotationFromJsonString(`{
-	"type": "TypeAPL",
-	"priorityList": [
-		{"action":{"autocastOtherCooldowns":{}}}
-	]
-}`)
-
 func holyPaladin() *proto.Player {
 	return &proto.Player{
 		Name:          "HolyPaladin",
@@ -308,13 +301,11 @@ func TestHealerIsMeasuredInHPS(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		player func() *proto.Player
-		// false while the spec's default APL casts no heals
-		heals bool
 	}{
-		{"HealingPriest", holyPriest, true},
-		{"HolyPaladin", holyPaladin, true},
-		{"RestorationDruid", restorationDruid, true},
-		{"RestorationShaman", restorationShaman, true},
+		{"HealingPriest", holyPriest},
+		{"HolyPaladin", holyPaladin},
+		{"RestorationDruid", restorationDruid},
+		{"RestorationShaman", restorationShaman},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			player := tc.player()
@@ -322,10 +313,10 @@ func TestHealerIsMeasuredInHPS(t *testing.T) {
 				t.Fatalf("role %v, err %v", role, err)
 			}
 			result := measure(t, request(player, 50))
-			if len(result.Slopes) != len(Healer.Stats) || (tc.heals && result.Base.Hps <= 0) {
+			if len(result.Slopes) != len(Healer.Stats) || result.Base.Hps <= 0 {
 				t.Fatalf("%d slopes, base hps %v", len(result.Slopes), result.Base.Hps)
 			}
-			if sp := slopeOf(t, result, proto.Stat_StatSpellPower); tc.heals && sp.Gain.Hps <= 0 {
+			if sp := slopeOf(t, result, proto.Stat_StatSpellPower); sp.Gain.Hps <= 0 {
 				t.Errorf("spell power gains %v HPS per point", sp.Gain.Hps)
 			}
 		})

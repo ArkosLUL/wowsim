@@ -197,7 +197,7 @@ const (
 	SpellFlagNoLogs                                         // Disables logs for a spell.
 	SpellFlagAPL                                            // Indicates this spell can be used from an APL rotation.
 	SpellFlagMCD                                            // Indicates this spell is a MajorCooldown.
-	SpellFlagNoOnDamageDealt                                // Disables OnSpellHitDealt and OnPeriodicDamageDealt aura callbacks for this spell.
+	SpellFlagNoOnDamageDealt                                // Disables the dealt and taken aura callbacks of this spell's hits, ticks and heals.
 	SpellFlagPrepullOnly                                    // Indicates this spell should only be used during prepull. Not enforced, just a signal for the APL UI.
 	SpellFlagEncounterOnly                                  // Indicates this spell should only be used during the encounter (not prepull). Not enforced, just a signal for the APL UI.
 	SpellFlagPotion                                         // Indicates this spell is a potion spell.

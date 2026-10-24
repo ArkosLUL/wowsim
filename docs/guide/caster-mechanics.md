@@ -45,7 +45,8 @@ pets and guardians in [pets](pets.md).
     lists Tree. Faerie Fire's and the balance spells' do; Faerie Fire at a friend (a healer's default target)
     isn't cast.
   - Omen of Clarity rolls on every landing, a hot's with nothing to heal too (`CheckProc` passes any druid
-    spell but a shapeshift): Wild Growth once a target, Lifebloom's bloom (`CAN_PROC_FROM_PROCS`).
+    spell but a shapeshift): Wild Growth once a target. Lifebloom's bloom procs nothing, Omen and items
+    alike (`SPELL_ATTR3_SUPPRESS_CASTER_PROCS`).
     Clearcasting covers every heal, not Tree of Life.
   - Balance talents reach them: Genesis +1% a point on the hots, Moonglow -3% cost on Healing Touch,
     Rejuvenation, Regrowth and Nourish, Nature's Majesty +2% crit on Healing Touch and Nourish, Nature's
@@ -83,17 +84,23 @@ pets and guardians in [pets](pets.md).
     speed, keeping the tick count. Regrowth +20% on the heal and on the hot's amount while the target has any
     Regrowth, read as the amount is worked out (a first cast gets none; Swiftmend's ticks never). Rejuvenation:
     a tick on a target under 50% health casts 54755 for half of it (no crit, no healing power or done
-    percents). Swiftmend keeps the hot. Wild Growth +1 target.
+    percents or flat healing taken). Swiftmend keeps the hot. Wild Growth +1 target.
   - **Resto sets:** T7 (Dreamwalker Regalia) Lifebloom -5% cost; its 4-piece 60137 is a class script (8477) no
     server code reads, so does nothing. T8 (Nightsong Regalia) Swiftmend +10% on the whole amount; each
     Rejuvenation cast or refresh heals 64801 for half the unmodified tick (169) plus 0.188 of healing power
-    (Empowered Rejuvenation's coefficient, not Gift of Nature). T9 (Malfurion's or Runetotem's Garb) Nourish
-    +5% crit; Rejuvenation ticks can crit. T10 (Lasherweave Garb) Wild Growth's bonus drops 1.4% a tick, not 2%;
-    each Rejuvenation tick has 2% to cast Blessing of the Eternal (70691), a 15 s hot of that heal on the raid
-    unit lowest in health without a Regrowth (never the one healed; the druid when alone).
-  - **Resto relics:** Budding Life -36 and Awakening -106 mana on Rejuvenation; Pure Thoughts +33 on its tick
-    (before the percents); Lush Moss a seventh of 125 on each Lifebloom tick; Idols of Tenacity (every season)
-    +N on the bloom's base per stack; Flourishing Life +187 healing power on Nourish; Flaring Growth 70% on a
+    (Empowered Rejuvenation's coefficient, not Gift of Nature), no crit (`SPELL_ATTR2_CANT_CRIT`), Master
+    Shapeshifter in Tree. T9 (Malfurion's or Runetotem's Garb) Nourish +5% crit; Rejuvenation ticks can crit, on
+    the chance taken as the hot went on or refreshed. T10 (Lasherweave Garb): Wild Growth's 2%-a-tick decay
+    loses 30% (1.4) on a new aura and 30% again at each refresh (0.98, 0.69…), as `spell_dru_wild_growth_aura`
+    reruns on a refresh; each Rejuvenation tick has 2% to cast Blessing of the Eternal (70691), a hot of that heal
+    on the raid unit lowest in health without a Regrowth (the one healed included: the cast has no explicit
+    target; the druid when alone). 70691 ignores caster modifiers (no spell mods, only aura 136 at each tick)
+    but not duration mods: Nature's Splendor makes it 18 s, and Rapid Rejuvenation hastes it. With
+    Rejuvenation's family flag, Swiftmend eats it (4 ticks) and Revitalize rolls on its ticks.
+  - **Resto relics:** Budding Life -36 and Awakening -106 mana on Rejuvenation; Pure Thoughts +33 on its tick;
+    Lush Moss a seventh of 125 on each Lifebloom tick; Idols of Tenacity (every season) +N on the bloom's base per
+    stack; Flourishing Life +187 on Nourish (a flat `SPELLMOD_DAMAGE`: the server's healing power branch for it
+    is in `SpellDamageBonusDone`, which heals never reach); flats come after the percents; Flaring Growth 70% on a
     Rejuvenation tick, 5 s apart, for 234 spell power 9 s; Black Willow every tick, a stack of 32 spell power,
     8 stacks, 15 s.
   - **Tree of Life** (33891, 13% base mana less Natural Shapeshifter): its 34123 gives every raid unit +6%
@@ -103,11 +110,13 @@ pets and guardians in [pets](pets.md).
     stacks and left to bloom, Rejuvenation when down, Wild Growth and Swiftmend on cooldown, Regrowth when down,
     Healing Touch on Clearcasting, Nourish filler; Innervate (self, under 500 mana), Nature's Swiftness and the
     potion go out as major cooldowns. Page defaults: no bloodlust or other DPS buffs, Runic Mana Potion.
-    - Page request (9 dummies, 300 s), time to OOM and HPS: preraid 126 s 7000, P1 174 s 9189, P2 to P5 none
-      (13532, 13421, 20836, 21081). The P5 preset is P4 plus the Ruby Sanctum cloak, bracers, belt, ring and trinket.
-    - HPS a point, `statslopes.Measure` at the page's request, 3000 iterations (Int / Spirit / SP / crit / haste /
-      MP5): P1 4.07 / 2.49 / 2.35 / 0.37 / -0.44 / 6.53; P3 0.52 / 0.73 / 2.79 / 0.72 / 0.09 / 0.35; P5 0.99 /
-      1.28 / 3.09 / 0.79 / -0.21 / 0.86. Mana stats fall once a phase stops running dry. Haste is about 0 or
+    - Page request (9 dummies, 300 s, 3000 iterations, seed 424242), time to OOM and HPS: preraid 128 s 6938,
+      P1 174 s 9078; P2 to P5 average past 300 s (0 to 4 s out of mana): 12375, 13425, 20413, 20680. The P5
+      preset is P4 plus the Ruby Sanctum cloak, bracers, belt, ring and trinket. P2's Val'anyr bubble jumping to
+      200000 (`spell_item_blessing_of_ancient_kings`) counts as shielding, so P2 out-heals P3.
+    - HPS a point, `statslopes.Measure` at the same request (Int / Spirit / SP / crit / haste / MP5): P1 4.10 /
+      2.55 / 2.32 / 0.28 / -0.43 / 6.77; P3 0.52 / 0.73 / 2.79 / 0.73 / 0.05 / 0.37; P5 1.16 / 1.42 / 3.77 /
+      1.08 / 0.17 / 0.96. Mana stats fall once a phase stops running dry. Haste is about 0 or
       negative while the build is mana-bound, as it only spends mana sooner; Lifebloom and the hots don't scale
       with it.
 - **Savage Defense** holds one charge, which the druid's crits refill at their own rate: the slower the boss

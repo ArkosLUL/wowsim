@@ -22,7 +22,8 @@ func init() {
 	core.NewItemEffect(49623, func(agent core.Agent) {
 		player := agent.GetCharacter()
 
-		ppmm := player.AutoAttacks.NewPPMManager(12, core.ProcMaskMeleeOrProc)
+		shadowmourne := core.ServerProcFor(71903)
+		ppmm := player.AutoAttacks.NewPPMManager(shadowmourne.PPM, core.ProcMaskMeleeOrProc)
 
 		chaosBaneAura := player.NewTemporaryStatsAura("Chaos Bane", core.ActionID{SpellID: 73422}, stats.Stats{stats.Strength: 270}, time.Second*10)
 
@@ -64,7 +65,7 @@ func init() {
 		core.MakePermanent(player.GetOrRegisterAura(core.Aura{
 			Label: "Shadowmourne",
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				if chaosBaneAura.IsActive() {
+				if chaosBaneAura.IsActive() || !result.Landed() || !shadowmourne.AllowsEvent(spell, result, false) {
 					return
 				}
 

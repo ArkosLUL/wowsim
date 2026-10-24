@@ -59,15 +59,15 @@ func hotSnapshot(periodic float64) core.OnSnapshot {
 	return hotSnapshotWith(periodic, 0, nil)
 }
 
-// hotSnapshotWith adds a flat SPELLMOD_DOT to the roll and healing power before the percents, and the multiplier
+// hotSnapshotWith adds a flat SPELLMOD_DOT after every percent, as Player::ApplySpellMod does, and the multiplier
 // extra returns (Glyph of Regrowth's, which reads the target as the hot goes on).
 func hotSnapshotWith(periodic float64, flat float64, extra func(target *core.Unit) float64) core.OnSnapshot {
 	return func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-		dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.HealingPower(target)) + flat
 		multiplier := periodic
 		if extra != nil {
 			multiplier *= extra(target)
 		}
+		dot.SnapshotBaseDamage = dot.Tick.Roll(sim) + core.PowerBonus(dot.Tick.SP, dot.Spell.HealingPower(target)) + flat/multiplier
 		dot.SnapshotHotMultiplier(multiplier)
 	}
 }
@@ -76,9 +76,10 @@ func tickHot(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
 	dot.CalcAndDealPeriodicSnapshotHealing(sim, target, dot.OutcomeTick)
 }
 
-// wholeHot is a hot's whole amount for one stack, what SpellHealingBonusDone returns for it.
+// wholeHot is a hot's whole amount for one stack, what SpellHealingBonusDone returns for it, a flat SPELLMOD_DOT
+// added after the percents.
 func wholeHot(sim *core.Simulation, target *core.Unit, dot *core.Dot, periodic float64, flat float64) float64 {
-	return max(0, math.Trunc((dot.Tick.Roll(sim)+core.PowerBonus(dot.Tick.SP, dot.Spell.HealingPower(target))+flat)*periodic))
+	return max(0, math.Trunc((dot.Tick.Roll(sim)+core.PowerBonus(dot.Tick.SP, dot.Spell.HealingPower(target)))*periodic+flat))
 }
 
 func (druid *Druid) registerHealingTouchSpell() {
@@ -175,6 +176,7 @@ func (druid *Druid) registerRegrowthSpell() {
 func (druid *Druid) registerRejuvenationSpell() {
 	hotFlat := druid.rejuvenationFlatHealing()
 	t9Crit := druid.HasSetBonus(ItemSetMalfurionsGarb, 4)
+	snapshot := hotSnapshotWith(druid.periodicHealMultiplier(0.05*float64(druid.Talents.ImprovedRejuvenation)), hotFlat, nil)
 	druid.Rejuvenation = druid.RegisterSpell(healForms, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 48441},
 		SpellSchool: core.SpellSchoolNature,
@@ -209,8 +211,11 @@ func (druid *Druid) registerRejuvenationSpell() {
 			TickHaste:           core.SpellHasteScalesBoth,
 			TicksCanCrit:        t9Crit,
 			Tick:                core.SpellEffect{Effect: 0, Min: rejuvenationTickBase, Max: rejuvenationTickBase, SP: 0.376},
-			OnSnapshot:          hotSnapshotWith(druid.periodicHealMultiplier(0.05*float64(druid.Talents.ImprovedRejuvenation)), hotFlat, nil),
-			OnTick:              tickRejuvenation,
+			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, isRollover bool) {
+				snapshot(sim, target, dot, isRollover)
+				dot.SnapshotCritChance = dot.Spell.HealingCritChance()
+			},
+			OnTick: tickRejuvenation,
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -234,7 +239,7 @@ var nourishTakenBonus = float64(float32(1.2))
 func (druid *Druid) registerNourishSpell() {
 	glyphPerHot := serverBonus(spellGlyphOfNourish, 0)
 	glyph := druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfNourish)
-	relicPower := druid.nourishRelicPower()
+	relicFlat := druid.nourishRelicFlat()
 	t9Crit := core.TernaryFloat64(druid.HasSetBonus(ItemSetMalfurionsGarb, 2), serverBonus(spellT9Restoration2P, 0), 0)
 	druid.Nourish = druid.RegisterSpell(healForms, core.SpellConfig{
 		ActionID:    core.ActionID{SpellID: 50464},
@@ -263,7 +268,10 @@ func (druid *Druid) registerNourishSpell() {
 		Mods:   []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 10 * druid.Talents.EmpoweredTouch}},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
-			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.HealingPower(target)+relicPower)
+			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.HealingPower(target))
+			if relicFlat != 0 {
+				baseHealing += relicFlat / spell.CasterHealingMultiplier()
+			}
 			// spell_dru_nourish adds the glyph's percent per hot of the druid's, after the heal's terms and before the crit
 			outcome := spell.OutcomeHealingCrit
 			if hots := druid.countHots(target); glyph && hots > 0 {
@@ -370,8 +378,9 @@ func (druid *Druid) registerSwiftmendSpell() {
 }
 
 // swiftmendHot is the hot Swiftmend eats and how many of its ticks it heals for: a Rejuvenation (4) or Regrowth
-// (6) with the least time left, a tie to the older one. The druid's own come first, then another druid's:
-// AURA_STATE_SWIFTMEND isn't per caster.
+// (6) with the least time left, a tie to the older one. T10's Blessing of the Eternal has Rejuvenation's family
+// flag, so it counts as one. The druid's own come first, then another druid's: AURA_STATE_SWIFTMEND isn't per
+// caster.
 func (druid *Druid) swiftmendHot(sim *core.Simulation, target *core.Unit) (*core.Dot, int32) {
 	if hot, ticks := shortestSwiftmendHot(sim, target, druid); hot != nil {
 		return hot, ticks
@@ -396,7 +405,7 @@ func shortestSwiftmendHot(sim *core.Simulation, target *core.Unit, caster *Druid
 	for _, c := range []struct {
 		spell *DruidSpell
 		ticks int32
-	}{{caster.Rejuvenation, 4}, {caster.Regrowth, 6}} {
+	}{{caster.Rejuvenation, 4}, {caster.Regrowth, 6}, {caster.BlessingOfTheEternal, 4}} {
 		if c.spell == nil {
 			continue
 		}

@@ -163,6 +163,7 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 
 	// Seal of Vengeance aura.
 	auraActionID := core.ActionID{SpellID: 31801}
+	serverProc := core.ServerProcFor(31801)
 	paladin.SealOfVengeanceAura = paladin.RegisterAura(core.Aura{
 		Label:    "Seal of Vengeance",
 		Tag:      "Seal",
@@ -198,7 +199,7 @@ func (paladin *Paladin) registerSealOfVengeanceSpellAndAura() {
 					}
 				}
 			} else {
-				if paladin.sealCanProcOn(spell) {
+				if paladin.sealCanProcOn(spell) && serverProc.AllowsEvent(spell, result, false) {
 					if dotSpell.Dot(result.Target).GetStacks() > 0 {
 						onSpecialOrSwingProc.Cast(sim, result.Target)
 					}

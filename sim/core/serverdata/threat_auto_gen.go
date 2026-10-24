@@ -136,7 +136,9 @@ var threats = []Threat{
 	{SpellID: 28730, Targets: ThreatTargetsCaster | ThreatTargetsEnemyArea},                // Arcane Torrent (Racial)
 	{SpellID: 29076, Targets: ThreatTargetsCaster},                                         // Master of Elements (Rank 3)
 	{SpellID: 29131, Targets: ThreatTargetsCaster},                                         // Bloodrage
+	{SpellID: 29723, Targets: ThreatTargetsCaster},                                         // Sudden Death (Rank 1)
 	{SpellID: 29724, Targets: ThreatTargetsCaster},                                         // Sudden Death (Rank 3)
+	{SpellID: 29725, Targets: ThreatTargetsCaster},                                         // Sudden Death (Rank 2)
 	{SpellID: 29859, Targets: ThreatTargetsCaster},                                         // Blood Frenzy (Rank 2)
 	{SpellID: 30160, Targets: ThreatTargetsCaster},                                         // Elemental Devastation (Rank 1)
 	{SpellID: 30165, Targets: ThreatTargetsCaster},                                         // Elemental Devastation (Rank 1)
@@ -161,11 +163,13 @@ var threats = []Threat{
 	{SpellID: 32851, Targets: ThreatTargetsCaster},                                         // Demonic Frenzy
 	{SpellID: 33151, Targets: ThreatTargetsCaster},                                         // Surge of Light (Rank 1)
 	{SpellID: 33154, Targets: ThreatTargetsCaster},                                         // Surge of Light (Rank 2)
+	{SpellID: 33648, Targets: ThreatTargetsCaster},                                         // Reflection of Torment
 	{SpellID: 33697, Targets: ThreatTargetsCaster},                                         // Blood Fury (Racial)
 	{SpellID: 33776, Targets: ThreatTargetsCaster},                                         // Spiritual Attunement (Rank 2)
 	{SpellID: 33778, Targets: ThreatTargetsCaster},                                         // Lifebloom
 	{SpellID: 33831, Targets: ThreatTargetsEnemyArea},                                      // Force of Nature
 	{SpellID: 33891, Targets: ThreatTargetsCaster},                                         // Tree of Life (Shapeshift)
+	{SpellID: 33953, Targets: ThreatTargetsCaster},                                         // Essence of Life
 	{SpellID: 34026, Targets: ThreatTargetsCaster},                                         // Kill Command
 	{SpellID: 34074, Targets: ThreatTargetsCaster},                                         // Aspect of the Viper
 	{SpellID: 34123, Targets: ThreatTargetsCaster},                                         // Tree of Life (Passive)
@@ -180,6 +184,10 @@ var threats = []Threat{
 	{SpellID: 34837, Targets: ThreatTargetsCaster},                                         // Master Tactician (Rank 5)
 	{SpellID: 34839, Targets: ThreatTargetsCaster},                                         // Master Tactician (Rank 5)
 	{SpellID: 34860, Targets: ThreatTargetsCaster},                                         // Holy Concentration (Rank 3)
+	{SpellID: 35080, Targets: ThreatTargetsCaster},                                         // Band of the Eternal Champion
+	{SpellID: 35081, Targets: ThreatTargetsCaster},                                         // Band of the Eternal Champion
+	{SpellID: 35083, Targets: ThreatTargetsCaster},                                         // Band of the Eternal Sage
+	{SpellID: 35084, Targets: ThreatTargetsCaster},                                         // Band of the Eternal Sage
 	{SpellID: 35548, Targets: ThreatTargetsCaster},                                         // Combat Potency (Rank 5)
 	{SpellID: 35553, Targets: ThreatTargetsCaster},                                         // Combat Potency (Rank 5)
 	{SpellID: 35706, Targets: ThreatTargetsCaster},                                         // Master Demonologist
@@ -234,6 +242,11 @@ var threats = []Threat{
 	{SpellID: 44561, Targets: ThreatTargetsCaster},                                         // Enduring Winter (Rank 3)
 	{SpellID: 44578, Targets: ThreatTargetsCaster},                                         // Lifeward
 	{SpellID: 44949, Targets: ThreatTargetsEnemyArea},                                      // Whirlwind
+	{SpellID: 45040, Targets: ThreatTargetsCaster},                                         // Battle Trance
+	{SpellID: 45041, Targets: ThreatTargetsCaster},                                         // Combat Insight
+	{SpellID: 45053, Targets: ThreatTargetsCaster},                                         // Disdain
+	{SpellID: 45354, Targets: ThreatTargetsCaster},                                         // Item - Sunwell Dungeon Melee Trinket
+	{SpellID: 45355, Targets: ThreatTargetsCaster},                                         // Item - T7 Melee Trinket Base
 	{SpellID: 45470, Targets: ThreatTargetsCaster},                                         // Death Strike
 	{SpellID: 45529, Targets: ThreatTargetsCaster},                                         // Blood Tap
 	{SpellID: 46100, Targets: ThreatTargetsCaster},                                         // Brutal Idol of Tenacity
@@ -301,6 +314,7 @@ var threats = []Threat{
 	{SpellID: 48836, Targets: ThreatTargetsCaster},                                         // Vengeful Justice
 	{SpellID: 48952, Targets: ThreatTargetsCaster},                                         // Holy Shield (Rank 6)
 	{SpellID: 48982, Targets: ThreatTargetsCaster},                                         // Rune Tap
+	{SpellID: 49027, Targets: ThreatTargetsCaster},                                         // Bloodworms (Rank 1)
 	{SpellID: 49028, Targets: ThreatTargetsCaster},                                         // Dancing Rune Weapon
 	{SpellID: 49065, Targets: ThreatTargetsEnemyArea},                                      // Explosive Trap Effect (Rank 6)
 	{SpellID: 49206, Targets: ThreatTargetsCaster},                                         // Summon Gargoyle
@@ -311,6 +325,7 @@ var threats = []Threat{
 	{SpellID: 49483, Targets: ThreatTargetsCaster},                                         // Butchery (Rank 2)
 	{SpellID: 49509, Targets: ThreatTargetsCaster},                                         // Scent of Blood (Rank 3)
 	{SpellID: 49530, Targets: ThreatTargetsCaster},                                         // Sudden Doom (Rank 3)
+	{SpellID: 49542, Targets: ThreatTargetsCaster},                                         // Bloodworms (Rank 2)
 	{SpellID: 49543, Targets: ThreatTargetsCaster},                                         // Bloodworms (Rank 3)
 	{SpellID: 49623, Targets: ThreatTargetsCaster},                                         // Effervescence
 	{SpellID: 49796, Targets: ThreatTargetsCaster},                                         // Deathchill
@@ -391,8 +406,10 @@ var threats = []Threat{
 	{SpellID: 54277, Targets: ThreatTargetsCaster},                                         // Backdraft
 	{SpellID: 54428, Targets: ThreatTargetsCaster},                                         // Divine Plea
 	{SpellID: 54681, Targets: ThreatTargetsCaster},                                         // Monstrous Strength
+	{SpellID: 54695, Targets: ThreatTargetsCaster},                                         // Item - Death Knight's Anguish Base
 	{SpellID: 54696, Targets: ThreatTargetsCaster},                                         // Wracking Pains
 	{SpellID: 54697, Targets: ThreatTargetsCaster},                                         // Oozing Wound
+	{SpellID: 54707, Targets: ThreatTargetsCaster},                                         // Sonic Awareness (DND)
 	{SpellID: 54741, Targets: ThreatTargetsCaster},                                         // Firestarter
 	{SpellID: 54743, Targets: ThreatTargetsCaster},                                         // Glyph of Regrowth
 	{SpellID: 54754, Targets: ThreatTargetsCaster},                                         // Glyph of Rejuvenation
@@ -419,6 +436,7 @@ var threats = []Threat{
 	{SpellID: 55533, Targets: ThreatTargetsCaster},                                         // Glyph of Healing Wave
 	{SpellID: 55637, Targets: ThreatTargetsCaster},                                         // Lightweave
 	{SpellID: 55640, Targets: ThreatTargetsCaster},                                         // Lightweave Embroidery
+	{SpellID: 55747, Targets: ThreatTargetsCaster},                                         // Argent Fury
 	{SpellID: 55767, Targets: ThreatTargetsCaster},                                         // Darkglow
 	{SpellID: 55768, Targets: ThreatTargetsCaster},                                         // Darkglow Embroidery
 	{SpellID: 55775, Targets: ThreatTargetsCaster},                                         // Swordguard Embroidery
@@ -430,6 +448,7 @@ var threats = []Threat{
 	{SpellID: 56488, Targets: ThreatTargetsCaster | ThreatTargetsEnemyArea},                // Global Thermal Sapper Charge
 	{SpellID: 56815, Row: 56815, FlatMod: 0, PctMod: 1.75},                                 // Rune Strike
 	{SpellID: 56817, Targets: ThreatTargetsCaster},                                         // Rune strike proc
+	{SpellID: 57352, Targets: ThreatTargetsCaster},                                         // Darkmoon Card: Death
 	{SpellID: 57516, Targets: ThreatTargetsCaster},                                         // Enrage (Rank 2)
 	{SpellID: 57518, Targets: ThreatTargetsCaster},                                         // Enrage (Rank 1)
 	{SpellID: 57755, Row: 57755, FlatMod: 0, PctMod: 1.5},                                  // Heroic Throw
@@ -453,11 +472,13 @@ var threats = []Threat{
 	{SpellID: 58836, Targets: ThreatTargetsCaster},                                         // Initialize Images
 	{SpellID: 58872, Targets: ThreatTargetsCaster},                                         // Damage Shield (Rank 1)
 	{SpellID: 58874, Targets: ThreatTargetsCaster},                                         // Damage Shield (Rank 2)
+	{SpellID: 58901, Targets: ThreatTargetsCaster},                                         // Tears of Anguish
 	{SpellID: 58904, Targets: ThreatTargetsCaster},                                         // Tears of Anguish
 	{SpellID: 59000, Targets: ThreatTargetsCaster},                                         // Improved Spirit Tap (Rank 2)
 	{SpellID: 59052, Targets: ThreatTargetsCaster},                                         // Freezing Fog
 	{SpellID: 59072, Targets: ThreatTargetsCaster},                                         // Natural Reaction
 	{SpellID: 59159, Targets: ThreatTargetsCaster | ThreatTargetsEnemyArea},                // Thunderstorm (Rank 4)
+	{SpellID: 59345, Targets: ThreatTargetsCaster},                                         // Chagrin
 	{SpellID: 59578, Targets: ThreatTargetsCaster},                                         // The Art of War (Rank 2)
 	{SpellID: 59620, Targets: ThreatTargetsCaster},                                         // Berserk
 	{SpellID: 59626, Targets: ThreatTargetsCaster},                                         // Black Magic
@@ -465,6 +486,7 @@ var threats = []Threat{
 	{SpellID: 59630, Targets: ThreatTargetsCaster},                                         // Black Magic
 	{SpellID: 59891, Targets: ThreatTargetsCaster},                                         // Borrowed Time
 	{SpellID: 60062, Targets: ThreatTargetsCaster},                                         // Essence of Life
+	{SpellID: 60063, Targets: ThreatTargetsCaster},                                         // Now is the Time!
 	{SpellID: 60064, Targets: ThreatTargetsCaster},                                         // Now is the time!
 	{SpellID: 60065, Targets: ThreatTargetsCaster},                                         // Reflection of Torment
 	{SpellID: 60089, Row: 60089, FlatMod: 638, PctMod: 1},                                  // Faerie Fire (Feral)
@@ -474,13 +496,22 @@ var threats = []Threat{
 	{SpellID: 60233, Targets: ThreatTargetsCaster},                                         // Greatness
 	{SpellID: 60234, Targets: ThreatTargetsCaster},                                         // Greatness
 	{SpellID: 60235, Targets: ThreatTargetsCaster},                                         // Greatness
+	{SpellID: 60301, Targets: ThreatTargetsCaster},                                         // Meteorite Whetstone
 	{SpellID: 60302, Targets: ThreatTargetsCaster},                                         // Meteorite Whetstone
+	{SpellID: 60306, Targets: ThreatTargetsCaster},                                         // Vestige of Haldor
 	{SpellID: 60314, Targets: ThreatTargetsCaster},                                         // Fury of the Five Flights
+	{SpellID: 60317, Targets: ThreatTargetsCaster},                                         // Signet of Edward the Odd
 	{SpellID: 60318, Targets: ThreatTargetsCaster},                                         // Edward's Insight
+	{SpellID: 60436, Targets: ThreatTargetsCaster},                                         // Grim Toll
 	{SpellID: 60437, Targets: ThreatTargetsCaster},                                         // Grim Toll
+	{SpellID: 60442, Targets: ThreatTargetsCaster},                                         // Bandit's Insignia
+	{SpellID: 60473, Targets: ThreatTargetsCaster},                                         // Forge Ember
 	{SpellID: 60479, Targets: ThreatTargetsCaster},                                         // Forge Ember
+	{SpellID: 60482, Targets: ThreatTargetsCaster},                                         // Pendulum of Telluric Currents
 	{SpellID: 60486, Targets: ThreatTargetsCaster},                                         // Illustration of the Dragon Soul
+	{SpellID: 60487, Targets: ThreatTargetsCaster},                                         // Extract of Necromatic Power
 	{SpellID: 60492, Targets: ThreatTargetsCaster},                                         // Embrace of the Spider
+	{SpellID: 60493, Targets: ThreatTargetsCaster},                                         // Dying Curse
 	{SpellID: 60494, Targets: ThreatTargetsCaster},                                         // Dying Curse
 	{SpellID: 60520, Targets: ThreatTargetsCaster},                                         // Spark of Life
 	{SpellID: 60525, Targets: ThreatTargetsCaster},                                         // Majestic Dragon Figurine
@@ -528,6 +559,7 @@ var threats = []Threat{
 	{SpellID: 61336, Targets: ThreatTargetsCaster},                                         // Survival Instincts
 	{SpellID: 61571, Targets: ThreatTargetsCaster},                                         // Spirits of the Lost
 	{SpellID: 61595, Targets: ThreatTargetsCaster},                                         // Demonic Soul
+	{SpellID: 61618, Targets: ThreatTargetsCaster},                                         // Tentacles
 	{SpellID: 61619, Targets: ThreatTargetsCaster},                                         // Tentacles
 	{SpellID: 61654, Targets: ThreatTargetsEnemyArea},                                      // Fire Nova (Rank 9)
 	{SpellID: 61657, Targets: ThreatTargetsCaster},                                         // Fire Nova (Rank 9)
@@ -536,6 +568,7 @@ var threats = []Threat{
 	{SpellID: 61792, Targets: ThreatTargetsCaster},                                         // Shadowy Insight
 	{SpellID: 61847, Targets: ThreatTargetsCaster},                                         // Aspect of the Dragonhawk (Rank 2)
 	{SpellID: 61968, Targets: ThreatTargetsCaster | ThreatTargetsEnemyArea},                // Flash Freeze
+	{SpellID: 62115, Targets: ThreatTargetsCaster},                                         // Strength of the Titans
 	{SpellID: 62146, Targets: ThreatTargetsCaster},                                         // Unflinching Valor
 	{SpellID: 62478, Targets: ThreatTargetsCaster},                                         // Frozen Blows
 	{SpellID: 62606, Targets: ThreatTargetsCaster},                                         // Savage Defense
@@ -544,6 +577,7 @@ var threats = []Threat{
 	{SpellID: 63167, Targets: ThreatTargetsCaster},                                         // Decimation
 	{SpellID: 63244, Targets: ThreatTargetsCaster},                                         // Pyroclasm
 	{SpellID: 63250, Targets: ThreatTargetsCaster},                                         // Jouster's Fury
+	{SpellID: 63251, Targets: ThreatTargetsCaster},                                         // Glory of the Jouster
 	{SpellID: 63283, Targets: ThreatTargetsCaster},                                         // Totem of Wrath
 	{SpellID: 63321, Targets: ThreatTargetsCaster},                                         // Life Tap
 	{SpellID: 63375, Targets: ThreatTargetsCaster},                                         // Improved Stormstrike
@@ -631,10 +665,13 @@ var threats = []Threat{
 	{SpellID: 67489, Targets: ThreatTargetsCaster},                                         // Runic Healing Injector
 	{SpellID: 67545, Targets: ThreatTargetsCaster},                                         // Empowered Fire
 	{SpellID: 67631, Targets: ThreatTargetsCaster},                                         // Aegis
+	{SpellID: 67653, Targets: ThreatTargetsCaster},                                         // Coliseum 5 Tank Trinket
 	{SpellID: 67666, Targets: ThreatTargetsCaster},                                         // Mana Mana
 	{SpellID: 67667, Targets: ThreatTargetsCaster},                                         // Coliseum 5 Healer Trinket
 	{SpellID: 67669, Targets: ThreatTargetsCaster},                                         // Elusive Power
+	{SpellID: 67670, Targets: ThreatTargetsCaster},                                         // Coliseum 5 CasterTrinket
 	{SpellID: 67671, Targets: ThreatTargetsCaster},                                         // Fury
+	{SpellID: 67672, Targets: ThreatTargetsCaster},                                         // Coliseum 5 Melee Trinket
 	{SpellID: 67696, Targets: ThreatTargetsCaster},                                         // Energized
 	{SpellID: 67703, Targets: ThreatTargetsCaster},                                         // Paragon
 	{SpellID: 67708, Targets: ThreatTargetsCaster},                                         // Paragon
@@ -692,19 +729,26 @@ var threats = []Threat{
 	{SpellID: 71229, Targets: ThreatTargetsCaster},                                         // Precognition
 	{SpellID: 71396, Targets: ThreatTargetsCaster},                                         // Rage of the Fallen
 	{SpellID: 71401, Targets: ThreatTargetsCaster},                                         // Icy Rage
+	{SpellID: 71402, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 10 Normal Melee Trinket
 	{SpellID: 71403, Targets: ThreatTargetsCaster},                                         // Fatal Flaws
+	{SpellID: 71404, Targets: ThreatTargetsCaster},                                         // Item - Icecrown Dungeon Melee Trinket
+	{SpellID: 71406, Targets: ThreatTargetsCaster},                                         // Anger Capacitor
 	{SpellID: 71432, Targets: ThreatTargetsCaster},                                         // Mote of Anger
 	{SpellID: 71484, Targets: ThreatTargetsCaster},                                         // Strength of the Taunka
 	{SpellID: 71485, Targets: ThreatTargetsCaster},                                         // Agility of the Vrykul
 	{SpellID: 71486, Targets: ThreatTargetsCaster},                                         // Power of the Taunka
 	{SpellID: 71491, Targets: ThreatTargetsCaster},                                         // Aim of the Iron Dwarves
 	{SpellID: 71492, Targets: ThreatTargetsCaster},                                         // Speed of the Vrykul
+	{SpellID: 71519, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Normal Melee Trinket
+	{SpellID: 71540, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 10 Heroic Melee Trinket
 	{SpellID: 71541, Targets: ThreatTargetsCaster},                                         // Icy Rage
+	{SpellID: 71545, Targets: ThreatTargetsCaster},                                         // Anger Capacitor
 	{SpellID: 71556, Targets: ThreatTargetsCaster},                                         // Agility of the Vrykul
 	{SpellID: 71558, Targets: ThreatTargetsCaster},                                         // Power of the Taunka
 	{SpellID: 71559, Targets: ThreatTargetsCaster},                                         // Aim of the Iron Dwarves
 	{SpellID: 71560, Targets: ThreatTargetsCaster},                                         // Speed of the Vrykul
 	{SpellID: 71561, Targets: ThreatTargetsCaster},                                         // Strength of the Taunka
+	{SpellID: 71562, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Heroic Melee Trinket
 	{SpellID: 71570, Targets: ThreatTargetsCaster},                                         // Cultivated Power
 	{SpellID: 71572, Targets: ThreatTargetsCaster},                                         // Cultivated Power
 	{SpellID: 71575, Targets: ThreatTargetsCaster},                                         // Invigorated
@@ -712,7 +756,9 @@ var threats = []Threat{
 	{SpellID: 71584, Targets: ThreatTargetsCaster},                                         // Revitalized
 	{SpellID: 71586, Targets: ThreatTargetsCaster},                                         // Hardened Skin
 	{SpellID: 71605, Targets: ThreatTargetsCaster},                                         // Siphoned Power
+	{SpellID: 71606, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Normal Caster Trinket 2
 	{SpellID: 71636, Targets: ThreatTargetsCaster},                                         // Siphoned Power
+	{SpellID: 71637, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Heroic Caster Trinket 2
 	{SpellID: 71841, Targets: ThreatTargetsCaster},                                         // Smite
 	{SpellID: 71842, Targets: ThreatTargetsCaster},                                         // Smite (Rank 12)
 	{SpellID: 71845, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Normal Caster Weapon Proc
@@ -723,12 +769,15 @@ var threats = []Threat{
 	{SpellID: 71873, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Heroic Tank Weapon Proc
 	{SpellID: 71875, Targets: ThreatTargetsCaster},                                         // Necrotic Touch
 	{SpellID: 71877, Targets: ThreatTargetsCaster},                                         // Necrotic Touch
+	{SpellID: 71880, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Normal Dagger Proc
 	{SpellID: 71881, Targets: ThreatTargetsCaster},                                         // Invigoration
 	{SpellID: 71882, Targets: ThreatTargetsCaster},                                         // Invigoration
 	{SpellID: 71883, Targets: ThreatTargetsCaster},                                         // Invigoration
 	{SpellID: 71886, Targets: ThreatTargetsCaster},                                         // Invigoration
 	{SpellID: 71887, Targets: ThreatTargetsCaster},                                         // Invigoration
 	{SpellID: 71888, Targets: ThreatTargetsCaster},                                         // Invigoration
+	{SpellID: 71892, Targets: ThreatTargetsCaster},                                         // Item - Icecrown 25 Heroic Dagger Proc
+	{SpellID: 71903, Targets: ThreatTargetsCaster},                                         // Item - Shadowmourne Legendary
 	{SpellID: 71904, Targets: ThreatTargetsEnemyArea},                                      // Chaos Bane
 	{SpellID: 71905, Targets: ThreatTargetsCaster},                                         // Soul Fragment
 	{SpellID: 72412, Targets: ThreatTargetsCaster},                                         // Frostforged Champion
@@ -736,10 +785,15 @@ var threats = []Threat{
 	{SpellID: 72414, Targets: ThreatTargetsCaster},                                         // Frostforged Defender
 	{SpellID: 72415, Targets: ThreatTargetsCaster},                                         // Item - Icecrown Reputation Ring Tank Trigger
 	{SpellID: 72416, Targets: ThreatTargetsCaster},                                         // Frostforged Sage
+	{SpellID: 72417, Targets: ThreatTargetsCaster},                                         // Item - Icecrown Reputation Ring Caster Trigger
 	{SpellID: 73061, Targets: ThreatTargetsEnemyArea},                                      // Frost Breath
 	{SpellID: 73422, Targets: ThreatTargetsCaster},                                         // Chaos Bane
+	{SpellID: 75455, Targets: ThreatTargetsCaster},                                         // Item - Chamber of Aspects 25 Melee Trinket
 	{SpellID: 75456, Targets: ThreatTargetsCaster},                                         // Piercing Twilight
+	{SpellID: 75457, Targets: ThreatTargetsCaster},                                         // Item - Chamber of Aspects 25 Heroic Melee Trinket
 	{SpellID: 75458, Targets: ThreatTargetsCaster},                                         // Piercing Twilight
+	{SpellID: 75465, Targets: ThreatTargetsCaster},                                         // Item - Chamber of Aspects 25 Nuker Trinket
 	{SpellID: 75466, Targets: ThreatTargetsCaster},                                         // Twilight Flames
 	{SpellID: 75473, Targets: ThreatTargetsCaster},                                         // Twilight Flames
+	{SpellID: 75474, Targets: ThreatTargetsCaster},                                         // Item - Chamber of Aspects 25 Heroic Nuker Trinket
 }

@@ -25,7 +25,9 @@ checks it and the Go effects.
   Althor's Abacus heals as 71610 / 71641, Glowing Twilight Scale ticks as 75493 / 75494. Still under the
   item: Forethought Talisman's heal over time.
 - Talisman of Troll Divinity (37734): each direct heal of a magic-class spell puts a stack of Touched by a Troll
-  (60518, 58 flat healing taken a stack, 5 max, 10 s refreshed) on its target. Hots and their ticks add none.
+  (60518, 58 flat healing taken a stack, 5 max, 10 s refreshed) on its target. Triggered heals count (60517 has
+  `CAN_PROC_FROM_PROCS`), but not one that suppresses procs (Lifebloom's bloom); hots, their ticks and no-class
+  heals (Glyph of Rejuvenation's 54755) add none. Every healer's heals on the target get the flat bonus.
 - A spell that deals damage (an on-use item among them) isn't cast at another friendly unit, a healer's default
   target (`Spell.dealsDamageToAFriend`); area spells and heals are.
 - Althor's Abacus heals the enabled, [living](damage-and-healing.md#healing) raid unit with the lowest health

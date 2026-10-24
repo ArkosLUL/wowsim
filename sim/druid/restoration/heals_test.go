@@ -274,8 +274,8 @@ func TestClearcastingMakesHealsFree(t *testing.T) {
 }
 
 // Omen of Clarity (16864, 3.5 PPM over the cast time entry, at least 1.5 s) rolls once for each target a heal
-// lands on, the hots' landings with nothing to heal and the bloom too (spell_dru_omen_of_clarity::CheckProc
-// lets a druid spell through, CAN_PROC_FROM_PROCS the triggered bloom).
+// lands on, the hots' landings with nothing to heal too (spell_dru_omen_of_clarity::CheckProc lets a druid spell
+// through). The bloom has SPELL_ATTR3_SUPPRESS_CASTER_PROCS, so Spell::DoAllEffectOnTarget procs nothing off it.
 func TestOmenOfClarityRollsOnHealLandings(t *testing.T) {
 	sim, druid := healSetup{dummies: 4}.build(t)
 	startFight(sim)
@@ -290,7 +290,7 @@ func TestOmenOfClarityRollsOnHealLandings(t *testing.T) {
 	}{
 		{druid.Rejuvenation.Spell, instant},
 		{druid.Lifebloom.Spell, instant},
-		{druid.LifebloomBloom.Spell, instant},
+		{druid.LifebloomBloom.Spell, 0},
 		// the druid and the four dummies
 		{druid.WildGrowth.Spell, 1 - math.Pow(1-instant, 5)},
 		{druid.HealingTouch.Spell, 3.5 * 3 / 60},

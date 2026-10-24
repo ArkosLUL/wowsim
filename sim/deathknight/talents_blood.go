@@ -406,6 +406,7 @@ func (dk *Deathknight) applyBloodworms() {
 	}
 
 	procChance := 0.03 * float64(dk.Talents.Bloodworms)
+	serverProc := core.ServerProcFor([]int32{0, 49027, 49542, 49543}[dk.Talents.Bloodworms])
 	icd := core.Cooldown{
 		Timer:    dk.NewTimer(),
 		Duration: time.Second * 20,
@@ -427,7 +428,7 @@ func (dk *Deathknight) applyBloodworms() {
 	core.MakePermanent(dk.RegisterAura(core.Aura{
 		Label: "Bloodworms Proc",
 		OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !spell.ProcMask.Matches(core.ProcMaskMelee) {
+			if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMelee) || !serverProc.AllowsEvent(spell, result, false) {
 				return
 			}
 
