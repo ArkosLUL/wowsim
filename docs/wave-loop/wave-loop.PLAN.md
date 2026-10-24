@@ -95,6 +95,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z15 | EC-CORE-FIX12 (G) · EC-PET-FIX10 (live) · EC-CLASS-FIX11 (G, live) · EC-TOOLS5 (C++, live) | ✔ |
 | Z16 | CAP-TAB · CAP-ROSTER | |
 | Z17 | CAP-FLOORS · CAP-SERVER (C++, live) | |
+| Z17b | EC-UPSTREAM2 (G, FS, live) | |
 | Z18 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
@@ -175,7 +176,9 @@ Z15's follow-ups, which become Z18. Its items touch only the tab, its packages a
 can't move, and it skips the re-baseline. Z17 is the user's call too (2026-10-23): reforge suggestions that keep
 the caps, and an "Apply on server" button over SOAP, also golden-neutral.
 HL1 to HL3 are the user's call (2026-10-23), before Z18: the [healer pages](../healer-sims/healer-sims.PLAN.md),
-whose own registry lists their items. They move only healer suites and skip the re-baseline.
+whose own registry lists their items. HL1 and HL2 move only healer suites and skip the re-baseline; HL3's proc
+type check moves DPS suites too, so it runs it. Z17b (the user, 2026-10-24) syncs the sim with the server's
+upstream merge of that day, before Z18.
 
 **Where the specs are:**
 
@@ -194,10 +197,11 @@ whose own registry lists their items. They move only healer suites and skip the 
 
 ## Current wave
 
-- Wave: HL3 running ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CORE, HEAL-PAL-2, HEAL-DRU-2;
-  base `8f4569950`, args `waveHL3-build.py`, run `wf_cdad3276-19b`, transcript `subagents\workflows\wf_cdad3276-19b`
-  in session `2b733101`). Merge order HEAL-CORE, HEAL-PAL-2, HEAL-DRU-2. Then Z18 (Z15's follow-ups, specs in the
-  e2e-coverage PLAN).
+- Wave: HL3 landed ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CORE, HEAL-PAL-2, HEAL-DRU-2;
+  base `8f4569950`, args `waveHL3-build.py`, run `wf_cdad3276-19b`). Cross-review `.wave-loop\hl3-run1\xreview.md`
+  (brief `waveHL3-xreview-brief.md`); item notes `.wave-loop\hl3-run1\heal-*-tmp`. Next Z17b (EC-UPSTREAM2, the
+  e2e-coverage PLAN) on the user's go, then Z18 (Z15's follow-ups). Open for the user: Val'anyr's 200000 bubble
+  counts in full as shielding on dummies that take no damage.
   HL2 landed (HEAL-FIGHT, HEAL-PAL-1, HEAL-DRU-1; base `b7a4e4af7`, args `waveHL2-build.py`, run `wf_cb624648-495`).
   Cross-review `.wave-loop\hl2-run1\xreview.md` (brief `waveHL2-xreview-brief.md`); prod rebuilt after it.
   HL1 landed (HEAL-SHA, HEAL-PRI, HEAL-TEST; base `149c6a726`, args `waveHL1-build.py`, run `wf_d9e3f4f8-cee`, cut
@@ -210,8 +214,8 @@ whose own registry lists their items. They move only healer suites and skip the 
   spec-balance is closed (2026-10-22). Its `Player.playerbot` switch (`docs/guide/playerbot-rules.md`) stays on in
   presetgen, statweights' capture and the rankings, so the BiS chain optimizes under bot rules.
   Live stages stay short: the user finds hours of recordings not worth it (2026-10-16).
-  The server runs [ac] `62fb09c68`: upstream merged, 338 commits over `3d89793c7` (DB import ran, `simval trace` row
-  present). Its image is rebuilt by other sessions for mod-playerbots (last 2026-10-19 16:23 local, same rev); a
+  The server runs [ac] `ea83cc94b` (image rebuilt 2026-10-24 13:18 UTC), an upstream merge over `62fb09c68` that
+  Z17b syncs; `62fb09c68` was the merge of 338 commits over `3d89793c7` (DB import ran, `simval trace` row present). Its image is rebuilt by other sessions for mod-playerbots (last 2026-10-19 16:23 local, same rev); a
   rebuild compiles every module's working tree as it stands, so a wave's uncommitted module C++ goes live with it.
   EC-UPSTREAM audited the merge and recaptured the spelldump; the other committed records and fight logs, all but
   the two Frost DK ones, predate it.
@@ -326,6 +330,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z13 | 8603.0, +217 / +218 | 10770.0, +855 / +875 | 5012.8, +97 / +98 | 12922.4, +230 / +234 | 5722.6, +2167 / +2485 | 1846.3, -74 / +129 |
 | Z14 | 8603.0, +217 / +218 | 10770.0, +855 / +875 | 5012.8, +80 / +74 | 12922.4, +230 / +234 | 5722.6, +2167 / +2485 | 1846.3, -74 / +129 |
 | Z15 | 8603.0, +217 / +218 | 10770.0, +855 / +875 | 5012.8, +80 / +74 | 12929.4, +222 / +259 | 5744.3, +1244 / +1970 | 1846.3, -74 / +129 |
+| HL3 | 8645.8, +214 / +211 | 10809.7, +865 / +875 | 5009.8, +100 / +85 | 14006.9, +104 / +89 | 5744.3, +2045 / +1970 | 1846.3, +6 / +129 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -456,6 +461,10 @@ check's sim prices lift Prot Paladin by 142 / 112 and Feral Tank's Normal by 21;
 
 In Z13 (`90ca43251`, logs `.wave-loop/logs/z13-rebaseline`) all thirteen pass. Fury's search gains 44 / 12, Ret
 Quick's 33 and Fire Normal's 15 (with 19% fewer sims); Combat Rogue and Feral Tank are unchanged.
+In HL3 (`ca49ca1a2`, logs `.wave-loop/logs/hl3-rebaseline`) all twelve pass. Ret's `J_preset` rose 8.3%
+(`dps_preset` 16369.2 to 16905.4, normalizer 1.266 to 1.207) and Combat Rogue's 0.4% from spec-balance's buffs
+(`ca5062282`), which landed after Z15's run; Fire Mage's fell 0.06% (Flare of the Heavens off landings), Fury's
+rose 0.5% (its noise). The gains moved within earlier rows' range.
 
 ## Sim throughput
 

@@ -1,6 +1,6 @@
 # Healer sims: Holy Paladin, Resto Druid and Resto Shaman pages that heal
 
-Status: approved by the user (2026-10-23); HL1 and HL2 landed; HL3 running.
+Status: approved by the user (2026-10-23); HL1 to HL3 landed; all four healer pages launched.
 
 ## Context
 

@@ -59,6 +59,7 @@ The live e2e and the replays leave timing, costs, threat, pets, gear and buffs u
 | Z13 | EC-CORE-FIX10 (G, FS) · EC-PET-FIX8 (G, live) · EC-CLASS-FIX9 (G, live) · EC-TOOLS4 (live) | Z12's follow-ups; EC-TOOLS4 moved from Z12 |
 | Z14 | EC-UPSTREAM (G, FS, live) · EC-CORE-FIX11 (G, FS, live) · EC-PET-FIX9 (G, live) · EC-CLASS-FIX10 (G) | The server's upstream merge, then Z13's follow-ups |
 | Z15 | EC-CORE-FIX12 (G) · EC-PET-FIX10 (live) · EC-CLASS-FIX11 (G, live) · EC-TOOLS5 (C++, live) | Z14's follow-ups, and Z13's UI one |
+| Z17b | EC-UPSTREAM2 (G, FS, live) | The server's 2026-10-24 upstream merge (the user's call) |
 | Z18 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | Z15's follow-ups |
 
 U is taken (the UI wave). Versus the INVESTIGATION's order, B7, A3 and A4 moved forward (cheap, independent) and
@@ -5771,6 +5772,37 @@ and 48111 stay uncompared rightly: a triggered aura's cost or dispel resist, or 
 `TestStrikesFixtureHasEveryProbe` now wants both 66974 records (`strikesOtherProbes`); the e2e's `strikesRedo`
 doubles a death knight's off-hand fixed bonus itself (`ecTools5Base` gone); `strikeProbe` takes the off hand from
 `SPELL_ATTR3_REQUIRES_OFF_HAND_WEAPON`.
+
+### EC-UPSTREAM2 (Z17b; changes goldens, full suite; stages: code, live)
+
+- The live server moved from [ac] `62fb09c68` to `ea83cc94b` (upstream merge `e2829262b`, image rebuilt 2026-10-24
+  13:18 UTC); check its DB import ran (`acore_world.updates` lists `2026_10_22_01`). Every committed record,
+  spelldump line and fight log predates it. Fix each change below in the sim, with a unit test per rule from [ac]
+  source, or name the follow-up.
+- **Independent swing timers** (0e58ee439, `Player::Update`, `Unit::Attack`): no 200 ms push of the other hand
+  (`ATTACK_DISPLAY_DELAY` is gone). The off hand skips an update in which the main hand swung; the 50% off-hand
+  stagger runs only when an attack starts (`isNewAttack`), not on every `Attack` call. The sim still pushes
+  (`attackDisplayDelay`, `sim/core/attack.go`, `constants.go`). Also read `UnitAI.cpp`'s creature dual wield
+  against the tank sims' bosses. Moves every dual-wield suite (Fury, Enhancement, the rogues, dual-wield Frost DK).
+- **Meteorite Crystal** (460265c2e, `2026_10_22_01`, `spell_item_meteoric_inspiration` on 64999): a stack only off
+  a non-triggered spell that costs mana (Call of the Elements' totems count), a channel's tick of a mana or Penance
+  channel, or a Beacon of Light copy of a mana-cost heal; `spell_proc` 64999 now type mask 0, finish phase,
+  triggered can proc. The sim stacks on every cast (`sim/common/wotlk/stat_bonus_stacking.go`).
+- **Borrowed Time** (`2026_10_15_03`): the buff's ranks 59887 to 59891 chain, so `spell_proc` -59887 consumes every
+  rank, not rank 1 only. Check the sim's consumption (`applyBorrowedTime`, `sim/priest/talents.go`: any cast with a
+  cast time, under 52800) against that row.
+- **Trap casts** (a64665927, add9cadc2): a GameObject cast now reaches the original caster's finish-phase procs, and
+  trap targeting changed. Check which of the hunter's procs a trap now fires (Lock and Load's trap trigger,
+  cast-complete trinkets and set bonuses) against `applyLockAndLoad` (`sim/hunter/talents.go`) and the sim's
+  Explosive Trap.
+- **Read, likely moot:** 458851463 (Ignite and a death knight spell don't start combat; check the
+  `spell_dk.cpp` change); e8b5aadf3, 8746c9fb1 (combat bookkeeping).
+- Spelldump: recapture live and rerun `gen_serverdata`; each moved row is a finding (64999 at least).
+- Live: re-record the dual-wield fight logs and swing records the new timers change (`TestFightReplays`, the e2e
+  harness), one run at a time under the lock; keep it short.
+- **Owns:** `sim/core/attack.go` and `constants.go`'s swing rules, Meteorite Crystal, `applyBorrowedTime`, the
+  hunter's trap procs, the regenerated serverdata and spelldump, the re-recorded logs, the server rev in
+  `docs/wave-loop/wave-loop.PLAN.md`'s Current wave.
 
 ### EC-CORE-FIX13 (Z18; changes goldens, full suite; stages: code)
 
