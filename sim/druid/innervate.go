@@ -2,6 +2,7 @@ package druid
 
 import (
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
 // Returns the time to wait before the next action, or 0 if innervate is on CD
@@ -17,6 +18,11 @@ func (druid *Druid) registerInnervateCD() {
 	var innervateSpell *DruidSpell
 
 	innervateCD := core.InnervateCD
+
+	var glyphAura *core.Aura
+	if druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfInnervate) {
+		glyphAura = druid.registerGlyphOfInnervate()
+	}
 
 	var innervateAura *core.Aura
 	var innervateManaThreshold float64
@@ -41,10 +47,6 @@ func (druid *Druid) registerInnervateCD() {
 		ActionID: actionID,
 		Flags:    SpellFlagOmenTrigger,
 
-		ManaCost: core.ManaCostOptions{
-			BaseCost:   0.04,
-			Multiplier: 1,
-		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
 				GCD: core.GCDDefault,
@@ -57,7 +59,7 @@ func (druid *Druid) registerInnervateCD() {
 
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
 			// If target already has another innervate, don't cast.
-			return innervateTarget.HasActiveAuraWithTag(core.InnervateAuraTag)
+			return !innervateTarget.HasActiveAuraWithTag(core.InnervateAuraTag)
 		},
 
 		SpellSchool: core.SpellSchoolNature,
@@ -67,6 +69,9 @@ func (druid *Druid) registerInnervateCD() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			spell.CalcAndDealOutcome(sim, target, spell.OutcomeAlwaysHit)
 			innervateAura.Activate(sim)
+			if glyphAura != nil {
+				glyphAura.Activate(sim)
+			}
 		},
 	})
 

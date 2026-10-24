@@ -3260,6 +3260,25 @@ var spells = []Spell{
 			{Effect: 10, BasePoints: 2699, DieSides: 1801, ValueMultiplier: 1, DamageMultiplier: 1},
 		},
 	},
+	// Vengeful Idol of Tenacity
+	{
+		ID: 43725, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 115, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// Reduced Rejuvenation Cost
+	{
+		ID: 43736, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		DurationMs: -1, MaxDurationMs: -1,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: -37, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0x10}},
+		},
+	},
 	// Lunar Grace
 	{
 		ID: 43740, SchoolMask: 8, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
@@ -3479,6 +3498,15 @@ var spells = []Spell{
 			{Effect: 146, DieSides: 1, DamageMultiplier: 1, MiscValue: 3},
 			{Effect: 6, Aura: 249, DieSides: 1, DamageMultiplier: 1, MiscValueB: 3},
 			{Effect: 30, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, MiscValue: 6},
+		},
+	},
+	// Brutal Idol of Tenacity
+	{
+		ID: 46100, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 130, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x10}},
 		},
 	},
 	// Deathfrost
@@ -6994,6 +7022,34 @@ var spells = []Spell{
 			{Effect: 6, Aura: 108, BasePoints: -101, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0x4}},
 		},
 	},
+	// Glyph of Regrowth
+	{
+		ID: 54743, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 112, BasePoints: 19, DieSides: 1, DamageMultiplier: 1, MiscValue: 7798, ClassMask: [3]uint32{0x40}},
+		},
+	},
+	// Glyph of Rejuvenation
+	{
+		ID: 54754, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0, 0, 0, 0x8000000},
+		ProcFlags:  0x40000, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 49, DieSides: 1, DamageMultiplier: 1, MiscValue: 8, ClassMask: [3]uint32{0x10000000}},
+		},
+	},
+	// Glyph of Rejuvenation
+	{
+		ID: 54755, SchoolMask: 8, Flags: FlagPositive,
+		Attributes: [8]uint32{0x8000000, 0, 0x20000000, 0x2000000, 0x80, 0x8, 0x8000000}, AttributesCu: 0x100,
+		GCDCategory: 133,
+		ProcChance:  101, SpellLevel: 1,
+		Effects: [3]Effect{
+			{Effect: 10, BasePoints: -1, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Pyro Rocket
 	{
 		ID: 54757, SchoolMask: 4, DmgClass: DmgClassMagic, Flags: FlagAlwaysHit,
@@ -7012,6 +7068,45 @@ var spells = []Spell{
 		ProcChance: 101,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 339, DieSides: 1, DamageMultiplier: 1, MiscValue: 917504},
+		},
+	},
+	// Glyph of Healing Touch
+	{
+		ID: 54825, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 108, BasePoints: -26, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0x20}},
+			{Effect: 6, Aura: 108, BasePoints: -51, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0x20}},
+			{Effect: 6, Aura: 107, BasePoints: -1501, DieSides: 1, DamageMultiplier: 1, MiscValue: 10, ClassMask: [3]uint32{0x20}},
+		},
+	},
+	// Glyph of Lifebloom
+	{
+		ID: 54826, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 999, DieSides: 1, DamageMultiplier: 1, MiscValue: 1, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// Glyph of Innervate
+	{
+		ID: 54832, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0},
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 44, DieSides: 1, DamageMultiplier: 1, MiscValue: 1, ClassMask: [3]uint32{0, 0x440}},
+		},
+	},
+	// Glyph of Innervate
+	{
+		ID: 54833, Family: 7, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0x10000, 0, 0x80000, 0, 0, 0, 0, 0x10000}, AttributesCu: 0x100000,
+		DurationMs: 10000, MaxDurationMs: 10000,
+		ProcChance: 101, SpellLevel: 40, BaseLevel: 40,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 24, AmplitudeMs: 1000, BasePoints: 89, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
 		},
 	},
 	// Lightning Bolt (Rank 1)
@@ -7638,6 +7733,15 @@ var spells = []Spell{
 		PowerType: 3, MaxTargets: 1, SpellLevel: 1, BaseLevel: 1,
 		Effects: [3]Effect{
 			{Effect: 121, BasePoints: -1, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1},
+		},
+	},
+	// Increased Healing
+	{
+		ID: 57918, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1c0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 32, DieSides: 1, DamageMultiplier: 1, MiscValue: 22, ClassMask: [3]uint32{0x10}},
 		},
 	},
 	// Tricks of the Trade
@@ -8387,6 +8491,15 @@ var spells = []Spell{
 			{Effect: 3, BasePoints: 24, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Reduced Lifebloom Cost
+	{
+		ID: 60135, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x80000}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 108, BasePoints: -6, DieSides: 1, DamageMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
 	// Berserker!
 	{
 		ID: 60196, SchoolMask: 1, Flags: FlagBinary | FlagResetsAutoAttack | FlagPositive,
@@ -8876,6 +8989,60 @@ var spells = []Spell{
 			{Effect: 6, Aura: 109, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 60555, ClassMask: [3]uint32{0, 0x440}},
 		},
 	},
+	// Savage Gladiator's Idol of Tenacity
+	{
+		ID: 60733, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 187, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// Hateful Gladiator's Idol of Tenacity
+	{
+		ID: 60736, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 216, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// Deadly Gladiator's Idol of Tenacity
+	{
+		ID: 60738, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 245, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// LK Arena 4 Gladiator's Idol of Tenacity
+	{
+		ID: 60739, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 293, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// LK Arena 5 Gladiator's Idol of Tenacity
+	{
+		ID: 60740, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 375, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// LK Arena 6 Gladiator's Idol of Tenacity
+	{
+		ID: 60741, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 447, DieSides: 1, DamageMultiplier: 1, MiscValue: 12, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
 	// Essence of the Storm
 	{
 		ID: 60766, SchoolMask: 1, Flags: FlagBinary | FlagPositive,
@@ -8895,6 +9062,24 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 50, BaseLevel: 50, MaxLevel: 50,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 195, DieSides: 1, DamageMultiplier: 1, MiscValue: 917504},
+		},
+	},
+	// Idol of Lush Moss
+	{
+		ID: 60779, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0},
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 124, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// Idol of Awakening
+	{
+		ID: 60780, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: -107, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, MiscValue: 14, ClassMask: [3]uint32{0x10}},
 		},
 	},
 	// Libram of Obstruction
@@ -9247,6 +9432,24 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 20, BaseLevel: 20,
 		Effects: [3]Effect{
 			{Effect: 2, BasePoints: 31061, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
+	// Glyph of Wild Growth
+	{
+		ID: 62970, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, DieSides: 1, DamageMultiplier: 1, MiscValue: 23, ClassMask: [3]uint32{0, 0x4000000}},
+		},
+	},
+	// Glyph of Nourish
+	{
+		ID: 62971, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0},
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 5, DieSides: 1, DamageMultiplier: 1, MiscValue: 1, ClassMask: [3]uint32{0, 0, 0x40}},
 		},
 	},
 	// Decimation
@@ -9660,6 +9863,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 42, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, TriggerSpell: 64741},
 		},
 	},
+	// Item - Druid T8 Restoration 2P Bonus
+	{
+		ID: 64756, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0, 0, 0, 0x80000}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 108, BasePoints: 9, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x2}},
+		},
+	},
 	// Comet's Trail
 	{
 		ID: 64772, SchoolMask: 1, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
@@ -9697,6 +9909,15 @@ var spells = []Spell{
 		ProcFlags:  0x154, ProcChance: 10, SpellLevel: 60, BaseLevel: 60,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 42, DamageMultiplier: 1, TriggerSpell: 64790},
+		},
+	},
+	// Rejuvenation
+	{
+		ID: 64801, Family: 7, FamilyFlags: [3]uint32{0x10}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive,
+		Attributes: [8]uint32{0, 0, 0x20000000, 0x2000000, 0, 0, 0x4000000}, AttributesCu: 0x100100,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		Effects: [3]Effect{
+			{Effect: 10, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 0.188},
 		},
 	},
 	// Elune's Wrath
@@ -9842,6 +10063,15 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 149, DieSides: 1, ValueMultiplier: 1, DamageMultiplier: 1, MiscValue: 917504},
+		},
+	},
+	// Item - Druid T8 Restoration Relic
+	{
+		ID: 64949, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 186, DieSides: 1, DamageMultiplier: 1, BonusMultiplier: 1, ClassMask: [3]uint32{0, 0x2000000}},
 		},
 	},
 	// Primal Wrath (Rank 5)
@@ -10200,6 +10430,15 @@ var spells = []Spell{
 			{Effect: 6, Aura: 29, BasePoints: 179, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Item - Druid T9 Restoration 2P Bonus (Nourish)
+	{
+		ID: 67127, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0}, AttributesCu: 0x100000,
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 107, BasePoints: 4, DieSides: 1, DamageMultiplier: 1, MiscValue: 7, ClassMask: [3]uint32{0, 0x2000000}},
+		},
+	},
 	// Item - Rogue T9 2P Bonus (Rupture)
 	{
 		ID: 67209, Family: 8, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
@@ -10237,6 +10476,26 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 29, BasePoints: 199, DieSides: 1, DamageMultiplier: 1, MiscValue: 1},
+		},
+	},
+	// Item - Druid T9 Restoration Relic (Rejuvenation)
+	{
+		ID: 67356, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcFlags: 0x40000, ProcChance: 70,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 67358, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// Rejuvenating
+	{
+		ID: 67358, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   9000, MaxDurationMs: 9000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 135, BasePoints: 233, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
+			{Effect: 6, Aura: 13, BasePoints: 233, DieSides: 1, DamageMultiplier: 1, MiscValue: 126},
 		},
 	},
 	// Blessing of the Moon Goddess
@@ -10697,6 +10956,34 @@ var spells = []Spell{
 			{Effect: 3, BasePoints: 5, DieSides: 1, DamageMultiplier: 1},
 		},
 	},
+	// Item - Druid T10 Restoration 2P Bonus
+	{
+		ID: 70658, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0},
+		ProcChance: 101,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 29, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0, 0x4000000}},
+		},
+	},
+	// Item - Druid T10 Restoration 4P Bonus (Rejuvenation)
+	{
+		ID: 70664, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0xc0},
+		ProcFlags:  0x40000, ProcChance: 2,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 4, BasePoints: 1, DieSides: 1, DamageMultiplier: 1, ClassMask: [3]uint32{0x10, 0x8020000}},
+		},
+	},
+	// Rejuvenation
+	{
+		ID: 70691, Family: 7, FamilyFlags: [3]uint32{0x10}, SchoolMask: 8, DmgClass: DmgClassMagic, Flags: FlagBinary | FlagPositive | FlagTargetsArea,
+		Attributes: [8]uint32{0, 0, 0, 0x20000080, 0x100000, 0, 0xc000000}, AttributesCu: 0x100000,
+		DurationMs: 15000, MaxDurationMs: 15000,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 84,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 8, AmplitudeMs: 3000, DieSides: 1, DamageMultiplier: 1},
+		},
+	},
 	// Item - Druid T10 Balance 2P Bonus
 	{
 		ID: 70718, Family: 7, SchoolMask: 1, Flags: FlagPassive | FlagPositive,
@@ -10937,6 +11224,26 @@ var spells = []Spell{
 		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
 		Effects: [3]Effect{
 			{Effect: 6, Aura: 189, BasePoints: 43, DieSides: 1, DamageMultiplier: 1, MiscValue: 1792},
+		},
+	},
+	// Item - Druid T10 Restoration Relic (Rejuvenation)
+	{
+		ID: 71178, Family: 7, SchoolMask: 1, Flags: FlagBinary | FlagPassive | FlagPositive,
+		Attributes: [8]uint32{0x1d0}, AttributesCu: 0x100000,
+		ProcFlags: 0x40000, ProcChance: 100,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 42, BasePoints: 99, DieSides: 1, DamageMultiplier: 1, TriggerSpell: 71184, ClassMask: [3]uint32{0, 0x10}},
+		},
+	},
+	// Soothing
+	{
+		ID: 71184, SchoolMask: 8, Flags: FlagBinary | FlagPositive,
+		AttributesCu: 0x100000,
+		DurationMs:   15000, MaxDurationMs: 15000, StackAmount: 8,
+		ProcChance: 101, SpellLevel: 80, BaseLevel: 80, MaxLevel: 80,
+		Effects: [3]Effect{
+			{Effect: 6, Aura: 13, BasePoints: 31, DieSides: 1, DamageMultiplier: 1, MiscValue: 1918},
+			{Effect: 6, Aura: 135, BasePoints: 31, DieSides: 1, DamageMultiplier: 1, MiscValue: 127},
 		},
 	},
 	// Formidable

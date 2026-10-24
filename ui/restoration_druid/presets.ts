@@ -9,6 +9,7 @@ import {
 	Potions,
 	RaidBuffs,
 	UnitReference,
+	UnitReference_Type as UnitType,
 	TristateEffect
 } from '../core/proto/common.js';
 import { SavedTalents } from '../core/proto/ui.js';
@@ -35,6 +36,11 @@ import P3Gear from './gear_sets/p3.gear.json';
 export const P3_PRESET = PresetUtils.makePresetGear('P3 Preset', P3Gear);
 import P4Gear from './gear_sets/p4.gear.json';
 export const P4_PRESET = PresetUtils.makePresetGear('P4 Preset', P4Gear);
+import P5Gear from './gear_sets/p5.gear.json';
+export const P5_PRESET = PresetUtils.makePresetGear('P5 Preset', P5Gear);
+
+import DefaultApl from './apls/default.apl.json';
+export const ROTATION_PRESET_DEFAULT = PresetUtils.makePresetAPLRotation('Default', DefaultApl);
 
 // Default talents. Uses the wowhead calculator format, make the talents on
 // https://wowhead.com/wotlk/talent-calc and copy the numbers in the url.
@@ -68,7 +74,10 @@ export const ThiccRestoTalents = {
 };
 
 export const DefaultOptions = RestorationDruidOptions.create({
-	innervateTarget: UnitReference.create(),
+	innervateTarget: UnitReference.create({
+		type: UnitType.Player,
+		index: 0,
+	}),
 });
 
 export const DefaultConsumes = Consumes.create({
@@ -79,39 +88,26 @@ export const DefaultConsumes = Consumes.create({
 
 export const DefaultRaidBuffs = RaidBuffs.create({
 	arcaneBrilliance: true,
-	bloodlust: true,
 	divineSpirit: true,
 	giftOfTheWild: TristateEffect.TristateEffectImproved,
-	icyTalons: true,
 	moonkinAura: TristateEffect.TristateEffectImproved,
-	leaderOfThePack: TristateEffect.TristateEffectImproved,
-	powerWordFortitude: TristateEffect.TristateEffectImproved,
 	sanctifiedRetribution: true,
-	strengthOfEarthTotem: TristateEffect.TristateEffectImproved,
-	trueshotAura: true,
-	wrathOfAirTotem: true,
 });
 
 export const DefaultIndividualBuffs = IndividualBuffs.create({
 	blessingOfKings: true,
-	blessingOfMight: TristateEffect.TristateEffectImproved,
 	blessingOfWisdom: TristateEffect.TristateEffectImproved,
 	vampiricTouch: true,
 });
 
-export const DefaultPartyBuffs = PartyBuffs.create({
-	heroicPresence: false,
-});
+export const DefaultPartyBuffs = PartyBuffs.create({});
 
 export const DefaultDebuffs = Debuffs.create({
-	bloodFrenzy: true,
-	ebonPlaguebringer: true,
 	faerieFire: TristateEffect.TristateEffectImproved,
-	heartOfTheCrusader: true,
 	judgementOfWisdom: true,
+	misery: true,
+	curseOfElements: true,
 	shadowMastery: true,
-	sunderArmor: true,
-	totemOfWrath: true,
 });
 
 export const OtherDefaults = {

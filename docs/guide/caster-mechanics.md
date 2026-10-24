@@ -71,11 +71,45 @@ pets and guardians in [pets](pets.md).
   - **Lifebloom:** each cast adds a stack, up to 3, and restarts the ticks; a tick heals one stack's whole
     amount × stacks. Only running out blooms (`AURA_REMOVE_BY_EXPIRE`), never a refresh or the fight's end:
     mana back first (int 28 × base mana × stacks / 100 / 2), then 33778.
-  - **Wild Growth** (`spell_dru_wild_growth`): past 5, the living raid units and pets lowest in health
-    percent, a tie to raid order.
+  - **Wild Growth** (`spell_dru_wild_growth`): past 5 (6 with its glyph), the living raid units and pets lowest in
+    health percent, a tie to raid order.
+  - **Innervate** (`sim/druid/innervate.go`): the mana cooldown casts it when the target is low on mana, on the
+    druid (under 500 mana) or another player (under 1000), unless the target has one already; it costs no mana. Glyph of
+    Innervate (54832) gives the druid a share of base mana over 10 s on every cast, self included: 54833, 45%
+    split in ten ticks, `int32` math.
+  - **Resto glyphs** (`sim/druid/resto_items.go`, values from the glyph spells): Healing Touch -25% cost, -50%
+    healing, -1.5 s cast. Lifebloom +1 s. Nourish +6% a hot of the druid's on the target, after the heal's terms
+    and before the crit. Rapid Rejuvenation (aura 316) shortens Rejuvenation's ticks and duration by the cast
+    speed, keeping the tick count. Regrowth +20% on the heal and on the hot's amount while the target has any
+    Regrowth, read as the amount is worked out (a first cast gets none; Swiftmend's ticks never). Rejuvenation:
+    a tick on a target under 50% health casts 54755 for half of it (no crit, no healing power or done
+    percents). Swiftmend keeps the hot. Wild Growth +1 target.
+  - **Resto sets:** T7 (Dreamwalker Regalia) Lifebloom -5% cost; its 4-piece 60137 is a class script (8477) no
+    server code reads, so does nothing. T8 (Nightsong Regalia) Swiftmend +10% on the whole amount; each
+    Rejuvenation cast or refresh heals 64801 for half the unmodified tick (169) plus 0.188 of healing power
+    (Empowered Rejuvenation's coefficient, not Gift of Nature). T9 (Malfurion's or Runetotem's Garb) Nourish
+    +5% crit; Rejuvenation ticks can crit. T10 (Lasherweave Garb) Wild Growth's bonus drops 1.4% a tick, not 2%;
+    each Rejuvenation tick has 2% to cast Blessing of the Eternal (70691), a 15 s hot of that heal on the raid
+    unit lowest in health without a Regrowth (never the one healed; the druid when alone).
+  - **Resto relics:** Budding Life -36 and Awakening -106 mana on Rejuvenation; Pure Thoughts +33 on its tick
+    (before the percents); Lush Moss a seventh of 125 on each Lifebloom tick; Idols of Tenacity (every season)
+    +N on the bloom's base per stack; Flourishing Life +187 healing power on Nourish; Flaring Growth 70% on a
+    Rejuvenation tick, 5 s apart, for 234 spell power 9 s; Black Willow every tick, a stack of 32 spell power,
+    8 stacks, 15 s.
   - **Tree of Life** (33891, 13% base mana less Natural Shapeshifter): its 34123 gives every raid unit +6%
     healing taken (effect 65, a raid area aura). Tree of Life Passive (5420, -20% cost on Rejuvenation, Regrowth, Lifebloom and Wild Growth)
     has no Stances, so holds in any form. A Resto druid with the talent starts in the form.
+  - **Resto page** (`ui/restoration_druid/apls/default.apl.json`, also the golden's rotation): Lifebloom to 3
+    stacks and left to bloom, Rejuvenation when down, Wild Growth and Swiftmend on cooldown, Regrowth when down,
+    Healing Touch on Clearcasting, Nourish filler; Innervate (self, under 500 mana), Nature's Swiftness and the
+    potion go out as major cooldowns. Page defaults: no bloodlust or other DPS buffs, Runic Mana Potion.
+    - Page request (9 dummies, 300 s), time to OOM and HPS: preraid 126 s 7000, P1 174 s 9189, P2 to P5 none
+      (13532, 13421, 20836, 21081). The P5 preset is P4 plus the Ruby Sanctum cloak, bracers, belt, ring and trinket.
+    - HPS a point, `statslopes.Measure` at the page's request, 3000 iterations (Int / Spirit / SP / crit / haste /
+      MP5): P1 4.07 / 2.49 / 2.35 / 0.37 / -0.44 / 6.53; P3 0.52 / 0.73 / 2.79 / 0.72 / 0.09 / 0.35; P5 0.99 /
+      1.28 / 3.09 / 0.79 / -0.21 / 0.86. Mana stats fall once a phase stops running dry. Haste is about 0 or
+      negative while the build is mana-bound, as it only spends mana sooner; Lifebloom and the hots don't scale
+      with it.
 - **Savage Defense** holds one charge, which the druid's crits refill at their own rate: the slower the boss
   swings, the fewer swings find it down.
 - **Hurricane**'s cast is a hit without damage on the druid's side: one Illustration of the Dragon Soul stack,

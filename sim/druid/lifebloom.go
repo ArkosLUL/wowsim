@@ -4,6 +4,7 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/serverdata"
 )
 
@@ -25,6 +26,11 @@ func (druid *Druid) registerLifebloomSpell() {
 	bloomPerStack, _ := serverdata.SpellByID(48451).EffectRange(1)
 	manaMetrics := druid.NewManaMetrics(core.ActionID{SpellID: 64372})
 	periodic := druid.periodicHealMultiplier()
+	tickFlat := druid.lifebloomFlatHealing()
+	// Glyph of Lifebloom adds its seconds to the hot's duration
+	glyphTicks := core.TernaryInt32(druid.HasMajorGlyph(proto.DruidMajorGlyph_GlyphOfLifebloom), int32(serverBonus(spellGlyphOfLifebloom, 0))/1000, 0)
+	// Idol of Tenacity's flat SPELLMOD_EFFECT2 on the bloom's base
+	bloomPerStack += druid.lifebloomBloomBonus()
 
 	// 33778 heals for what spell_dru_lifebloom hands it, which already holds the caster's and the target's terms
 	// (Spell::EffectHeal skips them for it), and crits on the druid's chance
@@ -68,7 +74,7 @@ func (druid *Druid) registerLifebloomSpell() {
 
 		ManaCost: core.ManaCostOptions{
 			BaseCost:   lifebloomCostPct / 100.0,
-			Multiplier: druid.hotCostMultiplier(),
+			Multiplier: druid.hotCostMultiplier() + druid.lifebloomCostMod(),
 		},
 		Cast: core.CastConfig{
 			DefaultCast: core.Cast{
@@ -93,13 +99,13 @@ func (druid *Druid) registerLifebloomSpell() {
 				},
 			},
 			// Nature's Splendor adds 2 s
-			NumberOfTicks: 7 + core.TernaryInt32(druid.Talents.NaturesSplendor, 2, 0),
+			NumberOfTicks: 7 + glyphTicks + core.TernaryInt32(druid.Talents.NaturesSplendor, 2, 0),
 			TickLength:    time.Second,
 			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, Min: 53, Max: 53, SP: 0.09518},
 			// AuraEffect::CalculateAmount works out one stack's whole amount, then multiplies it by the stacks
 			OnSnapshot: func(sim *core.Simulation, target *core.Unit, dot *core.Dot, _ bool) {
-				dot.SnapshotBaseDamage = wholeHot(sim, target, dot, periodic) * float64(druid.lifeblooms[target.UnitIndex].stacks)
+				dot.SnapshotBaseDamage = wholeHot(sim, target, dot, periodic, tickFlat) * float64(druid.lifeblooms[target.UnitIndex].stacks)
 				dot.SnapshotHotMultiplier(1)
 			},
 			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {

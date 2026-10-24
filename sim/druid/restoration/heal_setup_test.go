@@ -64,6 +64,11 @@ type healSetup struct {
 	other bool
 	// the rotation's priority list as APL JSON; the default casts nothing
 	apl string
+	// whom the druid Innervates; nobody by default
+	innervate *proto.UnitReference
+	glyphs    *proto.Glyphs
+	// item ids, a relic among them
+	items []int32
 }
 
 func (s healSetup) build(t *testing.T) (*core.Simulation, *RestorationDruid) {
@@ -87,7 +92,13 @@ func (s healSetup) build(t *testing.T) (*core.Simulation, *RestorationDruid) {
 			TalentsString: talents,
 		}
 	}
-	raid := core.SinglePlayerRaidProto(player(talents, apl), nil, nil, nil)
+	main := player(talents, apl)
+	main.Glyphs = s.glyphs
+	for _, id := range s.items {
+		main.Equipment.Items = append(main.Equipment.Items, &proto.ItemSpec{Id: id})
+	}
+	main.GetRestorationDruid().Options.InnervateTarget = s.innervate
+	raid := core.SinglePlayerRaidProto(main, nil, nil, nil)
 	if s.other {
 		raid.Parties = append(raid.Parties, &proto.Party{Players: []*proto.Player{
 			player(restoTalents(false), `{"type": "TypeAPL", "priorityList": []}`),

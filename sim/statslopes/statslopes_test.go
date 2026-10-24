@@ -94,7 +94,7 @@ func restorationDruid() *proto.Player {
 		Race:          proto.Race_RaceTauren,
 		Class:         proto.Class_ClassDruid,
 		Equipment:     core.GetGearSet("../../ui/restoration_druid/gear_sets", "p1").GearSet,
-		Rotation:      castsNothing,
+		Rotation:      core.GetAplRotation("../../ui/restoration_druid/apls", "default").Rotation,
 		TalentsString: "05320031103--230023312131502331050313051",
 		Spec: &proto.Player_RestorationDruid{RestorationDruid: &proto.RestorationDruid{Options: &proto.RestorationDruid_Options{
 			InnervateTarget: &proto.UnitReference{Type: proto.UnitReference_Player, Index: 0},
@@ -313,7 +313,7 @@ func TestHealerIsMeasuredInHPS(t *testing.T) {
 	}{
 		{"HealingPriest", holyPriest, true},
 		{"HolyPaladin", holyPaladin, false},
-		{"RestorationDruid", restorationDruid, false},
+		{"RestorationDruid", restorationDruid, true},
 		{"RestorationShaman", restorationShaman, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

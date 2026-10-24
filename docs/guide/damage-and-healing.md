@@ -141,7 +141,10 @@ rounding, caps and crit damage. Everything else the server does differently is i
   Guardian's 10% a point, then +30% under Strength of Wrynn; no healing done percent (`spell_pal_sacred_shield`).
 - **Druid heal scripts** ([caster mechanics](caster-mechanics.md#druid)):
   - Direct heals carry SPELLMOD_DAMAGE and Master Shapeshifter's aura 136 in `DamageMultiplier`; a hot's amount
-    takes only its SPELLMOD_DOT percents (`hotSnapshot`), aura 136 at each tick.
+    takes only its SPELLMOD_DOT percents (`hotSnapshot`), aura 136 at each tick. A flat SPELLMOD_DOT (Idols of
+    Pure Thoughts and Lush Moss) joins the roll and healing power before those percents.
+  - With T9's 4-piece a Rejuvenation tick rolls the druid's current crit chance at the tick (`tickRejuvenation`).
+    Nourish's glyph adds its percent to the finished heal, truncated in float32, before the crit.
   - Living Seed's 48503: base points `uint32(float32(crit heal) × 30 / 100)`, the overheal in; it never crits
     (`SPELL_ATTR2_CANT_CRIT`), ignores caster modifiers and makes no threat, so only the target's taken terms
     apply.

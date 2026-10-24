@@ -219,6 +219,8 @@ var threats = []Threat{
 	{SpellID: 42950, Targets: ThreatTargetsEnemyArea},                                      // Dragon's Breath (Rank 6)
 	{SpellID: 42976, Targets: ThreatTargetsCaster},                                         // Executioner
 	{SpellID: 43185, Targets: ThreatTargetsCaster},                                         // Healing Potion
+	{SpellID: 43725, Targets: ThreatTargetsCaster},                                         // Vengeful Idol of Tenacity
+	{SpellID: 43736, Targets: ThreatTargetsCaster},                                         // Reduced Rejuvenation Cost
 	{SpellID: 43740, Targets: ThreatTargetsCaster},                                         // Lunar Grace
 	{SpellID: 43749, Targets: ThreatTargetsCaster},                                         // Elemental Strength
 	{SpellID: 43751, Targets: ThreatTargetsCaster},                                         // Energized
@@ -234,6 +236,7 @@ var threats = []Threat{
 	{SpellID: 44949, Targets: ThreatTargetsEnemyArea},                                      // Whirlwind
 	{SpellID: 45470, Targets: ThreatTargetsCaster},                                         // Death Strike
 	{SpellID: 45529, Targets: ThreatTargetsCaster},                                         // Blood Tap
+	{SpellID: 46100, Targets: ThreatTargetsCaster},                                         // Brutal Idol of Tenacity
 	{SpellID: 46584, Targets: ThreatTargetsCaster},                                         // Raise Dead
 	{SpellID: 46662, Targets: ThreatTargetsCaster},                                         // Deathfrost
 	{SpellID: 46832, Targets: ThreatTargetsCaster},                                         // Moonkin Starfire Bonus
@@ -391,7 +394,13 @@ var threats = []Threat{
 	{SpellID: 54696, Targets: ThreatTargetsCaster},                                         // Wracking Pains
 	{SpellID: 54697, Targets: ThreatTargetsCaster},                                         // Oozing Wound
 	{SpellID: 54741, Targets: ThreatTargetsCaster},                                         // Firestarter
+	{SpellID: 54743, Targets: ThreatTargetsCaster},                                         // Glyph of Regrowth
+	{SpellID: 54754, Targets: ThreatTargetsCaster},                                         // Glyph of Rejuvenation
 	{SpellID: 54758, Targets: ThreatTargetsCaster},                                         // Hyperspeed Acceleration
+	{SpellID: 54825, Targets: ThreatTargetsCaster},                                         // Glyph of Healing Touch
+	{SpellID: 54826, Targets: ThreatTargetsCaster},                                         // Glyph of Lifebloom
+	{SpellID: 54832, Targets: ThreatTargetsCaster},                                         // Glyph of Innervate
+	{SpellID: 54833, Targets: ThreatTargetsCaster},                                         // Glyph of Innervate
 	{SpellID: 54845, Targets: ThreatTargetsCaster},                                         // Glyph of Starfire
 	{SpellID: 55018, Targets: ThreatTargetsCaster},                                         // Sonic Awareness
 	{SpellID: 55166, Targets: ThreatTargetsCaster},                                         // Tidal Force
@@ -426,6 +435,7 @@ var threats = []Threat{
 	{SpellID: 57755, Row: 57755, FlatMod: 0, PctMod: 1.5},                                  // Heroic Throw
 	{SpellID: 57761, Targets: ThreatTargetsCaster},                                         // Fireball!
 	{SpellID: 57823, Row: 57823, FlatMod: 121, PctMod: 1},                                  // Revenge (Rank 9)
+	{SpellID: 57918, Targets: ThreatTargetsCaster},                                         // Increased Healing
 	{SpellID: 57934, Targets: ThreatTargetsCaster},                                         // Tricks of the Trade
 	{SpellID: 57946, Targets: ThreatTargetsCaster},                                         // Life Tap (Rank 8)
 	{SpellID: 57960, Targets: ThreatTargetsCaster},                                         // Water Shield (Rank 9)
@@ -458,6 +468,7 @@ var threats = []Threat{
 	{SpellID: 60064, Targets: ThreatTargetsCaster},                                         // Now is the time!
 	{SpellID: 60065, Targets: ThreatTargetsCaster},                                         // Reflection of Torment
 	{SpellID: 60089, Row: 60089, FlatMod: 638, PctMod: 1},                                  // Faerie Fire (Feral)
+	{SpellID: 60135, Targets: ThreatTargetsCaster},                                         // Reduced Lifebloom Cost
 	{SpellID: 60196, Targets: ThreatTargetsCaster},                                         // Berserker!
 	{SpellID: 60229, Targets: ThreatTargetsCaster},                                         // Greatness
 	{SpellID: 60233, Targets: ThreatTargetsCaster},                                         // Greatness
@@ -498,8 +509,16 @@ var threats = []Threat{
 	{SpellID: 60698, Targets: ThreatTargetsCaster},                                         // LK Arena 4 Gladiator's Idol of Resolve
 	{SpellID: 60700, Targets: ThreatTargetsCaster},                                         // LK Arena 5 Gladiator's Idol of Resolve
 	{SpellID: 60701, Targets: ThreatTargetsCaster},                                         // LK Arena 6 Gladiator's Idol of Resolve
+	{SpellID: 60733, Targets: ThreatTargetsCaster},                                         // Savage Gladiator's Idol of Tenacity
+	{SpellID: 60736, Targets: ThreatTargetsCaster},                                         // Hateful Gladiator's Idol of Tenacity
+	{SpellID: 60738, Targets: ThreatTargetsCaster},                                         // Deadly Gladiator's Idol of Tenacity
+	{SpellID: 60739, Targets: ThreatTargetsCaster},                                         // LK Arena 4 Gladiator's Idol of Tenacity
+	{SpellID: 60740, Targets: ThreatTargetsCaster},                                         // LK Arena 5 Gladiator's Idol of Tenacity
+	{SpellID: 60741, Targets: ThreatTargetsCaster},                                         // LK Arena 6 Gladiator's Idol of Tenacity
 	{SpellID: 60766, Targets: ThreatTargetsCaster},                                         // Essence of the Storm
 	{SpellID: 60771, Targets: ThreatTargetsCaster},                                         // Totem of the Elemental Plane
+	{SpellID: 60779, Targets: ThreatTargetsCaster},                                         // Idol of Lush Moss
+	{SpellID: 60780, Targets: ThreatTargetsCaster},                                         // Idol of Awakening
 	{SpellID: 60794, Targets: ThreatTargetsCaster},                                         // Libram of Obstruction
 	{SpellID: 60795, Targets: ThreatTargetsCaster},                                         // Libram of Obstruction
 	{SpellID: 60819, Targets: ThreatTargetsCaster},                                         // Libram of Reciprocation
@@ -520,6 +539,8 @@ var threats = []Threat{
 	{SpellID: 62146, Targets: ThreatTargetsCaster},                                         // Unflinching Valor
 	{SpellID: 62478, Targets: ThreatTargetsCaster},                                         // Frozen Blows
 	{SpellID: 62606, Targets: ThreatTargetsCaster},                                         // Savage Defense
+	{SpellID: 62970, Targets: ThreatTargetsCaster},                                         // Glyph of Wild Growth
+	{SpellID: 62971, Targets: ThreatTargetsCaster},                                         // Glyph of Nourish
 	{SpellID: 63167, Targets: ThreatTargetsCaster},                                         // Decimation
 	{SpellID: 63244, Targets: ThreatTargetsCaster},                                         // Pyroclasm
 	{SpellID: 63250, Targets: ThreatTargetsCaster},                                         // Jouster's Fury
@@ -550,6 +571,7 @@ var threats = []Threat{
 	{SpellID: 64739, Targets: ThreatTargetsCaster},                                         // Show of Faith
 	{SpellID: 64741, Targets: ThreatTargetsCaster},                                         // Pandora's Plea
 	{SpellID: 64742, Targets: ThreatTargetsCaster},                                         // Pandora's Plea
+	{SpellID: 64756, Targets: ThreatTargetsCaster},                                         // Item - Druid T8 Restoration 2P Bonus
 	{SpellID: 64772, Targets: ThreatTargetsCaster},                                         // Comet's Trail
 	{SpellID: 64786, Targets: ThreatTargetsCaster},                                         // Comet's Trail
 	{SpellID: 64790, Targets: ThreatTargetsCaster},                                         // Blood of the Old God
@@ -566,6 +588,7 @@ var threats = []Threat{
 	{SpellID: 64912, Targets: ThreatTargetsCaster},                                         // Item - Priest T8 Healer 4P Bonus
 	{SpellID: 64913, Targets: ThreatTargetsCaster},                                         // Energized (Rank 1)
 	{SpellID: 64937, Targets: ThreatTargetsCaster},                                         // Heightened Reflexes
+	{SpellID: 64949, Targets: ThreatTargetsCaster},                                         // Item - Druid T8 Restoration Relic
 	{SpellID: 64951, Targets: ThreatTargetsCaster},                                         // Primal Wrath (Rank 5)
 	{SpellID: 64963, Targets: ThreatTargetsCaster},                                         // Shadow of Death (Rank 5)
 	{SpellID: 65000, Targets: ThreatTargetsCaster},                                         // Meteoric Inspiration
@@ -589,10 +612,13 @@ var threats = []Threat{
 	{SpellID: 66803, Targets: ThreatTargetsCaster},                                         // Desolation
 	{SpellID: 66923, Targets: ThreatTargetsCaster},                                         // Hack and Slash
 	{SpellID: 67117, Targets: ThreatTargetsCaster},                                         // Unholy Might
+	{SpellID: 67127, Targets: ThreatTargetsCaster},                                         // Item - Druid T9 Restoration 2P Bonus (Nourish)
 	{SpellID: 67209, Targets: ThreatTargetsCaster},                                         // Item - Rogue T9 2P Bonus (Rupture)
 	{SpellID: 67210, Targets: ThreatTargetsCaster},                                         // Clearcasting
 	{SpellID: 67354, Targets: ThreatTargetsCaster},                                         // Evasion (Rank 5)
 	{SpellID: 67355, Targets: ThreatTargetsCaster},                                         // Agile
+	{SpellID: 67356, Targets: ThreatTargetsCaster},                                         // Item - Druid T9 Restoration Relic (Rejuvenation)
+	{SpellID: 67358, Targets: ThreatTargetsCaster},                                         // Rejuvenating
 	{SpellID: 67360, Targets: ThreatTargetsCaster},                                         // Blessing of the Moon Goddess
 	{SpellID: 67365, Targets: ThreatTargetsCaster},                                         // Item - Paladin T9 Retribution Relic (Seal of Vengeance)
 	{SpellID: 67371, Targets: ThreatTargetsCaster},                                         // Holy Strength
@@ -630,6 +656,8 @@ var threats = []Threat{
 	{SpellID: 70127, Targets: ThreatTargetsEnemyArea},                                      // Mystic Buffet
 	{SpellID: 70654, Targets: ThreatTargetsCaster},                                         // Blood Armor
 	{SpellID: 70657, Targets: ThreatTargetsCaster},                                         // Advantage (Rank 5)
+	{SpellID: 70658, Targets: ThreatTargetsCaster},                                         // Item - Druid T10 Restoration 2P Bonus
+	{SpellID: 70664, Targets: ThreatTargetsCaster},                                         // Item - Druid T10 Restoration 4P Bonus (Rejuvenation)
 	{SpellID: 70718, Targets: ThreatTargetsCaster},                                         // Item - Druid T10 Balance 2P Bonus
 	{SpellID: 70727, Targets: ThreatTargetsCaster},                                         // Item - Hunter T10 2P Bonus
 	{SpellID: 70728, Targets: ThreatTargetsCaster},                                         // Exploit Weakness
@@ -651,6 +679,8 @@ var threats = []Threat{
 	{SpellID: 71165, Targets: ThreatTargetsCaster},                                         // Molten Core
 	{SpellID: 71175, Targets: ThreatTargetsCaster},                                         // Agile
 	{SpellID: 71177, Targets: ThreatTargetsCaster},                                         // Vicious
+	{SpellID: 71178, Targets: ThreatTargetsCaster},                                         // Item - Druid T10 Restoration Relic (Rejuvenation)
+	{SpellID: 71184, Targets: ThreatTargetsCaster},                                         // Soothing
 	{SpellID: 71187, Targets: ThreatTargetsCaster},                                         // Formidable
 	{SpellID: 71199, Targets: ThreatTargetsCaster},                                         // Furious
 	{SpellID: 71216, Targets: ThreatTargetsCaster},                                         // Enraged

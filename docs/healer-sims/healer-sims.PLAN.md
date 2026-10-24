@@ -517,3 +517,65 @@ HL2 cross-review (uncommitted):
   launch.
 - **Owns:** the druid's resto glyphs, sets and idols, `sim/druid/innervate.go`, `ui/restoration_druid/`,
   `sim/druid/restoration/`.
+
+#### As built
+
+Stage 1, items (uncommitted; numbers before HEAL-CORE):
+- Innervate: `registerInnervateCD`'s `ExtraCastCondition` is no longer inverted. `TestInnervateCastsOncePerCooldown`
+  (self and another player): one cast and 7866 mana per 3 minutes. No Balance, Feral, Tank or raid golden holds an
+  Innervate target, so none moves from it; Restoration's does (self Innervate).
+- Glyphs (`sim/druid/resto_items.go`, rules in [caster-mechanics](../guide/caster-mechanics.md#druid)): Healing
+  Touch, Lifebloom, Nourish, Rapid Rejuvenation, Regrowth, Rejuvenation, Swiftmend, Wild Growth, Innervate. T7 to
+  T10 sets (Dreamwalker and Nightsong Regalia, Malfurion's or Runetotem's Garb, Lasherweave Garb; T7's 4-piece
+  60137 has no server code) and the resto idols (Budding Life, Awakening, Pure Thoughts, Lush Moss, the Tenacity
+  idols of every season, Flourishing Life, Flaring Growth, Black Willow). One test each in `items_test.go`.
+- Needs a live capture (stage 3): 54755 (Glyph of Rejuvenation's heal), then `gen_serverdata`. It is built like
+  Glyph of Healing Wave's 55533 (no coefficient, can crit); its attributes are unchecked.
+- Also touched: `sim/optimizer/residuals.go` (the idol ids), `sim/core/serverdata` (regenerated, additions only).
+- Goldens: Balance, Feral and Tank gain `AllItems` rows for the four resto sets. Restoration gains the same rows
+  and moves everywhere: Average-Default HPS 6079 to 7471 (+22.9%) from Innervate (more Nourish, Lifebloom and
+  Healing Touch casts), Glyph of Nourish (+6% a hot on Nourish: 7904 to 9586 a hit), Swiftmend's glyph (Rejuvenation
+  stays up) and Wild Growth's 6th target.
+
+Stage 2, page (uncommitted; numbers before HEAL-CORE):
+- Default APL `ui/restoration_druid/apls/default.apl.json` as `autoRotation` (rule in
+  [caster-mechanics](../guide/caster-mechanics.md#druid)); `TestRestoration` and the stat-slopes row run it. Self
+  Innervate is the page default; P5 preset (P4 plus the Ruby Sanctum cloak, bracers, belt, ring and trinket); talents
+  and glyphs kept. Page buffs and debuffs match the shaman page's, so no bloodlust. Launched; `header.spec.ts` now
+  lists the druid page in the menu and checks its healing note. The page had no alert.
+- Tests (`default_apl_test.go`): the page's padded 9-dummy request at 300 s heals with every APL spell, runs P1 dry
+  inside the fight, and every preset item is in the server catalog by its phase's tier.
+  `TestHealerIsMeasuredInHPS` has `heals: true` for the druid.
+- Page request, 300 s (time to OOM, HPS): preraid 126 s 7000, P1 174 s 9189, P2 to P5 none, 13532 / 13421 / 20836 /
+  21081. "Measure at my gear" (Int / Spirit / SP / crit / haste / MP5): P1 4.07 / 2.49 / 2.35 / 0.37 / -0.44 / 6.53;
+  P3 0.52 / 0.73 / 2.79 / 0.72 / 0.09 / 0.35; P5 0.99 / 1.28 / 3.09 / 0.79 / -0.21 / 0.86. Haste is near 0 or
+  negative while mana-bound, as the build only spends mana sooner.
+- Goldens (against the base, items and page together): `TestRestoration` Average-Default HPS 6079 to 7748 (+27.4%),
+  Settings rows +13% to +59%; the other druid suites move only by stage 1's new set rows.
+
+Stage 3, live (uncommitted; server lock held 13:40 to 14:03 UTC, no rebuild; numbers before HEAL-CORE):
+- Captured 54755 (`TestSpelldumpCapture`), added to `spelldump.jsonl`; `gen_serverdata` rerun (additions only);
+  `spellids` reports only 26545 and 53258. 54755 is `SPELL_ATTR2_CANT_CRIT` with `IGNORE_HEALTH_MODIFIERS`: the
+  sim's glyph heal no longer crits (it was built as Glyph of Healing Wave's 55533).
+- `tools/acore/spellmods` regenerated: the T8 heal 64801 joins the spells talents' mods reach, Blessing of the
+  Eternal's 70691 is excluded (ignores caster modifiers). The spell-mod sweep over the four druid paths
+  (`SIMVAL_SPELLMOD_ONLY`) replaced their lines in `spellmods.jsonl`; `TestSpellModRecords` passes (same two
+  disagreements as before, both already dropped). Glyphs, sets and relics are not talents, so the sweep doesn't
+  reach them.
+- Timing: a private copy of the e2e harness (not committed) took 208 `.simval timing` records of Healing Touch,
+  Lifebloom, Rejuvenation, Nourish, Regrowth, Wild Growth, Swiftmend and Innervate: bare, with each resto glyph,
+  T7 to T10 bonus spell and relic spell alone, all together (plus Bloodlust), and the three timing glyphs with
+  and without Bloodlust. Replayed through `replayTiming` (sets and relics worn as the items): 1224 checks
+  agree. Server values: Glyph of Healing Touch cast 1500 ms, cost 864; Glyph of Lifebloom 8 s; Rapid
+  Rejuvenation divides the hot's 15 s by haste (11538 ms at Bloodlust); T7 2-piece Lifebloom 929; Budding Life
+  -36 and Awakening -106 on Rejuvenation's 629, adding to 487; the other glyphs, T8 to T10 spells and relics
+  move no timing. The all-together records can't be replayed (a character has 3 glyphs); they add up as the
+  single ones do.
+- Fixed from it: Innervate costs no mana on the server (the sim took 4% of base mana, 139); the cost is gone.
+  `TestInnervateCastsOncePerCooldown` holds it at 0.
+- Goldens, `TestRestoration` against the base: Average-Default HPS 6079 to 7766 (+27.7%), LivingSeed-Average
+  6236 to 7913, NoBuffs LongSingleTarget 2918 to 4717; Innervate's cost removal adds under 0.3% to stage 2's.
+  Balance, Feral and Tank: new set rows only.
+- Left: T7's 4-piece (60137) has no server code; Glyph of Rejuvenation 54754, Blessing of the Eternal and the
+  Flaring Growth and Black Willow idols are modelled from the scripts and `spell_proc` rows, not measured live
+  (the harness probes no heals' amounts).
