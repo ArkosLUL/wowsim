@@ -8,9 +8,10 @@ import (
 
 // const JudgementDuration = time.Second * 20
 
-// canJudgement is the shared condition for casting any Judgement: an active seal.
-func (paladin *Paladin) canJudgement() bool {
-	return paladin.CurrentSeal != nil && paladin.CurrentSeal.IsActive()
+// canJudgement is the shared condition for casting any Judgement: an active seal and an enemy target. The server
+// refuses a judgement on a friend, and a healer's current target is a friendly dummy.
+func (paladin *Paladin) canJudgement(target *core.Unit) bool {
+	return target.Type == core.EnemyUnit && paladin.CurrentSeal != nil && paladin.CurrentSeal.IsActive()
 }
 
 func (paladin *Paladin) registerJudgementOfWisdomSpell(cdTimer *core.Timer) {
@@ -41,7 +42,7 @@ func (paladin *Paladin) registerJudgementOfWisdomSpell(cdTimer *core.Timer) {
 		},
 
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
-			return paladin.canJudgement()
+			return paladin.canJudgement(target)
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -87,7 +88,7 @@ func (paladin *Paladin) registerJudgementOfLightSpell(cdTimer *core.Timer) {
 		},
 
 		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
-			return paladin.canJudgement()
+			return paladin.canJudgement(target)
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {

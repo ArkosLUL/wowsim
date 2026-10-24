@@ -46,6 +46,37 @@ func TestLifebloomStacksToThree(t *testing.T) {
 	}
 }
 
+// Unit::SpellHealingBonusTaken takes Lifebloom's stacks into the flat healing taken term too, on the ticks and
+// on the bloom: int32(taken x coefficient x stacks), the coefficients unmodded on a target that isn't the druid.
+func TestLifebloomFlatHealingTakenCountsTheStacks(t *testing.T) {
+	sim, druid := healSetup{dummies: 1}.build(t)
+	startFight(sim)
+	target := targetDummies(sim)[0]
+	neverCrit(sim, druid)
+	for range 3 {
+		druid.Lifebloom.SkipCastAndApplyEffects(sim, target)
+	}
+	// five stacks of Talisman of Troll Divinity's 60518
+	const taken = 290
+	target.PseudoStats.BonusHealingTaken = taken
+	flat := func(coefficient float64) float64 {
+		return float64(int32(float32(coefficient) * float32(taken*3)))
+	}
+
+	before := healed(druid.Lifebloom.Spell, target)
+	runUntil(sim, 1500*time.Millisecond)
+	if got, want := healed(druid.Lifebloom.Spell, target)-before, 3*lifebloomOneStack(druid, target)+flat(0.09518); got != want {
+		t.Errorf("a 3 stack tick healed %v with %v flat healing taken, want %v", got, taken, want)
+	}
+	runUntil(sim, 9500*time.Millisecond)
+	if got, want := healed(druid.LifebloomBloom.Spell, target), lifebloomBloom(druid, target, 3)+flat(0.655); got != want {
+		t.Errorf("a 3 stack bloom healed %v with %v flat healing taken, want %v", got, taken, want)
+	}
+	if got := target.PseudoStats.BonusHealingTaken; got != taken {
+		t.Errorf("the target's flat healing taken is %v after the heals, want %v back", got, taken)
+	}
+}
+
 // When Lifebloom runs out it blooms (33778) for 776 and 0.655 of the healing power a stack, and the script gives
 // back half the base cost a stack, ahead of the heal: 28% of base mana x stacks / 100 / 2 in whole numbers.
 func TestLifebloomBloomsWhenItRunsOut(t *testing.T) {

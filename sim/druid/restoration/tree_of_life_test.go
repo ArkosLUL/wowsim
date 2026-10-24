@@ -39,8 +39,8 @@ func TestTreeOfLifeHealsTheRaidMore(t *testing.T) {
 	}
 }
 
-// Every heal casts in Tree of Life: the form has SHAPESHIFT_FLAG_STANCE, and the heals' StancesNot lists only
-// Moonkin. None takes the druid out of the form.
+// Every heal casts in Tree of Life: the form has SHAPESHIFT_FLAG_STANCE, and no heal has Tree in its StancesNot.
+// None takes the druid out of the form.
 func TestHealsCastInTreeOfLife(t *testing.T) {
 	sim, resto := healSetup{talents: restoTalents(true), dummies: 1}.build(t)
 	startFight(sim)
@@ -111,5 +111,31 @@ func TestTreeOfLifeCosts(t *testing.T) {
 	}
 	if resto.TreeOfLife.CanCast(sim, dummy) {
 		t.Error("Tree of Life can be cast in Tree of Life")
+	}
+}
+
+// The server refuses Faerie Fire on a friend. A rotation's Faerie Fire with no target, at the dummy the druid
+// targets, isn't cast and leaves the druid in Tree of Life; the rotation goes on to the next action.
+func TestNoFaerieFireOnAFriend(t *testing.T) {
+	sim, resto := healSetup{talents: restoTalents(true), dummies: 1, apl: `{"type": "TypeAPL", "priorityList": [
+		{"action": {"castSpell": {"spellId": {"spellId": 770}}}},
+		{"action": {"castSpell": {"spellId": {"spellId": 48441}}}}
+	]}`}.build(t)
+	startFight(sim)
+	dummy := targetDummies(sim)[0]
+	runUntil(sim, 5*time.Second)
+
+	if got := resto.FaerieFire.SpellMetrics[dummy.UnitIndex].Casts; got != 0 {
+		t.Errorf("Faerie Fire cast %d times on the dummy", got)
+	}
+	if !resto.InForm(druid.Tree) {
+		t.Error("the druid left Tree of Life")
+	}
+	if got := resto.Rejuvenation.SpellMetrics[dummy.UnitIndex].Casts; got == 0 {
+		t.Error("the rotation didn't go on to Rejuvenation")
+	}
+	resto.GCD.Reset()
+	if !resto.FaerieFire.CanCast(sim, sim.Encounter.TargetUnits[0]) {
+		t.Error("Faerie Fire can't be cast on the enemy")
 	}
 }

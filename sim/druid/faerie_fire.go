@@ -77,6 +77,10 @@ func (druid *Druid) registerFaerieFireSpell() {
 			IgnoreHaste: ignoreHaste,
 			CD:          cd,
 		},
+		// the server refuses it on a friend, and a healer's current target is a friendly dummy
+		ExtraCastCondition: func(sim *core.Simulation, target *core.Unit) bool {
+			return target.Type == core.EnemyUnit
+		},
 
 		ThreatMultiplier: 1,
 		DamageMultiplier: 1,

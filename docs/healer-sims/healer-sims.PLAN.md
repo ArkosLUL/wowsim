@@ -318,6 +318,9 @@ Cross-review (uncommitted):
 - Review: at 300 s the Resto APL without its Healing Wave line out-heals the default by 10–27% at every phase and
   still runs dry (preraid 6553, P1 9234 at ~255 s, P2 9407, P3 12099, P4 20662, P5 20444 HPS); at 180 s P1 it's +14%,
   not the ~6% the guide had. The APL is HEAL-SHA's, left as is.
+- HL2 cross-review: no test guarded the 300 / 180 s split (the page-request tests read the request's own fight).
+  `tools/uitest/tests/settings/default_fight.spec.ts`: 300 s on the four healer pages, 180 s on every other page
+  and the raid sim, a saved fight kept until Restore Defaults.
 
 ### HEAL-PAL-1 (G; stages: code, code, live)
 
@@ -367,8 +370,8 @@ Stage 3, live (uncommitted; server lock held 21:19 to 21:37 UTC, no rebuild):
 - Sweeps of PaladinProtection, PaladinProtection2 and PaladinRetribution, their lines replaced in `talents.jsonl`
   and `spellmods.jsonl`, added to `costauras.jsonl`; none disagree. Talent: 17 agree, 48 move no field. Spell-mod:
   54 agree, 53 move nothing, 17 not compared. Cost-aura: Divine Illumination's -50% agrees on 22 spells.
-  - 48821 and 48823 aren't compared: the replay finds no talent teaching them (first ranks 25914, 25912). Taught
-    Holy Shock by hand, Healing Light ×1.12, Divine Favor's and Sanctified Light's crit agree.
+  - 48821 and 48823 are taught through 48825's talent (`spellModCastBy`, HL2 cross-review): Healing Light ×1.12,
+    Divine Favor's and Sanctified Light's crit agree; Benediction moves nothing.
 - Timing: a private copy of the e2e harness (not committed) took `.simval timing` of the 21 spells stages 1 and 2
   added: bare; under Benediction, Divine Guardian, Light's Grace, Infusion of Light and Judgements of the Pure;
   then each of 31834, 54149, 31842, 54153 and Bloodlust on top (141 records). Replayed through `replayTiming`
@@ -382,6 +385,8 @@ Stage 3, live (uncommitted; server lock held 21:19 to 21:37 UTC, no rebuild):
 Review (uncommitted):
 - Judgement of Command (20467) now takes Judgements of the Pure's +5% a point: its flags[1] 0x200 is in the
   talent's `SPELLMOD_DAMAGE` mask (0x20400e00). No golden build has both; JoC is unprobed in the sweep.
+- HL2 cross-review: a judgement at a friend (Holy's default target) crashed the sim on its nil enemy aura; it now
+  isn't cast (`canJudgement`, `TestNoJudgementOnAFriend`). Goldens unchanged.
 
 ### HEAL-DRU-1 (G; stages: code, code, live)
 
@@ -454,6 +459,17 @@ Review fixes (uncommitted):
 - Swiftmend eats another druid's Rejuvenation or Regrowth when the druid has none
   (`TestSwiftmendFallsBackToAnotherDruidsHot`).
 - Goldens unchanged by both: the suite's one dummy shares the druid's party, and no other druid plays.
+
+HL2 cross-review (uncommitted):
+- Lifebloom's ticks and bloom multiply the flat healing taken by the stacks (`scaleFlatTaken`); Swiftmend's ticks
+  take Strength of Wrynn; Faerie Fire at a friend (the druid's default target) crashed the sim and now isn't cast.
+  Tests: `TestLifebloomFlatHealingTakenCountsTheStacks`, `TestSwiftmendTakesStrengthOfWrynn`,
+  `TestNoFaerieFireOnAFriend`, `TestRevitalizeOnRejuvenation`; Clearcasting, Living Seed's Regrowth and Swiftmend
+  plants checked. Goldens unchanged: Talisman of Troll Divinity never stacks its 60518, and the suite's buffs lack
+  Strength of Wrynn.
+- Open: Innervate never casts (`registerInnervateCD`'s inverted `ExtraCastCondition`, from upstream; fixing it moves
+  Balance and Feral pages with an Innervate target); hot landings proc trinkets whose rows lack NO_DMG_HEAL (core
+  `ApplyProcTriggerCallback`); Talisman of Troll Divinity never stacks (`sim/common`).
 
 ### HEAL-PAL-2 (G; stages: code, live)
 

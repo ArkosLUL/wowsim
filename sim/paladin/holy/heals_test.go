@@ -352,6 +352,29 @@ func TestJudgingWisdomOrLightCasts54158(t *testing.T) {
 	}
 }
 
+// The server refuses a judgement on a friend. A rotation's judgement with no target, at the dummy the paladin
+// targets, isn't cast; the rotation goes on to the next action.
+func TestNoJudgementOnAFriend(t *testing.T) {
+	sim, holy := healSetup{dummies: 1, apl: `{"type": "TypeAPL", "priorityList": [
+		{"action": {"castSpell": {"spellId": {"spellId": 53408}}}},
+		{"action": {"castSpell": {"spellId": {"spellId": 20271}}}},
+		{"action": {"castSpell": {"spellId": {"spellId": 48785}}}}
+	]}`}.build(t)
+	startFight(sim)
+	dummy := targetDummies(sim)[0]
+	cast(sim, holy.SealOfWisdom, &holy.Unit)
+	runUntil(sim, 5*time.Second)
+
+	for _, judgement := range []*core.Spell{holy.JudgementOfWisdom, holy.JudgementOfLight} {
+		if got := judgement.SpellMetrics[dummy.UnitIndex].Casts; got != 0 {
+			t.Errorf("%s cast %d times on the dummy", judgement.ActionID, got)
+		}
+	}
+	if got := holy.FlashOfLight.SpellMetrics[dummy.UnitIndex].Casts; got == 0 {
+		t.Error("the rotation didn't go on to Flash of Light")
+	}
+}
+
 // Seal of Wisdom's 20168 gives 4% of max mana, rolled at 12 PPM off the main hand's speed on a melee hit, the
 // judgement's 54158 included.
 func TestSealOfWisdomGivesManaOffJudgements(t *testing.T) {

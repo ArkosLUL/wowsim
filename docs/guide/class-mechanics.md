@@ -179,7 +179,8 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 - **Seal of Wisdom / Light**: a judgement also casts 54158 (`spell_pal_judgement`: no effect-2 seal judgement).
   Melee hits, 54158 included (`SPELL_ATTR3_NOT_A_PROC`), roll 12 / 10 PPM off the main hand's speed for 4% of
   max mana / a self heal of 15% AP + 15% SP (no crit). Holy has a main hand for it but never swings.
-- Holy's rotation heals with no target go to the first target dummy, so judgements must target the boss.
+- Holy's rotation casts with no target go to the first target dummy. A judgement there isn't cast (the server
+  refuses one on a friend): target the boss. Exorcism and damaging on-use items hit the dummy, counting no DPS.
 - **Judgement of Light**'s 20185 procs like Judgement of Wisdom's (15 PPM, landed damaging hits, no triggered
   casts): 20267 heals the attacker for 2% of his max health through his healing taken percents. Its original
   caster, the judging paladin, gets the healing and its threat, so the sim credits nobody.

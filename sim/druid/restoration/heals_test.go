@@ -158,6 +158,28 @@ func TestSwiftmendTakesHealingTakenOnce(t *testing.T) {
 	}
 }
 
+// Strength of Wrynn's 30% is healing done, so the ticks Swiftmend reads take it with the hot caster's healing
+// done, as a Rejuvenation tick does. The sim stands it in on the healed unit's HealingTakenMultiplier.
+func TestSwiftmendTakesStrengthOfWrynn(t *testing.T) {
+	sim, druid := healSetup{dummies: 1}.build(t)
+	startFight(sim)
+	target := targetDummies(sim)[0]
+	neverCrit(sim, druid)
+	target.PseudoStats.HealingTakenMultiplier *= 1.3
+
+	druid.Rejuvenation.SkipCastAndApplyEffects(sim, target)
+	before := healed(druid.Rejuvenation.Spell, target)
+	runUntil(sim, 3500*time.Millisecond)
+	tick := healed(druid.Rejuvenation.Spell, target) - before
+	amount := math.Floor((338 + power(druid.Rejuvenation.Spell, target, rejuvenationSP)) * rejuvMods)
+	if want := math.Floor(amount * 1.3); tick != want {
+		t.Fatalf("a Rejuvenation tick healed %v under Strength of Wrynn, want %v", tick, want)
+	}
+	if got, want := castHeal(sim, druid.Swiftmend.Spell, target), 1+4*tick; got != want {
+		t.Errorf("Swiftmend healed %v under Strength of Wrynn, want %v", got, want)
+	}
+}
+
 // AURA_STATE_SWIFTMEND isn't per caster: with none of its own on the target, Swiftmend eats another druid's
 // Rejuvenation or Regrowth (Spell::EffectHeal), as that druid's tick. With one of its own up it never does.
 func TestSwiftmendFallsBackToAnotherDruidsHot(t *testing.T) {
@@ -239,17 +261,15 @@ func TestClearcastingMakesHealsFree(t *testing.T) {
 			druid.Rejuvenation.SkipCastAndApplyEffects(sim, target)
 		}
 		clearcasting.Activate(sim)
-		mana := druid.CurrentMana()
 		// the empty rotation leaves the GCD held
 		druid.GCD.Reset()
 		if !spell.Cast(sim, target) {
 			t.Fatalf("%s didn't cast", spell.ActionID)
 		}
-		// regen can only add mana in the meantime, and the cheapest heal costs hundreds
-		runUntil(sim, sim.CurrentTime+4*time.Second)
-		if druid.CurrentMana() < mana {
-			t.Errorf("%s cost %v under Clearcasting", spell.ActionID, mana-druid.CurrentMana())
+		if spell.CurCast.Cost != 0 {
+			t.Errorf("%s cost %v under Clearcasting", spell.ActionID, spell.CurCast.Cost)
 		}
+		runUntil(sim, sim.CurrentTime+4*time.Second)
 	}
 }
 

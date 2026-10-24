@@ -46,7 +46,10 @@ func (druid *Druid) registerLifebloomSpell() {
 			// SpellHealingBonusDone with the stacks as its factor: int32(power x coefficient x stacks)
 			power := float32(float32(spell.Direct.SP) * float32(spell.HealingPower(target)))
 			baseHealing := float64(bloomPerStack*stacks) + float64(int32(power*float32(stacks)))
-			spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+			taken := scaleFlatTaken(target, stacks)
+			result := spell.CalcHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+			target.PseudoStats.BonusHealingTaken = taken
+			spell.DealHealing(sim, result)
 		},
 	})
 
@@ -99,7 +102,12 @@ func (druid *Druid) registerLifebloomSpell() {
 				dot.SnapshotBaseDamage = wholeHot(sim, target, dot, periodic) * float64(druid.lifeblooms[target.UnitIndex].stacks)
 				dot.SnapshotHotMultiplier(1)
 			},
-			OnTick: tickHot,
+			OnTick: func(sim *core.Simulation, target *core.Unit, dot *core.Dot) {
+				taken := scaleFlatTaken(target, druid.lifeblooms[target.UnitIndex].stacks)
+				result := dot.CalcSnapshotHealing(sim, target, dot.OutcomeTick)
+				target.PseudoStats.BonusHealingTaken = taken
+				dot.Spell.DealPeriodicHealing(sim, result)
+			},
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -119,4 +127,13 @@ func (druid *Druid) registerLifebloomSpell() {
 			druid.landHot(sim, spell, target)
 		},
 	})
+}
+
+// scaleFlatTaken multiplies the target's flat healing taken by Lifebloom's stacks, as SpellHealingBonusTaken's
+// factorMod does for the ticks and the bloom, and returns the old value. Put it back before dealing the heal: its
+// procs can change it.
+func scaleFlatTaken(target *core.Unit, stacks int32) float64 {
+	taken := target.PseudoStats.BonusHealingTaken
+	target.PseudoStats.BonusHealingTaken *= float64(stacks)
+	return taken
 }

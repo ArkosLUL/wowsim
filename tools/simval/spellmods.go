@@ -288,6 +288,10 @@ var spellModSimSpells = map[int32]spellModSimSpell{
 	66216: {sim: 49921}, // Threat of Thassarian's off-hand Plague Strike
 }
 
+// spellModCastBy is the cast that triggers a probed spell, for a spell the sim registers only with the cast's
+// talent: Holy Shock's heal and damage, which 48825's dummy casts (spell_pal_holy_shock).
+var spellModCastBy = map[int32]int32{48821: 48825, 48823: 48825}
+
 // spellModExtraSpecs are specs past the class's own that register a spell of spellModSimSpells, by server
 // class id: only the smite priest has Penance's damage. Tried for those spells alone.
 var spellModExtraSpecs = map[uint8][]string{5: {"smite_priest"}}
@@ -346,7 +350,7 @@ func (s *spellModSims) pair(k int, cast, spellID int32) spellModPair {
 	}
 	// a spell the sim deals under another id comes with that one's talent (Scourge Strike's shadow damage)
 	other := spellModSimSpells[spellID]
-	teach, err := s.path.spellModTeacher(cmp.Or(other.sim, spellID))
+	teach, err := s.path.spellModTeacher(cmp.Or(other.sim, spellModCastBy[spellID], spellID))
 	if err != nil {
 		return spellModPair{err: err}
 	}

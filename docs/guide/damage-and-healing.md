@@ -146,15 +146,16 @@ rounding, caps and crit damage. Everything else the server does differently is i
     (`SPELL_ATTR2_CANT_CRIT`), ignores caster modifiers and makes no threat, so only the target's taken terms
     apply.
   - Lifebloom's bloom 33778: `776 × stacks + int32(power × 0.655 × stacks)` through a direct heal's done and
-    taken terms, then the druid's crit (`Spell::EffectHeal` skips the terms again). Not modelled: the flat
-    healing taken term of Lifebloom's ticks and bloom ignores the stacks.
+    taken terms, then the druid's crit (`Spell::EffectHeal` skips the terms again). The ticks' and
+    bloom's flat healing taken term is multiplied by the stacks (`factorMod`; `scaleFlatTaken`).
   - Wild Growth's tick n: `int32(b + b × (6 − 2(n−1)) / 100)` in float32, b the aura's amount
     (`spell_dru_wild_growth_aura`).
   - Nourish: × 1.2f in the taken terms on a target with the druid's own Rejuvenation, Regrowth, Lifebloom or
     Wild Growth (`Unit::SpellHealingBonusTaken`).
   - Swiftmend (`Spell::EffectHeal`): 1 plus 4 ticks of a Rejuvenation or 6 of a Regrowth, whichever has less
     time left (a tie to the older), the druid's own first, else another druid's (`AURA_STATE_SWIFTMEND` isn't
-    per caster); each tick `int32(amount × its caster's healing done)` through the target's taken terms
+    per caster); each tick `int32(amount × its caster's healing done)`, Strength of Wrynn's stand-in included,
+    through the target's taken terms
     (`Dot.HotTickHealing`, `TickHealingTaken`), then `SPELLMOD_DAMAGE` and the crit; no done or taken of its
     own. It eats the hot, and needs one up.
 - **Mark of Blood**'s 61607 heals the unit the marked target hits for 4% of that unit's max health, Vampiric

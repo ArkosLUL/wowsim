@@ -520,8 +520,8 @@ cost's power type (Bloodrage, -2) is written unsigned, 4294967294, so `timingRec
 **Replay** (`TestSpellModRecords`, skips without the fixture): per listed spell of each step, the server's change from
 the line before (`steps` k-1, no cast) to after (k, the talent's cast if not passive) against the sim's between
 `goldcharSetup(k-1)` and `(k)` (`newPathSim`), the cast aura mirrored. The sim's spell comes from the path's spec, else
-the class's other specs, else with a point in the talent whose rank spell is its first rank (Mortal Strike, Living
-Bomb); none (a pet's or Mirror Image's spell, an off-hand strike) is `not compared`, as is a cast talent the sim has no
+the class's other specs, else with a point in the talent whose rank spell is its first rank, or its triggering
+cast's (Mortal Strike, Living Bomb; Holy Shock's heal and damage through `spellModCastBy`); none (a pet's or Mirror Image's spell, an off-hand strike) is `not compared`, as is a cast talent the sim has no
 aura for (Presence of Mind). A probed spell the sim deals under another id compares as the sim spell whose
 `ThreatSpellID` is it (`spellModSimSpells`: Penance's ticks, Sunder Armor's 7386 and 58567, Windfury Attack, Seal
 of Righteousness' and Scourge Strike's second spells), without cast time, GCD, cost and cooldown unless it's the

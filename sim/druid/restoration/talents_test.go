@@ -271,6 +271,15 @@ func TestLivingSeed(t *testing.T) {
 		t.Error("the seed is still up after it bloomed")
 	}
 
+	// Swiftmend eats the Regrowth's hot
+	for _, spell := range []*core.Spell{druid.Regrowth.Spell, druid.Swiftmend.Spell} {
+		castHeal(sim, spell, target)
+		if !seed().IsActive() {
+			t.Errorf("a crit %s planted no seed", spell.ActionID)
+		}
+		seed().Deactivate(sim)
+	}
+
 	// the bloom and the hots never plant one
 	for range 3 {
 		druid.Lifebloom.SkipCastAndApplyEffects(sim, target)
@@ -356,5 +365,40 @@ func TestRevitalize(t *testing.T) {
 	ticks := float64(casts * 7)
 	if se := math.Sqrt(ticks * 0.15 * 0.85); math.Abs(gains-0.15*ticks) > 5*se {
 		t.Errorf("Revitalize gave mana on %v of %v ticks, want about %v", gains, ticks, 0.15*ticks)
+	}
+}
+
+// Rejuvenation's ticks roll Revitalize too, on the druid and on another mana user.
+func TestRevitalizeOnRejuvenation(t *testing.T) {
+	sim, druid := healSetup{dummies: 1, other: true}.build(t)
+	startFight(sim)
+	targets := []*RestorationDruid{druid, sim.Raid.Parties[1].Players[0].(*RestorationDruid)}
+	drains := make([]*core.ResourceMetrics, len(targets))
+	for i, target := range targets {
+		target.PseudoStats.SpiritRegenMultiplier = 0
+		target.UpdateManaRegenRates()
+		drains[i] = target.NewManaMetrics(core.ActionID{OtherID: 1})
+		target.SpendMana(sim, target.CurrentMana(), drains[i])
+	}
+
+	// 6 ticks each with Nature's Splendor
+	const casts = 30
+	gains := 0.0
+	for range casts {
+		for _, target := range targets {
+			druid.Rejuvenation.SkipCastAndApplyEffects(sim, &target.Unit)
+		}
+		runUntil(sim, sim.CurrentTime+18500*time.Millisecond)
+		for i, target := range targets {
+			gains += target.CurrentMana() / math.Floor(target.MaxMana()/100)
+			target.SpendMana(sim, target.CurrentMana(), drains[i])
+		}
+	}
+	if gains != math.Floor(gains) {
+		t.Fatalf("Revitalize gave %v gains, not a whole number", gains)
+	}
+	ticks := float64(casts * 2 * 6)
+	if se := math.Sqrt(ticks * 0.15 * 0.85); math.Abs(gains-0.15*ticks) > 5*se {
+		t.Errorf("Revitalize gave mana on %v of %v Rejuvenation ticks, want about %v", gains, ticks, 0.15*ticks)
 	}
 }

@@ -16,6 +16,8 @@ type healSetup struct {
 	items   []int32
 	dummies int32
 	buffs   *proto.RaidBuffs
+	// the rotation's priority list as APL JSON; the default casts nothing
+	apl string
 }
 
 func (s healSetup) build(t *testing.T) (*core.Simulation, *HolyPaladin) {
@@ -23,6 +25,10 @@ func (s healSetup) build(t *testing.T) (*core.Simulation, *HolyPaladin) {
 	talents := s.talents
 	if talents == "" {
 		talents = StandardTalents
+	}
+	apl := s.apl
+	if apl == "" {
+		apl = `{"type": "TypeAPL", "priorityList": []}`
 	}
 	equipment := &proto.EquipmentSpec{}
 	for _, id := range s.items {
@@ -34,7 +40,7 @@ func (s healSetup) build(t *testing.T) (*core.Simulation, *HolyPaladin) {
 		Equipment:     equipment,
 		Consumes:      &proto.Consumes{},
 		Spec:          BasicOptions,
-		Rotation:      core.APLRotationFromJsonString(`{"type": "TypeAPL", "priorityList": []}`),
+		Rotation:      core.APLRotationFromJsonString(apl),
 		TalentsString: talents,
 	}, nil, s.buffs, nil)
 	raid.TargetDummies = s.dummies

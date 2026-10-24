@@ -41,8 +41,9 @@ pets and guardians in [pets](pets.md).
   `SpellFlagNaturesGrace`.
 - **Resto heals** (`sim/druid/heals.go`, `lifebloom.go`, `wild_growth.go`; amounts in
   [damage and healing](damage-and-healing.md#healing)):
-  - All cast in Tree of Life: the form has `SHAPESHIFT_FLAG_STANCE`, so acts as no form, and their StancesNot
-    lists only Moonkin.
+  - All cast in Tree of Life: the form has `SHAPESHIFT_FLAG_STANCE`, so acts as no form, and no heal's StancesNot
+    lists Tree. Faerie Fire's and the balance spells' do; Faerie Fire at a friend (a healer's default target)
+    isn't cast.
   - Omen of Clarity rolls on every landing, a hot's with nothing to heal too (`CheckProc` passes any druid
     spell but a shapeshift): Wild Growth once a target, Lifebloom's bloom (`CAN_PROC_FROM_PROCS`).
     Clearcasting covers every heal, not Tree of Life.

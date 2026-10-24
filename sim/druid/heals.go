@@ -8,7 +8,7 @@ import (
 )
 
 // Tree of Life has SHAPESHIFT_FLAG_STANCE, so it acts as no form for SpellInfo::CheckShapeshift and every heal
-// casts in it: their StancesNot lists only Moonkin.
+// casts in it: none has Tree in its StancesNot.
 const healForms = Humanoid | Tree
 
 // hotCostMultiplier is Tree of Life Passive (5420): -20% cost on Rejuvenation, Regrowth, Lifebloom and Wild
@@ -94,8 +94,7 @@ func (druid *Druid) registerHealingTouchSpell() {
 		ThreatMultiplier: druid.healThreatMultiplier(),
 
 		Direct: core.SpellEffect{Effect: 0, Min: 3761, Max: 4439, SP: 1.61},
-		// Empowered Touch
-		Mods: []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 20 * druid.Talents.EmpoweredTouch}},
+		Mods:   []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 20 * druid.Talents.EmpoweredTouch}},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.HealingPower(target))
@@ -122,7 +121,6 @@ func (druid *Druid) registerRegrowthSpell() {
 			},
 		},
 
-		// Nature's Bounty
 		BonusCritRating:  5 * float64(druid.Talents.NaturesBounty) * core.CritRatingPerCritChance,
 		DamageMultiplier: druid.directHealMultiplier(),
 		CritMultiplier:   druid.DefaultHealingCritMultiplier(),
@@ -183,9 +181,8 @@ func (druid *Druid) registerRejuvenationSpell() {
 			TickLength:    time.Second * 3,
 			TicksCanCrit:  false,
 			Tick:          core.SpellEffect{Effect: 0, Min: 338, Max: 338, SP: 0.376},
-			// Improved Rejuvenation
-			OnSnapshot: hotSnapshot(druid.periodicHealMultiplier(0.05 * float64(druid.Talents.ImprovedRejuvenation))),
-			OnTick:     tickHot,
+			OnSnapshot:    hotSnapshot(druid.periodicHealMultiplier(0.05 * float64(druid.Talents.ImprovedRejuvenation))),
+			OnTick:        tickHot,
 		},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
@@ -223,7 +220,6 @@ func (druid *Druid) registerNourishSpell() {
 			},
 		},
 
-		// Nature's Majesty and Nature's Bounty
 		BonusCritRating: (2*float64(druid.Talents.NaturesMajesty) + 5*float64(druid.Talents.NaturesBounty)) *
 			core.CritRatingPerCritChance,
 		DamageMultiplier: druid.directHealMultiplier(),
@@ -231,8 +227,7 @@ func (druid *Druid) registerNourishSpell() {
 		ThreatMultiplier: druid.healThreatMultiplier(),
 
 		Direct: core.SpellEffect{Effect: 0, Min: 1883, Max: 2187, SP: 0.672},
-		// Empowered Touch
-		Mods: []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 10 * druid.Talents.EmpoweredTouch}},
+		Mods:   []core.SpellMod{{Op: core.SpellModBonusMultiplier, Flat: 10 * druid.Talents.EmpoweredTouch}},
 
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, spell.HealingPower(target))
@@ -307,7 +302,15 @@ func (druid *Druid) registerSwiftmendSpell() {
 			}
 			// Spell::EffectHeal: the effect's 1 plus the ticks of the hot as the target would take one, and no
 			// healing done or taken of Swiftmend's own
-			tick := hot.TickHealingTaken(target, hot.HotTickHealing())
+			done := hot.HotTickHealing()
+			// the server's tick takes the hot caster's whole healing done, Strength of Wrynn's included. Its
+			// stand-in sits in the target's HealingTakenMultiplier, which TickHealingTaken skips
+			if pct := target.HealingTakenPctMultiplier(); pct > 0 {
+				// whole percents, so float drift in the multipliers can't cost a point
+				wrynn := math.Round((target.PseudoStats.HealingTakenMultiplier/pct - 1) * 100)
+				done = math.Trunc(done * (1 + wrynn/100))
+			}
+			tick := hot.TickHealingTaken(target, done)
 			baseHealing := spell.Direct.Roll(sim) + float64(ticks)*tick
 			hot.Cancel(sim)
 			spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
