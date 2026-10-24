@@ -1,6 +1,6 @@
 # Healer sims: Holy Paladin, Resto Druid and Resto Shaman pages that heal
 
-Status: approved by the user (2026-10-23); HL1 and HL2 landed; HL3 next.
+Status: approved by the user (2026-10-23); HL1 and HL2 landed; HL3 running.
 
 ## Context
 
@@ -76,6 +76,9 @@ Status: approved by the user (2026-10-23); HL1 and HL2 landed; HL3 next.
   near zero in "Measure at my gear"), and it launches from Alpha.
 - **Default fight:** 300 s on healer pages, so mana stats measure where 180 s ends before the mana does (Disc P4
   and P5).
+- **HL3 also fixes (2026-10-24)** the HL2 cross-review's open points, though DPS goldens may move: Innervate's
+  inverted condition, no-damage hits proccing rows without NO_DMG_HEAL, Talisman of Troll Divinity's stacks, and the
+  Resto Shaman default APL loses its Healing Wave line.
 
 ## Out of scope
 
@@ -84,13 +87,14 @@ rankings; the raid sim's presets.
 
 ## Wave registry
 
-All waves skip the BiS re-baseline: no DPS spec, preset or optimizer path moves.
+HL1 and HL2 skip the BiS re-baseline: no DPS spec, preset or optimizer path moves. HL3 runs it if HEAL-CORE or
+the Innervate fix moves a DPS suite.
 
 | Wave | WIs |
 |---|---|
 | HL1 | HEAL-SHA (G) · HEAL-PRI (G) · HEAL-TEST (G) |
 | HL2 | HEAL-FIGHT · HEAL-PAL-1 (G) · HEAL-DRU-1 (G) |
-| HL3 | HEAL-PAL-2 (G) · HEAL-DRU-2 (G) |
+| HL3 | HEAL-CORE · HEAL-PAL-2 (G) · HEAL-DRU-2 (G) |
 
 G changes only the class's own healer suites (and, for HEAL-TEST, the four healer suites' weights rows).
 
@@ -471,14 +475,45 @@ HL2 cross-review (uncommitted):
   Balance and Feral pages with an Innervate target); hot landings proc trinkets whose rows lack NO_DMG_HEAL (core
   `ApplyProcTriggerCallback`); Talisman of Troll Divinity never stacks (`sim/common`).
 
-### HEAL-PAL-2 (G; stages: code, live)
+**HL3 class items, both:**
+- Judgements, Faerie Fire and other damage on the boss (`Target`), never the friendly current target.
+- The page guard test is built on the page's padded 9-dummy request at 300 s, like the priest's and shaman's
+  `pageRequest`. "Measure at my gear" is measured from it, and the spec's row in `TestHealerIsMeasuredInHPS`
+  (`sim/statslopes`) gets `heals: true`.
 
-- Holy glyphs, T7 to T10 holy sets, healing librams, the APL (Beacon kept up, Sacred Shield, Holy Shock on
-  cooldown, Holy Light or Flash of Light filler, Divine Illumination, Divine Plea), presets, launch.
-- **Owns:** the paladin's holy glyphs, sets and librams, `ui/holy_paladin/`.
+### HEAL-CORE (stages: core, shaman)
 
-### HEAL-DRU-2 (G; stages: code, live)
+- **Proc type mask:** a hit that deals and heals nothing (a hot or debuff landing, not a tick) procs only a
+  `spell_proc` row whose `SpellTypeMask` has NO_DMG_HEAL (0x4), per [ac] `SpellMgr::CanSpellTriggerProcOnEvent`.
+  `SpellTypeMask` is already in serverdata; carry it in `core.ServerProc` and check it where server procs fire. Today
+  `landHot`'s 0-damage hit procs Pandora's Plea, Show of Faith and Sif's Remembrance.
+- **Talisman of Troll Divinity** (`sim/common/wotlk/other_effects.go`, 37734): 60518 stacks as on the server, so
+  its flat healing taken applies.
+- **Enemy-only spells at a friend:** check that damaging spells and on-use items cast at a healer's friendly current
+  target (priest SW:P, shaman shocks, paladin Exorcism, item MCDs) neither crash nor fire, with a core guard if one
+  is cheap.
+- **Resto Shaman APL** (stage shaman): the default APL drops its Healing Wave line. Re-measure on the page's
+  request at 300 s, per phase (time to OOM, HPS, "Measure at my gear"), as HEAL-FIGHT did; the guide's numbers
+  follow.
+- Full suite: report every suite that moves, DPS ones included, with the procs or stacks behind it.
+- **Owns:** `sim/core` proc code, `sim/common/wotlk/other_effects.go`'s talisman, the guard, `ui/restoration_shaman/apls/`,
+  `sim/shaman/restoration/` tests, the Resto Shaman numbers in the guides.
 
-- Resto glyphs, T7 to T10 resto sets, healing idols, the APL (Lifebloom stack, Rejuvenation and Wild Growth kept
-  rolling, Swiftmend, Nourish filler), presets, launch.
-- **Owns:** the druid's resto glyphs, sets and idols, `ui/restoration_druid/`.
+### HEAL-PAL-2 (G; stages: items, page, live)
+
+- Holy glyphs, T7 to T10 holy sets (T8 4p shortens Sacred Shield's cooldown, T9 4p raises 66922; both read in the
+  [ac] scripts), healing librams.
+- APL: Beacon of Light on another unit than the heal target (a beacon on it copies nothing), Sacred Shield, Holy
+  Shock on cooldown, Holy Light or Flash of Light filler, Divine Illumination, Divine Plea, judgements on `Target`.
+  Presets, launch.
+- **Owns:** the paladin's holy glyphs, sets and librams, `ui/holy_paladin/`, `sim/paladin/holy/`.
+
+### HEAL-DRU-2 (G; stages: items, page, live)
+
+- Resto glyphs (Glyph of Swiftmend keeps the hot), T7 to T10 resto sets, healing idols.
+- Innervate: `registerInnervateCD`'s `ExtraCastCondition` is inverted (from upstream), so it never casts; fix it
+  before the page measures mana. Report Balance, Feral and raid suites that move.
+- APL: Lifebloom stack, Rejuvenation and Wild Growth kept rolling, Swiftmend, Nourish filler, Innervate. Presets,
+  launch.
+- **Owns:** the druid's resto glyphs, sets and idols, `sim/druid/innervate.go`, `ui/restoration_druid/`,
+  `sim/druid/restoration/`.
