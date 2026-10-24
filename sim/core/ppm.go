@@ -13,6 +13,35 @@ type ServerProc struct {
 	Chance float64 // 0-1; unused when PPM is set, PPM replaces it on any damage or heal event
 	PPM    float64
 	ICD    time.Duration
+
+	// SpellTypeMask is the entry's PROC_SPELL_TYPE_* filter, 0 for any. AllowsEvent applies it.
+	SpellTypeMask uint32
+}
+
+// procEventSpellType is the spell type ProcSkillsAndAuras gives a spell event: a heal, else damage
+// (absorbed damage counts), else NO_DMG_HEAL for a hit that did neither, misses and landing debuffs and
+// hots included. The sim's hits carry no absorb, so the amount is the damage.
+func procEventSpellType(amount float64, healing bool) uint32 {
+	switch {
+	case amount <= 0:
+		return serverdata.ProcSpellTypeNoDmgHeal
+	case healing:
+		return serverdata.ProcSpellTypeHeal
+	}
+	return serverdata.ProcSpellTypeDamage
+}
+
+// AllowsEvent is CanSpellTriggerProcOnEvent's spell type check for a damage or heal event of spell.
+// White swings skip it: their proc flags aren't spell flags.
+func (sp ServerProc) AllowsEvent(spell *Spell, result *SpellResult, healing bool) bool {
+	return procSpellTypeAllows(sp.SpellTypeMask, spell, result, healing)
+}
+
+func procSpellTypeAllows(mask uint32, spell *Spell, result *SpellResult, healing bool) bool {
+	if mask == 0 || result == nil || spell.ProcMask.Matches(ProcMaskWhiteHit) {
+		return true
+	}
+	return mask&procEventSpellType(result.Damage, healing) != 0
 }
 
 // ServerProcFor reads spellID's generated proc entry, at CharacterLevel, and is the only place
@@ -27,6 +56,8 @@ func ServerProcFor(spellID int32) ServerProc {
 		Chance: fromFloat32(proc.Chance) / 100,
 		PPM:    fromFloat32(proc.ProcsPerMinute),
 		ICD:    time.Duration(proc.CooldownMs) * time.Millisecond,
+
+		SpellTypeMask: proc.SpellTypeMask,
 	}
 	// Aura::CalcProcChance: 1/30 less per level past 60
 	if proc.AttributesMask&serverdata.ProcAttrReduceProc60 != 0 {

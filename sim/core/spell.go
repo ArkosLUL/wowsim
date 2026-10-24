@@ -542,6 +542,10 @@ func (spell *Spell) CanCast(sim *Simulation, target *Unit) bool {
 		return false
 	}
 
+	if spell.dealsDamageToAFriend(target) {
+		return false
+	}
+
 	if spell.ExtraCastCondition != nil && !spell.ExtraCastCondition(sim, target) {
 		//if sim.Log != nil {
 		//	sim.Log("Cant cast because of extra condition")
@@ -579,7 +583,25 @@ func (spell *Spell) Cast(sim *Simulation, target *Unit) bool {
 	if target == nil {
 		target = spell.Unit.CurrentTarget
 	}
+	if spell.dealsDamageToAFriend(target) {
+		return false
+	}
 	return spell.castFn(sim, target)
+}
+
+// dealsDamageToAFriend is a damaging cast at another friendly unit, which the server refuses
+// (SPELL_FAILED_BAD_TARGETS) and whose enemy-only auras and dots would find nothing there. A healer's current
+// target is a friendly dummy, so its rotation or an on-use item can reach this. Heals, helpful spells, casts
+// at oneself and area spells, which ignore the target they are cast at, pass. Only a spell with a damaging proc
+// mask or an on-use item counts: the empty mask also covers imbue heals.
+func (spell *Spell) dealsDamageToAFriend(target *Unit) bool {
+	if target == nil || target == spell.Unit || spell.Unit.IsOpponent(target) || spell.DamageMultiplier == 0 ||
+		spell.Flags.Matches(SpellFlagHelpful) || spell.ProcMask.Matches(ProcMaskSpellHealing) ||
+		!(spell.ProcMask.Matches(ProcMaskDirect) || spell.Flags.Matches(SpellFlagMCD)) {
+		return false
+	}
+	ss := spell.ServerSpell()
+	return ss == nil || ss.Flags&serverdata.FlagTargetsArea == 0
 }
 
 // Skips the actual cast and applies spell effects immediately.

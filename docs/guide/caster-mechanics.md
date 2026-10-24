@@ -160,13 +160,21 @@ pets and guardians in [pets](pets.md).
   Heal, 100% otherwise (`impWaterShieldChance`; `spell_sha_imp_water_shield`), and gives mana only with Water
   Shield up, using no orb.
 - **Resto page** (`ui/restoration_shaman/apls/default.apl.json`): Call of the Elements and Earth Shield before the
-  pull, then Earth Shield when it's gone, Tidal Force, Riptide on cooldown, Healing Wave at 2 Tidal Waves
-  stacks, Chain Heal; Mana Tide and Nature's Swiftness go out as major cooldowns. The page's Earth Shield rate
-  is 30 hits a minute (a boss swing every 2 s).
-  - Every phase's gear runs dry inside the healer pages' 300 s default fight (P1 at ~130 s, P4 at ~181 s).
-    Without its Healing Wave line the APL heals 10–27% more and still runs dry at every phase (P1 at ~255 s). Improved Water Shield's crit procs are the largest mana source.
+  pull, then Earth Shield when it's gone, Tidal Force, Riptide on cooldown, Chain Heal; no Healing Wave
+  line (it healed 10–27% less and ran dry sooner). Mana Tide and Nature's Swiftness go out as major cooldowns.
+  The page's Earth Shield rate is 30 hits a minute (a boss swing every 2 s).
+  - Every phase's gear runs dry inside the healer pages' 300 s default fight. On the page's request (300 s):
+
+    | | preraid | P1 | P2 | P3 | P4 | P5 |
+    |---|---|---|---|---|---|---|
+    | Time to OOM (s out of mana) | 178 (75) | 255 (27) | 171 (78) | 211 (48) | 283 (15) | 241 (37) |
+    | HPS | 6553 | 9234 | 9407 | 12099 | 20662 | 20444 |
+
+    Improved Water Shield's crit procs are the largest mana source.
+  - "Measure at my gear" (HPS a point, gain/loss) is nonzero for Int, SP, MP5 and crit at every phase; haste is
+    about 0 or below while mana-bound (preraid to P3: −0.53 to −0.08 gain), +2 to +5 at P4 and P5.
   - Spirit gives mana only outside the five-second rule, and even out of mana the shaman casts again as soon as
-    in-combat regen pays for a spell, so Spirit measures about 0 at every phase and fight length.
+    in-combat regen pays for a spell, so Spirit measures about 0 (0.02 to 0.29) at every phase and fight length.
   - Val'anyr's shields count as healing, so it beats the 893 spell power scepter in HPS.
 - **Frost Witch's 4-piece** (`spell_sha_t10_elemental_4p_bonus`): a Lava Burst cast adds 6 s to Flame Shock's
   time left. The max duration, which caps the ticks, rises only when the new time passes it

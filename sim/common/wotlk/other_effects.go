@@ -6,6 +6,7 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -111,8 +112,15 @@ func init() {
 			ActionID: actionID,
 			Duration: time.Second * 20,
 			Callback: core.CallbackOnHealDealt,
-			Handler: func(sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
-				procAuras[result.Target.UnitIndex].Activate(sim)
+			// 60517's proc entry: direct heals only (DONE_SPELL_MAGIC_DMG_CLASS_POS), a stack a heal
+			SpellTypeMask: serverdata.ProcSpellTypeHeal,
+			Handler: func(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+				if ss := spell.ServerSpell(); ss != nil && ss.DmgClass != serverdata.DmgClassMagic {
+					return
+				}
+				stacks := procAuras[result.Target.UnitIndex]
+				stacks.Activate(sim)
+				stacks.AddStack(sim)
 			},
 		})
 

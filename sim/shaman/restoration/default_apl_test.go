@@ -107,14 +107,17 @@ func TestDefaultAPLHeals(t *testing.T) {
 		t.Errorf("HPS %.0f, want a rotation that heals", unit.Hps.Avg)
 	}
 	for name, id := range map[string]int32{
-		"Riptide": 61301, "Chain Heal": 55459, "Healing Wave": 49273, "Earth Shield": 49284, "Tidal Force": 55198,
+		"Riptide": 61301, "Chain Heal": 55459, "Earth Shield": 49284, "Tidal Force": 55198,
 		"Healing Stream Totem": 58757, "Nature's Swiftness": 16188,
 	} {
 		if casts, _ := castsAndHealing(unit, id); casts == 0 {
 			t.Errorf("%s is never cast", name)
 		}
 	}
-	for name, id := range map[string]int32{"Riptide": 61301, "Chain Heal": 55459, "Healing Wave": 49273, "Earth Shield": 49284} {
+	if casts, _ := castsAndHealing(unit, 49273); casts != 0 {
+		t.Errorf("Healing Wave is cast %d times, the default APL has no line for it", casts)
+	}
+	for name, id := range map[string]int32{"Riptide": 61301, "Chain Heal": 55459, "Earth Shield": 49284} {
 		if _, healing := castsAndHealing(unit, id); healing == 0 {
 			t.Errorf("%s heals nothing", name)
 		}

@@ -499,6 +499,60 @@ HL2 cross-review (uncommitted):
 - **Owns:** `sim/core` proc code, `sim/common/wotlk/other_effects.go`'s talisman, the guard, `ui/restoration_shaman/apls/`,
   `sim/shaman/restoration/` tests, the Resto Shaman numbers in the guides.
 
+#### As built
+
+Stage core (the shaman stage adds its own lines below).
+- **Spell type mask:** `ServerProc.SpellTypeMask` and `ProcTrigger.SpellTypeMask` (`ProcSpellID` fills it);
+  `ApplyProcTriggerCallback` refuses an event whose type (`procEventSpellType`: heal, else damage, else
+  `NO_DMG_HEAL`) the mask lacks, for hit, tick and heal callbacks, white swings excepted. Hand-rolled procs call
+  `ServerProc.AllowsEvent`. Tests: `sim/core/proc_spell_type_test.go`. Sim hits carry no absorb, so that rule
+  has no test.
+- **Talisman of Troll Divinity:** a stack of 60518 per direct heal of a magic-class spell, 5 max
+  (`TestTalismanOfTrollDivinityStacksOnDirectHeals`).
+- **Enemy-only spells at a friend:** `Spell.dealsDamageToAFriend` in `CanCast`, `Cast` and the APL gate: a
+  non-helpful, non-healing spell with a damaging proc mask or an on-use item, with damage, at another friendly
+  unit; area spells pass. Tests `TestNoDamageCastsAtAFriend` (shaman, paladin), `TestNoShadowWordPainAtAFriend`.
+- **Goldens (not promoted):** 12 of 37 suites move. Healer suites (Resto Druid, Holy Paladin, Disc and Holy
+  Priest, Resto Shaman): only the Talisman row (+0.7 to +1.4% HPS) and the Gnomish Lightning Generator row (no
+  longer damages the dummy). DPS suites move by 0.01 to 0.3% (single outliers to 0.8% on short runs, RNG shifts):
+  an item proc whose `spell_proc` row is damage only (`SpellTypeMask` 1) no longer rolls on a landing that deals
+  nothing. Flare of the Heavens: Balance (Insect Swarm, Starfall) and Mage (Living Bomb, Arcane Missiles).
+  Mjolnir Runestone: Feral (Rip, Faerie Fire) and Rogue (poisons, Expose Armor, Rupture). Comet's Trail: Rogue.
+  Swordguard Embroidery (damage only entry, hand-rolled) now asks `AllowsEvent` too; no suite equips it, so no
+  golden moves. No on-hit trinket or enchant gains procs.
+- Not covered (outside this item's paths): hand-rolled procs in `sim/common/tbc` (Hand of Justice, Dragonspine
+  Trophy, Madness of the Betrayer, Fists of Fury, Twin Blades) and the paladin seals roll on any landed hit.
+
+Stage shaman.
+- `ui/restoration_shaman/apls/default.apl.json` drops its Healing Wave line (Tidal Waves condition, 49273).
+  `TestDefaultAPLHeals` now asserts Healing Wave is never cast. Healing Wave stays a registered spell.
+- Re-measured on `pageRequest` (300 s, 3000 iterations, seed 424242, `statslopes.Measure`), after the core stage.
+  With the line (HEAL-FIGHT's table, reproduced exactly after the core stage) vs without; time to OOM (s out of
+  mana) and HPS:
+
+  | | preraid | P1 | P2 | P3 | P4 | P5 |
+  |---|---|---|---|---|---|---|
+  | before | 111 (118) 5273 | 130 (91) 7265 | 102 (125) 8537 | 147 (84) 10550 | 181 (65) 16827 | 165 (83) 16230 |
+  | after | 178 (75) 6553 | 255 (27) 9234 | 171 (78) 9407 | 211 (48) 12099 | 283 (15) 20662 | 241 (37) 20444 |
+
+  "Measure at my gear", HPS a point, gain/loss:
+
+  | | Int | Spirit | SP | MP5 | Crit | Haste |
+  |---|---|---|---|---|---|---|
+  | preraid | 4.20/3.63 | 0.23/0.14 | 1.96/1.97 | 6.04/5.51 | 2.27/2.07 | −0.08/0.01 |
+  | P1 | 4.20/5.17 | 0.09/0.07 | 2.48/2.47 | 5.57/7.04 | 2.99/3.12 | −0.08/0.46 |
+  | P2 | 5.13/5.01 | 0.29/0.20 | 2.18/2.17 | 8.28/7.12 | 3.13/2.99 | −0.15/0.37 |
+  | P3 | 5.93/5.79 | 0.06/0.05 | 2.69/2.64 | 8.61/9.22 | 4.00/3.81 | −0.53/−0.24 |
+  | P4 | 7.55/10.26 | 0.02/0.03 | 6.37/6.76 | 7.95/13.60 | 7.38/8.32 | 2.76/4.92 |
+  | P5 | 11.44/12.34 | 0.17/0.18 | 5.66/6.25 | 15.29/15.59 | 9.42/9.28 | 2.17/2.37 |
+
+  Spirit about 0 (five-second rule) and haste at or below 0 preraid to P3 (mana-bound) are explained; the rest
+  are nonzero.
+- Goldens (Resto Shaman suite, not promoted): `Rotation-Default-Average` (180 s, 9 dummies) +14.7% HPS, Chain Heal
+  casts 31 -> 75, Healing Wave gone. Every row on one dummy falls 10 to 14% (the AllItems, Settings and
+  SwitchInFrontOfTarget rows; short fights to -36%): Chain Heal has no second target there and Healing Wave was
+  the better single-target heal. Ancestral Awakening casts fall (24 -> 13 in `Average-Default`).
+
 ### HEAL-PAL-2 (G; stages: items, page, live)
 
 - Holy glyphs, T7 to T10 holy sets (T8 4p shortens Sacred Shield's cooldown, T9 4p raises 66922; both read in the

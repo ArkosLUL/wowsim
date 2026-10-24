@@ -236,6 +236,13 @@ type Proc struct {
 	Charges            int32
 }
 
+// ProcSpellTypeMask (SpellMgr.h), for Proc.SpellTypeMask.
+const (
+	ProcSpellTypeDamage    uint32 = 0x1
+	ProcSpellTypeHeal      uint32 = 0x2
+	ProcSpellTypeNoDmgHeal uint32 = 0x4
+)
+
 // ProcFlagAttributes (SpellMgr.h), for Proc.AttributesMask.
 const (
 	ProcAttrReqExpOrHonor        uint32 = 0x1
