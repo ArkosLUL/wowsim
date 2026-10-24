@@ -67,6 +67,9 @@ func aplCostBlocked(spell *Spell) bool {
 
 // CanCast right after castBlocked and aplCostBlocked came back false, with nothing changed since
 func aplCanCastPastGate(spell *Spell, sim *Simulation, target *Unit) bool {
+	if spell.dealsDamageToAFriend(target) {
+		return false
+	}
 	if spell.ExtraCastCondition != nil && !spell.ExtraCastCondition(sim, target) {
 		return false
 	}

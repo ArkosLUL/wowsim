@@ -24,6 +24,10 @@ checks it and the Go effects.
 - Item heals go the same way (`itemHealSpell`): Bauble of True Blood's use casts 71607 for both items,
   Althor's Abacus heals as 71610 / 71641, Glowing Twilight Scale ticks as 75493 / 75494. Still under the
   item: Forethought Talisman's heal over time.
+- Talisman of Troll Divinity (37734): each direct heal of a magic-class spell puts a stack of Touched by a Troll
+  (60518, 58 flat healing taken a stack, 5 max, 10 s refreshed) on its target. Hots and their ticks add none.
+- A spell that deals damage (an on-use item among them) isn't cast at another friendly unit, a healer's default
+  target (`Spell.dealsDamageToAFriend`); area spells and heals are.
 - Althor's Abacus heals the enabled, [living](damage-and-healing.md#healing) raid unit with the lowest health
   percent (`spell_item_echoes_of_light`), a tie at random, no one when none is left; a unit without a health bar
   (a target dummy) counts as full.

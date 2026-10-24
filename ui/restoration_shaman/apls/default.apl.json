@@ -9,7 +9,6 @@
         {"action":{"condition":{"not":{"val":{"dotIsActive":{"spellId":{"spellId":49284}}}}},"castSpell":{"spellId":{"spellId":49284}}}},
         {"action":{"castSpell":{"spellId":{"spellId":55198}}}},
         {"action":{"castSpell":{"spellId":{"spellId":61301}}}},
-        {"action":{"condition":{"cmp":{"op":"OpGe","lhs":{"auraNumStacks":{"auraId":{"spellId":53390}}},"rhs":{"const":{"val":"2"}}}},"castSpell":{"spellId":{"spellId":49273}}}},
         {"action":{"castSpell":{"spellId":{"spellId":55459}}}}
     ]
 }

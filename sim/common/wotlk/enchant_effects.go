@@ -465,7 +465,7 @@ func init() {
 				aura.Activate(sim)
 			},
 			OnSpellHitDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) {
+				if !result.Landed() || !spell.ProcMask.Matches(core.ProcMaskMeleeOrRanged) || !swordguard.AllowsEvent(spell, result, false) {
 					return
 				}
 

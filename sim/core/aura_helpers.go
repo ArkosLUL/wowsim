@@ -47,6 +47,10 @@ type ProcTrigger struct {
 	// entry gives ProcChance, PPM and ICD instead of the three fields above.
 	ProcSpellID int32
 
+	// SpellTypeMask is the entry's PROC_SPELL_TYPE_* filter, which ProcSpellID fills in. A trigger that reads
+	// its numbers from ServerProcFor sets it from there.
+	SpellTypeMask uint32
+
 	// AnyPeriodic lets every periodic tick past ProcMask, which then only filters direct hits and heals: the
 	// server's DONE_PERIODIC proc flag takes any dot or hot tick, whatever its spell's damage class. Ticks the
 	// server deals as casts of another spell (ticksAsCasts) stay out unless CanProcFromProcs.
@@ -108,6 +112,7 @@ func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
 			// Aura::CalcProcChance takes PPM over the entry's own chance on a damage or heal event.
 			config.ProcChance = 0
 		}
+		config.SpellTypeMask = sp.SpellTypeMask
 	}
 
 	var icd Cooldown
@@ -125,9 +130,12 @@ func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
 	}
 
 	handler := config.Handler
-	callbackFor := func(anyPeriodic bool) func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
+	callbackFor := func(anyPeriodic, healing bool) func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
 		return func(aura *Aura, sim *Simulation, spell *Spell, result *SpellResult) {
 			if config.SpellFlags != SpellFlagNone && !spell.Flags.Matches(config.SpellFlags) {
+				return
+			}
+			if !procSpellTypeAllows(config.SpellTypeMask, spell, result, healing) {
 				return
 			}
 			if config.ProcMaskExclude != ProcMaskUnknown && spell.ProcMask.Matches(config.ProcMaskExclude) {
@@ -162,10 +170,15 @@ func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
 			handler(sim, spell, result)
 		}
 	}
-	callback := callbackFor(false)
+	callback := callbackFor(false, false)
 	periodicCallback := callback
 	if config.AnyPeriodic {
-		periodicCallback = callbackFor(true)
+		periodicCallback = callbackFor(true, false)
+	}
+	healCallback := callbackFor(false, true)
+	periodicHealCallback := healCallback
+	if config.AnyPeriodic {
+		periodicHealCallback = callbackFor(true, true)
 	}
 
 	if config.ProcChance == 0 {
@@ -182,10 +195,10 @@ func ApplyProcTriggerCallback(unit *Unit, aura *Aura, config ProcTrigger) {
 		aura.OnPeriodicDamageDealt = periodicCallback
 	}
 	if config.Callback.Matches(CallbackOnHealDealt) {
-		aura.OnHealDealt = callback
+		aura.OnHealDealt = healCallback
 	}
 	if config.Callback.Matches(CallbackOnPeriodicHealDealt) {
-		aura.OnPeriodicHealDealt = periodicCallback
+		aura.OnPeriodicHealDealt = periodicHealCallback
 	}
 	if config.Callback.Matches(CallbackOnCastComplete) {
 		aura.OnCastComplete = func(aura *Aura, sim *Simulation, spell *Spell) {

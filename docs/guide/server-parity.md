@@ -144,6 +144,10 @@ class by simval.
     server deals as a triggered cast (auras 23, 226, 227) procs only an aura with
     `SPELL_ATTR3_CAN_PROC_FROM_PROCS` (`ProcTrigger.CanProcFromProcs`: Greatness, Dying Curse), as a hit of its
     damage class.
+  - **Spell type mask:** an event's type is a heal, else damage, else (a miss, or a hot or debuff landing that
+    deals nothing) `NO_DMG_HEAL`; an entry with a `SpellTypeMask` takes only those (`ServerProc.SpellTypeMask`,
+    `ProcTrigger.SpellTypeMask`, filled by `ProcSpellID`; hand-rolled procs call `ServerProc.AllowsEvent`).
+    White swings skip the check, and the sim's hits carry no absorb.
   - **Landed casts:** `Spell::DoAllEffectOnTarget` raises a hit-phase proc for every target a cast lands on,
     whatever it did there. A proc that reads that registers `Unit.RegisterOnCastLanded`
     (`sim/core/cast_landed.go`): raised once a spell, target and instant by every landed direct hit or heal and
