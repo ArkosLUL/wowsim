@@ -74,12 +74,17 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 				return
 			}
 
-			// The trap's gameobject (189322) arms its startDelay, 1 s, after it's laid, and goes off on
-			// the next update after that (GameObject::Update). One laid before the pull waits for it.
+			// The trap's gameobject (189322) arms its startDelay, 1 s, after it's laid, only with the hunter
+			// in combat, and goes off on the next update after that (GameObject::Update). One laid before
+			// the pull arms at once and waits for the pull.
+			armDelay := time.Second
+			if sim.CurrentTime < 0 {
+				armDelay = 0
+			}
 			core.StartDelayedAction(sim, core.DelayedActionOptions{
-				DoAt: max(0, sim.NextServerTick(sim.CurrentTime+time.Second)),
+				DoAt: max(0, sim.NextServerTick(sim.CurrentTime+armDelay)),
 				OnAction: func(sim *core.Simulation) {
-					// no 10 target cap: the trap's trigger creature casts it, not a player
+					// no 10 target cap: the trap's gameobject casts it, not a player
 					// (GameObject::CastSpell)
 					for _, aoeTarget := range sim.Encounter.TargetUnits {
 						baseDamage := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.AP, spell.RangedAttackPowerSpellBonus(aoeTarget))

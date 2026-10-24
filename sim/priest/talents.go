@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -223,11 +224,18 @@ func (priest *Priest) applyBorrowedTime() {
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if spell == priest.PowerWordShield {
 				procAura.Activate(sim)
-			} else if spell.CurCast.CastTime > 0 {
+			} else if usesBorrowedTime(spell) {
 				procAura.Deactivate(sim)
 			}
 		},
 	})
+}
+
+// usesBorrowedTime is spell_proc -59887, which covers every rank of the buff: its charge goes in the cast phase
+// of any untriggered magic-class spell, instants included
+func usesBorrowedTime(spell *core.Spell) bool {
+	s := spell.ServerSpell()
+	return spell.Flags.Matches(core.SpellFlagAPL) && s != nil && s.DmgClass == serverdata.DmgClassMagic
 }
 
 func (priest *Priest) applyInspiration() {

@@ -1,9 +1,11 @@
 package wotlk
 
 import (
+	"sync"
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -75,6 +77,9 @@ type StackingStatBonusCD struct {
 	Harmful     bool
 	ProcChance  float64
 	IsDefensive bool
+
+	// Stacking, when set, adds the stacks instead of the ProcTrigger the fields above describe
+	Stacking func(character *core.Character, buffAura *core.Aura)
 }
 
 func newStackingStatBonusCD(config StackingStatBonusCD) {
@@ -95,18 +100,22 @@ func newStackingStatBonusCD(config StackingStatBonusCD) {
 			BonusPerStack: config.Bonus,
 		})
 
-		core.ApplyProcTriggerCallback(&character.Unit, buffAura, core.ProcTrigger{
-			Name:       config.Name,
-			Callback:   config.Callback,
-			ProcMask:   config.ProcMask,
-			SpellFlags: config.SpellFlags,
-			Outcome:    config.Outcome,
-			Harmful:    config.Harmful,
-			ProcChance: config.ProcChance,
-			Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
-				buffAura.AddStack(sim)
-			},
-		})
+		if config.Stacking != nil {
+			config.Stacking(character, buffAura)
+		} else {
+			core.ApplyProcTriggerCallback(&character.Unit, buffAura, core.ProcTrigger{
+				Name:       config.Name,
+				Callback:   config.Callback,
+				ProcMask:   config.ProcMask,
+				SpellFlags: config.SpellFlags,
+				Outcome:    config.Outcome,
+				Harmful:    config.Harmful,
+				ProcChance: config.ProcChance,
+				Handler: func(sim *core.Simulation, _ *core.Spell, _ *core.SpellResult) {
+					buffAura.AddStack(sim)
+				},
+			})
+		}
 
 		var sharedTimer *core.Timer
 		if config.IsDefensive {
@@ -336,8 +345,8 @@ func init() {
 		MaxStacks:   20,
 		Bonus:       stats.Stats{stats.MP5: 75},
 		CD:          time.Minute * 2,
-		Callback:    core.CallbackOnCastComplete,
 		IsDefensive: true,
+		Stacking:    meteoricInspiration,
 	})
 	newStackingStatBonusCD(StackingStatBonusCD{
 		Name:      "Victor's Call",
@@ -525,4 +534,92 @@ func init() {
 	})
 
 	core.AddEffectsToTest = true
+}
+
+const attr3NotAProc = 0x200
+
+// Penance's casts, whose channels cost no mana but whose bolts still stack
+var penanceCasts = map[int32]bool{47540: true, 53005: true, 53006: true, 53007: true}
+
+// meteoricTicks are the tick spells of the channels that cost mana, those with SPELL_ATTR3_NOT_A_PROC
+// (Arcane Missiles' missiles, Tranquility's heals)
+var meteoricTicks = sync.OnceValue(func() map[int32]bool {
+	ticks := map[int32]bool{}
+	for i := range serverdata.Spells() {
+		s := &serverdata.Spells()[i]
+		if s.Flags&serverdata.FlagChanneled == 0 || !serverCostsMana(s) {
+			continue
+		}
+		for _, e := range s.Effects {
+			switch e.Aura {
+			case 23, 226, 227: // periodic trigger spell, periodic dummy, trigger spell with value
+				if t := serverdata.SpellByID(e.TriggerSpell); t != nil && t.Attributes[3]&attr3NotAProc != 0 {
+					ticks[t.ID] = true
+				}
+			}
+		}
+	}
+	return ticks
+})
+
+func serverCostsMana(s *serverdata.Spell) bool {
+	return s.PowerType == 0 && (s.ManaCost > 0 || s.ManaCostPct > 0)
+}
+
+func costsMana(spell *core.Spell) bool {
+	if s := spell.ServerSpell(); s != nil {
+		return serverCostsMana(s)
+	}
+	_, ok := spell.Cost.(*core.ManaCost)
+	return ok
+}
+
+// meteoricInspiration is 64999's spell_item_meteoric_inspiration: a stack at the finish phase of an untriggered
+// spell that costs mana (Call of the Elements' totems too), of a mana channel's or Penance's tick, or of a Beacon
+// of Light copy of a heal that costs mana. The finish phase is the cast's end, or its landing for a missile.
+func meteoricInspiration(character *core.Character, buffAura *core.Aura) {
+	// copies cast inside the heal they copy, which completes after them
+	beaconCopies := int32(0)
+	addStacks := func(sim *core.Simulation, n int32) {
+		if n > 0 && buffAura.IsActive() {
+			buffAura.SetStacks(sim, buffAura.GetStacks()+n)
+		}
+	}
+	atFinish := func(sim *core.Simulation, spell *core.Spell, n int32) {
+		if spell.MissileSpeed > 0 && !spell.Flags.Matches(core.SpellFlagChanneled) {
+			spell.WaitTravelTime(sim, func(sim *core.Simulation) { addStacks(sim, n) })
+			return
+		}
+		addStacks(sim, n)
+	}
+
+	buffAura.OnGain = func(_ *core.Aura, _ *core.Simulation) {
+		beaconCopies = 0
+	}
+	buffAura.OnCastComplete = func(_ *core.Aura, sim *core.Simulation, spell *core.Spell) {
+		switch {
+		case spell.Flags.Matches(core.SpellFlagAPL):
+			n := 1 + beaconCopies
+			beaconCopies = 0
+			if costsMana(spell) {
+				atFinish(sim, spell, n)
+			}
+		case meteoricTicks()[spell.ActionID.SpellID]:
+			atFinish(sim, spell, 1)
+		}
+	}
+	// Penance's bolts are its own ticks here, dealt as they land
+	buffAura.OnHealDealt = func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, _ *core.SpellResult) {
+		switch id := spell.ActionID.SpellID; {
+		case id == 53652 || id == 53653 || id == 53654:
+			beaconCopies++
+		case penanceCasts[id]:
+			addStacks(sim, 1)
+		}
+	}
+	buffAura.OnPeriodicDamageDealt = func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, _ *core.SpellResult) {
+		if penanceCasts[spell.ActionID.SpellID] {
+			addStacks(sim, 1)
+		}
+	}
 }
