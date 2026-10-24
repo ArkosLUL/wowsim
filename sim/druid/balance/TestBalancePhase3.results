@@ -250,6 +250,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestBalancePhase3-AllItems-DreamwalkerRegalia"
+ value: {
+  dps: 9056.36617
+  tps: 8953.99574
+ }
+}
+dps_results: {
  key: "TestBalancePhase3-AllItems-EffulgentSkyflareDiamond"
  value: {
   dps: 12125.2535
@@ -523,6 +530,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestBalancePhase3-AllItems-LasherweaveGarb"
+ value: {
+  dps: 10840.19783
+  tps: 10754.17907
+ }
+}
+dps_results: {
  key: "TestBalancePhase3-AllItems-LasherweaveRegalia"
  value: {
   dps: 12409.06067
@@ -562,6 +576,13 @@ dps_results: {
  value: {
   dps: 7120.67967
   tps: 7002.79304
+ }
+}
+dps_results: {
+ key: "TestBalancePhase3-AllItems-Malfurion'sGarb"
+ value: {
+  dps: 9561.88367
+  tps: 9468.49947
  }
 }
 dps_results: {
@@ -611,6 +632,13 @@ dps_results: {
  value: {
   dps: 10157.1525
   tps: 10063.24711
+ }
+}
+dps_results: {
+ key: "TestBalancePhase3-AllItems-NightsongRegalia"
+ value: {
+  dps: 9423.75583
+  tps: 9327.46418
  }
 }
 dps_results: {
