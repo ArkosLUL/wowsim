@@ -67,8 +67,14 @@ func (paladin *Paladin) registerLayOnHandsSpell() {
 		ThreatMultiplier: 1,
 
 		ApplyEffects: func(sim *core.Simulation, _ *core.Unit, spell *core.Spell) {
-			spell.CalcAndDealHealing(sim, &paladin.Unit, paladin.CountPctFromMaxHealth(100), spell.OutcomeHealing)
+			result := spell.CalcHealing(sim, &paladin.Unit, paladin.CountPctFromMaxHealth(100), spell.OutcomeHealing)
+			healed := result.Damage > 0
+			spell.DealHealing(sim, result)
 			paladin.AddMana(sim, mana, manaMetrics)
+			// Light's Beacon copies the paladin's max health, not the heal (spell_pal_light_s_beacon)
+			if healed {
+				paladin.copyToBeacon(sim, &paladin.Unit, paladin.beacon.holyShock, paladin.CountPctFromMaxHealth(100))
+			}
 			if physicalCut != nil {
 				physicalCut.Activate(sim)
 			}

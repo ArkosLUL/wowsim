@@ -12,7 +12,7 @@ func init() {
 	RegisterHolyPaladin()
 }
 
-// The APL only autocasts cooldowns and never heals, so the suite checks stats and item heals only.
+// The paladin heals a target dummy with every heal he has, his beacon on himself.
 func TestHoly(t *testing.T) {
 	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
 		Class:      proto.Class_ClassPaladin,
@@ -102,7 +102,20 @@ var FullConsumes = &proto.Consumes{
 
 var DefaultRotation = core.APLRotationFromJsonString(`{
 	"type": "TypeAPL",
+	"prepullActions": [
+		{"action":{"castSpell":{"spellId":{"spellId":20166}}},"doAtValue":{"const":{"val":"-3s"}}},
+		{"action":{"castSpell":{"spellId":{"spellId":53563},"target":{"type":"Self"}}},"doAtValue":{"const":{"val":"-1.5s"}}}
+	],
 	"priorityList": [
-		{"action":{"autocastOtherCooldowns":{}}}
+		{"action":{"autocastOtherCooldowns":{}}},
+		{"action":{"castSpell":{"spellId":{"spellId":31842}}}},
+		{"action":{"castSpell":{"spellId":{"spellId":20216}}}},
+		{"action":{"condition":{"not":{"val":{"auraIsActive":{"auraId":{"spellId":53563},"sourceUnit":{"type":"Self"}}}}},"castSpell":{"spellId":{"spellId":53563},"target":{"type":"Self"}}}},
+		{"action":{"condition":{"not":{"val":{"auraIsActive":{"auraId":{"spellId":53601},"sourceUnit":{"type":"CurrentTarget"}}}}},"castSpell":{"spellId":{"spellId":53601}}}},
+		{"action":{"castSpell":{"spellId":{"spellId":53408},"target":{"type":"Target"}}}},
+		{"action":{"condition":{"cmp":{"op":"OpLt","lhs":{"currentManaPercent":{}},"rhs":{"const":{"val":"60%"}}}},"castSpell":{"spellId":{"spellId":54428}}}},
+		{"action":{"castSpell":{"spellId":{"spellId":48825}}}},
+		{"action":{"condition":{"cmp":{"op":"OpLt","lhs":{"currentManaPercent":{}},"rhs":{"const":{"val":"40%"}}}},"castSpell":{"spellId":{"spellId":48785}}}},
+		{"action":{"castSpell":{"spellId":{"spellId":48782}}}}
 	]
 }`)

@@ -33,6 +33,11 @@ func NewHolyPaladin(character *core.Character, options *proto.Player) *HolyPalad
 
 	holy.PaladinAura = holyOptions.Options.Aura
 
+	// no swings, but a seal's PPM reads the main hand's speed (Aura::CalcProcChance)
+	holy.EnableAutoAttacks(holy, core.AutoAttackOptions{
+		MainHand: holy.WeaponFromMainHand(0),
+	})
+
 	return holy
 }
 
@@ -46,7 +51,13 @@ func (holy *HolyPaladin) GetPaladin() *paladin.Paladin {
 	return holy.Paladin
 }
 
+// a rotation's heal with no target goes to the first target dummy, or the paladin himself without one
 func (holy *HolyPaladin) Initialize() {
+	if dummy := holy.Env.Raid.GetFirstTargetDummy(); dummy != nil {
+		holy.CurrentTarget = &dummy.Unit
+	} else {
+		holy.CurrentTarget = &holy.Unit
+	}
 	holy.Paladin.Initialize()
 }
 

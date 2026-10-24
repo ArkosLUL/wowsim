@@ -862,16 +862,99 @@
     {"id":42463,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]}
   ]}
 ]},
+{"class":"paladin","tree":"Holy","talent":"healingLight","passive":true,"groups": [
+ {"ranks":[20237,20238,20239],"mods":[{"effect":0,"type":"pct","op":"DAMAGE","classMask":[3223322624,65536,0]}],
+  "spells": [
+    {"id":48782,"name":"Holy Light","ops":["DAMAGE"]},
+    {"id":48785,"name":"Flash of Light","ops":["DAMAGE"]},
+    {"id":48821,"name":"Holy Shock","ops":["DAMAGE"]},
+    {"id":48823,"name":"Holy Shock","ops":["DAMAGE"]},
+    {"id":48825,"name":"Holy Shock","ops":["DAMAGE"]}
+  ]}
+]},
 {"class":"paladin","tree":"Holy","talent":"improvedLayOnHands","passive":true,"groups": [
  {"ranks":[20234,20235],"mods":[{"effect":1,"type":"flat","op":"COOLDOWN","classMask":[32768,0,0]}],
   "spells": [
     {"id":48788,"name":"Lay on Hands","ops":["COOLDOWN"]}
   ]}
 ]},
+{"class":"paladin","tree":"Holy","talent":"divineFavor","passive":false,"groups": [
+ {"ranks":[20216],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[3223322624,65536,0]}],
+  "spells": [
+    {"id":48782,"name":"Holy Light","ops":["CRITICAL_CHANCE"]},
+    {"id":48785,"name":"Flash of Light","ops":["CRITICAL_CHANCE"]},
+    {"id":48821,"name":"Holy Shock","ops":["CRITICAL_CHANCE"]},
+    {"id":48823,"name":"Holy Shock","ops":["CRITICAL_CHANCE"]},
+    {"id":48825,"name":"Holy Shock","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"paladin","tree":"Holy","talent":"sanctifiedLight","passive":true,"groups": [
+ {"ranks":[20359,20360,20361],"mods":[{"effect":0,"type":"flat","op":"CRITICAL_CHANCE","classMask":[2149580800,65536,0]}],
+  "spells": [
+    {"id":48782,"name":"Holy Light","ops":["CRITICAL_CHANCE"]},
+    {"id":48821,"name":"Holy Shock","ops":["CRITICAL_CHANCE"]},
+    {"id":48823,"name":"Holy Shock","ops":["CRITICAL_CHANCE"]},
+    {"id":48825,"name":"Holy Shock","ops":["CRITICAL_CHANCE"]}
+  ]}
+]},
+{"class":"paladin","tree":"Holy","talent":"judgementsOfThePure","passive":true,"groups": [
+ {"ranks":[53671,53673,54154,54155],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[33555456,541068800,24]},{"effect":2,"type":"pct","op":"DOT","classMask":[41943040,536873984,8]}],
+  "spells": [
+    {"id":20154,"name":"Seal of Righteousness","ops":["DAMAGE","DOT"]},
+    {"id":20187,"name":"Judgement of Righteousness","ops":["DAMAGE","DOT"]},
+    {"id":20271,"name":"Judgement of Light","ops":["DOT"]},
+    {"id":20375,"name":"Seal of Command","ops":["DAMAGE","DOT"]},
+    {"id":20424,"name":"Seal of Command","ops":["DAMAGE","DOT"]},
+    {"id":20467,"name":"Judgement of Command","ops":["DAMAGE","DOT"]},
+    {"id":21084,"name":"Seal of Righteousness","ops":["DAMAGE","DOT"]},
+    {"id":25742,"name":"Seal of Righteousness","ops":["DAMAGE","DOT"]},
+    {"id":31801,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":31803,"name":"Holy Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":31804,"name":"Judgement of Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":42463,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":53408,"name":"Judgement of Wisdom","ops":["DOT"]},
+    {"id":54158,"name":"Judgement","ops":["DAMAGE","DOT"]}
+  ]},
+ {"ranks":[54151],"mods":[{"effect":1,"type":"pct","op":"DAMAGE","classMask":[33555456,541068800,24]},{"effect":2,"type":"pct","op":"DOT","classMask":[25165824,536873984,8]}],
+  "spells": [
+    {"id":20154,"name":"Seal of Righteousness","ops":["DAMAGE","DOT"]},
+    {"id":20187,"name":"Judgement of Righteousness","ops":["DAMAGE","DOT"]},
+    {"id":20271,"name":"Judgement of Light","ops":["DOT"]},
+    {"id":20375,"name":"Seal of Command","ops":["DAMAGE"]},
+    {"id":20424,"name":"Seal of Command","ops":["DAMAGE"]},
+    {"id":20467,"name":"Judgement of Command","ops":["DAMAGE","DOT"]},
+    {"id":21084,"name":"Seal of Righteousness","ops":["DAMAGE","DOT"]},
+    {"id":25742,"name":"Seal of Righteousness","ops":["DAMAGE","DOT"]},
+    {"id":31801,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":31803,"name":"Holy Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":31804,"name":"Judgement of Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":42463,"name":"Seal of Vengeance","ops":["DAMAGE","DOT"]},
+    {"id":53408,"name":"Judgement of Wisdom","ops":["DOT"]},
+    {"id":54158,"name":"Judgement","ops":["DAMAGE","DOT"]}
+  ]}
+]},
+{"class":"paladin","tree":"Holy","talent":"enlightenedJudgements","passive":true,"groups": [
+ {"ranks":[53556,53557],"mods":[{"effect":0,"type":"flat","op":"RANGE","classMask":[8388608,0,0]}],
+  "spells": [
+    {"id":20187,"name":"Judgement of Righteousness","ops":["RANGE"]},
+    {"id":20271,"name":"Judgement of Light","ops":["RANGE"]},
+    {"id":20467,"name":"Judgement of Command","ops":["RANGE"]},
+    {"id":31804,"name":"Judgement of Vengeance","ops":["RANGE"]},
+    {"id":53408,"name":"Judgement of Wisdom","ops":["RANGE"]},
+    {"id":54158,"name":"Judgement","ops":["RANGE"]}
+  ]}
+]},
 {"class":"paladin","tree":"Protection","talent":"improvedRighteousFury","passive":true,"groups": [
  {"ranks":[20468,20469,20470],"mods":[{"effect":1,"type":"flat","op":"EFFECT2","classMask":[1,0,0]}],
   "spells": [
     {"id":25780,"name":"Righteous Fury","ops":["EFFECT2"]}
+  ]}
+]},
+{"class":"paladin","tree":"Protection","talent":"divineGuardian","passive":true,"groups": [
+ {"ranks":[53527,53530],"mods":[{"effect":1,"type":"pct","op":"DURATION","classMask":[0,524288,0]},{"effect":2,"type":"pct","op":"EFFECT1","classMask":[0,524288,0]}],
+  "spells": [
+    {"id":53601,"name":"Sacred Shield","ops":["DURATION","EFFECT1"]},
+    {"id":58597,"name":"Sacred Shield","ops":["DURATION","EFFECT1"]}
   ]}
 ]},
 {"class":"paladin","tree":"Protection","talent":"improvedDevotionAura","passive":true,"groups": [
@@ -902,9 +985,12 @@
     {"id":498,"name":"Divine Protection","ops":["COST"]},
     {"id":6940,"name":"Hand of Sacrifice","ops":["COST"]},
     {"id":20154,"name":"Seal of Righteousness","ops":["COST"]},
+    {"id":20165,"name":"Seal of Light","ops":["COST"]},
+    {"id":20166,"name":"Seal of Wisdom","ops":["COST"]},
     {"id":20185,"name":"Judgement of Light","ops":["COST"]},
     {"id":20186,"name":"Judgement of Wisdom","ops":["COST"]},
     {"id":20187,"name":"Judgement of Righteousness","ops":["COST"]},
+    {"id":20216,"name":"Divine Favor","ops":["COST"]},
     {"id":20271,"name":"Judgement of Light","ops":["COST"]},
     {"id":20375,"name":"Seal of Command","ops":["COST"]},
     {"id":20424,"name":"Seal of Command","ops":["COST"]},
@@ -922,14 +1008,26 @@
     {"id":48806,"name":"Hammer of Wrath","ops":["COST"]},
     {"id":48817,"name":"Holy Wrath","ops":["COST"]},
     {"id":48819,"name":"Consecration","ops":["COST"]},
+    {"id":48821,"name":"Holy Shock","ops":["COST"]},
+    {"id":48823,"name":"Holy Shock","ops":["COST"]},
+    {"id":48825,"name":"Holy Shock","ops":["COST"]},
     {"id":48827,"name":"Avenger's Shield","ops":["COST"]},
     {"id":48932,"name":"Blessing of Might","ops":["COST"]},
     {"id":48952,"name":"Holy Shield","ops":["COST"]},
     {"id":53385,"name":"Divine Storm","ops":["COST"]},
     {"id":53408,"name":"Judgement of Wisdom","ops":["COST"]},
+    {"id":53563,"name":"Beacon of Light","ops":["COST"]},
     {"id":53595,"name":"Hammer of the Righteous","ops":["COST"]},
+    {"id":53601,"name":"Sacred Shield","ops":["COST"]},
+    {"id":54158,"name":"Judgement","ops":["COST"]},
+    {"id":58597,"name":"Sacred Shield","ops":["COST"]},
     {"id":61411,"name":"Shield of Righteousness","ops":["COST"]},
     {"id":68055,"name":"Judgements of the Just","ops":["COST"]}
+  ],
+  "excluded": [
+    {"id":53652,"name":"Beacon of Light","op":"COST","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"},
+    {"id":53653,"name":"Beacon of Light","op":"COST","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"},
+    {"id":53654,"name":"Beacon of Light","op":"COST","reason":"SPELL_ATTR3_IGNORE_CASTER_MODIFIERS"}
   ]}
 ]},
 {"class":"paladin","tree":"Retribution","talent":"improvedJudgements","passive":true,"groups": [
@@ -939,7 +1037,8 @@
     {"id":20271,"name":"Judgement of Light","ops":["COOLDOWN"]},
     {"id":20467,"name":"Judgement of Command","ops":["COOLDOWN"]},
     {"id":31804,"name":"Judgement of Vengeance","ops":["COOLDOWN"]},
-    {"id":53408,"name":"Judgement of Wisdom","ops":["COOLDOWN"]}
+    {"id":53408,"name":"Judgement of Wisdom","ops":["COOLDOWN"]},
+    {"id":54158,"name":"Judgement","ops":["COOLDOWN"]}
   ]}
 ]},
 {"class":"paladin","tree":"Retribution","talent":"sanctityOfBattle","passive":true,"groups": [
@@ -964,7 +1063,8 @@
     {"id":31804,"name":"Judgement of Vengeance","ops":["DAMAGE"]},
     {"id":35395,"name":"Crusader Strike","ops":["DAMAGE"]},
     {"id":53385,"name":"Divine Storm","ops":["DAMAGE"]},
-    {"id":53408,"name":"Judgement of Wisdom","ops":["DAMAGE"]}
+    {"id":53408,"name":"Judgement of Wisdom","ops":["DAMAGE"]},
+    {"id":54158,"name":"Judgement","ops":["DAMAGE"]}
   ]}
 ]},
 {"class":"paladin","tree":"Retribution","talent":"fanaticism","passive":true,"groups": [
@@ -974,7 +1074,8 @@
     {"id":20271,"name":"Judgement of Light","ops":["CRITICAL_CHANCE"]},
     {"id":20467,"name":"Judgement of Command","ops":["CRITICAL_CHANCE"]},
     {"id":31804,"name":"Judgement of Vengeance","ops":["CRITICAL_CHANCE"]},
-    {"id":53408,"name":"Judgement of Wisdom","ops":["CRITICAL_CHANCE"]}
+    {"id":53408,"name":"Judgement of Wisdom","ops":["CRITICAL_CHANCE"]},
+    {"id":54158,"name":"Judgement","ops":["CRITICAL_CHANCE"]}
   ]}
 ]},
 {"class":"paladin","tree":"Retribution","talent":"sanctifiedWrath","passive":true,"groups": [
