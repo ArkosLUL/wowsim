@@ -412,16 +412,15 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 		return wa.hold(until)
 	}
 
-	var otherHand *WeaponAttack
-	switch wa {
-	case &aa.mh:
-		otherHand = &aa.oh
-	case &aa.oh:
-		// the server checks the main hand first, so on a shared tick it swings and pushes this one back
+	if wa == &aa.oh {
+		// the server checks the main hand first, and the off hand sits out an update the main hand swung on
 		if aa.mh.swingAt <= sim.CurrentTime {
 			return sim.CurrentTime
 		}
-		otherHand = &aa.mh
+		if aa.mhSwungAt == sim.CurrentTime {
+			wa.swingAt = sim.nextUpdate(wa.unit, sim.CurrentTime+1)
+			return wa.swingAt
+		}
 	}
 
 	if wa.replaceSwing != nil {
@@ -455,8 +454,8 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 		}
 	}
 
-	if otherHand != nil && aa.IsDualWielding && otherHand.timerAt-sim.CurrentTime < attackDisplayDelay {
-		otherHand.setTimer(sim, sim.CurrentTime+attackDisplayDelay)
+	if wa == &aa.mh {
+		aa.mhSwungAt = sim.CurrentTime
 	}
 
 	attackSpell := wa.spell
@@ -476,7 +475,7 @@ func (wa *WeaponAttack) swing(sim *Simulation, releasingHold bool) time.Duration
 		wa.park(sim.CurrentTime)
 	}
 	// a melee swing restarts the ranged timer too; a restart can land earlier than a pushed-back timer
-	if otherHand != nil && aa.AutoSwingRanged {
+	if wa != &aa.ranged && aa.AutoSwingRanged {
 		aa.ranged.setTimer(sim, sim.CurrentTime+aa.ranged.curSwingDuration)
 		sim.rescheduleWeaponAttack(aa.ranged.swingAt)
 	}
@@ -556,6 +555,9 @@ type AutoAttacks struct {
 
 	// a melee swing, or the action right after it, is running: past this update's extra attacks
 	inMelee bool
+
+	// the update the main hand last swung on, extra attacks not counted
+	mhSwungAt time.Duration
 
 	// Unit::_lastExtraAttackSpell: the last extra attack queued, till a plain melee swing or the pass that
 	// swings it. lastExtraAttackEndsChain is set for Sword Specialization's.
@@ -695,6 +697,7 @@ func (aa *AutoAttacks) reset(sim *Simulation) {
 
 	aa.enabled = false
 	aa.inMelee = false
+	aa.mhSwungAt = NeverExpires
 	aa.mh.clearExtraAttacks()
 	aa.lastExtraAttack = nil
 
@@ -734,10 +737,7 @@ func (aa *AutoAttacks) startPull(sim *Simulation) {
 	if aa.AutoSwingMelee {
 		aa.mh.addWeaponAttack(sim, aa.mh.unit.SwingSpeed())
 		if aa.IsDualWielding {
-			// Unit::Attack: a ready off hand waits half the main hand's hasted attack time behind it
-			if aa.oh.timerAt <= sim.CurrentTime {
-				aa.oh.setTimer(sim, max(aa.oh.timerAt, aa.mh.timerAt+aa.mh.curSwingDuration/2))
-			}
+			aa.oh.staggerNewAttack(sim, &aa.mh)
 			aa.oh.addWeaponAttack(sim, aa.mh.curSwingSpeed)
 		}
 	}
@@ -745,6 +745,12 @@ func (aa *AutoAttacks) startPull(sim *Simulation) {
 	if aa.AutoSwingRanged {
 		aa.ranged.addWeaponAttack(sim, aa.ranged.unit.RangedSwingSpeed())
 	}
+}
+
+// staggerNewAttack is Unit::Attack on a new attack, not a target switch: the off hand waits at least half
+// the main hand's hasted attack time behind it, ready or not.
+func (wa *WeaponAttack) staggerNewAttack(sim *Simulation, mh *WeaponAttack) {
+	wa.setTimer(sim, max(wa.timerAt, max(mh.timerAt, sim.CurrentTime)+mh.curSwingDuration/2))
 }
 
 // Stops the auto swing action for the rest of the iteration. Used for pets
@@ -775,8 +781,17 @@ func (aa *AutoAttacks) CancelAutoSwing(sim *Simulation) {
 	}
 }
 
-// Re-enables the auto swing action for the iteration
+// EnableAutoSwing starts auto attacks again as a new attack, out of stealth say.
 func (aa *AutoAttacks) EnableAutoSwing(sim *Simulation) {
+	aa.enableAutoSwing(sim, true)
+}
+
+// SwitchAutoSwingBack starts them again on a target switch, a boss taunted back: no off-hand stagger.
+func (aa *AutoAttacks) SwitchAutoSwingBack(sim *Simulation) {
+	aa.enableAutoSwing(sim, false)
+}
+
+func (aa *AutoAttacks) enableAutoSwing(sim *Simulation, newAttack bool) {
 	if !aa.AutoSwingMelee && !aa.AutoSwingRanged {
 		return
 	}
@@ -791,11 +806,9 @@ func (aa *AutoAttacks) EnableAutoSwing(sim *Simulation) {
 		aa.mh.setTimer(sim, max(aa.mh.timerAt, sim.CurrentTime, 0))
 		aa.mh.addWeaponAttack(sim, aa.mh.unit.SwingSpeed())
 		if aa.IsDualWielding {
-			// Unit::Attack: a ready off hand waits half the main hand's hasted attack time behind it
-			if aa.oh.timerAt <= sim.CurrentTime {
-				aa.oh.setTimer(sim, max(aa.oh.timerAt, aa.mh.timerAt+aa.mh.curSwingDuration/2))
-			} else {
-				aa.oh.setTimer(sim, max(aa.oh.timerAt, sim.CurrentTime, 0))
+			aa.oh.setTimer(sim, max(aa.oh.timerAt, sim.CurrentTime, 0))
+			if newAttack {
+				aa.oh.staggerNewAttack(sim, &aa.mh)
 			}
 			aa.oh.addWeaponAttack(sim, aa.mh.unit.SwingSpeed())
 		}
