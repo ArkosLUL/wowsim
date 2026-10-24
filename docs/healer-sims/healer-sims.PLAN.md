@@ -79,6 +79,7 @@ Status: approved by the user (2026-10-23); HL1 to HL3 landed; all four healer pa
 - **HL3 also fixes (2026-10-24)** the HL2 cross-review's open points, though DPS goldens may move: Innervate's
   inverted condition, no-damage hits proccing rows without NO_DMG_HEAL, Talisman of Troll Divinity's stacks, and the
   Resto Shaman default APL loses its Healing Wave line.
+- **Val'anyr (2026-10-24):** its shields keep counting in full as healing, though the dummies never consume them.
 
 ## Out of scope
 

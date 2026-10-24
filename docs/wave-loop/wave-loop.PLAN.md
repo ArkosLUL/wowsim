@@ -197,11 +197,12 @@ upstream merge of that day, before Z18.
 
 ## Current wave
 
-- Wave: HL3 landed ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CORE, HEAL-PAL-2, HEAL-DRU-2;
+- Wave: Z17b running (EC-UPSTREAM2, the e2e-coverage PLAN; base `e25e40799`, args `waveZ17b-build.py`, run
+  `wf_723d139c-669`); then Z18 (Z15's follow-ups).
+  HL3 landed ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CORE, HEAL-PAL-2, HEAL-DRU-2;
   base `8f4569950`, args `waveHL3-build.py`, run `wf_cdad3276-19b`). Cross-review `.wave-loop\hl3-run1\xreview.md`
-  (brief `waveHL3-xreview-brief.md`); item notes `.wave-loop\hl3-run1\heal-*-tmp`. Next Z17b (EC-UPSTREAM2, the
-  e2e-coverage PLAN) on the user's go, then Z18 (Z15's follow-ups). Open for the user: Val'anyr's 200000 bubble
-  counts in full as shielding on dummies that take no damage.
+  (brief `waveHL3-xreview-brief.md`); item notes `.wave-loop\hl3-run1\heal-*-tmp`. Prod not rebuilt after it (the
+  user's call).
   HL2 landed (HEAL-FIGHT, HEAL-PAL-1, HEAL-DRU-1; base `b7a4e4af7`, args `waveHL2-build.py`, run `wf_cb624648-495`).
   Cross-review `.wave-loop\hl2-run1\xreview.md` (brief `waveHL2-xreview-brief.md`); prod rebuilt after it.
   HL1 landed (HEAL-SHA, HEAL-PRI, HEAL-TEST; base `149c6a726`, args `waveHL1-build.py`, run `wf_d9e3f4f8-cee`, cut
