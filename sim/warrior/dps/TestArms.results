@@ -146,15 +146,15 @@ dps_results: {
 dps_results: {
  key: "TestArms-AllItems-Bryntroll,theBoneArbiter-50415"
  value: {
-  dps: 10517.86017
-  tps: 8507.36147
+  dps: 10338.68633
+  tps: 8363.97791
  }
 }
 dps_results: {
  key: "TestArms-AllItems-Bryntroll,theBoneArbiter-50709"
  value: {
-  dps: 10620.81283
-  tps: 8590.23658
+  dps: 10446.093
+  tps: 8450.42655
  }
 }
 dps_results: {
@@ -420,15 +420,15 @@ dps_results: {
 dps_results: {
  key: "TestArms-AllItems-Heartpierce-49982"
  value: {
-  dps: 9811.23917
-  tps: 7950.19722
+  dps: 9946.16883
+  tps: 8060.5936
  }
 }
 dps_results: {
  key: "TestArms-AllItems-Heartpierce-50641"
  value: {
-  dps: 9928.2345
-  tps: 8047.43515
+  dps: 10006.75883
+  tps: 8111.13422
  }
 }
 dps_results: {
@@ -476,15 +476,15 @@ dps_results: {
 dps_results: {
  key: "TestArms-AllItems-LastWord-50179"
  value: {
-  dps: 9952.071
-  tps: 8055.06841
+  dps: 10089.027
+  tps: 8166.24627
  }
 }
 dps_results: {
  key: "TestArms-AllItems-LastWord-50708"
  value: {
-  dps: 10084.975
-  tps: 8161.96453
+  dps: 10157.88567
+  tps: 8221.64088
  }
 }
 dps_results: {
@@ -637,8 +637,8 @@ dps_results: {
 dps_results: {
  key: "TestArms-AllItems-Shadowmourne-49623"
  value: {
-  dps: 11825.61117
-  tps: 9561.5961
+  dps: 11762.34483
+  tps: 9511.84494
  }
 }
 dps_results: {
@@ -756,8 +756,8 @@ dps_results: {
 dps_results: {
  key: "TestArms-AllItems-TheFistsofFury"
  value: {
-  dps: 5941.731
-  tps: 4839.52822
+  dps: 6065.843
+  tps: 4942.9404
  }
 }
 dps_results: {
@@ -770,8 +770,8 @@ dps_results: {
 dps_results: {
  key: "TestArms-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 6405.339
-  tps: 5214.3509
+  dps: 6468.00283
+  tps: 5264.87021
  }
 }
 dps_results: {
