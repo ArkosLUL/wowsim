@@ -99,14 +99,14 @@ dps_results: {
  key: "TestDisc-AllItems-Althor'sAbacus-50359"
  value: {
   tps: 2323.55648
-  hps: 5368.12412
+  hps: 5359.68996
  }
 }
 dps_results: {
  key: "TestDisc-AllItems-Althor'sAbacus-50366"
  value: {
   tps: 2345.8584
-  hps: 5425.56545
+  hps: 5416.02195
  }
 }
 dps_results: {
@@ -127,14 +127,14 @@ dps_results: {
  key: "TestDisc-AllItems-BaubleofTrueBlood-50354"
  value: {
   tps: 2280.15973
-  hps: 5345.61267
+  hps: 5250.97634
  }
 }
 dps_results: {
  key: "TestDisc-AllItems-BaubleofTrueBlood-50726"
  value: {
   tps: 2292.05531
-  hps: 5376.39861
+  hps: 5280.52527
  }
 }
 dps_results: {
@@ -859,6 +859,13 @@ dps_results: {
  }
 }
 dps_results: {
+ key: "TestDisc-Rotation-Default-Average"
+ value: {
+  tps: 2775.6999
+  hps: 6392.95507
+ }
+}
+dps_results: {
  key: "TestDisc-Settings-Undead-p1_disc-Disc-disc-FullBuffs-LongMultiTarget"
  value: {
   tps: 2273.09856
@@ -1196,6 +1203,155 @@ ability_results: {
    key: "target0|aura|{SpellID: 8647}"
    value: {
     uptime_s: 296.9236
+   }
+  }
+ }
+}
+ability_results: {
+ key: "TestDisc-Rotation-Default-Average"
+ value: {
+  entries: {
+   key: "player|action|{ItemID: 40212}"
+   value: {
+    casts: 1
+   }
+  }
+  entries: {
+   key: "player|action|{ItemID: 40258}"
+   value: {
+    amount: 15641.0015
+   }
+  }
+  entries: {
+   key: "player|action|{ItemID: 42408}"
+   value: {
+    casts: 11.5815
+    hits: 11.5815
+    amount_per_hit: 1631.38233
+    amount: 18893.8545
+   }
+  }
+  entries: {
+   key: "player|action|{ItemID: 42545}"
+   value: {
+    casts: 1
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 47515}"
+   value: {
+    hits: 43.234
+    amount_per_hit: 2469.28915
+    amount: 106757.2473
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 48063}"
+   value: {
+    casts: 32.683
+    hits: 32.683
+    crit_pct: 27.91665
+    amount_per_hit: 11629.47698
+    amount: 380086.196
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 48066}"
+   value: {
+    casts: 11.5815
+    hits: 11.5815
+    amount_per_hit: 7575.91464
+    amount: 87740.45544
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 48071}"
+   value: {
+    casts: 28.4395
+    hits: 28.4395
+    crit_pct: 28.72238
+    amount_per_hit: 5664.73792
+    amount: 161102.314
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 48113}"
+   value: {
+    casts: 16.6185
+    hits: 48.7585
+    crit_pct: 27.55827
+    amount_per_hit: 4764.09106
+    amount: 232289.934
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 53007}"
+   value: {
+    casts: 18.168
+    hits: 36.1305
+    crit_pct: 34.63279
+    amount_per_hit: 6330.19565
+    amount: 228713.134
+   }
+  }
+  entries: {
+   key: "player|action|{SpellID: 64901}"
+   value: {
+    casts: 1
+   }
+  }
+  entries: {
+   key: "player|aura|{ItemID: 40212}"
+   value: {
+    uptime_s: 14.00047
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 2825, Tag: -1}"
+   value: {
+    uptime_s: 39.99997
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 47240}"
+   value: {
+    uptime_s: 179.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 49623}"
+   value: {
+    uptime_s: 44.11437
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 52800}"
+   value: {
+    uptime_s: 42.74546
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 57669}"
+   value: {
+    uptime_s: 179.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 57722}"
+   value: {
+    uptime_s: 179.9236
+   }
+  }
+  entries: {
+   key: "player|aura|{SpellID: 57724}"
+   value: {
+    uptime_s: 179.9236
+   }
+  }
+  entries: {
+   key: "target0|aura|{SpellID: 30708}"
+   value: {
+    uptime_s: 179.9236
    }
   }
  }
