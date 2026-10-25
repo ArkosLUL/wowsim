@@ -9,11 +9,11 @@
     {"id":43591,"gems":[36767,36767,36767]},
     {"id":44011,"enchant":3327,"gems":[45880,45880],"reforge":{"fromStatType":36,"toStatType":37}},
     {"id":43592,"enchant":1075,"gems":[45880,45880]},
-    {"id":43582,"enchant":3791,"gems":[45880]},
+    {"id":43993,"enchant":3791,"gems":[45880],"reforge":{"fromStatType":32,"toStatType":37}},
     {"id":40370,"enchant":3791,"reforge":{"fromStatType":13,"toStatType":37}},
     {"id":49116},
     {"id":49118},
-    {"id":39422,"enchant":3851,"reforge":{"fromStatType":37,"toStatType":31}},
+    {"id":40388,"enchant":3851,"reforge":{"fromStatType":32,"toStatType":31}},
     {},
     {"id":40342}
 ]}
