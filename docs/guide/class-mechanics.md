@@ -154,8 +154,9 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   - The Prot Paladin default APL casts it under 25% health, mod-playerbots' critical health
     (`Playerbots.CriticalHealth`).
 - **Holy Shock** (48825) casts 48821's heal on a friend, 48823's damage on anyone else (`spell_pal_holy_shock`).
-- **Sacred Shield** (53601), one target at a time: its target counts as always hit, so 58597 goes on with the aura,
-  then once a cooldown (`core.HitTakenStandIn`); a refresh keeps the clock, a new target restarts it.
+- **Sacred Shield** (53601), one target at a time: 58597 goes on with the aura, then on the target's first hit taken
+  (damage above 0) once a cooldown has passed. With no incoming damage the target counts as always hit instead,
+  once a cooldown (`core.HitTakenStandIn`). A refresh keeps the clock, a new target restarts it.
   - The cooldown is 53601's effect 0 in seconds with Divine Guardian's +10% a point, whole: 6, 6, 7 s. Divine
     Guardian also adds 50% a point to both auras' durations.
   - 58597's +50% Flash of Light crit counts only on the paladin healing himself (`Unit::SpellTakenCritChance`
@@ -196,20 +197,28 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   power, 3 stacks, 15 s (71192). The TBC librams aren't in db.json.
 - Holy's rotation casts with no target go to the first target dummy. A judgement there isn't cast (the server
   refuses one on a friend): target the boss. Exorcism and damaging on-use items aren't cast there either.
-- **Holy page** (`ui/holy_paladin/apls/default.apl.json`): Seal of Wisdom and a self Beacon before the pull, then Divine
-  Illumination, Divine Favor, Beacon when it's gone, Sacred Shield when its target lacks it, Judgement of Wisdom on
-  the boss, Holy Shock, Divine Plea under 60% mana, Holy Light. A Flash of Light under Infusion of Light on a
-  Sacred Shield target healed 3% less at P1 and P4, so none is cast.
+- **Holy page** (`ui/holy_paladin/apls/default.apl.json`): Seal of Wisdom and Beacon on the tank before the pull,
+  then Divine Illumination, Divine Favor, Beacon and Sacred Shield on the tank when gone, Judgement of Wisdom on the
+  boss, Holy Shock on a unit missing over 3500, Divine Plea under 60% mana, Holy Light over 7000 missing, Flash of
+  Light over 2500, all on the most hurt unit; nobody hurt, it waits. The tank takes the beacon, so heals on it copy
+  nothing. Beacon copies the heal whole, so a heal that overhealed still puts its full amount on the beacon.
   - P1 to P4 gear is upstream's, all in the server catalog by tier; P5 swaps in the Ruby Sanctum cloak, bracers,
     belt, boots, one ring and a trinket. Every socket takes an Int gem: Int gains ~3.5 times Spell Power's HPS.
   - Libram of Renewal beats Tolerance and the Resolute at every phase, Veracity and Blinding Light at P2 to P5
     (its 113 mana off Holy Light outweighs the others), so every preset wears it.
   - Glyph of the Wise is the one minor glyph that does anything here (~300 mana off the pre-pull seal).
-  - The page's request, 300 s, 3000 iterations, seed 424242. Time to OOM in s (s out of mana), HPS: preraid 127
-    (64) 9.9k, P1 151 (51) 12.3k, P2 205 (28) 17.9k, P3 226 (21) 20.6k, P4 none (1) 28.7k, P5 252 (12) 29.3k.
-  - "Measure at my gear", HPS a point (Int / SP / crit / MP5 / haste), gain: P1 8.26 / 2.35 / 2.54 / 7.38 / 0.05;
-    P3 13.46 / 5.23 / 5.24 / 10.71 / 3.09; P5 15.04 / 4.65 / 6.50 / 12.97 / -0.72. Spirit gains 0 to 0.11 at every
-    phase (exactly 0 at P4, which doesn't run dry). Haste is about 0 or below while mana-bound (P1, P5).
+  - The page's request, 300 s, 3000 iterations, seed 424242, the page's incoming damage:
+
+    | | preraid | P1 | P2 | P3 | P4 | P5 |
+    |---|---|---|---|---|---|---|
+    | Damage a second | 11000 | 11000 | 15500 | 18300 | 24200 | 25200 |
+    | Effective / raw HPS | 8212 / 8646 | 9482 / 10460 | 14752 / 15312 | 17721 / 18067 | 23980 / 24402 | 24108 / 24633 |
+    | Overheal | 5.0% | 9.3% | 3.7% | 1.9% | 1.7% | 2.1% |
+    | Time to OOM (s out of mana) | 133 (36) | 172 (24) | 201 (12) | 209 (11) | 305 (1) | 233 (5) |
+
+  - "Measure at my gear", effective HPS a point, gain (Int / SP / crit / MP5 / haste): P1 4.15 / 0.94 / 1.03 /
+    4.09 / -0.37; P3 9.83 / 3.24 / 3.74 / 8.04 / 0.19; P5 11.37 / 2.77 / 4.26 / 10.15 / -0.96. Spirit gains 0 at
+    every phase. Haste is about 0 or below while mana-bound; it gains only at P3 and P4 (+0.19, +0.24).
 - **Judgement of Light**'s 20185 procs like Judgement of Wisdom's (15 PPM, landed damaging hits, no triggered
   casts): 20267 heals the attacker for 2% of his max health through his healing taken percents. Its original
   caster, the judging paladin, gets the healing and its threat, so the sim credits nobody.

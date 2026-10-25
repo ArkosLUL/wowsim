@@ -26,6 +26,8 @@ type healSetup struct {
 	shield  proto.ShamanShield
 	ppm     int32
 	dummies int32
+	// incoming damage per second on the dummies; 0 leaves them without health bars
+	damage float64
 	// the rotation's priority list as APL JSON; the default casts nothing
 	apl string
 }
@@ -57,6 +59,7 @@ func (s healSetup) build(t *testing.T) (*core.Simulation, *RestorationShaman) {
 		Glyphs:        s.glyphs,
 	}, nil, nil, nil)
 	raid.TargetDummies = s.dummies
+	raid.IncomingDamagePerSecond = s.damage
 	// long enough for the tests that wait for hours of game time
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = 7200

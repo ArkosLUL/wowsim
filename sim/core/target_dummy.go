@@ -9,9 +9,13 @@ import (
 
 type TargetDummy struct {
 	Character
+
+	// takesDamage is set when the raid has incoming damage: the dummy then has a health bar and heals on it
+	// count only up to its missing health.
+	takesDamage bool
 }
 
-func NewTargetDummy(dummyIndex int, party *Party, partyIndex int) *TargetDummy {
+func NewTargetDummy(dummyIndex int, party *Party, partyIndex int, maxHealth float64) *TargetDummy {
 	name := fmt.Sprintf("Target Dummy %d", dummyIndex+1)
 	td := &TargetDummy{
 		Character: Character{
@@ -29,7 +33,7 @@ func NewTargetDummy(dummyIndex int, party *Party, partyIndex int) *TargetDummy {
 			Party:      party,
 			PartyIndex: partyIndex,
 			baseStats: stats.Stats{
-				stats.Health: 10000,
+				stats.Health: maxHealth,
 			},
 		},
 	}

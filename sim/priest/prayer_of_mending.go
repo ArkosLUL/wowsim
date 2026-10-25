@@ -91,13 +91,14 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 }
 
 func (priest *Priest) makePrayerOfMendingAura(target *core.Unit) *core.Aura {
-	autoProc := true
+	// without incoming damage the aura procs on a 5 s timer, standing in for the hit it waits on
+	autoProc := func() bool { return !priest.Env.Raid.HasIncomingDamage() }
 
 	return target.RegisterAura(core.Aura{
 		Label:    "PrayerOfMending" + strconv.Itoa(int(priest.Index)),
 		Duration: time.Second * 30,
 		OnGain: func(aura *core.Aura, sim *core.Simulation) {
-			if autoProc {
+			if autoProc() {
 				core.StartDelayedAction(sim, core.DelayedActionOptions{
 					DoAt: sim.CurrentTime + time.Second*5,
 					OnAction: func(sim *core.Simulation) {
@@ -107,7 +108,7 @@ func (priest *Priest) makePrayerOfMendingAura(target *core.Unit) *core.Aura {
 			}
 		},
 		OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
-			if !autoProc && result.Damage > 0 {
+			if !autoProc() && result.Damage > 0 {
 				priest.ProcPrayerOfMending(sim, aura.Unit, priest.PrayerOfMending)
 			}
 		},

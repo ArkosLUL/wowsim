@@ -37,6 +37,9 @@ export interface ResultMetrics {
 	tmi: string,
 	dur: string,
 	hps: string,
+	rawHps: string,
+	overheal: string,
+	unhealedDps: string,
 	tps: string,
 	tto: string,
 }
@@ -64,6 +67,9 @@ export class RaidSimResultsManager {
 		cod: 'threat',
 		tto: 'healing',
 		hps: 'healing',
+		rawHps: 'healing',
+		overheal: 'healing',
+		unhealedDps: 'healing',
 	}
 
 	static resultMetricClasses: { [ResultMetrics: string]: string } = {
@@ -74,6 +80,9 @@ export class RaidSimResultsManager {
 		tmi: 'results-sim-tmi',
 		dur: 'results-sim-dur',
 		hps: 'results-sim-hps',
+		rawHps: 'results-sim-raw-hps',
+		overheal: 'results-sim-overheal',
+		unhealedDps: 'results-sim-unhealed-dps',
 		tps: 'results-sim-tps',
 		tto: 'results-sim-tto',
 	}
@@ -165,7 +174,10 @@ export class RaidSimResultsManager {
 		setResultTooltip('results-sim-dps', 'Damage Per Second');
 		setResultTooltip('results-sim-dpasp', 'Demonic Pact Average Spell Power');
 		setResultTooltip('results-sim-tto', 'Time To OOM');
-		setResultTooltip('results-sim-hps', 'Healing+Shielding Per Second, including overhealing.');
+		setResultTooltip('results-sim-hps', "Healing+Shielding Per Second. With incoming damage, healing past an ally's missing health is overhealing and does not count; shields count in full.");
+		setResultTooltip('results-sim-raw-hps', 'Healing+Shielding Per Second as cast, overhealing included.');
+		setResultTooltip('results-sim-overheal', 'The share of the raw HPS that was overhealing.');
+		setResultTooltip('results-sim-unhealed-dps', 'Incoming damage per second that no heal answered.');
 		setResultTooltip('results-sim-tps', 'Threat Per Second');
 		setResultTooltip('results-sim-dtps', 'Damage Taken Per Second');
 		setResultTooltip('results-sim-tmi', `
@@ -184,6 +196,9 @@ export class RaidSimResultsManager {
 			Array.from(this.simUI.resultsViewer.contentElem.getElementsByClassName('results-sim-dpasp')).forEach(e => e.remove());
 			Array.from(this.simUI.resultsViewer.contentElem.getElementsByClassName('results-sim-tto')).forEach(e => e.remove());
 			Array.from(this.simUI.resultsViewer.contentElem.getElementsByClassName('results-sim-hps')).forEach(e => e.remove());
+			['results-sim-raw-hps', 'results-sim-overheal', 'results-sim-unhealed-dps'].forEach(cssClass =>
+				Array.from(this.simUI.resultsViewer.contentElem.getElementsByClassName(cssClass)).forEach(e => e.remove()),
+			);
 			Array.from(this.simUI.resultsViewer.contentElem.getElementsByClassName('results-sim-tps')).forEach(e => e.remove());
 			Array.from(this.simUI.resultsViewer.contentElem.getElementsByClassName('results-sim-dtps')).forEach(e => e.remove());
 			Array.from(this.simUI.resultsViewer.contentElem.getElementsByClassName('results-sim-tmi')).forEach(e => e.remove());
@@ -424,6 +439,22 @@ export class RaidSimResultsManager {
 				stdev: playerMetrics.hps.stdev,
 				classes: this.getResultsLineClasses('hps'),
 			}).outerHTML;
+			if (playerMetrics.rawHps && playerMetrics.overheal && playerMetrics.unhealedDps) {
+				const raw = playerMetrics.rawHps.avg;
+				content += this.buildResultsLine({
+					average: raw,
+					stdev: playerMetrics.rawHps.stdev,
+					classes: this.getResultsLineClasses('rawHps'),
+				}).outerHTML;
+				content += this.buildResultsLine({
+					average: raw > 0 ? (playerMetrics.overheal.avg / raw) * 100 : 0,
+					classes: this.getResultsLineClasses('overheal'),
+				}).outerHTML;
+				content += this.buildResultsLine({
+					average: playerMetrics.unhealedDps.avg,
+					classes: this.getResultsLineClasses('unhealedDps'),
+				}).outerHTML;
+			}
 		} else if (filter?.target != null) {
 			content += this.buildResultsLine({
 				average: sum(players.map(player => player.getDps(filter))),

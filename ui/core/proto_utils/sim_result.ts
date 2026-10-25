@@ -286,6 +286,10 @@ export class UnitMetrics {
 	readonly dtps: DistributionMetricsProto;
 	readonly tmi: DistributionMetricsProto;
 	readonly tto: DistributionMetricsProto;
+	// Only in a healer sim with incoming damage, where hps counts the healing that landed.
+	readonly rawHps?: DistributionMetricsProto;
+	readonly overheal?: DistributionMetricsProto;
+	readonly unhealedDps?: DistributionMetricsProto;
 	readonly actions: Array<ActionMetrics>;
 	readonly auras: Array<AuraMetrics>;
 	readonly resources: Array<ResourceMetrics>;
@@ -337,6 +341,9 @@ export class UnitMetrics {
 		this.dtps = this.metrics.dtps!;
 		this.tmi = this.metrics.tmi!;
 		this.tto = this.metrics.tto!;
+		this.rawHps = this.metrics.rawHps;
+		this.overheal = this.metrics.overheal;
+		this.unhealedDps = this.metrics.unhealedDps;
 		this.actions = actions;
 		this.auras = auras;
 		this.resources = resources;

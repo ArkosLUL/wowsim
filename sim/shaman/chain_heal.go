@@ -8,9 +8,9 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 )
 
-// standInDeficit is the health a target dummy counts as missing in a chain heal's search. The server only jumps
-// to hurt units and nothing damages the dummies, so they stand in for a hurt raid: a real deficit above it goes
-// first.
+// standInDeficit is the health a target dummy without a health bar counts as missing in a chain heal's search.
+// The server only jumps to hurt units, so with no incoming damage the dummies stand in for a hurt raid: a real
+// deficit above it goes first. With incoming damage a dummy has a health bar and its own deficit counts.
 const standInDeficit = 1
 
 // targetDummies are the raid's target dummies, which the first chain heal looks up.

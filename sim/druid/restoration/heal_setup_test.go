@@ -60,6 +60,8 @@ const (
 type healSetup struct {
 	talents string
 	dummies int32
+	// incoming damage per second on the dummies; 0 leaves them without health bars
+	damage float64
 	// a second resto druid, in the second party, that heals nothing
 	other bool
 	// the rotation's priority list as APL JSON; the default casts nothing
@@ -109,6 +111,7 @@ func (s healSetup) build(t *testing.T) (*core.Simulation, *RestorationDruid) {
 		raid.Parties = append(raid.Parties, &proto.Party{})
 	}
 	raid.TargetDummies = s.dummies
+	raid.IncomingDamagePerSecond = s.damage
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = 600
 	sim := core.NewSim(&proto.RaidSimRequest{

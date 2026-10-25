@@ -2,9 +2,10 @@
     "type": "TypeAPL",
     "priorityList": [
         {"action":{"autocastOtherCooldowns":{}}},
-        {"action":{"castSpell":{"spellId":{"spellId":48089}}}},
-        {"action":{"castSpell":{"spellId":{"spellId":48113}}}},
-        {"action":{"multidot":{"spellId":{"spellId":48068},"maxDots":3,"maxOverlap":{"const":{"val":"0ms"}}}}},
-        {"action":{"castSpell":{"spellId":{"spellId":48063}}}}
+        {"action":{"castSpell":{"spellId":{"spellId":48113},"target":{"type":"Tank"}}}},
+        {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"missingHealth":{"sourceUnit":{"type":"MostHurt"}}},"rhs":{"const":{"val":"4000"}}}},"castSpell":{"spellId":{"spellId":48089},"target":{"type":"MostHurt"}}}},
+        {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"missingHealth":{"sourceUnit":{"type":"MostHurt"}}},"rhs":{"const":{"val":"2000"}}}},"multihot":{"spellId":{"spellId":48068},"maxOverlap":{"const":{"val":"0ms"}}}}},
+        {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"missingHealth":{"sourceUnit":{"type":"MostHurt"}}},"rhs":{"const":{"val":"9000"}}}},"castSpell":{"spellId":{"spellId":48063},"target":{"type":"MostHurt"}}}},
+        {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"missingHealth":{"sourceUnit":{"type":"MostHurt"}}},"rhs":{"const":{"val":"3000"}}}},"castSpell":{"spellId":{"spellId":48071},"target":{"type":"MostHurt"}}}}
     ]
 }

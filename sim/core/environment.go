@@ -129,6 +129,7 @@ func (env *Environment) initialize(raidProto *proto.Raid, encounterProto *proto.
 	}
 
 	raidStats := env.Raid.applyCharacterEffects(raidProto)
+	env.Raid.incoming.register(env)
 
 	for _, party := range env.Raid.Parties {
 		for _, playerOrPet := range party.PlayersAndPets {
@@ -313,6 +314,10 @@ func (env *Environment) GetUnit(ref *proto.UnitReference, contextUnit *Unit) *Un
 			return env.Encounter.TargetUnits[ref.Index]
 		} else {
 			return nil
+		}
+	case proto.UnitReference_Tank:
+		if dummy := env.Raid.GetFirstTargetDummy(); dummy != nil {
+			return &dummy.Unit
 		}
 	case proto.UnitReference_Self:
 		return contextUnit

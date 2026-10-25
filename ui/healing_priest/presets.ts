@@ -54,6 +54,10 @@ export const ROTATION_PRESET_DISC = PresetUtils.makePresetAPLRotation('Disc', Di
 import HolyApl from './apls/holy.apl.json';
 export const ROTATION_PRESET_HOLY = PresetUtils.makePresetAPLRotation('Holy', HolyApl);
 
+import { IncomingDamageDefaults } from '../core/constants/healer_dummies.js';
+import IncomingDamage from './incoming_damage.json';
+export const INCOMING_DAMAGE_DEFAULTS: IncomingDamageDefaults = IncomingDamage;
+
 // Default talents. Uses the wowhead calculator format, make the talents on
 // https://wowhead.com/wotlk/talent-calc and copy the numbers in the url.
 export const DiscTalents = {

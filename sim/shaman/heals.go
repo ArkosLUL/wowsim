@@ -283,8 +283,8 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 	})
 }
 
-// earthShieldHits is what one Earth Shield target takes in place of damage: hits at the page's rate, of which
-// 379's 3.5 s cooldown (on the target) lets one through at a time.
+// earthShieldHits is what one Earth Shield target takes: the dummies' hits, or without incoming damage a stand-in
+// at the page's rate. 379's 3.5 s cooldown (on the target) lets one hit through at a time.
 type earthShieldHits struct {
 	standIn *core.HitTakenStandIn
 	readyAt time.Duration
@@ -299,20 +299,25 @@ func (shaman *Shaman) earthShieldHitsOn(target *core.Unit) *earthShieldHits {
 	}
 	hits := &earthShieldHits{}
 	hits.standIn = core.NewHitTakenStandIn(float64(shaman.SelfBuffs.EarthShieldPPM), func(sim *core.Simulation) {
-		if sim.CurrentTime < hits.readyAt {
-			return
-		}
-		hot := shaman.EarthShield.Hot(target)
-		if !hot.IsActive() {
-			return
-		}
-		hits.readyAt = sim.CurrentTime + earthShieldCooldown
-		hot.ManualTick(sim)
-		// the charge's heal is 379, a cast of its own on the server and not a tick
-		shaman.EarthShield.LandOn(sim, target)
+		shaman.earthShieldHit(sim, target, hits)
 	})
 	shaman.earthShieldTargets[target] = hits
 	return hits
+}
+
+// earthShieldHit spends one charge on a hit the target took.
+func (shaman *Shaman) earthShieldHit(sim *core.Simulation, target *core.Unit, hits *earthShieldHits) {
+	if sim.CurrentTime < hits.readyAt {
+		return
+	}
+	hot := shaman.EarthShield.Hot(target)
+	if !hot.IsActive() {
+		return
+	}
+	hits.readyAt = sim.CurrentTime + earthShieldCooldown
+	hot.ManualTick(sim)
+	// the charge's heal is 379, a cast of its own on the server and not a tick
+	shaman.EarthShield.LandOn(sim, target)
 }
 
 const earthShieldCooldown = time.Millisecond * 3500
@@ -366,7 +371,15 @@ func (shaman *Shaman) registerEarthShieldSpell() {
 				Label:    "Earth Shield",
 				ActionID: core.ActionID{SpellID: 379},
 				OnGain: func(aura *core.Aura, sim *core.Simulation) {
-					shaman.earthShieldHitsOn(aura.Unit).standIn.Start(sim)
+					hits := shaman.earthShieldHitsOn(aura.Unit)
+					if !shaman.Env.Raid.HasIncomingDamage() {
+						hits.standIn.Start(sim)
+					}
+				},
+				OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+					if result.Damage > 0 && shaman.Env.Raid.HasIncomingDamage() {
+						shaman.earthShieldHit(sim, aura.Unit, shaman.earthShieldHitsOn(aura.Unit))
+					}
 				},
 				OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 					shaman.earthShieldHitsOn(aura.Unit).standIn.Stop(sim)

@@ -9,6 +9,8 @@ import (
 type UnitReference struct {
 	fixedUnit       *Unit
 	curTargetSource *Unit
+	// the unit whose raid the most hurt friendly unit is picked from
+	mostHurtSource *Unit
 }
 
 func (ur UnitReference) Get() *Unit {
@@ -16,6 +18,8 @@ func (ur UnitReference) Get() *Unit {
 		return ur.fixedUnit
 	} else if ur.curTargetSource != nil {
 		return ur.curTargetSource.CurrentTarget
+	} else if ur.mostHurtSource != nil {
+		return ur.mostHurtSource.mostHurtFriendly()
 	} else {
 		return nil
 	}
@@ -31,6 +35,10 @@ func NewUnitReference(ref *proto.UnitReference, contextUnit *Unit) UnitReference
 	} else if ref.Type == proto.UnitReference_CurrentTarget {
 		return UnitReference{
 			curTargetSource: contextUnit,
+		}
+	} else if ref.Type == proto.UnitReference_MostHurt {
+		return UnitReference{
+			mostHurtSource: contextUnit,
 		}
 	} else {
 		return UnitReference{

@@ -123,6 +123,7 @@ func request(player *proto.Player, iterations int32) *proto.StatSlopesRequest {
 	if core.IsHealerSpec(core.PlayerProtoToSpec(player)) {
 		// what a healer heals in an individual sim
 		raid.TargetDummies = 1
+		raid.IncomingDamagePerSecond = core.HealerSuiteIncomingDamage
 	}
 	return &proto.StatSlopesRequest{
 		Raid: raid,
@@ -320,6 +321,33 @@ func TestHealerIsMeasuredInHPS(t *testing.T) {
 				t.Errorf("spell power gains %v HPS per point", sp.Gain.Hps)
 			}
 		})
+	}
+}
+
+// A healer's slopes are effective HPS: with almost no damage to answer, more spell power is worth nothing, and
+// with so much that nothing overheals it is worth what it heals.
+func TestHealerSlopesCountOnlyHealingThatLands(t *testing.T) {
+	needDB(t)
+	measureAt := func(damage float64) *proto.StatSlopesResult {
+		req := request(restorationShaman(), 200)
+		req.Raid.IncomingDamagePerSecond = damage
+		return measure(t, req)
+	}
+
+	starved := measureAt(100)
+	if starved.Base.Hps > 150 {
+		t.Errorf("base HPS %v against 100 damage a second", starved.Base.Hps)
+	}
+	if sp := slopeOf(t, starved, proto.Stat_StatSpellPower); sp.Gain.Hps > 0.02 {
+		t.Errorf("spell power gains %v HPS per point when nothing needs healing", sp.Gain.Hps)
+	}
+
+	flooded := measureAt(1e6)
+	if flooded.Base.Hps < 2000 {
+		t.Errorf("base HPS %v when the dummies sit at 1 health", flooded.Base.Hps)
+	}
+	if sp := slopeOf(t, flooded, proto.Stat_StatSpellPower); sp.Gain.Hps <= 0.1 {
+		t.Errorf("spell power gains %v HPS per point when everything lands", sp.Gain.Hps)
 	}
 }
 

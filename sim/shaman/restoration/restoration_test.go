@@ -182,6 +182,7 @@ func healingGraceTalentsRequest() *proto.RaidSimRequest {
 		SimOptions: core.AverageDefaultSimTestOptions,
 	}
 	rsr.Raid.TargetDummies = 1
+	rsr.Raid.IncomingDamagePerSecond = core.HealerSuiteIncomingDamage
 	return rsr
 }
 

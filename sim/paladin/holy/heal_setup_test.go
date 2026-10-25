@@ -17,6 +17,8 @@ type healSetup struct {
 	glyphs  *proto.Glyphs
 	dummies int32
 	buffs   *proto.RaidBuffs
+	// incoming damage per second on the dummies; 0 leaves them without health bars
+	damage float64
 	// the rotation's priority list as APL JSON; the default casts nothing
 	apl string
 }
@@ -50,6 +52,7 @@ func (s healSetup) build(t *testing.T) (*core.Simulation, *HolyPaladin) {
 		raid.Parties = append(raid.Parties, &proto.Party{})
 	}
 	raid.TargetDummies = s.dummies
+	raid.IncomingDamagePerSecond = s.damage
 	encounter := core.MakeSingleTargetEncounter(0)
 	encounter.Duration = 600
 	sim := core.NewSim(&proto.RaidSimRequest{

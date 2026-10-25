@@ -123,6 +123,13 @@ message Raid {
 
 	// Extra fake players to add. Currently only used by healing sims.
 	int32 target_dummies = 6;
+
+	// Healer sims: damage per second the target dummies take, half on dummy 1 (the tank) and half on four of
+	// the others. 0 means none: the dummies have no health bar and every heal on them counts in full.
+	double incoming_damage_per_second = 8;
+	// Max health of dummy 1 and of each other dummy while there is incoming damage. 0 means 40000 and 20000.
+	int32 dummy_tank_health = 9;
+	int32 dummy_raid_health = 10;
 }
 
 message SimOptions {
@@ -188,8 +195,12 @@ message TargetedActionMetrics {
 	// Total threat done to this target by this action.
 	double threat = 10;
 
-	// Total healing done to this target by this action.
+	// Total healing done to this target by this action, overhealing included.
 	double healing = 11;
+
+	// The part of that healing that went past the target's missing health. Only on a target dummy that takes
+	// incoming damage.
+	double overheal = 16;
 
 	// Total shielding done to this target by this action.
 	double shielding = 13;
@@ -260,6 +271,13 @@ message UnitMetrics {
 	DistributionMetrics tmi = 17;
 	DistributionMetrics hps = 14;
 	DistributionMetrics tto = 15; // Time To OOM, in seconds.
+
+	// Healer sims with incoming damage: hps counts only the healing that landed (plus shielding in full).
+	// These are the healing and shielding as cast, the overhealing alone, and the incoming damage no heal
+	// answered, each per second.
+	DistributionMetrics raw_hps = 23;
+	DistributionMetrics overheal = 24;
+	DistributionMetrics unhealed_dps = 25;
 
 	// average seconds spent oom per iteration
 	double seconds_oom_avg = 3; 

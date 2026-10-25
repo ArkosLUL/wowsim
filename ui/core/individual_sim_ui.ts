@@ -128,6 +128,9 @@ export interface IndividualSimUIConfig<SpecType extends Spec> extends PlayerConf
 
 		// Overrides Encounter.defaultTargetProto(), e.g. the generic AzerothCore boss the tank specs default to.
 		encounterTarget?: Target;
+
+		// Healer pages: the incoming damage per second at a phase until the user sets one.
+		incomingDamage?: (player: Player<SpecType>, phase: number) => number;
 	};
 
 	playerInputs?: InputSection;
@@ -318,6 +321,15 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 					updateOn: this.player.gearChangeEmitter,
 					getContent: () => Tooltips.HEALING_SIM_DISCLAIMER,
 				});
+
+				const incomingDamageDefault = config.defaults.incomingDamage;
+				if (incomingDamageDefault) {
+					this.sim.raid.setIncomingDamageDefault(() => incomingDamageDefault(this.player, this.sim.getPhase()));
+					// the default follows the phase and, for a priest, the tree
+					TypedEvent.onAny([this.sim.phaseChangeEmitter, this.player.talentsChangeEmitter]).on(eventID =>
+						this.sim.raid.incomingDamageChangeEmitter.emit(eventID),
+					);
+				}
 			}
 		}
 
@@ -573,6 +585,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 				this.sim.raid.setTargetDummies(eventID, 0);
 			} else {
 				this.sim.raid.setTargetDummies(eventID, healingSpec ? 9 : 0);
+				this.sim.raid.setIncomingDamage(eventID, null);
 				this.sim.encounter.applyDefaults(eventID, this.individualConfig.defaults.encounterTarget, healingSpec);
 				this.sim.raid.setDebuffs(eventID, this.individualConfig.defaults.debuffs);
 				this.sim.applyDefaults(eventID, tankSpec, healingSpec);
@@ -633,6 +646,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 				raidBuffs: this.sim.raid.getBuffs(),
 				debuffs: this.sim.raid.getDebuffs(),
 				targetDummies: this.sim.raid.getTargetDummies(),
+				incomingDamagePerSecond: this.sim.raid.getCustomIncomingDamage() ?? undefined,
 			});
 		}
 		if (exportCategory(SimSettingCategories.UISettings)) {
@@ -682,6 +696,7 @@ export abstract class IndividualSimUI<SpecType extends Spec> extends SimUI {
 					party.setBuffs(eventID, settings.partyBuffs || PartyBuffs.create());
 				}
 				this.sim.raid.setTargetDummies(eventID, settings.targetDummies);
+				this.sim.raid.setIncomingDamage(eventID, settings.incomingDamagePerSecond ?? null);
 			}
 			if (loadCategory(SimSettingCategories.Encounter)) {
 				this.sim.encounter.fromProto(

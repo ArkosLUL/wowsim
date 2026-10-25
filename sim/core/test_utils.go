@@ -1,11 +1,13 @@
 package core
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -267,6 +269,37 @@ func GetAplRotation(dir string, file string) RotationCombo {
 	}
 
 	return RotationCombo{Label: file, Rotation: APLRotationFromJsonString(string(data))}
+}
+
+// PageIncomingDamage is the incoming damage a healer page defaults to for a variant (a priest's tree, "default"
+// for the other pages) at a content phase: the page's incoming_damage.json, where the UI reads it too.
+func PageIncomingDamage(dir string, variant string, phase int32) float64 {
+	filePath := dir + "/incoming_damage.json"
+	data, err := os.ReadFile(filePath)
+	if err != nil {
+		log.Fatalf("failed to load incoming damage json file: %s, %s", filePath, err)
+	}
+	var defaults map[string]map[string]float64
+	if err := json.Unmarshal(data, &defaults); err != nil {
+		log.Fatalf("bad incoming damage json file: %s, %s", filePath, err)
+	}
+	return defaults[variant][strconv.Itoa(int(phase))]
+}
+
+// PagePhase is the content phase a gear preset ("preraid", "p1" to "p5") is played at: preraid at phase 1.
+func PagePhase(preset string) int32 {
+	phase, err := strconv.Atoi(strings.TrimPrefix(preset, "p"))
+	if err != nil {
+		return 1
+	}
+	return int32(phase)
+}
+
+// SetPageIncomingDamage gives a page request what the page sends for incoming damage at a phase: the default
+// damage of its variant and the phase's dummy health.
+func SetPageIncomingDamage(raid *proto.Raid, dir string, variant string, phase int32) {
+	raid.IncomingDamagePerSecond = PageIncomingDamage(dir, variant, phase)
+	raid.DummyTankHealth, raid.DummyRaidHealth = DummyHealthForPhase(phase)
 }
 
 func GetGearSet(dir string, file string) GearSetCombo {

@@ -47,6 +47,7 @@ func pageRequest(phase string) *proto.RaidSimRequest {
 				GiftOfTheWild:         proto.TristateEffect_TristateEffectImproved,
 				MoonkinAura:           proto.TristateEffect_TristateEffectImproved,
 				SanctifiedRetribution: true,
+				WrathOfAirTotem:       true,
 			},
 			&proto.Debuffs{
 				FaerieFire:        proto.TristateEffect_TristateEffectImproved,
@@ -67,6 +68,7 @@ func pageRequest(phase string) *proto.RaidSimRequest {
 	}
 	rsr.Raid.NumActiveParties = 5
 	rsr.Raid.TargetDummies = 9
+	core.SetPageIncomingDamage(rsr.Raid, "../../../ui/holy_paladin", "default", core.PagePhase(phase))
 	return rsr
 }
 

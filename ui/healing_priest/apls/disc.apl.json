@@ -2,9 +2,10 @@
     "type": "TypeAPL",
     "priorityList": [
         {"action":{"autocastOtherCooldowns":{}}},
-        {"action":{"multishield":{"spellId":{"spellId":48066},"maxShields":2,"maxOverlap":{"const":{"val":"0ms"}}}}},
-        {"action":{"castSpell":{"spellId":{"spellId":48113}}}},
-        {"action":{"castSpell":{"spellId":{"spellId":53007}}}},
-        {"action":{"castSpell":{"spellId":{"spellId":48063}}}}
+        {"action":{"castSpell":{"spellId":{"spellId":48066},"target":{"type":"Tank"}}}},
+        {"action":{"castSpell":{"spellId":{"spellId":48113},"target":{"type":"Tank"}}}},
+        {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"missingHealth":{"sourceUnit":{"type":"MostHurt"}}},"rhs":{"const":{"val":"6000"}}}},"castSpell":{"spellId":{"spellId":53007},"target":{"type":"MostHurt"}}}},
+        {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"missingHealth":{"sourceUnit":{"type":"MostHurt"}}},"rhs":{"const":{"val":"9000"}}}},"castSpell":{"spellId":{"spellId":48063},"target":{"type":"MostHurt"}}}},
+        {"action":{"condition":{"cmp":{"op":"OpGt","lhs":{"missingHealth":{"sourceUnit":{"type":"MostHurt"}}},"rhs":{"const":{"val":"3000"}}}},"castSpell":{"spellId":{"spellId":48071},"target":{"type":"MostHurt"}}}}
     ]
 }

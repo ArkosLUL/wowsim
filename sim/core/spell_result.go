@@ -619,6 +619,9 @@ func (spell *Spell) dealHealingInternal(sim *Simulation, isPeriodic bool, result
 		before := result.Target.CurrentHealth()
 		result.Target.GainHealth(sim, result.Damage, spell.HealthMetrics(result.Target))
 		gain = result.Target.CurrentHealth() - before
+		if result.Target.CountsOverheal() {
+			spell.SpellMetrics[result.Target.UnitIndex].TotalOverheal += result.Damage - gain
+		}
 	}
 	result.Threat = spell.healThreat(sim, gain)
 
