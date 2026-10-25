@@ -552,7 +552,7 @@ var meteoricTicks = sync.OnceValue(func() map[int32]bool {
 		}
 		for _, e := range s.Effects {
 			switch e.Aura {
-			case 23, 226, 227: // periodic trigger spell, periodic dummy, trigger spell with value
+			case 23, 227: // periodic trigger spell, with or without a value
 				if t := serverdata.SpellByID(e.TriggerSpell); t != nil && t.Attributes[3]&attr3NotAProc != 0 {
 					ticks[t.ID] = true
 				}
@@ -578,7 +578,7 @@ func costsMana(spell *core.Spell) bool {
 // spell that costs mana (Call of the Elements' totems too), of a mana channel's or Penance's tick, or of a Beacon
 // of Light copy of a heal that costs mana. The finish phase is the cast's end, or its landing for a missile.
 func meteoricInspiration(character *core.Character, buffAura *core.Aura) {
-	// copies cast inside the heal they copy, which completes after them
+	// a Beacon of Light copy lands inside the heal it copies, so it's counted there and stacks with that cast
 	beaconCopies := int32(0)
 	addStacks := func(sim *core.Simulation, n int32) {
 		if n > 0 && buffAura.IsActive() {
@@ -592,23 +592,39 @@ func meteoricInspiration(character *core.Character, buffAura *core.Aura) {
 		}
 		addStacks(sim, n)
 	}
+	onCast := func(sim *core.Simulation, spell *core.Spell) {
+		n := 1 + beaconCopies
+		beaconCopies = 0
+		if costsMana(spell) {
+			atFinish(sim, spell, n)
+		}
+	}
 
+	buffAura.OnInit = func(_ *core.Aura, _ *core.Simulation) {
+		// casts kept out of OnCastComplete (Icy Veins, Tree of Life, Avenging Wrath) stack too. A helper that
+		// casts the real spell, like the trap weave, has no cost of its own and doesn't.
+		for _, spell := range character.Spellbook {
+			if spell.Flags.Matches(core.SpellFlagAPL) && spell.Flags.Matches(core.SpellFlagNoOnCastComplete) && spell.Cost != nil {
+				applyEffects := spell.ApplyEffects
+				spell.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+					applyEffects(sim, target, spell)
+					onCast(sim, spell)
+				}
+			}
+		}
+	}
 	buffAura.OnGain = func(_ *core.Aura, _ *core.Simulation) {
 		beaconCopies = 0
 	}
 	buffAura.OnCastComplete = func(_ *core.Aura, sim *core.Simulation, spell *core.Spell) {
 		switch {
 		case spell.Flags.Matches(core.SpellFlagAPL):
-			n := 1 + beaconCopies
-			beaconCopies = 0
-			if costsMana(spell) {
-				atFinish(sim, spell, n)
-			}
+			onCast(sim, spell)
 		case meteoricTicks()[spell.ActionID.SpellID]:
 			atFinish(sim, spell, 1)
 		}
 	}
-	// Penance's bolts are its own ticks here, dealt as they land
+	// the sim deals Penance's bolts as 53007's own heals and ticks, as they land
 	buffAura.OnHealDealt = func(_ *core.Aura, sim *core.Simulation, spell *core.Spell, _ *core.SpellResult) {
 		switch id := spell.ActionID.SpellID; {
 		case id == 53652 || id == 53653 || id == 53654:

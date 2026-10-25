@@ -158,8 +158,8 @@ exact, which is what unit tests want. Outside the fight every update takes the m
   - Auto attacks off, cancelled or reset drop the queue. Not modelled: the server swings it anyway. The sim has
     no melee range, so Hand of Justice's range check never fails.
 - Each hand swings on its own timer, but the off hand sits out an update the main hand swung on and goes the
-  next (`Player::Update`, `UnitAI::DoMeleeAttackIfReady`). A melee swing restarts the ranged timer, and
-  every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
+  next (`Player::Update`, `UnitAI::DoMeleeAttackIfReady`); an extra attack doesn't count. A melee swing
+  restarts the ranged timer, and every Auto Shot restarts both melee timers (`Unit::_UpdateAutoRepeatSpell`).
 - A new attack (the pull, auto attacks back on out of stealth) puts the off hand at least half the main hand's
   hasted attack time behind it, ready or not; a target switch (a boss taunted back, `SwitchAutoSwingBack`)
   doesn't (`Unit::Attack`). A weapon swap doesn't reset swings.

@@ -6,15 +6,19 @@ import (
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
+	"github.com/wowsims/wotlk/sim/hunter"
 	"github.com/wowsims/wotlk/sim/mage"
 	"github.com/wowsims/wotlk/sim/paladin/holy"
 	"github.com/wowsims/wotlk/sim/priest/healing"
+	"github.com/wowsims/wotlk/sim/priest/smite"
 	"github.com/wowsims/wotlk/sim/shaman/elemental"
 )
 
 func init() {
 	mage.RegisterMage()
 	holy.RegisterHolyPaladin()
+	smite.RegisterSmitePriest()
+	hunter.RegisterHunter()
 }
 
 const meteoriteCrystal = 46051
@@ -76,7 +80,7 @@ func TestMeteoricInspirationStacksOnManaCastsAndPenanceBolts(t *testing.T) {
 	self := &priest.Unit
 	character := priest.GetCharacter()
 
-	// the item's aura lasts 20 s
+	// keep the waits inside the item's 20 s
 	for _, step := range []struct {
 		name  string
 		spell *core.Spell
@@ -190,5 +194,53 @@ func TestMeteoricInspirationStacksOnCallOfTheElementsTotems(t *testing.T) {
 	castAndWait(t, sim, character, shaman.GetSpell(core.ActionID{SpellID: 66842}), sim.Encounter.TargetUnits[0], 2*time.Second)
 	if got := meteoriteStacks(character); got != 4 {
 		t.Errorf("%d stacks after Call of the Elements dropped four totems, want 4", got)
+	}
+}
+
+// Penance's damage bolts (53000) stack like its heal's, each as it lands.
+func TestMeteoricInspirationStacksOnPenanceDamageBolts(t *testing.T) {
+	sim := meteoriteSim(t, &proto.Player{
+		Race:          proto.Race_RaceUndead,
+		Class:         proto.Class_ClassPriest,
+		Spec:          &proto.Player_SmitePriest{SmitePriest: &proto.SmitePriest{Options: &proto.SmitePriest_Options{}}},
+		TalentsString: "0503203130300512301313231251-2351010303",
+	}, 0)
+	priest := sim.Raid.Parties[0].Players[0].(*smite.SmitePriest)
+	if priest.Penance == nil {
+		t.Fatal("no Penance")
+	}
+	castAndWait(t, sim, priest.GetCharacter(), priest.Penance, sim.Encounter.TargetUnits[0], 3*time.Second)
+	if got := meteoriteStacks(priest.GetCharacter()); got != 1+3 {
+		t.Errorf("%d stacks after Penance, want %d", got, 1+3)
+	}
+}
+
+// Icy Veins skips OnCastComplete and still stacks, for its mana cost. The trap weave casts Explosive Trap (49067)
+// for the hunter: one stack, the trap's.
+func TestMeteoricInspirationStacksOnCastsThatSkipCastComplete(t *testing.T) {
+	sim := meteoriteSim(t, &proto.Player{
+		Race:          proto.Race_RaceTroll,
+		Class:         proto.Class_ClassMage,
+		Spec:          &proto.Player_Mage{Mage: &proto.Mage{Options: &proto.Mage_Options{}}},
+		TalentsString: "23000503110003--0533030310233100030152231351",
+	}, 0)
+	m := sim.Raid.Parties[0].Players[0].(*mage.Mage)
+	if m.IcyVeins == nil {
+		t.Fatal("no Icy Veins")
+	}
+	castAndWait(t, sim, m.GetCharacter(), m.IcyVeins, &m.Unit, time.Second)
+	if got := meteoriteStacks(m.GetCharacter()); got != 1 {
+		t.Errorf("%d stacks after Icy Veins, want 1", got)
+	}
+
+	sim = meteoriteSim(t, &proto.Player{
+		Race:  proto.Race_RaceOrc,
+		Class: proto.Class_ClassHunter,
+		Spec:  &proto.Player_Hunter{Hunter: &proto.Hunter{Options: &proto.Hunter_Options{PetType: proto.Hunter_Options_PetNone}}},
+	}, 0)
+	h := sim.Raid.Parties[0].Players[0].(*hunter.Hunter)
+	castAndWait(t, sim, h.GetCharacter(), h.TrapWeaveSpell, sim.Encounter.TargetUnits[0], time.Second)
+	if got := meteoriteStacks(h.GetCharacter()); got != 1 {
+		t.Errorf("%d stacks after the trap weave, want 1", got)
 	}
 }

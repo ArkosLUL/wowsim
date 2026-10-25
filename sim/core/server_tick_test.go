@@ -388,8 +388,8 @@ func setSwingTimersAt(sim *Simulation, when time.Duration, aa *AutoAttacks, mh, 
 	})
 }
 
-// Player::Update (0e58ee439): no 200 ms push either way. The off hand sits out an update the main hand
-// swung on and goes on the next one.
+// Player::Update: the off hand sits out an update the main hand swung on and goes on the next one. An
+// off-hand swing never moves the main hand.
 func TestOffHandSitsOutTheMainHandsUpdate(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
@@ -540,7 +540,7 @@ func TestAutoShotRestartBringsAMeleeSwingForward(t *testing.T) {
 }
 
 // Unit::Attack: at the pull the off hand waits at least half the main hand's hasted attack time behind
-// it, ready or not (0e58ee439), with no random draw.
+// it, ready or not, with no random draw.
 func TestOffHandStartsHalfAMainHandSwingBehind(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
@@ -576,7 +576,7 @@ func TestOffHandStartsHalfAMainHandSwingBehind(t *testing.T) {
 	}
 }
 
-// Unit::Attack staggers the off hand on a new attack only (0e58ee439): auto attacks back on out of stealth
+// Unit::Attack staggers the off hand on a new attack only: auto attacks back on out of stealth
 // stagger it ready or not, a boss taunted back to its tank switches targets and doesn't. After the pull
 // the main hand is due at 2.5 s, the off hand at 1.25 s and, once that swing went, at 2.75 s. The restart
 // is at 2 s.

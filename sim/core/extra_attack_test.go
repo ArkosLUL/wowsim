@@ -61,11 +61,12 @@ func TestExtraAttackSwingsOnTheNextUpdate(t *testing.T) {
 }
 
 // On the update an extra attack goes, it comes after the unit's auras and before its melee, the off hand's
-// swing due then included.
+// swing due then included. It isn't the main hand's swing, so the off hand still goes on that update.
 func TestExtraAttackGoesBetweenTheAurasAndTheMelee(t *testing.T) {
 	var extra *Spell
 	var aura *Aura
 	var order []string
+	var offHandSwings []time.Duration
 	sim, a := newTickTestSim(t, 100, 10, func(a *timingTestAgent) {
 		a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2), OffHand: testWeapon(2), AutoSwingMelee: true})
 		extra = extraAttackTestSpell(t, a, 0)
@@ -77,7 +78,10 @@ func TestExtraAttackGoesBetweenTheAurasAndTheMelee(t *testing.T) {
 	})
 	target := sim.Encounter.TargetUnits[0]
 	extra.ApplyEffects = func(*Simulation, *Unit, *Spell) { order = append(order, "extra") }
-	a.AutoAttacks.OHAuto().ApplyEffects = func(*Simulation, *Unit, *Spell) { order = append(order, "off hand") }
+	a.AutoAttacks.OHAuto().ApplyEffects = func(sim *Simulation, _ *Unit, _ *Spell) {
+		order = append(order, "off hand")
+		offHandSwings = append(offHandSwings, sim.CurrentTime)
+	}
 	sim.PrePull()
 	var offHandAt time.Duration
 	at(sim, ms(105), func(sim *Simulation) {
@@ -93,6 +97,9 @@ func TestExtraAttackGoesBetweenTheAurasAndTheMelee(t *testing.T) {
 
 	if want := []string{"aura", "extra", "off hand"}; !slices.Equal(order, want) {
 		t.Errorf("went in the order %v at %v, want %v", order, offHandAt, want)
+	}
+	if len(offHandSwings) == 0 || offHandSwings[0] != offHandAt {
+		t.Errorf("off hand swung at %v, want the first at %v", offHandSwings, offHandAt)
 	}
 }
 

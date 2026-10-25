@@ -74,11 +74,11 @@ func (hunter *Hunter) registerExplosiveTrapSpell(timer *core.Timer) {
 				return
 			}
 
-			// The trap's gameobject (189322) arms its startDelay, 1 s, after it's laid, only with the hunter
-			// in combat, and goes off on the next update after that (GameObject::Update). One laid before
-			// the pull arms at once and waits for the pull.
+			// The trap's gameobject (189322) arms its startDelay, 1 s, after it's laid, and goes off on the
+			// next update after that (GameObject::Update). The delay only counts if the hunter's in combat at
+			// the object's first update, so one that comes before the pull arms at once and waits for it.
 			armDelay := time.Second
-			if sim.CurrentTime < 0 {
+			if sim.NextServerTick(sim.CurrentTime) < 0 {
 				armDelay = 0
 			}
 			core.StartDelayedAction(sim, core.DelayedActionOptions{
