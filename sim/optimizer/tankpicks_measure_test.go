@@ -239,19 +239,17 @@ func TestMeasureTankPicks(t *testing.T) {
 			seed.GetPDeath(), seed.GetDtps(), seed.GetHealthMargin(), scored.GetPDeath(), scored.GetDtps(), scored.GetTmi(), scored.GetTps(),
 			scored.GetHealthMargin(), p.result.GetTotalSims())
 
-		// J as the run's last search scored it: a second search counted death chance from its first
-		// pick's normalizer, taken here at the final pick
+		// J as the run's last search scored it: a second search scored on its first pick's objective,
+		// measured here at the final pick
 		judge := obj
-		if slices.ContainsFunc(p.result.GetWarnings(), func(w string) bool { return strings.Contains(w, "a second search counted death chance") }) {
-			dm, err := measureDeath(ctx, eval, r, pick, iterations)
+		if slices.ContainsFunc(p.result.GetWarnings(), func(w string) bool { return strings.Contains(w, "a second search") }) {
+			at, err := newObjectiveAt(ctx, eval, r, pick, iterations, "the pick")
 			if err != nil {
 				t.Fatalf("%s: %v", tag, err)
 			}
-			second := *obj
-			second.Warnings = slices.Clone(obj.Warnings)
-			second.countDeathAt(dm)
-			judge = &second
-			t.Logf("%s: scored with death chance from the pick, %.1f se: coefficients %s", tag, seCount(MetricPDeath, dm.Norm), coefficientsText(judge))
+			at.settleDeathAtPick(obj, 0)
+			judge = at
+			t.Logf("%s: scored on the pick's scale, death chance %.1f se: coefficients %s", tag, seCount(MetricPDeath, at.death.Norm), coefficientsText(judge))
 		}
 		d := judge.Delta(worn, picked)
 		t.Logf("%s: pick against worn dJ %+.0f (se %.0f)", tag, d.Mean, d.SE)
@@ -347,10 +345,11 @@ func TestMeasureTankDeathAtPicks(t *testing.T) {
 			what string
 			l    Loadout
 		}{{"worn", r.Equipped}, {"pick", pick}} {
-			dm, err := measureDeath(ctx, eval, r, at.l, iterations)
+			o, err := newObjectiveAt(ctx, eval, r, at.l, iterations, at.what)
 			if err != nil {
 				t.Fatalf("%s: %v", tag, err)
 			}
+			dm := o.death
 			coef, left := deathCoefficient(weight, dm)
 			uncapped := weight / dm.Norm.Mean
 			t.Logf("%s %s: dies %.4f (%.4f at -2000 Armor, %.4f at +2000), %.3g ± %.2g per Armor point = %.1f se, Armor %.0f, coefficient %.0f uncapped, %.0f counted; left out: %q",

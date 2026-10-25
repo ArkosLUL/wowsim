@@ -228,8 +228,9 @@ type run struct {
 
 	prefetching sync.WaitGroup
 
-	// The death normalizer a second search prices death chance with, taken at the first pick.
-	deathAt *deathMeasure
+	// The objective a second search scores with, measured at the first pick; nil measures it at the
+	// gear as equipped.
+	pickObj *Objective
 	// Sims the time-to-live fight; made on first use.
 	lives *countingEvaluator
 }
@@ -243,53 +244,98 @@ func (r *run) trace(format string, args ...any) {
 	}
 }
 
-// optimize runs the search, and a second one where the first left death chance out and its pick
-// brings the term back. The gear as equipped can all but always or never die while a pick that
-// trades health for avoidance doesn't, and then the normalizer measured at the pick prices death
-// where the worn gear's couldn't. The second search starts from the first pick and scores with that
-// normalizer; a pick that still dies in 0 or 100% of iterations, or moves too little to price, ends
-// the run with the first result.
+// optimize runs the search, and a second one where the first pick shows the score was scaled wrong.
+// The objective measures its normalizers at the gear as equipped, which can sit far from where the
+// search ends: gear that dies in every fight moves the survival terms differently per point of Armor
+// than the pick does, and can't price death chance at all. So a run that counts several terms, or left
+// death chance out, measures the objective again at the first pick. Where death chance comes back or
+// the balance between the terms moved by more than scaleShiftMin, it searches again from that pick,
+// scored on the pick's objective. A run counting one term that didn't leave death chance out (DPS,
+// HPS, raid mode) skips all of it.
 func optimize(ctx context.Context, asked, simmed *Request, eval Evaluator, progress ProgressFunc, start time.Time) *proto.OptimizerResult {
 	first, result := optimizePass(ctx, asked, simmed, eval, progress, start, nil)
-	if first.obj == nil || first.obj.DeathWarning == "" {
+	if first.obj == nil || !first.obj.worthRescaling() {
+		return result
+	}
+	deathWarning := first.obj.DeathWarning
+	keep := func(extra ...string) *proto.OptimizerResult {
+		if deathWarning != "" {
+			result.Warnings = append(result.Warnings, deathWarning)
+		}
+		result.Warnings = append(result.Warnings, extra...)
+		// the first result is whole, but the run the caller asked for was cut short
+		if ctx.Err() != nil && result.ErrorResult == "" {
+			result.Cancelled = true
+		}
 		return result
 	}
 	if result.ErrorResult != "" || result.Cancelled || ctx.Err() != nil {
-		result.Warnings = append(result.Warnings, first.obj.DeathWarning)
-		return result
+		return keep()
 	}
 	// the pick the result holds: the search's best, or the seed where nothing beat it
 	pick := first.best
+	if pick == first.obj.base {
+		return keep()
+	}
 	measured := &countingEvaluator{inner: eval, have: map[Point]int{}}
-	dm, err := measureDeath(ctx, measured, simmed, pick, first.budget.Iterations)
+	at, err := newObjectiveAt(ctx, measured, simmed, pick, first.budget.Iterations, "the first search's pick")
+	result.TotalSims += int32(measured.simmed())
 	if err != nil {
-		result.Warnings = append(result.Warnings, first.obj.DeathWarning, fmt.Sprintf("couldn't measure death chance at the pick, so it stays out: %v", err))
-		return result
+		return keep(fmt.Sprintf("couldn't measure the score at the first search's pick, so the first result stands: %v", err))
 	}
+	dies := 0.0
 	if first.bestEval != nil {
-		dm.Dies = first.bestEval.Metrics[MetricPDeath].Mean
+		dies = first.bestEval.Metrics[MetricPDeath].Mean
 	}
-	if _, left := deathCoefficient(first.obj.Weights[MetricPDeath], dm); left != "" {
-		result.Warnings = append(result.Warnings, first.obj.DeathWarning, "death chance stays out: the search's first pick "+left)
-		return result
+	at.settleDeathAtPick(first.obj, dies)
+
+	var why []string
+	deathBack := deathWarning != "" && at.coef[MetricPDeath] != 0
+	if deathBack {
+		why = append(why, fmt.Sprintf("%s; the first search's pick dies in %.0f%% of iterations and %g Armor moves that %.1f standard errors, so a second search counted death chance from that pick",
+			deathWarning, at.death.Dies*100, normalizerOffset(stats.Armor), -at.death.Norm.Mean/at.death.Norm.SE))
 	}
+	k, moved := scaleShift(first.obj, at)
+	if moved {
+		why = append(why, fmt.Sprintf("the score's scale at the first search's pick differs from %s's: %s, so a second search scored on the pick's",
+			first.obj.label, scaleText(k, first.obj, at)))
+	} else {
+		first.trace("the score's scale at the first search's pick is within %.0f%% of %s's: %s", scaleShiftMin*100, first.obj.label, scaleText(k, first.obj, at))
+	}
+	stays := ""
+	if deathWarning != "" && !deathBack && at.deathLeft != "" {
+		stays = "death chance stays out: the search's first pick " + at.deathLeft
+	}
+	if len(why) == 0 {
+		return keep(stays)
+	}
+
 	next := *simmed
 	next.WarmStarts = append(slices.Clone(simmed.WarmStarts), pick)
-	secondRun, second := optimizePass(ctx, asked, &next, eval, progress, start, &dm)
-	if second.ErrorResult != "" {
-		result.Warnings = append(result.Warnings, first.obj.DeathWarning, fmt.Sprintf("the second search, with death chance counted, failed: %s", firstLine(second.ErrorResult)))
-		return result
-	}
+	secondRun, second := optimizePass(ctx, asked, &next, eval, progress, start, at)
 	// the second search reads the first's cached points again; only what it adds to them was simmed
-	second.TotalSims = int32(first.eval.simmed() + measured.simmed() + secondRun.eval.simmedBeyond(first.eval) + first.livesSimmed() + secondRun.livesSimmed())
-	second.Warnings = append([]string{fmt.Sprintf("%s; the first search's pick dies in %.0f%% of iterations and %g Armor moves that %.1f standard errors, so a second search counted death chance from that pick",
-		first.obj.DeathWarning, dm.Dies*100, normalizerOffset(stats.Armor), -dm.Norm.Mean/dm.Norm.SE)}, second.Warnings...)
-	second.Warnings = slices.Compact(second.Warnings)
+	secondSims := secondRun.eval.simmedBeyond(first.eval) + secondRun.livesSimmed()
+	if second.ErrorResult != "" {
+		result.TotalSims += int32(secondSims)
+		return keep(fmt.Sprintf("the second search, scored on the first pick's scale, failed: %s", firstLine(second.ErrorResult)))
+	}
+	if second.Cancelled {
+		// a cancel early in the second search leaves the seed as its best
+		result.TotalSims += int32(secondSims)
+		result.Cancelled = true
+		return keep("the second search, scored on the first pick's scale, was cancelled, so the first result stands")
+	}
+	second.TotalSims = int32(first.eval.simmed() + measured.simmed() + secondSims + first.livesSimmed())
+	if stays != "" {
+		why = append(why, deathWarning, stays)
+	}
+	second.Warnings = slices.Compact(append(why, second.Warnings...))
 	return second
 }
 
-// optimizePass is one search. deathAt, when set, is the death normalizer to price death chance with.
-func optimizePass(ctx context.Context, asked, simmed *Request, eval Evaluator, progress ProgressFunc, start time.Time, deathAt *deathMeasure) (*run, *proto.OptimizerResult) {
+// optimizePass is one search. at, when set, is the objective to score with in place of the one measured
+// at the gear as equipped.
+func optimizePass(ctx context.Context, asked, simmed *Request, eval Evaluator, progress ProgressFunc, start time.Time, at *Objective) (*run, *proto.OptimizerResult) {
 	budget := EffortBudget(asked.Settings.GetEffort())
 	seed := simmed.Base.GetSimOptions().GetRandomSeed()
 	if seed == 0 {
@@ -309,7 +355,7 @@ func optimizePass(ctx context.Context, asked, simmed *Request, eval Evaluator, p
 		start:    start,
 		best:     simmed.Seed,
 		ref:      simmed.Equipped,
-		deathAt:  deathAt,
+		pickObj:  at,
 	}
 	r.eval = &countingEvaluator{inner: eval, have: map[Point]int{}, after: r.report}
 	r.region = trace.StartRegion(ctx, stages[0])
@@ -401,17 +447,17 @@ func (r *run) execute() *proto.OptimizerResult {
 		points = append(points, Point{Loadout: r.ref})
 	}
 	waitSeed := r.prefetch(batch{points, r.budget.Iterations})
-	obj, err := NewObjective(r.ctx, r.eval, r.r, r.budget.Iterations)
-	if err != nil {
-		return r.stop(err)
-	}
-	if r.deathAt != nil {
-		obj.countDeathAt(*r.deathAt)
+	obj := r.pickObj
+	if obj == nil {
+		var err error
+		if obj, err = NewObjective(r.ctx, r.eval, r.r, r.budget.Iterations); err != nil {
+			return r.stop(err)
+		}
 	}
 	r.obj = obj
 	for _, w := range obj.Warnings {
-		// a first search that dropped death chance may get it back at its pick, see optimize
-		if w == obj.DeathWarning {
+		// optimize reports how a dropped death chance fared at the first pick
+		if obj.DeathWarning != "" && w == obj.DeathWarning {
 			continue
 		}
 		r.warn("%s", w)

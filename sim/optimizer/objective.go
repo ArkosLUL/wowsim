@@ -2,8 +2,11 @@ package optimizer
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"math"
 	"slices"
+	"strings"
 
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
@@ -11,7 +14,7 @@ import (
 )
 
 // Objective is the score J the search maximizes: the sum over metrics of r[m] * M[m] / w[m]. w[m] is
-// how much one point of the metric's reference stat moves it at the seed, which puts every term in
+// how much one point of the metric's reference stat moves it at one loadout, which puts every term in
 // reference-stat points, so the weights r[m] trade like for like. w is negative for DTPS, TMI and
 // death chance (more Armor lowers them), so lowering those raises J; the health margin's is positive.
 type Objective struct {
@@ -20,7 +23,8 @@ type Objective struct {
 	// What each w[m] is measured against: the spec's EP reference stat for DPS, HPS and TPS, Armor
 	// for the survival metrics.
 	ReferenceStats [NumMetrics]stats.Stat
-	// w[m] per point of its reference stat, measured at the seed and frozen there.
+	// w[m] per point of its reference stat, measured at the loadout the objective was built at and
+	// frozen there.
 	Normalizers [NumMetrics]Estimate
 	// Weighted metrics J had to leave out, and why.
 	Warnings []string
@@ -29,6 +33,12 @@ type Objective struct {
 	DeathWarning string
 
 	coef Metrics
+	// The loadout the normalizers were measured at, and what warnings call it.
+	base  Loadout
+	label string
+	// The death measurement, and why death chance stayed out when it did.
+	death     deathMeasure
+	deathLeft string
 }
 
 // deathMinSE is how many standard errors the death normalizer has to clear before J counts death
@@ -45,29 +55,6 @@ type deathMeasure struct {
 	Dies float64
 	// Armor on the sheet the pair was taken around; 0 where it couldn't be read.
 	Armor float64
-}
-
-// measureDeath is NewObjective's death normalizer for the loadout at: paired sims of it with the Armor
-// offsets the objective uses.
-func measureDeath(ctx context.Context, eval Evaluator, r *Request, at Loadout, iterations int) (deathMeasure, error) {
-	var down, up stats.Stats
-	down[stats.Armor], up[stats.Armor] = -normalizerOffset(stats.Armor), normalizerOffset(stats.Armor)
-	evals, err := eval.Evaluate(ctx, []Point{{Loadout: at, Offset: down}, {Loadout: at, Offset: up}}, iterations)
-	if err != nil {
-		return deathMeasure{}, err
-	}
-	d := Delta(evals[0], evals[1], MetricPDeath)
-	span := 2 * normalizerOffset(stats.Armor)
-	dm := deathMeasure{
-		Norm: Estimate{Mean: d.Mean / span, SE: d.SE / span},
-		Down: evals[0].Metrics[MetricPDeath].Mean,
-		Up:   evals[1].Metrics[MetricPDeath].Mean,
-	}
-	dm.Dies = (dm.Down + dm.Up) / 2
-	if sheet, err := playerSheet(r.Base, r.TargetIndex, at, stats.Stats{}); err == nil {
-		dm.Armor = sheet.FinalStats[stats.Armor]
-	}
-	return dm, nil
 }
 
 // deathCoefficient is the death term's coefficient for a weight, or 0 and why it stays out. The
@@ -97,22 +84,103 @@ func deathCoefficient(weight float64, dm deathMeasure) (coef float64, left strin
 }
 
 // judgeDeath sets death chance's coefficient from dm, or leaves it out with a warning.
-func (o *Objective) judgeDeath(dm deathMeasure) {
+func (o *Objective) judgeDeath(dm deathMeasure, label string) {
+	o.death = dm
 	o.Normalizers[MetricPDeath] = dm.Norm
 	coef, left := deathCoefficient(o.Weights[MetricPDeath], dm)
 	o.coef[MetricPDeath] = coef
+	o.deathLeft = left
 	if left != "" {
-		o.DeathWarning = "left death chance out of the objective: the gear as equipped " + left
+		o.DeathWarning = "left death chance out of the objective: " + label + " " + left
 		o.Warnings = append(o.Warnings, o.DeathWarning)
 	}
 }
 
-// countDeathAt prices death chance from the normalizer at dm, taken at the first search's pick, in
-// place of the gear as equipped's, which failed the bar and dropped the term.
-func (o *Objective) countDeathAt(dm deathMeasure) {
+// settleDeathAtPick is the death rule for an objective built at the first search's pick. Counted at the
+// pick's own normalizer where that clears the bar, with dies the pick's death chance as the search
+// measured it (0 or less to keep the pair's average). Where it doesn't, the first objective's
+// coefficient stays if it had one, capped at the Armor the pick wears; no signal at the pick isn't a
+// reason to stop pricing deaths.
+func (o *Objective) settleDeathAtPick(first *Objective, dies float64) {
+	if o.Weights[MetricPDeath] == 0 {
+		return
+	}
 	o.Warnings = slices.DeleteFunc(o.Warnings, func(w string) bool { return w == o.DeathWarning })
 	o.DeathWarning = ""
-	o.judgeDeath(dm)
+	dm := o.death
+	if dies > 0 {
+		dm.Dies = dies
+	}
+	o.judgeDeath(dm, "the first search's pick")
+	if o.deathLeft != "" && first.coef[MetricPDeath] != 0 {
+		o.coef[MetricPDeath] = first.coef[MetricPDeath]
+		if dm.Armor > 0 {
+			o.coef[MetricPDeath] = max(o.coef[MetricPDeath], -dm.Armor)
+		}
+		o.Normalizers[MetricPDeath] = first.Normalizers[MetricPDeath]
+		o.Warnings = slices.DeleteFunc(o.Warnings, func(w string) bool { return w == o.DeathWarning })
+		o.DeathWarning, o.deathLeft = "", ""
+	}
+}
+
+// worthRescaling is whether measuring the objective again at the first pick could change the run: it
+// counts two terms or more, so their balance can move, or it left death chance out, which can come back.
+func (o *Objective) worthRescaling() bool {
+	terms := 0
+	for _, c := range o.coef {
+		if c != 0 {
+			terms++
+		}
+	}
+	return terms >= 2 || o.DeathWarning != ""
+}
+
+// scaleShiftMin is how far apart the factors between two objectives' coefficients may sit before the
+// balance between the terms counts as moved.
+const scaleShiftMin = 0.15
+
+// scaleShift compares the coefficients of at against first, over the terms both count except death
+// chance, which has its own rule. k[m] is at's over first's. The balance moved when the biggest k
+// is over 1+scaleShiftMin times the smallest, or when a term is counted by only one of them. A
+// uniform change of scale doesn't move it.
+func scaleShift(first, at *Objective) (k Metrics, moved bool) {
+	lo, hi := math.Inf(1), 0.0
+	for m := range k {
+		if Metric(m) == MetricPDeath {
+			continue
+		}
+		a, b := first.coef[m], at.coef[m]
+		if (a == 0) != (b == 0) {
+			moved = true
+		}
+		if a == 0 || b == 0 {
+			continue
+		}
+		k[m] = b / a
+		if k[m] <= 0 {
+			moved = true
+			continue
+		}
+		lo, hi = min(lo, k[m]), max(hi, k[m])
+	}
+	return k, moved || hi > lo*(1+scaleShiftMin)
+}
+
+// scaleText names each factor of k, and the terms only one side counted.
+func scaleText(k Metrics, first, at *Objective) string {
+	var parts []string
+	for m := range k {
+		switch a, b := first.coef[m] != 0, at.coef[m] != 0; {
+		case Metric(m) == MetricPDeath || !a && !b:
+		case a && b:
+			parts = append(parts, fmt.Sprintf("%s ×%.2f", metricName(Metric(m)), k[m]))
+		case a:
+			parts = append(parts, metricName(Metric(m))+" left out there")
+		default:
+			parts = append(parts, metricName(Metric(m))+" counted only there")
+		}
+	}
+	return strings.Join(parts, ", ")
 }
 
 // Lower is better for these, so their normalizers must come out negative.
@@ -216,11 +284,32 @@ func normalizerOffset(s stats.Stat) float64 {
 // weighted metric whose normalizer doesn't clear 2 standard errors with the right sign is left out,
 // with a warning; if that leaves nothing, it's an error.
 func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations int) (*Objective, error) {
+	o, err := newObjectiveAt(ctx, eval, r, r.Equipped, iterations, "the gear as equipped")
+	var failed *normalizerSimsError
+	if errors.As(err, &failed) && r.Equipped != r.Seed {
+		o, err = newObjectiveAt(ctx, eval, r, r.Seed, iterations, "the trimmed seed")
+		if err == nil {
+			o.Warnings = append([]string{fmt.Sprintf("measured the objective's normalizers against the trimmed seed instead of the gear as equipped, which failed to sim: %v", failed.err)}, o.Warnings...)
+		}
+	}
+	return o, err
+}
+
+// normalizerSimsError is a failed sim of the normalizer points, the one error NewObjective retries on
+// the trimmed seed.
+type normalizerSimsError struct{ err error }
+
+func (e *normalizerSimsError) Error() string { return "normalizer sims: " + e.err.Error() }
+func (e *normalizerSimsError) Unwrap() error { return e.err }
+
+// newObjectiveAt is NewObjective with the normalizers measured at base. label names that gear in the
+// objective's warnings.
+func newObjectiveAt(ctx context.Context, eval Evaluator, r *Request, base Loadout, iterations int, label string) (*Objective, error) {
 	weights, err := objectiveWeights(r.Settings)
 	if err != nil {
 		return nil, err
 	}
-	o := &Objective{Weights: weights}
+	o := &Objective{Weights: weights, base: base, label: label}
 	ref := referenceStat(r.Target())
 	for m := range o.ReferenceStats {
 		o.ReferenceStats[m] = ref
@@ -229,33 +318,21 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 		}
 	}
 
-	normalizerPoints := func(base Loadout) ([]Point, map[stats.Stat]int) {
-		var points []Point
-		pointIndex := map[stats.Stat]int{}
-		for m, w := range weights {
-			s := o.ReferenceStats[m]
-			if _, ok := pointIndex[s]; w == 0 || ok {
-				continue
-			}
-			pointIndex[s] = len(points)
-			var down, up stats.Stats
-			down[s], up[s] = -normalizerOffset(s), normalizerOffset(s)
-			points = append(points, Point{Loadout: base, Offset: down}, Point{Loadout: base, Offset: up})
+	var points []Point
+	pointIndex := map[stats.Stat]int{}
+	for m, w := range weights {
+		s := o.ReferenceStats[m]
+		if _, ok := pointIndex[s]; w == 0 || ok {
+			continue
 		}
-		return points, pointIndex
+		pointIndex[s] = len(points)
+		var down, up stats.Stats
+		down[s], up[s] = -normalizerOffset(s), normalizerOffset(s)
+		points = append(points, Point{Loadout: base, Offset: down}, Point{Loadout: base, Offset: up})
 	}
-
-	base := r.Equipped
-	points, pointIndex := normalizerPoints(base)
 	evals, err := eval.Evaluate(ctx, points, iterations)
-	if err != nil && base != r.Seed {
-		o.Warnings = append(o.Warnings, fmt.Sprintf("measured the objective's normalizers against the trimmed seed instead of the gear as equipped, which failed to sim: %v", err))
-		base = r.Seed
-		points, pointIndex = normalizerPoints(base)
-		evals, err = eval.Evaluate(ctx, points, iterations)
-	}
 	if err != nil {
-		return nil, fmt.Errorf("normalizer sims: %w", err)
+		return nil, &normalizerSimsError{err}
 	}
 
 	for m, w := range weights {
@@ -269,7 +346,7 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 		norm := Estimate{Mean: d.Mean / span, SE: d.SE / span}
 		o.Normalizers[m] = norm
 		if Metric(m) == MetricPDeath {
-			o.judgeDeath(deathMeasure{Norm: norm, Down: evals[i].Metrics[m].Mean, Up: evals[i+1].Metrics[m].Mean, Dies: (evals[i].Metrics[m].Mean + evals[i+1].Metrics[m].Mean) / 2, Armor: o.armorOf(r, base)})
+			o.judgeDeath(deathMeasure{Norm: norm, Down: evals[i].Metrics[m].Mean, Up: evals[i+1].Metrics[m].Mean, Dies: (evals[i].Metrics[m].Mean + evals[i+1].Metrics[m].Mean) / 2, Armor: o.armorOf(r, base)}, label)
 			continue
 		}
 		signed := norm.Mean
@@ -288,7 +365,7 @@ func NewObjective(ctx context.Context, eval Evaluator, r *Request, iterations in
 		o.coef[m] = w / norm.Mean
 	}
 	if o.coef == (Metrics{}) {
-		return nil, fmt.Errorf("no weighted metric responds to its reference stat at the seed: %v", o.Warnings)
+		return nil, fmt.Errorf("no weighted metric responds to its reference stat at %s: %v", label, o.Warnings)
 	}
 	return o, nil
 }

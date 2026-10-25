@@ -2,7 +2,9 @@ package optimizer
 
 import (
 	"context"
+	"errors"
 	"math"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -370,5 +372,220 @@ func TestDeathChanceComesBackAtTheFirstPick(t *testing.T) {
 				t.Errorf("warnings %q, want a second search: %v", result.Warnings, tc.second)
 			}
 		})
+	}
+}
+
+func TestScaleShift(t *testing.T) {
+	obj := func(c Metrics) *Objective { return &Objective{coef: c} }
+	first := obj(Metrics{MetricTPS: 0.64, MetricHealthMargin: 0.088, MetricTMI: -18.8, MetricDTPS: -0.88})
+	for _, tc := range []struct {
+		name  string
+		at    *Objective
+		moved bool
+	}{
+		{"survival x1.8 against TPS x1.05", obj(Metrics{MetricTPS: 0.64 * 1.05, MetricHealthMargin: 0.088 * 1.8, MetricTMI: -18.8 * 1.8, MetricDTPS: -0.88 * 1.8}), true},
+		{"everything x2", obj(Metrics{MetricTPS: 1.28, MetricHealthMargin: 0.176, MetricTMI: -37.6, MetricDTPS: -1.76}), false},
+		{"survival x1.1", obj(Metrics{MetricTPS: 0.64, MetricHealthMargin: 0.088 * 1.1, MetricTMI: -18.8 * 1.1, MetricDTPS: -0.88 * 1.1}), false},
+		{"a term only the first counts", obj(Metrics{MetricTPS: 0.64, MetricHealthMargin: 0.088, MetricTMI: -18.8}), true},
+		{"a term only the second counts", obj(Metrics{MetricTPS: 0.64, MetricHealthMargin: 0.088, MetricTMI: -18.8, MetricDTPS: -0.88, MetricHPS: 1}), true},
+		// death chance has its own rule
+		{"death chance on one side", obj(Metrics{MetricTPS: 0.64, MetricHealthMargin: 0.088, MetricTMI: -18.8, MetricDTPS: -0.88, MetricPDeath: -5}), false},
+	} {
+		if k, moved := scaleShift(first, tc.at); moved != tc.moved {
+			t.Errorf("%s: moved = %v (factors %v), want %v", tc.name, moved, k, tc.moved)
+		}
+	}
+	k, _ := scaleShift(first, obj(Metrics{MetricTPS: 0.64 * 1.05, MetricHealthMargin: 0.088 * 1.8, MetricTMI: -18.8 * 1.8, MetricDTPS: -0.88 * 1.8}))
+	if !near(k[MetricHealthMargin], 1.8, 1e-9) || !near(k[MetricTPS], 1.05, 1e-9) {
+		t.Errorf("factors = %v, want the margin x1.8 and TPS x1.05", k)
+	}
+}
+
+// marginRequest is kaRequest scored on TPS and the health margin, and death chance too when asked. Its
+// fake answers TPS with kaDPS, and moves the margin by perArmor at the gear as equipped and 2 elsewhere
+// per point of Armor; with dies, every loadout dies in every iteration.
+func marginRequest(t *testing.T, perArmor float64, dies bool) (*Request, *fakeEvaluator) {
+	t.Helper()
+	req := kaRequest(proto.OptimizerEffort_OptimizerEffortQuick)
+	req.Settings.MetricWeights = &proto.OptimizerMetrics{Tps: 1, HealthMargin: 1}
+	if dies {
+		req.Settings.MetricWeights.PDeath = 1
+	}
+	r, err := PrepareRequest(req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fake := newFakeEvaluator(func(p Point) Metrics {
+		dps, _ := kaMetrics(p)
+		slope := 2.0
+		if p.Loadout == r.Equipped {
+			slope = perArmor
+		}
+		m := Metrics{MetricTPS: dps[MetricDPS], MetricHealthMargin: 20000 + slope*p.Offset[stats.Armor]}
+		if dies {
+			m[MetricPDeath] = 1
+		}
+		return m
+	})
+	return r, fake
+}
+
+// The first search's pick can sit where Armor moves the health margin less than it does on the gear as
+// equipped, which makes the margin count for more there. Only then does a second search score on the
+// pick's scale.
+func TestScaleMovesAtTheFirstPick(t *testing.T) {
+	for _, tc := range []struct {
+		name         string
+		wornPerArmor float64
+		dies         bool
+		second       bool
+	}{
+		{"the margin responds half as much at the pick", 4, false, true},
+		{"the same response at the pick", 2, false, false},
+		{"half as much, with death chance out at both", 4, true, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			r, fake := marginRequest(t, tc.wornPerArmor, tc.dies)
+			result := optimize(context.Background(), r, r, fake, nil, time.Now())
+			if result.ErrorResult != "" {
+				t.Fatal(result.ErrorResult)
+			}
+			var told bool
+			for _, w := range result.Warnings {
+				told = told || strings.Contains(w, "scale at the first search's pick differs from the gear as equipped's") && strings.Contains(w, "health margin ×")
+			}
+			if told != tc.second {
+				t.Errorf("warnings %q, want a second search: %v", result.Warnings, tc.second)
+			}
+			// both: why death chance was left out, and why it stays out
+			if tc.dies && (!hasWarning(result, "left death chance out of the objective: the gear as equipped dies in 100%") || !hasWarning(result, "death chance stays out: the search's first pick dies in 100%")) {
+				t.Errorf("warnings %q, want death chance left out at the gear as equipped and kept out at the pick", result.Warnings)
+			}
+		})
+	}
+}
+
+// A cancel during the second search keeps the first search's whole result: the second's can still
+// hold the seed.
+func TestCancelInTheSecondSearchKeepsTheFirstResult(t *testing.T) {
+	r, fake := marginRequest(t, 4, false)
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	var pastSetup bool
+	progress := func(p *proto.OptimizerProgress) {
+		// the second search starts over at Setup
+		if p.Stage != "Setup" {
+			pastSetup = true
+		} else if pastSetup {
+			cancel()
+		}
+	}
+	result := optimize(ctx, r, r, fake, progress, time.Now())
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	if !result.Cancelled || !result.Improved || result.GetBest().GetScore() == 0 || !hasWarning(result, "second search, scored on the first pick's scale, was cancelled") {
+		t.Errorf("cancelled %v, improved %v, score %v, warnings %q; want the first search's scored pick, marked cancelled",
+			result.Cancelled, result.Improved, result.GetBest().GetScore(), result.Warnings)
+	}
+}
+
+// At the first pick, death chance counts at the pick's own normalizer where that clears the bar. Where
+// it doesn't, the first objective's coefficient stays, capped at the Armor the pick wears.
+func TestDeathChanceAtThePick(t *testing.T) {
+	const weight = 0.2
+	measured := deathMeasure{Norm: Estimate{Mean: -1e-5, SE: 5e-7}, Down: 0.5, Up: 0.3, Dies: 0.4, Armor: 30000}
+	alwaysDies := func(armor float64) deathMeasure { return deathMeasure{Down: 1, Up: 1, Dies: 1, Armor: armor} }
+	for _, tc := range []struct {
+		name      string
+		firstCoef float64
+		at        deathMeasure
+		coef      float64
+		left      bool
+	}{
+		{"the pick clears the bar", -5000, measured, weight / -1e-5, false},
+		{"the pick doesn't, the first counted it", -5000, alwaysDies(30000), -5000, false},
+		{"the pick wears less Armor than that costs", -5000, alwaysDies(4000), -4000, false},
+		{"neither counts it", 0, alwaysDies(30000), 0, true},
+	} {
+		first := &Objective{Weights: Metrics{MetricPDeath: weight}, coef: Metrics{MetricPDeath: tc.firstCoef}}
+		at := &Objective{Weights: Metrics{MetricPDeath: weight}, death: tc.at}
+		at.settleDeathAtPick(first, 0)
+		left := at.DeathWarning != "" && at.deathLeft != "" && slices.Contains(at.Warnings, at.DeathWarning)
+		if !near(at.coef[MetricPDeath], tc.coef, 1e-6*math.Abs(tc.coef)) || left != tc.left {
+			t.Errorf("%s: coefficient %g, warning %q; want %g, left out: %v", tc.name, at.coef[MetricPDeath], at.DeathWarning, tc.coef, tc.left)
+		}
+	}
+}
+
+// NewObjective measures against the trimmed seed only where the gear as equipped fails to sim. Gear
+// that sims but moves nothing is an error.
+func TestNewObjectiveFallsBackOnlyOnAFailedSim(t *testing.T) {
+	r := tankRequest(t, &proto.OptimizerMetrics{Tps: 1})
+	r.Equipped.Items[proto.ItemSlot_ItemSlotFinger1].ItemID = testPoolRingID
+	if r.Equipped == r.Seed {
+		t.Fatal("the fixture needs the gear as equipped to differ from the trimmed seed")
+	}
+	for _, tc := range []struct {
+		name string
+		// the gear as equipped fails to sim, or sims flat
+		fails bool
+		err   string
+	}{
+		{"fails to sim", true, ""},
+		{"sims flat", false, "no weighted metric responds to its reference stat at the gear as equipped"},
+	} {
+		known := newKnownEvaluator(func(p Point) (Metrics, error) {
+			if p.Loadout != r.Equipped {
+				return Metrics{MetricTPS: 3000 + p.Offset[stats.AttackPower]}, nil
+			}
+			if tc.fails {
+				return Metrics{}, errors.New("crashed")
+			}
+			return Metrics{MetricTPS: 3000}, nil
+		})
+		known.own = 0
+		o, err := NewObjective(context.Background(), known, r, 200)
+		switch {
+		case tc.err != "":
+			if err == nil || !strings.Contains(err.Error(), tc.err) {
+				t.Errorf("%s: err = %v, want one saying %q", tc.name, err, tc.err)
+			}
+		case err != nil:
+			t.Errorf("%s: %v", tc.name, err)
+		case o.base != r.Seed || len(o.Warnings) != 1 || !strings.Contains(o.Warnings[0], "which failed to sim: ") || strings.Contains(o.Warnings[0], "normalizer sims"):
+			t.Errorf("%s: measured at the seed: %v, warnings %q; want the seed and one warning naming the sim error", tc.name, o.base == r.Seed, o.Warnings)
+		}
+	}
+}
+
+// A run that counts one term and left nothing out has no scale to move: optimize sims what a single
+// search does and returns its result.
+func TestOneTermRunSkipsTheSecondSearch(t *testing.T) {
+	r, err := PrepareRequest(kaRequest(proto.OptimizerEffort_OptimizerEffortQuick))
+	if err != nil {
+		t.Fatal(err)
+	}
+	newFake := func() *fakeEvaluator {
+		return newFakeEvaluator(func(p Point) Metrics {
+			dps, _ := kaMetrics(p)
+			return dps
+		})
+	}
+	single, both := newFake(), newFake()
+	_, want := optimizePass(context.Background(), r, r, single, nil, time.Now(), nil)
+	got := optimize(context.Background(), r, r, both, nil, time.Now())
+	if got.ErrorResult != "" {
+		t.Fatal(got.ErrorResult)
+	}
+	if both.points != single.points || both.calls != single.calls {
+		t.Errorf("optimize simmed %d points in %d calls, a single search %d in %d", both.points, both.calls, single.points, single.calls)
+	}
+	// the fake's own noise depends on goroutine order, so equal-scoring gear may come out in another order
+	if g, w := got.GetBest().GetScore(), want.GetBest().GetScore(); !near(g, w, 1e-6*math.Abs(w)) {
+		t.Errorf("optimize scored %v, a single search %v", g, w)
+	}
+	if len(got.Warnings) != len(want.Warnings) {
+		t.Errorf("optimize warned %q, a single search %q", got.Warnings, want.Warnings)
 	}
 }

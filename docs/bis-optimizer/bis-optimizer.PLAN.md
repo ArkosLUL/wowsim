@@ -3132,3 +3132,71 @@ Code `37677896d`, merged with master's Z17b at `e7aca8432`; presets on that tree
     (`tmp/bis-chain-1022-balance`), merged by hand since the chain refuses two catalog dates (the user's call:
     same items); Felesta P4 now gems 18 Solid Majestic Zircon.
 - **Left:** the Lich King still kills every P4 pick most of the time with the buff; one-hand-only runes ungated.
+
+### BIS-TANK-RESCALE (direct)
+
+Bulwark's P4 tooltip pick (Prot Paladin) gems 13 Bold Cardinal Ruby. Strength is about 90% threat to a paladin
+(2 AP, 0.6 SP by Touched by the Light, 0.5 block value for Shield of Righteousness); the cause is the score's
+scale. `NewObjective` measures every normalizer once, on the gear as equipped. Bulwark's worn gear dies in every
+P4 fight (lowest health −57k), where Armor moves the margin 3.99 a point against 2.20 on the pick: at the pick
+each survival term counts about half (margin 0.088 vs 0.159, TMI 18.8 vs 35.9, DTPS 0.88 vs 1.52) while TPS
+holds (0.64 vs 0.67). Per gem at the pick, run's scale / pick's: Strength +57 / +66, Stamina +63 / +140, Agility
++69 / +123; on the pick's, 13 Bold → Solid gains 696 (18 se). presetgen starts from the page's default gear, so
+later-phase presets share the gap. `optimize` already searches again from the first pick when death chance comes
+back there; this widens that to the whole scale.
+
+**Decided by the user (2026-10-25):** search again only when the pick's scale moves the balance between terms by
+over 15%; the healing pin stays at the worn gear; a direct item on `bis-tank-rescale` (the tank-icc worktree),
+committed and fast-forwarded into `master`; downstream the tank presets, tank stat values and Bulwark's and
+Felesta's tooltip data, asking before the import.
+
+- **Objective at a loadout.** `newObjectiveAt(…, base, label)` under `NewObjective` (equipped, seed fallback);
+  `label` names the gear in warnings. `scaleShift(first, at)`: k = at.coef / first.coef over terms counted in
+  both, death aside; moved when max k / min k > 1 + `scaleShiftMin` (0.15), or a non-death term is counted on
+  one side only.
+- **Death at the pick:** counted where its normalizer clears `deathMinSE` there; else the first objective's
+  coefficient if it had one; else out with today's "stays out" warning.
+- **Second search.** Measure the pick's objective only when the first counts two or more terms or left death
+  out (DPS, HPS and raid runs: no extra sims). Search again from the pick, scored on its objective, when death
+  comes back or the scale moved; one extra search at most. The warning leads with why, naming each term's
+  factor; no move is a trace line. A failed measure or second search keeps the first result with a warning.
+  `optimizePass` takes the objective in place of `deathAt`; drop what that leaves unused.
+- **Tests:** `scaleShift` (×1.8 survival vs ×1.05 TPS moves; uniform ×2 and ×1.1 don't; a one-sided term
+  moves); `optimize` on a fake evaluator with TPS and margin, the margin's Armor response doubled at the worn gear
+  (second search) or equal (none); `TestDeathChanceComesBackAtTheFirstPick` stays green.
+- **Docs:** tank-modeling's two-pass rule, the `Normalizers` comment, the wave-loop Status row.
+- **Downstream:** presetgen, five tank builds, P1 to P5, Normal; then bischain narrowed to them and to Bulwark
+  and Felesta, from `bis-chain-1025-tanks`, after the user's `saveall`.
+
+**Verify:** `./sim/optimizer/...` in the container; no golden moves; a DPS run unchanged; fresh review.
+
+**Not doing:** the healing pin at the pick, a third search, score weights or the death bar.
+
+**Owns:** `sim/optimizer/`, the tank `p*_bis*` presets, `docs/guide/tank-modeling.md`.
+
+#### As built
+
+Uncommitted on `bis-tank-rescale`; `./sim/optimizer/...` passes with `with_db`, no golden moves (the sim suites
+don't run the optimizer).
+
+- **Code:** `newObjectiveAt` under `NewObjective` (its trimmed-seed fallback stays there, labelled "the trimmed
+  seed"); `scaleShift` and `scaleText`; `worthRescaling` (two or more counted terms, or death left out);
+  `settleDeathAtPick`; `optimize` measures the pick's objective, searches again on it, and returns the
+  first result with a warning when that measure or search fails. `optimizePass` takes the objective
+  (`run.pickObj`); `deathAt`, `countDeathAt` and `measureDeath` are gone, the measure tests read `Objective.death`.
+- **Deviations:** a pick equal to the loadout the first objective was measured at skips the measure (nothing
+  could differ). The pick's sims now count in `TotalSims` on the paths that return the first result too
+  (before, only on the second-search path).
+- **Death:** `TestDeathChanceComesBackAtTheFirstPick` passes with its wording unchanged.
+- **Tests:** `TestScaleShift`, `TestScaleMovesAtTheFirstPick` (margin response 4 against 2 per Armor point at
+  the worn gear: second search and warning; equal: neither), `TestOneTermRunSkipsTheSecondSearch` (a DPS run
+  sims the same points and calls as a single search and scores the same).
+- **Review fixes:** a cancel in the second search returned its partial result (the unscored seed after an
+  early cancel); now the first result stands, marked cancelled, as on every cancel path. A failed or
+  cancelled second pass counts in `TotalSims`. A scale-moved second search with death out at both now
+  carries the worn gear's death warning beside "stays out". A kept first death coefficient is capped at the
+  pick's Armor. `NewObjective` falls back to the trimmed seed only on a failed normalizer sim
+  (`normalizerSimsError`), as before the refactor. The scale warning names the first objective's gear
+  (`Objective.label`). Tests: `TestScaleMovesAtTheFirstPick`'s death-out case,
+  `TestCancelInTheSecondSearchKeepsTheFirstResult`, `TestDeathChanceAtThePick`,
+  `TestNewObjectiveFallsBackOnlyOnAFailedSim`; each fails with its fix reverted.

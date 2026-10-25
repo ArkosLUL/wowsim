@@ -147,10 +147,7 @@ func measureIcecrownFight(t *testing.T, tag string, r *Request) {
 		sheet.FinalStats[stats.Parry], sheet.FinalStats[stats.Agility],
 		r.Target().GetHealingModel().GetHps(), r.Target().GetCooldowns().GetHpPercentForDefensives(), obj.Weights, obj.Warnings)
 	t.Logf("%s normalizers per Armor point: %s; coefficients %s", tag, normalizersText(obj.Normalizers), coefficientsText(obj))
-	dm, err := measureDeath(ctx, eval, r, r.Equipped, iterations)
-	if err != nil {
-		t.Fatal(err)
-	}
+	dm := obj.death
 	t.Logf("%s death normalizer: %.4g ± %.2g per Armor point (%.1f se), dies %.4f (%.4f at -%g Armor, %.4f at +%g)", tag,
 		dm.Norm.Mean, dm.Norm.SE, -dm.Norm.Mean/max(dm.Norm.SE, 1e-12), dm.Dies, dm.Down, normalizerOffset(stats.Armor), dm.Up, normalizerOffset(stats.Armor))
 

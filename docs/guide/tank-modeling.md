@@ -91,15 +91,29 @@ fire on cooldown (`major_cooldown.go`). A saved raider keeps what it was saved w
 - Chance of death pairs like the others: core lists each iteration's death (`UnitMetrics.iteration_deaths`,
   under `SaveAllValues`, for a unit that tanks). Where a pick all but never dies (Anub'arak), the death sixth
   is flat and only TMI and the margin price Stamina.
-- **Death chance in two passes** (`optimize`). The normalizer must clear `deathMinSE` (10 se): worn gear
-  that dies 10 to 30% of iterations clears it and prices Stamina sanely, while a gear that nearly always dies
-  reads a few se and lets death chance swamp the score. The coefficient is capped at the Armor the loadout
-  wears (J's points are Armor; a certain death can't cost more than the Armor). Where the worn gear fails the
-  bar, the first search runs without the term and holds its warning back. Then the normalizer is measured at
-  its pick (`measureDeath`, paired, ±2000 Armor): if it clears the bar, a second search warm-starts from the
-  pick with death chance counted at that normalizer (`countDeathAt`), and its result stands, with a warning
-  naming both; if the pick dies in 0 or 100%, or fails the bar, the first result stands with the warning of
-  each. `TotalSims` counts what the passes simmed, not the second one's reads of cached points.
+- **Two passes: the score's scale and death chance** (`optimize`). The normalizers are measured at the worn
+  gear, and gear that dies in every fight moves the survival terms far more per Armor point than the pick
+  does (Bulwark P4: health margin 3.99 against 2.20), which halves their weight against TPS at the pick. A
+  run that counts two or more terms, or left death chance out, measures the objective again at the first
+  pick (`newObjectiveAt`), and a second search warm-starts from the pick scored on that objective when death
+  chance comes back or `scaleShift` moves: the factors between the two objectives' coefficients, death chance
+  aside, differ by over 15% (`scaleShiftMin`), or one counts a term the other doesn't. A uniform change
+  doesn't move it. A run counting one term that kept death chance (DPS, HPS, raid mode) runs once, with no
+  extra sims. The healing pin stays at the worn gear. The second result leads with why, naming each term's
+  factor; a move short of the bar is a trace line. A pick objective or second search that fails keeps the
+  first result, with a warning; a cancel keeps it too, marked cancelled, since an early cancel leaves the
+  second search's best at the seed.
+- Death chance's normalizer must clear `deathMinSE` (10 se): worn gear that dies 10 to 30% of iterations
+  clears it and prices Stamina sanely, while a gear that nearly always dies reads a few se and lets death
+  chance swamp the score. The coefficient is capped at the Armor the loadout wears (J's points are Armor; a
+  certain death can't cost more than the Armor). Where the worn gear fails the bar, the first search runs
+  without the term and holds its warning back. At the pick, death chance is counted at the pick's own
+  normalizer where that clears the bar; else the first objective's coefficient stays if it had one, capped
+  at the pick's Armor; else the term stays out (the pick dies in 0 or 100%, or fails the bar) and the
+  result carries both warnings. `TotalSims` counts what the passes and the pick's measure simmed, a failed
+  or cancelled second pass included, not the second one's reads of cached points.
+- `NewObjective` measures at the trimmed seed only where the worn gear fails to sim; worn gear that sims
+  but moves no weighted metric is an error.
 - Neither ±8000 Armor, 16,000 iterations nor healing at 0.75 to 4 times DTPS moves a worn gear that dies in
   every iteration off 100%, so whether a pick brings the term back is up to the pick.
 - A curve knot that sims NaN or infinite is left out (`MeasureResponse`), stops that bracket's bisection, and
