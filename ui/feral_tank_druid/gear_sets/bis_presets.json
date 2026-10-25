@@ -5,8 +5,8 @@
 		"phase": 1,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "0ddf696d9",
-		"catalogDate": "2026-10-14"
+		"simCommit": "e7aca8432",
+		"catalogDate": "2026-10-25"
 	},
 	"p2_bis": {
 		"name": "P2 Feral Tank",
@@ -14,8 +14,8 @@
 		"phase": 2,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "0ddf696d9",
-		"catalogDate": "2026-10-14"
+		"simCommit": "e7aca8432",
+		"catalogDate": "2026-10-25"
 	},
 	"p3_bis": {
 		"name": "P3 Feral Tank",
@@ -23,8 +23,8 @@
 		"phase": 3,
 		"effort": "Normal",
 		"racialTraits": "RaceNightElf",
-		"simCommit": "0ddf696d9",
-		"catalogDate": "2026-10-14"
+		"simCommit": "e7aca8432",
+		"catalogDate": "2026-10-25"
 	},
 	"p4_bis": {
 		"name": "P4 Feral Tank",
@@ -32,16 +32,16 @@
 		"phase": 4,
 		"effort": "Normal",
 		"racialTraits": "RaceTroll",
-		"simCommit": "0ddf696d9",
-		"catalogDate": "2026-10-14"
+		"simCommit": "e7aca8432",
+		"catalogDate": "2026-10-25"
 	},
 	"p5_bis": {
 		"name": "P5 Feral Tank",
 		"build": "Feral Tank Druid",
 		"phase": 5,
 		"effort": "Normal",
-		"racialTraits": "RaceNightElf",
-		"simCommit": "0ddf696d9",
-		"catalogDate": "2026-10-14"
+		"racialTraits": "RaceTroll",
+		"simCommit": "e7aca8432",
+		"catalogDate": "2026-10-25"
 	}
 }

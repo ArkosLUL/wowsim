@@ -41,7 +41,7 @@ func feralTankRelicRequest(tb testing.TB) *proto.OptimizeGearRequest {
 	player := feralTank(tb, feralTankTalents)
 
 	req := presetOptimizeRequest(tb, "fury_p1")
-	req.Base.Raid = core.SinglePlayerRaidProto(player, core.FullPartyBuffs, core.FullRaidBuffs, core.FullDebuffs)
+	req.Base.Raid = core.SinglePlayerRaidProto(player, core.FullPartyBuffs, tankRaidBuffs(2), core.FullDebuffs)
 	req.Base.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
 	req.Base.Encounter = tankEncounter(tb, 2)
 	player.HealingModel = tankHealing(req.Base.Encounter.Targets[0])

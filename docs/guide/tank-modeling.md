@@ -13,7 +13,7 @@ melee-only `GenericBossTarget` instead, with Patchwerk's numbers.
 | 1 | Kel'Thuzad 25 | Frostbolt 55802 (half land), Frostbolt volley 55807 |
 | 2 | Algalon 25, `dualWield`, `noParryHaste` | Quantum Strike 64592 (Physical), Phase Punch 64412, Black Hole Explosion 65108 |
 | 3 | Anub'arak 25H, `noParryHaste` | Freezing Slash 66012, Penetrating Cold 68510 |
-| 4 | The Lich King 25H, `noParryHaste`, `suppressDodge` | Soul Reaper 73799 with its follow-up, Infest 73781 |
+| 4 | The Lich King 25H, `noParryHaste`, `suppressDodge`, `icecrownBuff` | Soul Reaper 73799 with its follow-up, Infest 73781 |
 | 5 | Halion 25H, `hitChance` 5, `enemyDodgeMultiplier` 0.8 | Flame Breath 74528 |
 
 - The target is `OptimizerTankBossID`, a preset with an AI and no preset encounter. It swings from the boss's own
@@ -24,6 +24,10 @@ melee-only `GenericBossTarget` instead, with Patchwerk's numbers.
 - `hitChance` and `enemyDodgeMultiplier` are Halion's Twilight Precision 78243. The multiplier is
   `Target.enemy_dodge_multiplier`, which core's melee table reads. Core has no hit for an enemy's swing, so the
   AI takes `hitChance` off `PseudoStats.IncreasedMissChance`.
+- `icecrownBuff` is Icecrown's +30% health, damage and healing (ICC.Buff.Horde 73822, ICC.Buff.Alliance 73828: auras
+  133, 79, 136, cast on every player inside). Every tank request sets `raid.buffs.strengthOfWrynn` to it, whatever
+  the page had, so phase 4 has it and the rest don't. The pin (below) sims the buffed fight, and the healing
+  model's heals take ×1.3 on top of it through `HealingTakenMultiplier`.
 - The boss's hit chance and each ability travel as labelled `target_inputs`, an ability starting at its
   "Spell id". The AI reads them by label: a missing one is 0, an unknown one panics.
 - The AI casts an ability at a period rolled between its two. It never dodges, parries or blocks, so only the
@@ -44,9 +48,8 @@ melee-only `GenericBossTarget` instead, with Patchwerk's numbers.
   haste of cast 2's follow-up (a timer at the follow-up delay hastes the boss all the same). A `raidwide`
   ability (Infest, cast on the boss itself) still lands every cast, without restarting a swing. No taunt delay:
   Soul Reaper resets his swing, so a taunt inside the swing time (1.5 s) costs the tank nothing. The bots
-  don't swap, and Algalon (traded at 4 Phase Punch stacks) isn't swapped, nor is Icecrown's 30% buff
-  modelled: the user's calls. The Lich King's script has no Soul Reaper in phase 1 and 40 s into phases 2
-  and 3; the fight casts it from 30.5 s.
+  don't swap, and Algalon (traded at 4 Phase Punch stacks) isn't swapped: the user's calls. The Lich King's
+  script has no Soul Reaper in phase 1 and 40 s into phases 2 and 3; the fight casts it from 30.5 s.
 - A cast with a cast time holds the boss's melee. A cast that fails its land chance is skipped and holds nothing:
   the raid interrupted it or it went to another player.
 - `resetsSwing` restarts the boss's swing as the cast goes off (`Spell::IsAutoActionResetSpell`: untriggered,
@@ -165,6 +168,12 @@ resolves as the page builds a request) and no raid buffs, so that tank only auto
    [acbis driver](../../tools/database/acbis/driver/README.md)'s `--base`, on a Chrome `--port` and `--out`
    of its own.
 3. `MSYS_NO_PATHCONV=1 tools/acore/dock.sh exec env BIS_REQUESTS=/wotlk/tmp/requests [BIS_PICKS=/wotlk/tmp/<batch-stage1.json>] go test -tags with_db -v -run 'TestMeasureTank(Model|Picks|DeathAtPicks|DeathTerm)' ./sim/optimizer/`
+
+`TestMeasureTankIcecrown` needs no capture: it sims the P4 BiS blood and frost presets as worn, without
+Icecrown's buff and with it (the DK page's talents and rotation, presetgen's race and racials, the boss's healing
+cadence, `tankOptimizeRequest`'s raid buffs), and prints death chance, margin, the death normalizer, dJ per stat
+point by term and the gem swaps:
+`tools/acore/dock.sh exec env OPTIMIZER_ICC=1 go test --tags=with_db -count=1 -run TestMeasureTankIcecrown -v ./sim/optimizer/`.
 
 Requests and exports hold the roster: they go under the gitignored `tmp/`, which the container can read,
 and are deleted afterwards, never committed.

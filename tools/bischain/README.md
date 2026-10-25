@@ -51,6 +51,9 @@ Rerun only what a change touches: `--builds` and `--phases` narrow presets, stat
 `weights.json`, `rankings.json` and the live dataset cover everyone: it starts from that run's captures,
 results and merged batch. Without it, stat weights cover the chosen builds alone, the rankings and stat values
 are skipped and `assemble` refuses. The 2026-10-21 run is laid out for it as `bis-chain-1021`.
+`--from-work` must be the run behind what's live: check the base batch against the live dataset's version and
+the base `weights.json` against `stat_values.json`'s `sim_commit`, or the narrowed run reverts what a later run
+changed. `assemble` refuses entries from two catalog dates, even when only the source counts differ.
 Both dataset stages stay at Normal (the user's call, 2026-10-21).
 `--no-write`, `--dataset-effort Quick` and `--rankings-dest` are for test runs.
 

@@ -13,6 +13,7 @@ import {
 	ItemType,
 	MobType,
 	Profession,
+	RaidBuffs,
 	RaidDifficulty,
 	SimDatabase,
 	SimEnchant,
@@ -251,6 +252,9 @@ export interface TankBoss {
 	hitChance?: number;
 	// SPELL_AURA_MOD_ENEMY_DODGE on the boss: the tank's dodge against it times this.
 	enemyDodgeMultiplier?: number;
+	// Icecrown Citadel's +30% health, damage and healing (ICC.Buff.Horde 73822, ICC.Buff.Alliance 73828), which the
+	// server casts on every player inside; raid.buffs.strengthOfWrynn stands in for it.
+	icecrownBuff?: boolean;
 	abilities: Array<TankAbility>;
 }
 
@@ -311,6 +315,7 @@ export const TANK_BOSSES: Record<number, TankBoss> = {
 		difficulty: RaidDifficulty.RaidDifficulty25Heroic,
 		noParryHaste: true,
 		suppressDodge: true,
+		icecrownBuff: true,
 		abilities: [
 			// 50% of his average swing at once, then 70000 five seconds later, when 69410 doubles his melee speed for 5 s.
 			// The tanks swap after each cast; the modelled one holds him first
@@ -749,6 +754,8 @@ export function buildOptimizeRequest(input: PoolBuilderInput): BuiltRequest {
 		// the boss's tankIndex points at raid.tanks[0], so the target has to be there for it to swing
 		// at them at all
 		base.raid!.tanks = [UnitReference.create({ type: UnitReference_Type.Player, index: input.targetRaidIndex })];
+		const buffed = TANK_BOSSES[settings.contentPhase]?.icecrownBuff ?? false;
+		base.raid!.buffs = RaidBuffs.create({ ...base.raid!.buffs, strengthOfWrynn: buffed });
 		target.healingModel = healingModelForBoss(target.healingModel, boss);
 	}
 	if (base.simOptions) {

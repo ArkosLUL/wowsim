@@ -148,6 +148,7 @@ func slowRequest(tb testing.TB, c slowCase, effort proto.OptimizerEffort) *proto
 		RacialMode:   proto.OptimizerRacialMode_OptimizerRacialKeepCurrent,
 	}
 	if c.tank {
+		req.Base.Raid.Buffs = tankRaidBuffs(c.phase)
 		req.Base.Raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
 		req.Base.Encounter = tankEncounter(tb, c.phase)
 		player.HealingModel = tankHealing(req.Base.Encounter.Targets[0])
