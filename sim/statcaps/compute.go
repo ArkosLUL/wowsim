@@ -13,6 +13,7 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
+	"github.com/wowsims/wotlk/sim/priest"
 	goproto "google.golang.org/protobuf/proto"
 )
 
@@ -345,11 +346,37 @@ func (c *computer) spellHaste() capDef {
 		sheetCap: c.bisect(stats.SpellHaste, func(s core.PlayerSheet) bool {
 			return GlobalCooldown(s.CastSpeed) <= HasteCeilingFloor
 		}),
-		note: func(float64) string {
-			return fmt.Sprintf("Your GCD is %.2f s now (cast speed ×%.3f). Past this it stays at 1 s.",
+		note: func(frame float64) string {
+			note := fmt.Sprintf("Your GCD is %.2f s now (cast speed ×%.3f). Past this it stays at 1 s.",
 				GlobalCooldown(c.seed.CastSpeed).Seconds(), c.seed.CastSpeed)
+			return note + c.borrowedTimeNote(frame)
 		},
 	}
+}
+
+// borrowedTimeNote is the cap right after Power Word: Shield for a priest with Borrowed Time, whose
+// buff speeds the next magic-class spell up (sim/priest's usesBorrowedTime). Empty for anyone else.
+func (c *computer) borrowedTimeNote(frame float64) string {
+	hp, ok := c.player.GetSpec().(*proto.Player_HealingPriest)
+	if !ok || hp == nil {
+		return ""
+	}
+	var talents proto.PriestTalents
+	core.FillTalentsProto(talents.ProtoReflect(), c.player.GetTalentsString(), priest.TalentTreeSizes)
+	rank := talents.BorrowedTime
+	if rank == 0 {
+		return ""
+	}
+	speedup := 1 + 0.05*float64(rank)
+	sheetCap, err := BisectCapBonus(c.sheetAt, stats.SpellHaste, func(s core.PlayerSheet) bool {
+		return GlobalCooldown(s.CastSpeed/speedup) <= HasteCeilingFloor
+	})
+	if err != nil {
+		return ""
+	}
+	return fmt.Sprintf(" Right after Power Word: Shield, Borrowed Time adds %.0f%% cast speed and the cap is %.0f."+
+		" Any magic-class spell except Penance and Prayer of Mending uses the buff up.",
+		(speedup-1)*100, max(sheetCap-frame, 0))
 }
 
 func (c *computer) rangedHaste() capDef {

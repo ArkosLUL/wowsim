@@ -50,8 +50,10 @@ Each cap lists its sources in rating and %, zero rows dropped:
 - the remainder, a rating or more: "Talents on your attacks/spells" (Shadow Focus, Weapon Mastery), "Stances and
   talents" for ArP.
 
-Haste ceilings carry only a note: the cast speed and the GCD or Steady Shot time. Defense lists race, talent
-and buff rows only, since crit reductions aren't rating.
+Haste ceilings carry only a note: the cast speed and the GCD or Steady Shot time. A priest with Borrowed Time
+also gets the cap right after Power Word: Shield, bisected with the buff's cast speed (+5% a point)
+([caster-mechanics](caster-mechanics.md#priest)). Defense lists race, talent and buff rows only, since crit
+reductions aren't rating.
 
 `/statCaps` (`StatCapsRequest` → `StatCapsResult`, `statcaps.ComputeRequest`) is synchronous and caps the raid's
 first player. Caps bisect in parallel goroutines; a spec takes milliseconds.
