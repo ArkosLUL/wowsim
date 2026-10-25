@@ -16,6 +16,7 @@ import {
 
 import * as HealingPriestInputs from './inputs.js';
 import * as Presets from './presets.js';
+import { defaultIncomingDamage } from '../core/constants/healer_dummies.js';
 
 const SPEC_CONFIG = registerSpecConfig(Spec.SpecHealingPriest, {
 	cssClass: 'healing-priest-sim-ui',
@@ -51,6 +52,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHealingPriest, {
 	],
 
 	defaults: {
+		incomingDamage: (player, phase) => defaultIncomingDamage(Presets.INCOMING_DAMAGE_DEFAULTS, player.getTalentTree() == 0 ? 'disc' : 'holy', phase),
 		// Default equipped gear.
 		gear: Presets.DISC_P1_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.

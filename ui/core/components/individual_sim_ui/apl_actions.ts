@@ -10,6 +10,7 @@ import {
 	APLActionChannelSpell,
 	APLActionMultidot,
 	APLActionMultishield,
+	APLActionMultihot,
 	APLActionAutocastOtherCooldowns,
 
 	APLActionWait,
@@ -382,6 +383,29 @@ const actionKindFactories: {[f in NonNullable<APLActionKind>]: ActionKindConfig<
 			AplValues.valueFieldConfig('maxOverlap', {
 				label: 'Overlap',
 				labelTooltip: 'Maximum amount of time before a Shield expires when it may be refreshed.',
+			}),
+		],
+	}),
+	['multihot']: inputBuilder({
+		label: 'Multi Hot',
+		submenu: ['Casting'],
+		shortDescription: 'Casts a heal over time on the most hurt ally that is missing health and lacks it.',
+		includeIf: (player: Player<any>, isPrepull: boolean) => !isPrepull && isHealingSpec(player.spec),
+		newValue: () => APLActionMultihot.create({
+			maxOverlap: {
+				value: {
+					oneofKind: 'const',
+					const: {
+						val: '0ms',
+					},
+				},
+			},
+		}),
+		fields: [
+			AplHelpers.actionIdFieldConfig('spellId', 'dot_spells', ''),
+			AplValues.valueFieldConfig('maxOverlap', {
+				label: 'Overlap',
+				labelTooltip: 'Maximum amount of time before the hot expires when it may be refreshed.',
 			}),
 		],
 	}),

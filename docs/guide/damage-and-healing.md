@@ -62,6 +62,27 @@ rounding, caps and crit damage. Everything else the server does differently is i
 
 ## Healing
 
+- **Effective healing** (`sim/core/healer_raid.go`): a healer request with `Raid.IncomingDamagePerSecond` > 0
+  gives its target dummies health bars and damage; at 0 they keep none and every heal counts in full, and the
+  default APLs, which wait on missing health, cast nothing.
+  - Dummy 1 is the tank (40000 health at phase 1, +5000 a phase), the rest the raid (20000, +2500;
+    `DummyHealthForPhase`, `dummyHealthForPhase` in `ui/core/constants/healer_dummies.ts`). The request carries
+    both (`DummyTankHealth`, `DummyRaidHealth`; 0 is phase 1's).
+  - The damage is spell `OtherActionIncomingDamage` from the first target, unmitigated and unabsorbed, so a
+    dummy sees a hit taken. Half hits the tank every 2 s, the other half four random raid dummies every 4 s. A
+    dummy stops at 1 health.
+  - A heal counts up to the dummy's missing health, the rest is overheal (`SpellMetrics.TotalOverheal`). Unit and
+    raid `hps` are the healing that landed plus shielding in full; `raw_hps`, `overheal` and `unhealed_dps` (damage
+    dealt less healing that landed) are their own metrics, set only with incoming damage. DPS sims never see them.
+  - A page's default damage is its `incoming_damage.json` (variant `default`, a priest's tree `disc` or `holy`;
+    phases 1 to 5): the page request's HPS at that phase's preset when the damage is high enough that nothing
+    overheals, with the page's own APL (`HEAL_MEASURE=1 go test -run TestMeasureDefaultIncomingDamage` in each
+    healer package). `HEAL_REPORT=1 go test -v -run TestMeasureReport` prints per phase the effective and raw HPS,
+    overheal, unhealed damage, time to OOM and the "Measure at my gear" slopes (`HEAL_DAMAGE` and `HEAL_SEED`
+    override the damage and seed).
+  - APL: `MostHurt` (lowest health percent in the raid, a tie to the first in raid order; the target when there
+    is no damage) and `Tank` unit references, the `missingHealth` value, and `multihot`, which casts a hot on the
+    most hurt unit missing health that lacks the caster's.
 - **Whole heals:** a heal is whole after the caster's multiplier, the target's and the crit, one dealt outside
   a spell through `GainHealing`.
 - A heal's target search skips a unit at 0 health (`SpellInfo::CheckTarget`): Chain Heal's jumps
@@ -77,6 +98,8 @@ rounding, caps and crit damage. Everything else the server does differently is i
     in raid order.
   - Prayer of Mending's jump (`prayerOfMendingJump`; `Acore::MostHPMissingGroupInRange`) takes the unit missing
     the most whole health, not the holder, a tie to the first in raid order.
+  - Effects waiting on a hit taken (Prayer of Mending, Sacred Shield, Earth Shield, Living Seed) see the dummies' hits when the raid has
+    incoming damage (`Raid.HasIncomingDamage`), and use a `core.HitTakenStandIn` timer only without it.
   - Glyph of Healing Wave's 55533 is base points `int32(heal × 20%)` and crits on the shaman's own chance. Class
     mask 0 and no coefficient: no spell power or spell mod; `SPELL_ATTR6_IGNORE_HEALTH_MODIFIERS`: no healing
     done percent (`SpellPctHealingModsDone` returns 1; `SpellFlagIgnoreAttackerModifiers`).

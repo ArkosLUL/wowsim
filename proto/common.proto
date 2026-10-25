@@ -1000,6 +1000,10 @@ message UnitReference {
 		CurrentTarget = 5;
 		AllPlayers = 6;
 		AllTargets = 7;
+		// The friendly unit with the lowest health percent, a tie to the first in raid order.
+		MostHurt = 8;
+		// Dummy 1 of a healer sim.
+		Tank = 9;
 	}
 
 	// The type of unit being referenced.
@@ -1032,6 +1036,7 @@ enum OtherAction {
 	OtherActionUnholyRuneGain  = 15; // Indicates healing received from healing model.
 	OtherActionDeathRuneGain  = 16; // Indicates healing received from healing model.
 	OtherActionPotion = 17; // Used by APL to generically refer to either the prepull or combat potion.
+	OtherActionIncomingDamage = 18; // The raid damage a healer sim deals its target dummies.
 }
 
 message ActionID {

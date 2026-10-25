@@ -23,6 +23,15 @@
 	.results-sim-hps .topline-result-avg:after {
 		content: " HPS";
 	}
+	.results-sim-raw-hps .topline-result-avg:after {
+		content: " raw HPS";
+	}
+	.results-sim-overheal .topline-result-avg:after {
+		content: "% overheal";
+	}
+	.results-sim-unhealed-dps .topline-result-avg:after {
+		content: " unhealed DPS";
+	}
 	.results-sim-tps .topline-result-avg:after {
 		content: " TPS";
 	}

@@ -35,6 +35,10 @@ var HealerStatsToWeigh = []proto.Stat{
 	proto.Stat_StatSpellHaste,
 }
 
+// HealerSuiteIncomingDamage is the incoming damage per second a healer suite's single target dummy takes: the
+// tank half alone, 6000 a second on 40000 health.
+const HealerSuiteIncomingDamage = 12000
+
 func IsHealerSpec(spec proto.Spec) bool {
 	switch spec {
 	case proto.Spec_SpecHolyPaladin, proto.Spec_SpecRestorationDruid, proto.Spec_SpecRestorationShaman,
@@ -76,7 +80,7 @@ func (testSuite *IndividualTestSuite) TestStatWeights(testName string, swr *prot
 
 	healer := IsHealerSpec(PlayerProtoToSpec(swr.Player))
 	// a healer heals a target dummy, like an IsHealer suite's other rows, not itself
-	result := calcStatWeight(swr, TernaryInt32(healer, 1, 0), stats.Stat(swr.EpReferenceStat), nil).ToProto()
+	result := calcStatWeight(swr, TernaryInt32(healer, 1, 0), TernaryFloat64(healer, HealerSuiteIncomingDamage, 0), stats.Stat(swr.EpReferenceStat), nil).ToProto()
 	values := result.Dps
 	if healer {
 		values = result.Hps

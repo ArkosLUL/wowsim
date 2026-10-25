@@ -135,6 +135,9 @@ type Raid struct {
 
 	// each source's cast of Replenishment, by source
 	replenishmentCasts []*CastThreat
+
+	// nil unless the request has incoming damage
+	incoming *incomingDamage
 }
 
 func (raid *Raid) GetActiveUnits() []*Unit {
@@ -171,10 +174,19 @@ func NewRaid(raidConfig *proto.Raid, server *ServerSettings) *Raid {
 	}
 
 	numDummies := min(24, int(raidConfig.TargetDummies))
+	if numDummies > 0 && raidConfig.IncomingDamagePerSecond > 0 {
+		raid.incoming = newIncomingDamage(raidConfig)
+	}
 	for i := 0; i < numDummies; i++ {
 		party, partyIndex := raid.GetFirstEmptyRaidIndex()
-		dummy := NewTargetDummy(i, party, partyIndex)
+		dummy := NewTargetDummy(i, party, partyIndex, raid.incoming.dummyHealth(i))
+		dummy.takesDamage = raid.incoming != nil
 		party.Players = append(party.Players, dummy)
+		if raid.incoming != nil {
+			// a dummy without damage keeps no health, as before health bars
+			dummy.AddStats(dummy.baseStats)
+			raid.incoming.add(i, dummy)
+		}
 	}
 
 	return raid
@@ -293,7 +305,11 @@ func (raid *Raid) applyCharacterEffects(raidConfig *proto.Raid) *proto.RaidStats
 		for _, player := range party.Players {
 			char := player.GetCharacter()
 			// by slot: party.Players skips the party's empty slots
-			_, isDummy := player.(*TargetDummy)
+			dummy, isDummy := player.(*TargetDummy)
+			if isDummy && dummy.takesDamage {
+				char.EnableHealthBar()
+				char.countsOverheal = true
+			}
 			// the page pads every party to 5 slots, so a dummy can sit in a slot that has a (blank) config
 			if isDummy || char.PartyIndex >= len(partyConfig.Players) {
 				continue
@@ -369,6 +385,7 @@ func (raid *Raid) reset(sim *Simulation) {
 	}
 	raid.dpsMetrics.reset()
 	raid.hpsMetrics.reset()
+	raid.incoming.reset(sim)
 }
 
 func (raid *Raid) doneIteration(sim *Simulation) {

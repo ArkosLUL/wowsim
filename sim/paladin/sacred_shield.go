@@ -7,10 +7,12 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 )
 
-// sacredShieldState is the unit wearing the paladin's Sacred Shield and the hits standing in for its damage taken.
+// sacredShieldState is the unit wearing the paladin's Sacred Shield, when its next absorb may go on, and the hits
+// standing in for its damage taken when the raid has none.
 type sacredShieldState struct {
-	target  *core.Unit
-	standIn *core.HitTakenStandIn
+	target      *core.Unit
+	cooldownEnd time.Duration
+	standIn     *core.HitTakenStandIn
 	// T8's 4 piece, read at registration: HasSetBonus can't be called once the sim is built
 	setCooldown bool
 }
@@ -58,9 +60,9 @@ func (paladin *Paladin) sacredShieldFlashCrit(target *core.Unit) float64 {
 	return 50 * core.CritRatingPerCritChance
 }
 
-// registerSacredShieldSpell is 53601, one target at a time (SPELL_ATTR5_LIMIT_N). Nothing damages the sim's raid,
-// so its target counts as hit all the time: 58597's absorb goes on with the aura, then once a cooldown, a fresh
-// aura starting the cooldown over and a refresh keeping it.
+// registerSacredShieldSpell is 53601, one target at a time (SPELL_ATTR5_LIMIT_N). 58597's absorb goes on with the
+// aura, then on a hit taken once a cooldown, a fresh aura starting the cooldown over and a refresh keeping it.
+// A raid with no incoming damage counts its target as hit all the time instead.
 func (paladin *Paladin) registerSacredShieldSpell() {
 	actionID := core.ActionID{SpellID: 53601}
 	state := &paladin.sacredShield
@@ -105,7 +107,18 @@ func (paladin *Paladin) registerSacredShieldSpell() {
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
 				state.target = aura.Unit
 				hit(sim)
-				state.standIn.Start(sim)
+				if paladin.Env.Raid.HasIncomingDamage() {
+					state.cooldownEnd = sim.CurrentTime + cooldown
+				} else {
+					state.standIn.Start(sim)
+				}
+			},
+			OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+				if result.Damage <= 0 || sim.CurrentTime < state.cooldownEnd || !paladin.Env.Raid.HasIncomingDamage() {
+					return
+				}
+				state.cooldownEnd = sim.CurrentTime + cooldown
+				hit(sim)
 			},
 			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 				if state.target == aura.Unit {

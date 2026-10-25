@@ -105,6 +105,8 @@ func (rot *APLRotation) newAPLValue(config *proto.APLValue) APLValue {
 		return rot.newValueCurrentHealth(config.GetCurrentHealth())
 	case *proto.APLValue_CurrentHealthPercent:
 		return rot.newValueCurrentHealthPercent(config.GetCurrentHealthPercent())
+	case *proto.APLValue_MissingHealth:
+		return rot.newValueMissingHealth(config.GetMissingHealth())
 	case *proto.APLValue_CurrentMana:
 		return rot.newValueCurrentMana(config.GetCurrentMana())
 	case *proto.APLValue_CurrentManaPercent:
@@ -225,7 +227,7 @@ func aplValueIsPure(value APLValue) bool {
 		*APLValueCurrentTime, *APLValueCurrentTimePercent, *APLValueRemainingTime, *APLValueRemainingTimePercent,
 		*APLValueNumberTargets, *APLValueIsExecutePhase,
 		*APLValueBossSpellIsCasting, *APLValueBossSpellTimeToReady,
-		*APLValueCurrentHealth, *APLValueCurrentHealthPercent, *APLValueCurrentMana, *APLValueCurrentManaPercent,
+		*APLValueCurrentHealth, *APLValueCurrentHealthPercent, *APLValueMissingHealth, *APLValueCurrentMana, *APLValueCurrentManaPercent,
 		*APLValueCurrentRage, *APLValueCurrentEnergy, *APLValueCurrentComboPoints, *APLValueCurrentRunicPower,
 		*APLValueCurrentRuneCount, *APLValueCurrentNonDeathRuneCount, *APLValueCurrentRuneActive, *APLValueCurrentRuneDeath,
 		*APLValueRuneCooldown, *APLValueNextRuneCooldown, *APLValueRuneSlotCooldown, *APLValueRuneGrace, *APLValueRuneSlotGrace,

@@ -188,6 +188,7 @@ func (combos *SettingsCombos) GetTest(testIdx int) (string, *proto.ComputeStatsR
 	}
 	if combos.IsHealer {
 		rsr.Raid.TargetDummies = 1
+		rsr.Raid.IncomingDamagePerSecond = HealerSuiteIncomingDamage
 	}
 
 	return strings.Join(testNameParts, "-"), nil, nil, rsr
@@ -397,6 +398,7 @@ func (generator *ItemsTestGenerator) GetTest(testIdx int) (string, *proto.Comput
 	}
 	if generator.IsHealer {
 		rsr.Raid.TargetDummies = 1
+		rsr.Raid.IncomingDamagePerSecond = HealerSuiteIncomingDamage
 	}
 
 	return label, nil, nil, rsr
@@ -559,6 +561,7 @@ func FullCharacterTestSuiteGenerator(config CharacterSuiteConfig) TestGenerator 
 	}
 	if config.IsHealer {
 		defaultRaid.TargetDummies = 1
+		defaultRaid.IncomingDamagePerSecond = HealerSuiteIncomingDamage
 	}
 
 	generator := &CombinedTestGenerator{

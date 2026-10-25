@@ -120,6 +120,8 @@ func (action *APLAction) GetAllSpells() []*Spell {
 			spells = append(spells, impl.spell)
 		} else if impl, ok := a.impl.(*APLActionMultishield); ok {
 			spells = append(spells, impl.spell)
+		} else if impl, ok := a.impl.(*APLActionMultihot); ok {
+			spells = append(spells, impl.spell)
 		}
 	}
 	return spells
@@ -219,6 +221,8 @@ func (rot *APLRotation) newAPLActionImpl(config *proto.APLAction) APLActionImpl 
 		return rot.newActionMultidot(config.GetMultidot())
 	case *proto.APLAction_Multishield:
 		return rot.newActionMultishield(config.GetMultishield())
+	case *proto.APLAction_Multihot:
+		return rot.newActionMultihot(config.GetMultihot())
 	case *proto.APLAction_AutocastOtherCooldowns:
 		return rot.newActionAutocastOtherCooldowns(config.GetAutocastOtherCooldowns())
 

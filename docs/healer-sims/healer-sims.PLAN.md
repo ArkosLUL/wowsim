@@ -809,3 +809,101 @@ Cross-review (wave HL3, uncommitted; numbers on the merged tree, after HEAL-CORE
   additions, `sim/statslopes`' healer role, the four healer pages' `ui/` APLs, defaults and raid buffs, the classes'
   stand-in code, the healer suites and their tests, the healer numbers and rules in the guides
   (caster-mechanics, class-mechanics, damage-and-healing, stat-caps' healer values).
+
+#### As built
+
+Stage 1, core (uncommitted). Rules: [damage and healing](../guide/damage-and-healing.md#healing).
+- Request: `Raid.incoming_damage_per_second`, `dummy_tank_health`, `dummy_raid_health`. Damage 0 keeps the old
+  behaviour (dummies without health bars, every heal in full), so only requests with damage move.
+- `sim/core/healer_raid.go`: the damage (spell `OtherActionIncomingDamage` on the first target, hits taken),
+  `DummyHealthForPhase`. Metrics: `raw_hps`, `overheal`, `unhealed_dps` on `UnitMetrics` and `overheal` on
+  `TargetedActionMetrics`; `hps` is the healing that landed plus shielding.
+- APL: `UnitReference` `MostHurt` and `Tank`, `missingHealth`, `multihot`; each has a test
+  (`sim/shaman/restoration/effective_healing_test.go`). In the editor under healer specs.
+- Page: "Incoming Damage" beside "Num Allies"; the default follows the phase (and a priest's tree) until set, Restore
+  Defaults resets it, a link carries a set value. Results add raw HPS, overheal % and unhealed DPS. Wrath of Air on
+  by default on the Resto Druid and Holy Paladin pages and in their page-request tests.
+- Defaults (`ui/<page>/incoming_damage.json`, today's APLs, 300 s, 3000 iterations, seed 424242, damage 1e6 so
+  nothing overheals; HPS rounded to 100), phases 1 to 5: shaman 9300 9500 12100 20800 20600; druid 8600 11900 13000
+  20200 19200; paladin 12300 17700 21200 29600 29600; disc 6200 7000 8100 10500 11200; holy priest 5400 6200 7100
+  10900 10600. With them the page requests heal about 4000 to 5000 less than their raw HPS, because the rotations
+  still aim at dummy 1.
+- Healer suites: `core.HealerSuiteIncomingDamage` (12000) on their one dummy; `statslopes` needs no change (it
+  reads `hps`). Healer goldens (HPS, TPS from health gained): shaman Average -4.7%, druid -22.5%, paladin -7.1%,
+  Disc -2.3%, Holy priest -1.9%: the dummy takes 6000 a second, so the druid's and paladin's higher raw HPS
+  overheals. The shaman's Earthliving hot heals more (Blessing of the Eternal, a dummy under 35%).
+- Stand-ins (`HitTakenStandIn`, Chain Heal's `standInDeficit`) are untouched: the later stages replace them.
+
+Stage 2, priest-paladin (uncommitted).
+- Stand-ins: Prayer of Mending (`autoProc`) and Sacred Shield proc on the holder's hit taken (damage above 0) when
+  `Raid.HasIncomingDamage`; Sacred Shield's absorb waits out its cooldown from the last one. Without damage they
+  keep the 5 s timer and `HitTakenStandIn`. Beacon of Light needed no change: it copies the heal before taken terms.
+- APLs (`ui/healing_priest/apls`, `ui/holy_paladin/apls`): tank upkeep (Prayer of Mending, Disc's Power Word:
+  Shield, the paladin's Beacon and Sacred Shield) and heals on the most hurt unit sized by missing health, waiting
+  when nobody is hurt. Thresholds are in [caster-mechanics](../guide/caster-mechanics.md#priest) and
+  [class-mechanics](../guide/class-mechanics.md). Each rule has a test (`effective_healing_test.go` in
+  `sim/priest/healing` and `sim/paladin/holy`).
+- Page requests at the defaults measured with the old APLs (effective HPS, damage left unhealed, time to OOM), P1 to
+  P5: Disc 5666 / 6392 / 7600 / 9993 / 10767 effective, OOM 157 / 162 / 197 / 371 / 328 s; Holy priest 4866 / 5663 /
+  6553 / 9779 / 9786, OOM 136 / 123 / 110 / 192 / 155 s; paladin 9980 / 15394 / 18231 / 24305 / 24620, OOM 157 /
+  187 / 206 / 306 / 230 s. Overheal is 7% at most except the holy priest's 20 to 26% (Renew on units missing little).
+  The defaults are re-measured in the measure stage.
+- Healer goldens against HEAD (Average-Default hps / tps): Disc 6418 -> 5289 (-17.6%) / -8.6%; Holy priest 4484 ->
+  3609 (-19.5%) / +16.4%; paladin 11894 -> 6014 (-49.4%). The suite's one dummy takes 6000 a second, which bounds
+  effective HPS, and the APLs wait when it isn't hurt. The Holy priest's TPS rises because direct heals (0.45 to 0.5
+  threat a health point) replace Renew's (0.3). Stat weights (Int, Spirit, SP, MP5, crit, haste): paladin 8.56 -0.10
+  2.14 6.80 2.45 -1.25 -> 2.72 0 0.79 2.46 0.86 -0.50; Disc 3.10 0 1.17 0 1.02 -0.30 -> 2.81 0 0.81 0 0.77 -0.44;
+  Holy priest 1.80 1.34 1.04 2.27 0.28 -0.22 -> 1.17 0.80 0.65 2.00 0.26 +0.04. Shaman and druid goldens are as stage 1 left them.
+- Playwright: the effective, raw HPS and overheal % run test now covers all four healer pages.
+
+Stage 3, druid-shaman (uncommitted).
+- Stand-ins: Earth Shield's charges (`shaman.earthShieldHit`) and Living Seed's bloom take the target's hit taken
+  (damage above 0) when `Raid.HasIncomingDamage`; the 3.5 s cooldown stays. Without damage they keep their
+  `HitTakenStandIn`. Chain Heal, Ancestral Awakening and Wild Growth already read the dummies' health, so they needed
+  no code. Each has a test on dummies with damage (`dummy_hits_test.go`, `effective_healing_test.go`).
+- APLs: the tank gets Earth Shield (shaman) and Lifebloom (druid); heals go to the most hurt unit by its missing
+  health, waiting when nobody is hurt. Thresholds are in [caster-mechanics](../guide/caster-mechanics.md), each
+  tested against the real APL file. Healing Touch on Clearcasting sits ahead of Regrowth (else it never fired).
+  The golden suites' Talents rows set the suite's incoming damage (a request without it idles these APLs).
+- Page requests at the stage 1 defaults, P1 / P3 / P5 (effective HPS, raw HPS, overheal, damage left unhealed a
+  second, time to OOM): shaman 8276 / 10610 / 19581, raw 8944 / 11788 / 19931, overheal 7.5 / 10.0 / 1.8%, unhealed
+  999 / 2004 / 3821, OOM 251 / 216 / 239 s; druid 7685 / 12240 / 16546, raw 9612 / 14542 / 18074, overheal 20.0 /
+  15.8 / 8.5%, unhealed 987 / 774 / 3391, OOM 176 / 320 / 247 s. The defaults are re-measured in the measure stage.
+- Healer goldens against HEAD (Average-Default hps / tps): shaman 4340 -> 4482 (+3.3%) / +4.7%, Rotation-Default
+  -10.3%, Short FullBuffs -14.9%; druid 7631 -> 5971 (-21.8%) / -23.0%. The suite's tank dummy takes 6000 a second.
+  The druid casts Regrowth 7 -> 48 times and Nourish 72 -> 20; the shaman adds Lesser Healing Wave and casts 11%
+  fewer Chain Heals. Stat weights (Int, Spirit, SP, MP5, crit, haste): shaman 1.78 0.11 1.05 2.60 0.78 -0.18 ->
+  1.72 0.10 1.01 3.01 0.93 +0.25; druid 3.19 2.02 1.77 4.25 0.59 -0.24 -> 1.83 1.52 1.06 2.92 0.02 -0.24.
+
+Stage 4, measure (uncommitted). The numbers are in the guides ([druid and shaman and priest](../guide/caster-mechanics.md),
+[paladin](../guide/class-mechanics.md)); `HEAL_REPORT=1 go test -v -run TestMeasureReport` in each healer package
+reprints them (page request, 300 s, 3000 iterations, seed 424242; `statslopes.Measure` at the same request).
+- Defaults re-measured with the new APLs (`HEAL_MEASURE=1`, damage 1e6), phases 1 to 5, and kept where they moved
+  5% or less: shaman 9353 9338 12026 18878 18160 (kept 9300 9500 12100; P4 and P5 now 18900 18200); druid 9580 13359
+  15178 19060 18614 (now 9600 13400 15200 19100, P5 kept 19200); paladin 11022 15548 18259 24169 25186 (now 11000 15500
+  18300 24200 25200); Disc 6015 6782 7960 10385 11158 (all kept); Holy priest 6518 7546 8493 12667 12726 (now 6500 7500
+  8500 12700 12700). Preraid uses phase 1's.
+- Effective HPS (damage a second), preraid / P1 / P2 / P3 / P4 / P5:
+  shaman 6367 / 8260 / 7572 / 10635 / 19927 / 17743; druid 6296 / 8149 / 11946 / 13105 / 16926 / 16572;
+  paladin 8212 / 9482 / 14752 / 17721 / 23980 / 24108; Disc 4865 / 5679 / 6402 / 7606 / 10007 / 10781;
+  Holy priest 4463 / 5186 / 6089 / 7069 / 10442 / 10435. Overheal is 1.4 to 15.7% of raw (Holy priest 15.5 to 18.8%,
+  druid 6.5 to 13.7%, shaman 1.4 to 14.1%, paladin 1.7 to 9.3%, Disc 1.7 to 4.5%). Damage left unhealed: 1.0k to
+  3.4k a second for shaman and druid, 1.8k to 5.1k paladin, 1.5k to 2.4k Disc, 1.4k to 2.4k Holy priest.
+- Out of mana inside 300 s: shaman at every phase (OOM 177 to 288 s), druid at preraid to P2 (110 to 284 s; P3 314,
+  P4 339 s, P5 247 s), paladin at every phase except P4 (305 s), Holy priest at every phase, Disc at preraid to P3
+  but not P4 (372 s) and P5 (329 s).
+- Stat order against the class guides (not tuned to fit):
+  - Resto Druid crit low: matches (0.08 to 0.47 against Int 0.17 to 3.03 and SP 1.05 to 1.81). The heals cap at the
+    missing health, so a crit's extra lands as overheal.
+  - Resto Shaman haste over crit: differs. Haste is negative at every phase (-0.56 to -2.04), crit +1.9 to +6.4.
+    The shaman runs dry at every phase, so haste only spends mana sooner, and crit feeds Improved Water Shield and
+    Ancestral Awakening. Spirit is about 0 (0.00 to 0.10): matches.
+  - Resto Shaman spell power is 0.07 at P1 and 0.6 to 0.8 at P2, P3 and P5, against 2.48 at P1 with damage 1e6: the
+    damage, not the heal size, limits the HPS, and a bigger heal lands on a unit already near full.
+  - Disc haste turns positive only once the fight ends before the mana does (P4, P5); Holy priest haste is about 0
+    (idle between hurt units); the paladin's is -0.96 to +0.24.
+- Tooling: `measure_report_test.go` in the four healer packages (HEAL_REPORT, HEAL_DAMAGE, HEAL_SEED).
+- Goldens (not promoted): the four healer suites, five `.results` files, as the earlier stages reported; no DPS or
+  tank golden moves.
+- Playwright (smoke, header, default_fight, caps/, healer_incoming_damage) passes on :3336. The dist build does not track
+  `incoming_damage.json`: after editing one, touch the page's `presets.ts` before `make dist/wotlk/.dirstamp`.

@@ -74,7 +74,9 @@ How to verify a change. Run every command in the toolchain container ([dev-envir
   - A healer spec's `StatWeights` row holds HPS weights (Int, Spirit, SP, MP5, crit, haste); DPS weights
     would be all zero. A healer suite without `StatsToWeigh` gets those six, SP as reference, from
     `FullCharacterTestSuiteGenerator`. `StatWeightsRequest` has no target dummies field, so `TestStatWeights`
-    adds one for a healer (`calcStatWeight`), as `IsHealer` does for the other rows.
+    adds one for a healer (`calcStatWeight`), as `IsHealer` does for the other rows, each taking
+    `core.HealerSuiteIncomingDamage` a second, so a healer row's HPS is the healing that landed. The page-request
+    tests take their damage and dummy health from the page (`core.SetPageIncomingDamage`).
 - `Average` tests also store `ability_results`: one entry per `<unit>|action|<id>` and `<unit>|aura|<id>`,
   `<unit>` being `player`, `pet:<name>` or `target<i>` (target auras only).
   - Fields, per iteration and summed over targets: `casts`, `hits`, `crit_pct`, `amount_per_hit`, `amount`

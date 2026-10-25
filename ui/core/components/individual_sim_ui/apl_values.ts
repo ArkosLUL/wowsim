@@ -27,6 +27,7 @@ import {
 	APLValueIsExecutePhase_ExecutePhaseThreshold as ExecutePhaseThreshold,
 	APLValueCurrentHealth,
 	APLValueCurrentHealthPercent,
+	APLValueMissingHealth,
 	APLValueCurrentMana,
 	APLValueCurrentManaPercent,
 	APLValueCurrentRage,
@@ -593,6 +594,15 @@ const valueKindFactories: {[f in NonNullable<APLValueKind>]: ValueKindConfig<APL
 		submenu: ['Resources'],
 		shortDescription: 'Amount of currently available Health, as a percentage.',
 		newValue: APLValueCurrentHealthPercent.create,
+		fields: [
+			AplHelpers.unitFieldConfig('sourceUnit', 'aura_sources'),
+		],
+	}),
+	'missingHealth': inputBuilder({
+		label: 'Missing Health',
+		submenu: ['Resources'],
+		shortDescription: 'Amount of Health the unit is short of its maximum.',
+		newValue: APLValueMissingHealth.create,
 		fields: [
 			AplHelpers.unitFieldConfig('sourceUnit', 'aura_sources'),
 		],

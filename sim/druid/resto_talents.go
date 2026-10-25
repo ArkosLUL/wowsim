@@ -7,8 +7,8 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 )
 
-// livingSeedHitsPerMinute stands in for the hits a seeded unit takes: a boss swing every 2 s, as the shaman page's
-// Earth Shield rate.
+// livingSeedHitsPerMinute stands in for the hits a seeded unit takes when the raid has no incoming damage: a boss
+// swing every 2 s, as the shaman page's Earth Shield rate.
 const livingSeedHitsPerMinute = 30
 
 // registerLivingSeed is spell_dru_living_seed: a crit of Healing Touch, Regrowth's heal, Nourish or Swiftmend has
@@ -51,7 +51,15 @@ func (druid *Druid) registerLivingSeed() {
 			ActionID: core.ActionID{SpellID: 48504},
 			Duration: time.Second * 15,
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
-				hits.Start(sim)
+				if !druid.Env.Raid.HasIncomingDamage() {
+					hits.Start(sim)
+				}
+			},
+			OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
+				if result.Damage > 0 && druid.Env.Raid.HasIncomingDamage() {
+					druid.LivingSeedHeal.Cast(sim, unit)
+					aura.Deactivate(sim)
+				}
 			},
 			OnExpire: func(aura *core.Aura, sim *core.Simulation) {
 				hits.Stop(sim)

@@ -64,6 +64,7 @@ func pageRequest(tree, phase string) *proto.RaidSimRequest {
 	}
 	rsr.Raid.NumActiveParties = 5
 	rsr.Raid.TargetDummies = 9
+	core.SetPageIncomingDamage(rsr.Raid, "../../../ui/healing_priest", tree, core.PagePhase(phase))
 	return rsr
 }
 
@@ -80,7 +81,7 @@ func TestPageRequestHealsAndRunsShortOfManaAtP1(t *testing.T) {
 			t.Fatal(result.ErrorResult)
 		}
 		unit := result.RaidMetrics.Parties[0].Players[0]
-		if unit.Hps.Avg < 5000 {
+		if unit.Hps.Avg < 4000 {
 			t.Errorf("%s: HPS %.0f, want the dummies healed", tree, unit.Hps.Avg)
 		}
 		if unit.Tto.Avg >= fight {

@@ -6,6 +6,7 @@ import {
 	UnitReference_Type as UnitType,
 } from './proto/common.js';
 import { Raid as RaidProto } from './proto/api.js';
+import { dummyHealthForPhase } from './constants/healer_dummies.js';
 
 import { Party, MAX_PARTY_SIZE } from './party.js';
 import { Player } from './player.js';
@@ -21,6 +22,9 @@ export class Raid {
 	private debuffs: Debuffs = Debuffs.create();
 	private tanks: Array<UnitReference> = [];
 	private targetDummies: number = 0;
+	// What the user set, or null for the page's default at its phase.
+	private incomingDamage: number | null = null;
+	private incomingDamageDefault: (() => number) | null = null;
 	private numActiveParties: number = 5;
 
 	// Emits when a raid member is added/removed/moved.
@@ -30,6 +34,7 @@ export class Raid {
 	readonly debuffsChangeEmitter = new TypedEvent<void>();
 	readonly tanksChangeEmitter = new TypedEvent<void>();
 	readonly targetDummiesChangeEmitter = new TypedEvent<void>();
+	readonly incomingDamageChangeEmitter = new TypedEvent<void>();
 	readonly numActivePartiesChangeEmitter = new TypedEvent<void>();
 
 	// Emits when anything in the raid changes.
@@ -57,6 +62,7 @@ export class Raid {
 			this.debuffsChangeEmitter,
 			this.tanksChangeEmitter,
 			this.targetDummiesChangeEmitter,
+			this.incomingDamageChangeEmitter,
 		], 'RaidChange');
 	}
 
@@ -178,6 +184,28 @@ export class Raid {
 		this.targetDummiesChangeEmitter.emit(eventID);
 	}
 
+	// Damage per second the target dummies take: the user's, else the page's default at its phase.
+	getIncomingDamage(): number {
+		return this.incomingDamage ?? this.incomingDamageDefault?.() ?? 0;
+	}
+
+	// The user's setting, null while the page's default applies.
+	getCustomIncomingDamage(): number | null {
+		return this.incomingDamage;
+	}
+
+	setIncomingDamage(eventID: EventID, newIncomingDamage: number | null) {
+		if (this.incomingDamage == newIncomingDamage)
+			return;
+
+		this.incomingDamage = newIncomingDamage;
+		this.incomingDamageChangeEmitter.emit(eventID);
+	}
+
+	setIncomingDamageDefault(getDefault: () => number) {
+		this.incomingDamageDefault = getDefault;
+	}
+
 	getNumActiveParties(): number {
 		return this.numActiveParties;
 	}
@@ -197,7 +225,12 @@ export class Raid {
 	}
 
 	toProto(forExport?: boolean, forSimming?: boolean): RaidProto {
+		const hasDamage = this.getTargetDummies() > 0;
+		const health = dummyHealthForPhase(this.sim.getPhase());
 		return RaidProto.create({
+			incomingDamagePerSecond: hasDamage ? this.getIncomingDamage() : 0,
+			dummyTankHealth: hasDamage ? health.tank : 0,
+			dummyRaidHealth: hasDamage ? health.raid : 0,
 			parties: this.parties.map(party => party.toProto(forExport, forSimming)),
 			buffs: this.getBuffs(),
 			debuffs: this.getDebuffs(),

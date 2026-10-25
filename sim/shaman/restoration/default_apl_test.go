@@ -73,6 +73,7 @@ func pageRequest(phase string) *proto.RaidSimRequest {
 	}
 	rsr.Raid.NumActiveParties = 5
 	rsr.Raid.TargetDummies = 9
+	core.SetPageIncomingDamage(rsr.Raid, "../../../ui/restoration_shaman", "default", core.PagePhase(phase))
 	return rsr
 }
 

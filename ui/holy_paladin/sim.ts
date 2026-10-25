@@ -22,6 +22,7 @@ import * as OtherInputs from '../core/components/other_inputs.js';
 
 import * as HolyPaladinInputs from './inputs.js';
 import * as Presets from './presets.js';
+import { defaultIncomingDamage } from '../core/constants/healer_dummies.js';
 
 const SPEC_CONFIG = registerSpecConfig(Spec.SpecHolyPaladin, {
 	cssClass: 'holy-paladin-sim-ui',
@@ -54,6 +55,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHolyPaladin, {
 		Stat.StatMP5,
 	],
 	defaults: {
+		incomingDamage: (_player, phase) => defaultIncomingDamage(Presets.INCOMING_DAMAGE_DEFAULTS, 'default', phase),
 		// Default equipped gear.
 		gear: Presets.P1_PRESET.gear,
 		// Default EP weights for sorting gear in the gear picker.
@@ -78,6 +80,7 @@ const SPEC_CONFIG = registerSpecConfig(Spec.SpecHolyPaladin, {
 			giftOfTheWild: TristateEffect.TristateEffectImproved,
 			moonkinAura: TristateEffect.TristateEffectImproved,
 			sanctifiedRetribution: true,
+			wrathOfAirTotem: true,
 		}),
 		partyBuffs: PartyBuffs.create({
 		}),

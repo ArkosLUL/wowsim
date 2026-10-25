@@ -3,6 +3,7 @@ import { APLValueRuneSlot, APLValueRuneType } from '../../proto/apl.js';
 import { ActionID, OtherAction, UnitReference, UnitReference_Type as UnitType } from '../../proto/common.js';
 import { FeralDruid_Rotation_AplType } from '../../proto/druid.js';
 import { ActionId, defaultTargetIcon, getPetIconFromName } from '../../proto_utils/action_id.js';
+import { isHealingSpec } from '../../proto_utils/utils.js';
 import { EventID, TypedEvent } from '../../typed_event.js';
 import { bucket } from '../../utils.js';
 import { BooleanPicker } from '../boolean_picker.js';
@@ -280,6 +281,11 @@ export class APLActionIDPicker extends DropdownPicker<Player<any>, ActionID, Act
 
 export type UNIT_SET = 'aura_sources' | 'aura_sources_targets_first' | 'targets';
 
+// A healer can aim at the most hurt ally or the tank, which are dummies in its sim.
+function healerUnits(player: Player<any>): Array<UnitReference> {
+	return isHealingSpec(player.spec) ? [UnitReference.create({ type: UnitType.MostHurt }), UnitReference.create({ type: UnitType.Tank })] : [];
+}
+
 const unitSets: Record<
 	UNIT_SET,
 	{
@@ -368,6 +374,18 @@ export class APLUnitPicker extends UnitPicker<Player<any>> {
 				iconUrl: 'fa-bullseye',
 				text: 'Current Target',
 			};
+		} else if (ref.type == UnitType.MostHurt) {
+			return {
+				value: ref,
+				iconUrl: 'fa-heart-crack',
+				text: 'Most Hurt Ally',
+			};
+		} else if (ref.type == UnitType.Tank) {
+			return {
+				value: ref,
+				iconUrl: 'fa-shield',
+				text: 'Tank',
+			};
 		} else if (ref.type == UnitType.Player) {
 			const player = thisPlayer.sim.raid.getPlayer(ref.index);
 			if (player) {
@@ -413,7 +431,7 @@ export class APLUnitPicker extends UnitPicker<Player<any>> {
 
 	private updateValues() {
 		const unitSet = unitSets[this.unitSet];
-		const values = unitSet.getUnits(this.modObject);
+		const values = [...unitSet.getUnits(this.modObject), ...healerUnits(this.modObject)];
 
 		this.setOptions(
 			values.map(v => {
