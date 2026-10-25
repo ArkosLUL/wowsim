@@ -463,15 +463,15 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-LastWord-50179"
  value: {
-  dps: 2273.1805
-  tps: 7077.2716
+  dps: 2324.20067
+  tps: 7187.43353
  }
 }
 dps_results: {
  key: "TestBloodTank-AllItems-LastWord-50708"
  value: {
-  dps: 2297.13
-  tps: 7138.81378
+  dps: 2348.02367
+  tps: 7248.50813
  }
 }
 dps_results: {
@@ -652,8 +652,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-Shadowmourne-49623"
  value: {
-  dps: 2779.78733
-  tps: 8457.93114
+  dps: 2819.74133
+  tps: 8616.19694
  }
 }
 dps_results: {
@@ -827,8 +827,8 @@ dps_results: {
 dps_results: {
  key: "TestBloodTank-AllItems-TheTwinBladesofAzzinoth"
  value: {
-  dps: 1982.64433
-  tps: 6308.91474
+  dps: 1977.132
+  tps: 6360.06884
  }
 }
 dps_results: {

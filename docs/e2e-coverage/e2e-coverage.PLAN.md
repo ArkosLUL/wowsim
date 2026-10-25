@@ -5773,7 +5773,7 @@ and 48111 stay uncompared rightly: a triggered aura's cost or dispel resist, or 
 doubles a death knight's off-hand fixed bonus itself (`ecTools5Base` gone); `strikeProbe` takes the off hand from
 `SPELL_ATTR3_REQUIRES_OFF_HAND_WEAPON`.
 
-### EC-UPSTREAM2 (Z17b; changes goldens, full suite; stages: code, live)
+### EC-UPSTREAM2 (Z17b, done; changes goldens, full suite; stages: code, live)
 
 - The live server moved from [ac] `62fb09c68` to `ea83cc94b` (upstream merge `e2829262b`, image rebuilt 2026-10-24
   13:18 UTC); check its DB import ran (`acore_world.updates` lists `2026_10_22_01`). Every committed record,
@@ -5803,6 +5803,99 @@ doubles a death knight's off-hand fixed bonus itself (`ecTools5Base` gone); `str
 - **Owns:** `sim/core/attack.go` and `constants.go`'s swing rules, Meteorite Crystal, `applyBorrowedTime`, the
   hunter's trap procs, the regenerated serverdata and spelldump, the re-recorded logs, the server rev in
   `docs/wave-loop/wave-loop.PLAN.md`'s Current wave.
+
+#### As built
+
+Stage capture, on `e25e40799` against the live server at [ac] `ea83cc94b` (`updates` lists `2026_10_22_01`); notes in
+`tmp/ec-upstream2-capture.md`.
+- Spelldump (recaptured; judged by the procs stage). One full pass (families 3,4,5,6,7,8,9,10,11,15,17 plus
+  `spellids -all`'s 5066 ids, over the committed capture) left nothing missing but 26545 and 53258. Still 10856
+  spells; 5 lines moved:
+  - Borrowed Time 59888 to 59891 chain from 59887 (`2026_10_15_03`): `firstRankId` 59887, ranks 2 to 5, and their
+    proc entry is `spell_proc` -59887's (family 0, masks 0, type 0, phase cast 0x1) instead of a rowless aura's
+    (family 6, masks 0x1800 and 0x4, type 0x7, phase hit 0x2).
+  - Meteoric Inspiration 64999 (`2026_10_22_01`, 460265c2e): type 3 to 0, phase 0x2 to 0x4 (finish), attributes
+    `REQ_MANA_COST` 0x4 to `TRIGGERED_CAN_PROC` 0x2, script `spell_item_meteoric_inspiration`.
+  - The same six ids as before keep their committed lines: 11350, 11351, 50689, 65861, 67485, 69734.
+- gen_serverdata: no DB disagreement. One row moved: `procs_auto_gen.go` 59891 now `Row: -59887, SpellPhaseMask:
+  0x1`, no family, masks or type. 59887 to 59890 and 64999 aren't in the generated set (the sim names 52800, item
+  46051 and buff 65000).
+
+Stage swing (offline; notes, white swing counts and the stagger-only run in `tmp/ec-upstream2-swing.md`):
+- 0e58ee439 (independent swing timers): fixed. No 200 ms push either way (`attackDisplayDelay` gone); the off
+  hand sits out an update the main hand swung on (`AutoAttacks.mhSwungAt`, extra attacks not counted), for players
+  and creatures alike (`sim/core/attack.go`). `Unit::Attack`'s stagger runs on a new attack only, ready off hand
+  or not: the pull and `EnableAutoSwing` (out of stealth) stagger, `SwitchAutoSwingBack` doesn't; the optimizer
+  tank boss's taunt back uses it. Tests failing on the old rule: `TestOffHandSitsOutTheMainHandsUpdate`,
+  `TestBossOffHandSitsOutTheMainHandsUpdate`, `TestRestartStaggersTheOffHandOnANewAttackOnly`, the "off hand not
+  ready" case of `TestOffHandStartsHalfAMainHandSwingBehind`, `TestCastHoldsSwingsUntilItLands`.
+- Tank sims' bosses: `GenericBossTarget` and `DefaultTargetProto` are single-handed, so no tank suite moves on
+  the creature path. Algalon, Patchwerk 10 and a `dualWield` optimizer boss take the new rule.
+- Goldens (one full run; 25 of 37 unchanged): TestAssassination +3.948%, TestCombat +3.284%, TestSubtlety +1.598%
+  (different-speed hands lost up to 200 ms a collision), TestFury -1.290% (Shattering Throw's cast end restarts both
+  equal 3.4 s hands, which now stay a world tick apart, so both crits share a 400 ms munching step and Deep Wounds
+  per hit falls 8.4%), TestEnhancement +0.096%, TestUnholy +0.095%, TestFrostUH +0.057%, TestFrost +0.002%
+  Average-Default. Those four have equal 2.6 s hands lined up (Enhancement's Auto sync, the DKs' Army of the Dead
+  channel releasing both); the off hand now trails by a tick, not 200 ms: off-hand whites +0.26% to +0.63%, main hand
+  flat. TestArms, TestBlood, TestBloodTank and
+  TestProtectionWarrior move only in AllItems rows the harness makes dual-wield (largest +2.24%). The stagger alone
+  moves only the rogues: Average-Default Assassination +0.002%, Subtlety -0.077%, Combat 0.
+- TestFightReplays, every tools/simval replay and `simval.jsonl` pass on the committed logs and records: nothing
+  dropped. The live stage re-records the dual-wield logs under the new timers.
+
+Stage procs (offline; notes in `tmp/ec-upstream2-procs.md`, verdicts per commit and SQL file, goldens and live plan in
+`tmp/ec-upstream2-audit.md`):
+- Capture moves judged: Borrowed Time's chained ranks and 59891's new row (`2026_10_15_03`) and 64999's row and
+  script (`2026_10_22_01`) are the two fixes below; nothing reads 59891's row.
+- Meteorite Crystal (460265c2e): fixed. `meteoricInspiration` (`sim/common/wotlk/stat_bonus_stacking.go`, via a new
+  `StackingStatBonusCD.Stacking` hook) stacks at the finish phase of a `SpellFlagAPL` cast that costs mana (server
+  data; Call of the Elements' totems included), plus one per Beacon of Light copy its heal made; of a mana channel's
+  `SPELL_ATTR3_NOT_A_PROC` tick spell (`meteoricTicks` from serverdata: Arcane Missiles' 42845); and of each Penance
+  bolt, heal or damage. A cast kept out of `OnCastComplete` (Icy Veins, Tree of Life, Avenging Wrath, the feral
+  forms) stacks through its effects when it has a cost of its own, so the trap weave adds none beside its Explosive
+  Trap. A missile stacks at its landing. Tests: `meteorite_crystal_test.go`, all six failing on the old rule.
+  Residual: Penance's own stack comes at the press, up to a world tick before 53007's `SpellEvent`.
+- Borrowed Time: fixed. `usesBorrowedTime` (`sim/priest/talents.go`): any `SpellFlagAPL` magic-class spell uses the
+  buff, instants too, Inner Focus included; Penance and Prayer of Mending have damage class none. The charge goes
+  before the spell's effects, so a magic channel (Hymn of Hope, Mind Flay) gets no haste from it.
+  `TestBorrowedTimeGoesWithTheNextMagicSpell`.
+- Trap casts: a64665927 already matches: of the finish-phase procs a trap now reaches, Lock and Load (its trap branch
+  needs a frost trap, its periodic one a tick), Entrapment (mask misses Explosive Trap) and Meteoric Inspiration (49065
+  costs no mana) don't fire; a party rogue's Honor Among Thieves rolls on the explosion's crit (the sim's party crits
+  are `HonorOfThievesCritRate`). add9cadc2 fixed: a trap whose first update comes before the pull arms at once
+  (`sim/hunter/explosive_trap.go`, `TestExplosiveTrapArmsAtOnceOutOfCombat`); targeting has no geometry to model.
+- 458851463, e8b5aadf3, 8746c9fb1 and the other ten commits: out of the sim's scope. SQL: `2026_10_15_01` and
+  `2026_10_19_00` out of scope; no SQL file names a dummy.
+- Goldens (one full run; every `.results.tmp` but TestDisc's matches the swing stage's): Borrowed Time moves TestDisc
+  Average-Default +0.013% (rows -0.109% to +0.107%): Hymn of Hope, magic class, now uses the buff. Meteorite Crystal
+  and the trap: none. 24 of 37 unchanged.
+- Follow-ups (pre-existing): Lock and Load's periodic chance is 2/4/20% in the sim, 2/4/6% on the server (moves
+  TestSV); 65000's stacks have no duration on the server, so they outlast the 20 s use.
+
+Stage live (2026-10-24, ~25 min of server time, loaded host; notes in `tmp/ec-upstream2-live.md`):
+- Re-recorded the eight dual-wield fights (`TestSimvalFight`, two runs): DeathknightFrost, DeathknightFrostUH,
+  DeathknightUnholy, the three rogues, ShamanEnhancement, WarriorFury. RogueCombat ran twice: mod-chronicle uploaded and
+  deleted its first log mid-wait. The trims replace the committed logs (fights README dates line); no swing record
+  needed re-recording. No orphans.
+- Every replay passes on the new logs, nothing dropped, no sim fix needed. Fury's Deep Wounds tick mean: log 488.3, sim
+  434.6 (z 0.77). The fight cycle has no hardcast, so it can't show the hand lock behind TestFury's move (Shattering
+  Throw's cast end restarts both hands); no live record covers it.
+- Goldens: none from this stage; every `.results.tmp` matches the procs stage's run (24 of 37 unchanged).
+- Follow-up (pre-existing, passing): the DK logs' melee counts sit at or one past the sim's top on old and new logs.
+
+Cross-review (2026-10-25; report `.wave-loop\z17b-run1\xreview.md`):
+- Swing rules hold against [ac]; `TestExtraAttackGoesBetweenTheAurasAndTheMelee` now also pins that an extra attack
+  doesn't make the off hand sit out.
+- Borrowed Time's charge, Meteorite's no-`OnCastComplete` casts and the trap's first-update arming fixed as above.
+  Golden: TestDisc AllItems Greatness hps -0.000% (Hymn of Hope unhasted); nothing else moves.
+- Follow-ups (pre-existing): the Patchwerk 10 preset dual-wields but 16028 has no off hand (no
+  `USE_OFFHAND_ATTACK`, no equipment); parry haste never takes the off hand (`Unit::DealMeleeDamage` does when its
+  timer is shorter); a stunned player's swing still lands (the server resets the timer and deals nothing);
+  Enhancement's sync options move the off hand in a way no server action can; an item use whose spell is magic
+  class takes Borrowed Time on the server, not in the sim; Explosive Trap's cast-phase item procs fire at the lay
+  in the sim, at the explosion (49065) on the server, which may also go a map update later; Lock and Load rank 1
+  always procs on the server (no check on its third effect); `TestSimvalFight` falls back to the biggest log when
+  mod-chronicle deletes one; `StopMeleeUntil`'s `desyncOH` is never true.
 
 ### EC-CORE-FIX13 (Z18; changes goldens, full suite; stages: code)
 

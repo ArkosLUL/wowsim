@@ -313,7 +313,7 @@ func (ai *optimizerTankBossAI) handOff(sim *core.Simulation) {
 // Its haste starts all the same, on the swings the modelled tank now takes.
 func (ai *optimizerTankBossAI) takeBack(sim *core.Simulation, s *optimizerTankSpell) {
 	ai.away = false
-	ai.target.AutoAttacks.EnableAutoSwing(sim)
+	ai.target.AutoAttacks.SwitchAutoSwingBack(sim)
 	if s.ResetsSwing {
 		ai.target.AutoAttacks.StopMeleeUntil(sim, sim.CurrentTime, false)
 	}

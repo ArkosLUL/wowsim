@@ -375,7 +375,22 @@ func TestHasteRescalesTheSwingTimerNotTheTick(t *testing.T) {
 	}
 }
 
-func TestOtherHandPushedBackBySwing(t *testing.T) {
+// setSwingTimersAt sets both hands' timers at when, past the pull's off-hand stagger, and forgets the
+// swings before.
+func setSwingTimersAt(sim *Simulation, when time.Duration, aa *AutoAttacks, mh, oh time.Duration, swings ...*[]time.Duration) {
+	at(sim, when, func(sim *Simulation) {
+		aa.mh.setTimer(sim, mh)
+		aa.oh.setTimer(sim, oh)
+		sim.rescheduleWeaponAttack(min(aa.mh.swingAt, aa.oh.swingAt))
+		for _, s := range swings {
+			*s = (*s)[:0]
+		}
+	})
+}
+
+// Player::Update: the off hand sits out an update the main hand swung on and goes on the next one. An
+// off-hand swing never moves the main hand.
+func TestOffHandSitsOutTheMainHandsUpdate(t *testing.T) {
 	for _, tc := range []struct {
 		name         string
 		mh, oh       time.Duration
@@ -383,25 +398,60 @@ func TestOtherHandPushedBackBySwing(t *testing.T) {
 		wantMH       []time.Duration
 		wantOH       []time.Duration
 	}{
-		{"off hand due 100ms later", ms(1000), ms(1100), false, []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1200), ms(3200)}},
-		{"same moment", ms(1000), ms(1000), false, []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1200), ms(3200)}},
-		{"same moment, off hand first in the list", ms(1000), ms(1000), true, []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1200), ms(3200)}},
-		{"off hand first pushes the main hand", ms(1100), ms(1000), false, []time.Duration{ms(1200), ms(3200)}, []time.Duration{ms(1000), ms(3000)}},
-		{"far enough apart", ms(1000), ms(1500), false, []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1500), ms(3500)}},
+		{"off hand due an update later", ms(1000), ms(1100), false, []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1100), ms(3100)}},
+		{"same update", ms(1000), ms(1000), false, []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1100), ms(3100)}},
+		{"same update, off hand first in the list", ms(1000), ms(1000), true, []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1100), ms(3100)}},
+		{"off hand first leaves the main hand alone", ms(1100), ms(1000), false, []time.Duration{ms(1100), ms(3100)}, []time.Duration{ms(1000), ms(3000)}},
+		{"far apart", ms(1000), ms(1500), false, []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1500), ms(3500)}},
 	} {
-		sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+		sim, a := newTimingTestSim(t, 100, func(a *timingTestAgent) {
 			a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2), OffHand: testWeapon(2), AutoSwingMelee: true})
 		})
+		sim.serverTickPhase, sim.worldTickPhase = 0, 0
 		aa := &a.AutoAttacks
 		mhSwings, ohSwings := recordCasts(aa.MHAuto()), recordCasts(aa.OHAuto())
-		aa.mh.setTimer(sim, tc.mh)
-		aa.oh.setTimer(sim, tc.oh)
 		sim.PrePull()
+		setSwingTimersAt(sim, ms(500), aa, tc.mh, tc.oh, mhSwings, ohSwings)
 		if tc.reverseOrder {
 			at(sim, ms(500), func(sim *Simulation) {
 				slices.Reverse(sim.weaponAttacks)
 			})
 		}
+		runUntil(sim, ms(3900))
+
+		if !slices.Equal(*mhSwings, tc.wantMH) || !slices.Equal(*ohSwings, tc.wantOH) {
+			t.Errorf("%s: main hand %v, off hand %v; want %v, %v", tc.name, *mhSwings, *ohSwings, tc.wantMH, tc.wantOH)
+		}
+	}
+}
+
+// UnitAI::DoMeleeAttackIfReady has the same rule for a dual-wielding boss, on its map updates.
+func TestBossOffHandSitsOutTheMainHandsUpdate(t *testing.T) {
+	for _, tc := range []struct {
+		name           string
+		mh, oh         time.Duration
+		wantMH, wantOH []time.Duration
+	}{
+		{"same update", ms(1000), ms(1000), []time.Duration{ms(1000), ms(3000)}, []time.Duration{ms(1100), ms(3100)}},
+		{"off hand first leaves the main hand alone", ms(1100), ms(1000), []time.Duration{ms(1100), ms(3100)}, []time.Duration{ms(1000), ms(3000)}},
+	} {
+		sim := NewSim(newTargetAITestRaidSimRequest(
+			&proto.Target{Level: CharacterLevel + 3, SwingSpeed: 2, MinBaseDamage: 1, DualWield: true},
+			&proto.ServerSettings{
+				MapUpdateIntervalMs:   googleProto.Int32(100),
+				WorldUpdateIntervalMs: googleProto.Int32(10),
+				WorldLoopMs:           googleProto.Float64(0),
+				MapUpdateJitterMs:     googleProto.Float64(0),
+			}))
+		sim.reset()
+		sim.serverTickPhase, sim.worldTickPhase = 0, 0
+		aa := &sim.Encounter.TargetUnits[0].AutoAttacks
+		if !aa.IsDualWielding {
+			t.Fatal("the boss has no off hand")
+		}
+		mhSwings, ohSwings := recordCasts(aa.MHAuto()), recordCasts(aa.OHAuto())
+		sim.PrePull()
+		setSwingTimersAt(sim, ms(500), aa, tc.mh, tc.oh, mhSwings, ohSwings)
 		runUntil(sim, ms(3900))
 
 		if !slices.Equal(*mhSwings, tc.wantMH) || !slices.Equal(*ohSwings, tc.wantOH) {
@@ -489,8 +539,8 @@ func TestAutoShotRestartBringsAMeleeSwingForward(t *testing.T) {
 	}
 }
 
-// Unit::Attack: an off hand that's ready at the pull waits half the main hand's hasted attack time,
-// with no random draw.
+// Unit::Attack: at the pull the off hand waits at least half the main hand's hasted attack time behind
+// it, ready or not, with no random draw.
 func TestOffHandStartsHalfAMainHandSwingBehind(t *testing.T) {
 	for _, tc := range []struct {
 		name           string
@@ -501,10 +551,10 @@ func TestOffHandStartsHalfAMainHandSwingBehind(t *testing.T) {
 		{"hasted before the pull", func(a *timingTestAgent, _ *Spell) func(*Simulation) {
 			return func(sim *Simulation) { a.MultiplyMeleeSpeed(sim, 1.25) }
 		}, 0, ms(1000)},
-		// a swing reset before the pull leaves the off hand with a timer of its own
+		// a swing reset before the pull leaves the off hand not ready, 500 ms to go
 		{"off hand not ready", func(a *timingTestAgent, reset *Spell) func(*Simulation) {
 			return func(sim *Simulation) { reset.Cast(sim, a.CurrentTarget) }
-		}, ms(1500), ms(500)},
+		}, ms(1500), ms(2750)},
 	} {
 		var reset *Spell
 		sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
@@ -518,10 +568,46 @@ func TestOffHandStartsHalfAMainHandSwingBehind(t *testing.T) {
 			sim.prepullActions = []PrepullAction{{DoAt: -time.Second, Action: tc.prepull(a, reset)}}
 		}
 		sim.PrePull()
-		runUntil(sim, ms(1700))
+		runUntil(sim, ms(2900))
 
 		if len(*mhSwings) == 0 || len(*ohSwings) == 0 || (*mhSwings)[0] != tc.wantMH || (*ohSwings)[0] != tc.wantOH {
 			t.Errorf("%s: main hand %v, off hand %v; want the first at %v and %v", tc.name, *mhSwings, *ohSwings, tc.wantMH, tc.wantOH)
+		}
+	}
+}
+
+// Unit::Attack staggers the off hand on a new attack only: auto attacks back on out of stealth
+// stagger it ready or not, a boss taunted back to its tank switches targets and doesn't. After the pull
+// the main hand is due at 2.5 s, the off hand at 1.25 s and, once that swing went, at 2.75 s. The restart
+// is at 2 s.
+func TestRestartStaggersTheOffHandOnANewAttackOnly(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		cancelAt time.Duration
+		restart  func(*AutoAttacks, *Simulation)
+		want     time.Duration
+	}{
+		{"new attack, off hand not ready", ms(1300), (*AutoAttacks).EnableAutoSwing, ms(3750)},
+		{"new attack, off hand ready", ms(1000), (*AutoAttacks).EnableAutoSwing, ms(3750)},
+		{"target switch, off hand ready", ms(1000), (*AutoAttacks).SwitchAutoSwingBack, ms(2000)},
+		{"target switch, off hand not ready", ms(1300), (*AutoAttacks).SwitchAutoSwingBack, ms(2750)},
+	} {
+		sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+			a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2.5), OffHand: testWeapon(1.5), AutoSwingMelee: true})
+		})
+		aa := &a.AutoAttacks
+		ohSwings := recordCasts(aa.OHAuto())
+		recordCasts(aa.MHAuto())
+		sim.PrePull()
+		at(sim, tc.cancelAt, aa.CancelAutoSwing)
+		at(sim, ms(2000), func(sim *Simulation) {
+			*ohSwings = (*ohSwings)[:0]
+			tc.restart(aa, sim)
+		})
+		runUntil(sim, ms(3900))
+
+		if len(*ohSwings) == 0 || (*ohSwings)[0] != tc.want {
+			t.Errorf("%s: off hand swings %v after the restart, want the first at %v", tc.name, *ohSwings, tc.want)
 		}
 	}
 }

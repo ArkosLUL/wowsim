@@ -367,20 +367,21 @@ func noGCDCast(tag int32, castTime time.Duration) SpellConfig {
 // the cast to land, then goes, main hand first.
 func TestCastHoldsSwingsUntilItLands(t *testing.T) {
 	var spell *Spell
-	sim, a := newTimingTestSim(t, 0, func(a *timingTestAgent) {
+	sim, a := newTimingTestSim(t, 100, func(a *timingTestAgent) {
 		a.EnableAutoAttacks(a, AutoAttackOptions{MainHand: testWeapon(2), OffHand: testWeapon(2), AutoSwingMelee: true})
 		spell = a.RegisterSpell(castConfig(testSpellNoServerData, time.Second))
 	})
+	sim.serverTickPhase, sim.worldTickPhase = 0, 0
 	aa := &a.AutoAttacks
 	events := logEffects(map[string]*Spell{"mh": aa.MHAuto(), "oh": aa.OHAuto(), "cast": spell})
 	aa.mh.setTimer(sim, ms(1000))
-	aa.oh.setTimer(sim, ms(1100))
 	sim.PrePull()
+	setSwingTimersAt(sim, ms(100), aa, ms(1000), ms(1100))
 	at(sim, ms(500), func(sim *Simulation) { spell.Cast(sim, a.CurrentTarget) })
 	runUntil(sim, ms(3900))
 
-	// the off hand, held too, gets the usual 200 ms push from the main hand's swing
-	want := []string{"cast 1.5s", "mh 1.5s", "oh 1.7s", "mh 3.5s", "oh 3.7s"}
+	// the off hand, held too, sits out the update the main hand swung on
+	want := []string{"cast 1.5s", "mh 1.5s", "oh 1.6s", "mh 3.5s", "oh 3.6s"}
 	if !slices.Equal(*events, want) {
 		t.Errorf("got %v, want %v", *events, want)
 	}
@@ -397,8 +398,8 @@ func TestHeldSwingGoesBeforeTheNextCast(t *testing.T) {
 	aa := &a.AutoAttacks
 	events := logEffects(map[string]*Spell{"mh": aa.MHAuto(), "oh": aa.OHAuto(), "first": first, "second": second})
 	aa.mh.setTimer(sim, ms(1000))
-	aa.oh.setTimer(sim, ms(1100))
 	sim.PrePull()
+	setSwingTimersAt(sim, ms(100), aa, ms(1000), ms(1100))
 	at(sim, ms(500), func(sim *Simulation) {
 		first.Cast(sim, a.CurrentTarget)
 		// queued after the first cast's own action, so it goes once that one has landed
@@ -410,7 +411,7 @@ func TestHeldSwingGoesBeforeTheNextCast(t *testing.T) {
 	})
 	runUntil(sim, ms(3900))
 
-	// the off hand's push to 1.7 s lands inside the second cast, so that one holds it
+	// the off hand sits out the main hand's update, inside the second cast, so that one holds it
 	want := []string{"first 1.5s", "mh 1.5s", "second 2.5s", "oh 2.5s", "mh 3.5s"}
 	if !slices.Equal(*events, want) {
 		t.Errorf("got %v, want %v", *events, want)

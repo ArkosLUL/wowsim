@@ -45,19 +45,20 @@ Rules, held by `TestFightCycles`:
 cut by `simval fight -trim`. Kept: the header and zone lines, the player's and its minions' unit lines, what they
 did from the fight's start to its end to themselves or the dummy but a spell's plain `HIT` target result, a heal, a
 summon, a cast other than the bot's or a death but theirs or the dummy's, and before the start only their auras going on
-and off (what was up at the pull, Sniper Training included). The 32 were fought against the worldserver build of 16:52 (rev 3d89793c7), on
-2026-10-05; DruidFeralTank again on 2026-10-06, wearing its gear set's five enchants; DeathknightFrost, MageFrost and
-RogueSubtlety again on 2026-10-06 against the worldserver build of 19:37 (rev 3d89793c7 plus the module's working
-tree); HunterMM again on 2026-10-10 against the worldserver image of 2026-10-09 (rev 3d89793c7, module 408f7b5),
-Hunter's Mark pulled and the dummy at 19%; MageArcane and WarlockDemonology again on 2026-10-10 against that day's
-worldserver image (rev 3d89793c7, mod-spell-tweaks 9bf5c75: its mage and warlock tweaks); DeathknightBlood and
+and off (what was up at the pull, Sniper Training included). The 32 were fought against the worldserver build of 16:52
+(rev 3d89793c7), on 2026-10-05; DruidFeralTank again on 2026-10-06, wearing its gear set's five enchants; MageFrost
+again on 2026-10-06 against the worldserver build of 19:37 (rev 3d89793c7 plus the module's working tree); HunterMM
+again on 2026-10-10 against the worldserver image of 2026-10-09 (rev 3d89793c7, module 408f7b5), Hunter's Mark
+pulled and the dummy at 19%; MageArcane and WarlockDemonology again on 2026-10-10 against that day's worldserver image
+(rev 3d89793c7, mod-spell-tweaks 9bf5c75: its mage and warlock tweaks); DeathknightBlood and
 WarriorProtectionWarrior again on 2026-10-11 against that day's image (module 8a6f13f), and DruidBalance on
 2026-10-12 against the same image with module bc1d35e's working tree `fight_test.go`, from the hub's outer floor with
 Starfall cast first: 109 KB. DruidBalancePhase3 the same way on 2026-10-13, with the critters near the floor killed
-first; DruidBalance re-trimmed on 2026-10-14, losing two critters' deaths. DeathknightFrost and DeathknightFrostUH again on
-2026-10-18 against that day's image (rev 62fb09c68, module 86f62a3). DruidFeralApl, HunterMM, HunterSV,
-PaladinRetribution, RogueCombat, ShamanEnhancement and WarriorArms again on 2026-10-22 against the image of 2026-10-21
-with mod-spell-tweaks b957aa5 (spec-balance's SQL).
+first; DruidBalance re-trimmed on 2026-10-14, losing two critters' deaths. DruidFeralApl, HunterMM, HunterSV,
+PaladinRetribution and WarriorArms again on 2026-10-22 against the image of 2026-10-21 with mod-spell-tweaks b957aa5
+(spec-balance's SQL). The eight dual-wield setups (DeathknightFrost, DeathknightFrostUH, DeathknightUnholy, the three
+rogues, ShamanEnhancement, WarriorFury) again on 2026-10-24 against that day's image (rev ea83cc94b, module 9807c45,
+mod-spell-tweaks 8d49040).
 
 ## Left out
 

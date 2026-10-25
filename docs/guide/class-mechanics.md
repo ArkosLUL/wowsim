@@ -263,6 +263,9 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 - **Thrill of the Hunt** returns 40% of the shot's truncated base cost, a free Lock and Load shot's too.
 - **Pin** (53548) is a root, so armor cuts its ticks. **Savage Rend** (53582) is a bleed: armor cuts the first
   hit, not the ticks (`Unit::IsDamageReducedByArmor` finds the bleed per effect only).
+- **Explosive Trap** arms 1 s after it's laid and goes off on the next update after that (`GameObject::Update`).
+  The delay counts only with the hunter in combat at the trap's first update, so one whose first update comes
+  before the pull arms at once and waits for it (`sim/hunter/explosive_trap.go`).
 - **Explosive Decoy** deals nothing: its creature casts 53273 only on death, and a boss never attacks it.
 - **Haste:** mod-individual-progression's aura 89507 never changes the speed, so ranged haste is just the quiver's
   or ammo pouch's, which `Hunter.Options.quiver` picks (×1.15 by default), times Thori'dal's own ×1.15 (44972).

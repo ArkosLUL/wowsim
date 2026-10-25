@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/wowsims/wotlk/sim/core"
+	"github.com/wowsims/wotlk/sim/core/serverdata"
 	"github.com/wowsims/wotlk/sim/core/stats"
 )
 
@@ -217,17 +218,36 @@ func (priest *Priest) applyBorrowedTime() {
 	priest.RegisterAura(core.Aura{
 		Label:    "Borrwed Time Talent",
 		Duration: core.NeverExpires,
+		OnInit: func(_ *core.Aura, _ *core.Simulation) {
+			// the charge goes in the cast phase, before the effects: a magic channel (Hymn of Hope, Mind Flay)
+			// works out its hasted duration and tick without the buff, and casts that skip OnCastComplete
+			// (Inner Focus, Arcane Torrent) still use it
+			for _, spell := range priest.Spellbook {
+				if usesBorrowedTime(spell) {
+					applyEffects := spell.ApplyEffects
+					spell.ApplyEffects = func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
+						procAura.Deactivate(sim)
+						applyEffects(sim, target, spell)
+					}
+				}
+			}
+		},
 		OnReset: func(aura *core.Aura, sim *core.Simulation) {
 			aura.Activate(sim)
 		},
 		OnCastComplete: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell) {
 			if spell == priest.PowerWordShield {
 				procAura.Activate(sim)
-			} else if spell.CurCast.CastTime > 0 {
-				procAura.Deactivate(sim)
 			}
 		},
 	})
+}
+
+// usesBorrowedTime is spell_proc -59887 on every rank of the buff: magic class, cast phase, so any untriggered
+// magic spell takes the charge. Penance and Prayer of Mending have no damage class and leave it.
+func usesBorrowedTime(spell *core.Spell) bool {
+	s := spell.ServerSpell()
+	return spell.Flags.Matches(core.SpellFlagAPL) && s != nil && s.DmgClass == serverdata.DmgClassMagic
 }
 
 func (priest *Priest) applyInspiration() {
