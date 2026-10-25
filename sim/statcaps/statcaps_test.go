@@ -494,3 +494,36 @@ func TestComputeRequestAnswersTheFirstPlayer(t *testing.T) {
 		t.Error("an encounter without a target got caps")
 	}
 }
+
+func discPriest(talents string) *proto.Player {
+	return &proto.Player{
+		Name:          "Disc",
+		Race:          proto.Race_RaceUndead,
+		Class:         proto.Class_ClassPriest,
+		Equipment:     core.GetGearSet("../../ui/healing_priest/gear_sets", "p1_disc").GearSet,
+		TalentsString: talents,
+		Rotation:      core.GetAplRotation("../../ui/healing_priest/apls", "disc").Rotation,
+		Spec:          &proto.Player_HealingPriest{HealingPriest: &proto.HealingPriest{Options: &proto.HealingPriest_Options{}}},
+		Buffs:         core.FullIndividualBuffs,
+	}
+}
+
+func TestDiscHasteNoteGivesTheCapAfterShield(t *testing.T) {
+	const discTalents = "0503203130300512301313231251-2351010303"
+	haste := findCap(t, compute(t, discPriest(discTalents), setup{}), "Haste", proto.StatCapHand_StatCapHandBoth)
+	if haste.Needed != 1012 {
+		t.Errorf("always-on cap %.0f, want 1012", haste.Needed)
+	}
+	if want := "Borrowed Time adds 25% cast speed and the cap is 154."; !strings.Contains(haste.Note, want) {
+		t.Errorf("note lacks %q: %s", want, haste.Note)
+	}
+	if !strings.Contains(haste.Note, "except Penance and Prayer of Mending") {
+		t.Errorf("note lacks the buff's use-up rule: %s", haste.Note)
+	}
+
+	// holy has no Borrowed Time
+	holy := findCap(t, compute(t, discPriest("05032031103-234051032002152530004311051"), setup{}), "Haste", proto.StatCapHand_StatCapHandBoth)
+	if strings.Contains(holy.Note, "Borrowed Time") {
+		t.Errorf("a priest without the talent got the note: %s", holy.Note)
+	}
+}

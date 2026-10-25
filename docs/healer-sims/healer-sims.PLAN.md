@@ -766,6 +766,15 @@ Cross-review (wave HL3, uncommitted; numbers on the merged tree, after HEAL-CORE
 - **Owns:** `sim/statcaps/compute.go`'s haste note, `sim/statcaps/statcaps_test.go`, the haste ceiling facts in
   `docs/guide/stat-caps.md`.
 
+#### As built
+
+- `borrowedTimeNote` (`sim/statcaps/compute.go`) extends the haste note of a `HealingPriest` with Borrowed Time (talents
+  parsed with `priest.TalentTreeSizes`): the cap bisected with cast speed divided by 1 + 5% a rank. The row's
+  `needed` stays the always-on cap.
+- Disc page defaults (Undead, 5/5): 1012 always-on, 154 after a shield (P1 gear; always-on 1012 at every phase). A Holy
+  talent string gets no extra text. `TestDiscHasteNoteGivesTheCapAfterShield` holds both.
+- `docs/guide/stat-caps.md` names the extra note. Golden-neutral: no suite reads the note.
+
 ### HEAL-EFFECTIVE (G, FS; stages: core, priest-paladin, druid-shaman, measure)
 
 - **Wrath of Air** on by default on the Resto Druid and Holy Paladin pages and in their page-request tests
