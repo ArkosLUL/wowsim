@@ -198,8 +198,8 @@ healer haste caps.
 
 ## Current wave
 
-- Wave: HL4 running ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CAPS, HEAL-EFFECTIVE; args
-  `waveHL4-build.py`). Then Z18 (Z15's follow-ups), on the user's go.
+- Wave: HL4 running ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CAPS, HEAL-EFFECTIVE; base
+  `e37b39df1`, args `waveHL4-build.py`, run `wf_126541ca-02f`). Then Z18 (Z15's follow-ups), on the user's go.
   Z17b landed (EC-UPSTREAM2, the e2e-coverage PLAN; base `e25e40799`, args `waveZ17b-build.py`, run
   `wf_723d139c-669`). Cross-review `.wave-loop\z17b-run1\xreview.md` (brief `waveZ17b-xreview-brief.md`); item notes
   `.wave-loop\z17b-run1\ec-upstream2-tmp`. Prod not rebuilt after it (the user's call).
