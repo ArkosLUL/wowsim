@@ -334,6 +334,7 @@ Reckoning that way), but J isn't DPS: see below.
 | Z14 | 8603.0, +217 / +218 | 10770.0, +855 / +875 | 5012.8, +80 / +74 | 12922.4, +230 / +234 | 5722.6, +2167 / +2485 | 1846.3, -74 / +129 |
 | Z15 | 8603.0, +217 / +218 | 10770.0, +855 / +875 | 5012.8, +80 / +74 | 12929.4, +222 / +259 | 5744.3, +1244 / +1970 | 1846.3, -74 / +129 |
 | HL3 | 8645.8, +214 / +211 | 10809.7, +865 / +875 | 5009.8, +100 / +85 | 14006.9, +104 / +89 | 5744.3, +2045 / +1970 | 1846.3, +6 / +129 |
+| Z17b | 8742.8, +210 / +227 | 10813.7, +650 / +696 | 5009.8, +100 / +85 | 14006.9, +104 / +89 | 5744.3, +2045 / +1970 | 1846.3, +6 / +129 |
 
 Quick / Normal. Ret P4 ran at Quick only in wave D, after the glyph fix; its wave C numbers
 (12821.9, +54 / +73) came from a seed that wore the glyph. The two tanks arrive with
@@ -468,6 +469,10 @@ In HL3 (`ca49ca1a2`, logs `.wave-loop/logs/hl3-rebaseline`) all twelve pass. Ret
 (`dps_preset` 16369.2 to 16905.4, normalizer 1.266 to 1.207) and Combat Rogue's 0.4% from spec-balance's buffs
 (`ca5062282`), which landed after Z15's run; Fire Mage's fell 0.06% (Flare of the Heavens off landings), Fury's
 rose 0.5% (its noise). The gains moved within earlier rows' range.
+In Z17b (`1269d7464`, logs `.wave-loop/logs/z17b-rebaseline`) all twelve pass. Fury's `dps_preset` fell 1.4% (8293.2
+to 8179.0) with TestFury, and its J rose 1.1% on a 2.5% lower normalizer. Combat Rogue's rose 6.0% (10920.4 to
+11573.1; TestCombat +3.3%) and its J held on a 5.9% higher normalizer; its gains fell from +865 / +875 to +650 / +696
+(not traced). The other four repeat HL3's.
 
 ## Sim throughput
 
