@@ -1,6 +1,7 @@
 # Healer sims: Holy Paladin, Resto Druid and Resto Shaman pages that heal
 
-Status: approved by the user (2026-10-23); HL1 to HL3 landed; all four healer pages launched.
+Status: approved by the user (2026-10-23); HL1 to HL3 landed; all four healer pages launched. HL4 (the user,
+2026-10-25): effective healing and the haste caps.
 
 ## Context
 
@@ -60,11 +61,12 @@ Status: approved by the user (2026-10-23); HL1 to HL3 landed; all four healer pa
 
 ## Decisions (the user, 2026-10-23)
 
-- **Heal model: mana-limited casting.** Heals count in full on the dummies, overheal included; no incoming damage.
-  Default rotations fill every GCD, and mana runs short over the default fight, so SP, crit, haste, Int,
-  Spirit and MP5 all measure.
-- **Stand-ins:** effects that need incoming damage (Chain Heal jumps, Earth Shield charges, Sacred Shield,
-  Living Seed) get a stand-in trigger, as Prayer of Mending's 5 s proc does.
+- **Heal model (HL1 to HL3; HL4 replaces it): mana-limited casting.** Heals count in full on the dummies, overheal
+  included; no incoming damage. Default rotations fill every GCD, and mana runs short over the default fight, so
+  SP, crit, haste, Int, Spirit and MP5 all measure.
+- **Stand-ins (HL1 to HL3; HL4 replaces them with the dummies' hits):** effects that need incoming damage (Chain
+  Heal jumps, Earth Shield charges, Sacred Shield, Living Seed) get a stand-in trigger, as Prayer of Mending's 5 s
+  proc does.
 - **Order:** Resto Shaman first, then Holy Paladin and Resto Druid side by side.
 - **Parity bar:** the project's usual ([server-parity](../guide/server-parity.md),
   [server-validation](../guide/server-validation.md)): spells declared against serverdata, each script rule from
@@ -81,21 +83,34 @@ Status: approved by the user (2026-10-23); HL1 to HL3 landed; all four healer pa
   Resto Shaman default APL loses its Healing Wave line.
 - **Val'anyr (2026-10-24):** its shields keep counting in full as healing, though the dummies never consume them.
 
+**HL4 (the user, 2026-10-25).** The healer values disagreed with the class guides (Resto Druid reforged Spirit
+into crit, Resto Shaman ranked crit over haste) because overheal counted. So:
+- **Effective healing:** the dummies take damage, and a heal counts only up to the missing health; the rest is
+  overheal. Raw HPS stays shown.
+- **Incoming damage:** default per spec and phase, about what the phase's preset heals per second when every heal
+  lands in full, so it can just about keep up; a page setting changes it.
+- **Shields** keep counting in full as they go on (the Val'anyr call stands); the dummies' damage ignores them.
+- **Rotations** heal the most hurt dummy and wait when nobody is hurt; HoTs and shields may go out ahead of damage
+  where the class's usual play does.
+- **Haste caps:** Wrath of Air on by default on the Resto Druid and Holy Paladin pages, as on Disc and Resto
+  Shaman; the Disc haste cap also gives the number right after Power Word: Shield (Borrowed Time).
+
 ## Out of scope
 
-An incoming-damage model; healer BiS (optimizer, presetgen), shipped healer stat values (statweights) and
+Healer BiS (optimizer, presetgen), shipped healer stat values (statweights) and
 rankings; the raid sim's presets.
 
 ## Wave registry
 
 HL1 and HL2 skip the BiS re-baseline: no DPS spec, preset or optimizer path moves. HL3 runs it if HEAL-CORE or
-the Innervate fix moves a DPS suite.
+the Innervate fix moves a DPS suite. HL4 runs it only if a DPS suite moves.
 
 | Wave | WIs |
 |---|---|
 | HL1 | HEAL-SHA (G) · HEAL-PRI (G) · HEAL-TEST (G) |
 | HL2 | HEAL-FIGHT · HEAL-PAL-1 (G) · HEAL-DRU-1 (G) |
 | HL3 | HEAL-CORE · HEAL-PAL-2 (G) · HEAL-DRU-2 (G) |
+| HL4 | HEAL-CAPS · HEAL-EFFECTIVE (G, FS) |
 
 G changes only the class's own healer suites (and, for HEAL-TEST, the four healer suites' weights rows).
 
@@ -739,3 +754,58 @@ Cross-review (wave HL3, uncommitted; numbers on the merged tree, after HEAL-CORE
   P3 0.52 / 0.73 / 2.79 / 0.73 / 0.05 / 0.37; P5 1.16 / 1.42 / 3.77 / 1.08 / 0.17 / 0.96. HEAL-CORE moved none of
   stage 2's numbers past noise. The druid fixes moved P2 to P5 by -0.2% to +0.3%; the bloom procing nothing
   (HEAL-CORE's cross-review) and Innervate's 786 a tick then took 1 to 3% off, P2 9% (fewer Val'anyr bubbles).
+
+### HEAL-CAPS (stages: code)
+
+- The Caps tab's haste cap (`sim/statcaps`, `spellHaste`) counts only always-on haste. For a priest with Borrowed
+  Time, its note also gives the cap right after Power Word: Shield: bisected with the buff's cast speed (+5% a
+  point) on the sheet, and says that any magic-class spell but Penance and Prayer of Mending uses the buff up
+  ([caster-mechanics](../guide/caster-mechanics.md#priest)). The Disc page's defaults read 1012 and 154; a
+  `statcaps` test holds both.
+- Golden-neutral.
+- **Owns:** `sim/statcaps/compute.go`'s haste note, `sim/statcaps/statcaps_test.go`, the haste ceiling facts in
+  `docs/guide/stat-caps.md`.
+
+### HEAL-EFFECTIVE (G, FS; stages: core, priest-paladin, druid-shaman, measure)
+
+- **Wrath of Air** on by default on the Resto Druid and Holy Paladin pages and in their page-request tests
+  (`default_apl_test.go`), as on Disc and Resto Shaman.
+- **Dummies** on a healer request (`TargetDummies`) get health bars. Dummy 1 is the tank, the other eight the raid.
+  Max health: tank 40000 and raid 20000 at preraid and P1, +5000 and +2500 a phase after (P5 60000 / 30000). A
+  dummy never dies: damage stops at 1 health.
+- **Incoming damage:** a damage-per-second setting on healer pages (in the request beside `target_dummies`). Half
+  hits the tank every 2 s; the other half hits four of the eight raid dummies, picked at random, every 4 s. No
+  mitigation; shields don't absorb it. The hits are hits taken, so effects waiting on one see them.
+  - Default per spec and phase: the page request's HPS at that phase's preset when nothing overheals (damage
+    high enough), rounded. The page takes it from its phase (`sim.getPhase()`) until the user sets it; Restore
+    Defaults resets it.
+- **Effective healing:** a heal on a dummy counts up to its missing health, the rest is overheal. On a healer
+  request, unit and raid HPS are effective healing plus shielding (shields in full, as today); raw healing,
+  overheal and the damage left unhealed are their own metrics (next free `UnitMetrics` numbers). DPS and tank sims
+  don't change: no DPS or tank golden moves. A healer page's results show effective HPS, raw HPS and overheal %.
+- **Stat values:** `statslopes`' healer role measures effective HPS.
+- **APL:** add what the healer rotations need and lack, listed in the APL editor: a heal on the most hurt friendly
+  unit (lowest health percent, ties by raid order), a HoT on a hurt unit that lacks the caster's, a buff, HoT or
+  shield kept up on the tank, and a missing-health condition.
+- **Rotations:** each healer page's default APL (Disc, Holy priest, Holy Paladin, Resto Druid, Resto Shaman) heals
+  with the class's usual priority on the most hurt dummy, big heals only on a unit missing about that much, and
+  waits when nobody is hurt. Tank upkeep (Beacon, Sacred Shield, Lifebloom, Earth Shield) and Prayer of Mending may
+  go out ahead of damage.
+- **Stand-ins:** effects waiting on a hit taken (Prayer of Mending's 5 s proc, Earth Shield's charges, Living
+  Seed, Sacred Shield, the other `core.HitTakenStandIn` users) use the dummies' hits; Chain Heal's jumps, Ancestral
+  Awakening, Wild Growth and Blessing of the Eternal pick hurt units as [ac] does. `HitTakenStandIn` stays only for
+  a request with no incoming damage.
+- **Goldens:** the four healer suites move (raw and effective apart); their rows show effective HPS. No other suite
+  moves.
+- **Measure** (last stage), per spec and phase on the page request at 300 s, 3000 iterations, seed 424242: the
+  default damage re-measured with the new APLs (updated if it moved over 5%), time to OOM, effective and raw HPS,
+  overheal %, damage left unhealed, "Measure at my gear" gain and loss. Compare each spec's stat order with the
+  class guides (Wowhead's: Resto Druid crit low, Resto Shaman haste over crit, Spirit near 0 for shamans) and say
+  where and why they differ; don't tune the model to fit them. These replace the guides' healer numbers.
+- Stages: core (Wrath of Air, dummies, damage, effective metrics, APL additions, `statslopes`, the page setting and
+  results, the defaults measured with today's APLs); priest-paladin and druid-shaman (rotations and stand-ins);
+  measure.
+- **Owns:** `sim/core`'s target dummy, health and healing metrics, the request field and its UI, the APL
+  additions, `sim/statslopes`' healer role, the four healer pages' `ui/` APLs, defaults and raid buffs, the classes'
+  stand-in code, the healer suites and their tests, the healer numbers and rules in the guides
+  (caster-mechanics, class-mechanics, damage-and-healing, stat-caps' healer values).

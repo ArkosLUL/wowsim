@@ -178,7 +178,8 @@ the caps, and an "Apply on server" button over SOAP, also golden-neutral.
 HL1 to HL3 are the user's call (2026-10-23), before Z18: the [healer pages](../healer-sims/healer-sims.PLAN.md),
 whose own registry lists their items. HL1 and HL2 move only healer suites and skip the re-baseline; HL3's proc
 type check moves DPS suites too, so it runs it. Z17b (the user, 2026-10-24) syncs the sim with the server's
-upstream merge of that day, before Z18.
+upstream merge of that day, before Z18. HL4 (the user, 2026-10-25), before Z18 too: effective healing and the
+healer haste caps.
 
 **Where the specs are:**
 
@@ -197,7 +198,8 @@ upstream merge of that day, before Z18.
 
 ## Current wave
 
-- Wave: Z18 next (Z15's follow-ups), on the user's go.
+- Wave: HL4 running ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CAPS, HEAL-EFFECTIVE; args
+  `waveHL4-build.py`). Then Z18 (Z15's follow-ups), on the user's go.
   Z17b landed (EC-UPSTREAM2, the e2e-coverage PLAN; base `e25e40799`, args `waveZ17b-build.py`, run
   `wf_723d139c-669`). Cross-review `.wave-loop\z17b-run1\xreview.md` (brief `waveZ17b-xreview-brief.md`); item notes
   `.wave-loop\z17b-run1\ec-upstream2-tmp`. Prod not rebuilt after it (the user's call).
