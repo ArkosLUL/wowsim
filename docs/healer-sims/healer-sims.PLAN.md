@@ -1,7 +1,7 @@
 # Healer sims: Holy Paladin, Resto Druid and Resto Shaman pages that heal
 
-Status: approved by the user (2026-10-23); HL1 to HL3 landed; all four healer pages launched. HL4 (the user,
-2026-10-25): effective healing and the haste caps.
+Status: approved by the user (2026-10-23); HL1 to HL4 landed; all four healer pages launched and
+count only effective healing.
 
 ## Context
 

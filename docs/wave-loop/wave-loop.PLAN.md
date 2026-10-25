@@ -198,8 +198,11 @@ healer haste caps.
 
 ## Current wave
 
-- Wave: HL4 running ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CAPS, HEAL-EFFECTIVE; base
-  `e37b39df1`, args `waveHL4-build.py`, run `wf_126541ca-02f`). Then Z18 (Z15's follow-ups), on the user's go.
+- Wave: Z18 next (Z15's follow-ups), on the user's go.
+  HL4 landed ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CAPS, HEAL-EFFECTIVE; base `e37b39df1`,
+  args `waveHL4-build.py`, run `wf_126541ca-02f`; master merged mid-wave, `1d365b5df`). Cross-review
+  `.wave-loop\hl4-run1\xreview.md` (brief `waveHL4-xreview-brief.md`); item notes `.wave-loop\hl4-run1\heal-*-tmp`.
+  No DPS suite moved, so no BiS re-baseline. Prod not rebuilt after it (the user's call).
   Z17b landed (EC-UPSTREAM2, the e2e-coverage PLAN; base `e25e40799`, args `waveZ17b-build.py`, run
   `wf_723d139c-669`). Cross-review `.wave-loop\z17b-run1\xreview.md` (brief `waveZ17b-xreview-brief.md`); item notes
   `.wave-loop\z17b-run1\ec-upstream2-tmp`. Prod not rebuilt after it (the user's call).
@@ -235,7 +238,9 @@ healer haste caps.
   `int-check.sh`.
   Another session's `wotlk-bisdata` container can load most cores: `sim/optimizer` then passes Go's 10-minute test
   timeout in `int-check.sh`; rerun it alone with `-timeout 40m`.
-  Proto numbers taken: `ServerSettings` 9, `Target` 24, `UnitMetrics` 22, `OptimizerMetrics` 7.
+  Proto numbers taken: `ServerSettings` 9, `Target` 24, `UnitMetrics` 25, `OptimizerMetrics` 7, `Raid` 10,
+  `TargetedActionMetrics` 16, `IndividualSimSettings` 15, `APLValue` 67, `APLAction` 20, `UnitReference.Type` 9,
+  `OtherAction` 18.
   Server: mod-spell-tweaks `9bf5c75`; mod-sim-validation C++ and HEAD `13586b3`.
   Prod runs master `cb163252c` (through Z13, plus dps-rankings P0 to P2; 2026-10-18); `wowsims-wotlk:rollback-z6`
   is Z6's `e5a289570`, `rollback-x` X's `25cb9dddc`. A sim page left
