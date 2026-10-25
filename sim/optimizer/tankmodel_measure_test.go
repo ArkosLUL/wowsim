@@ -59,7 +59,13 @@ func tankFightRequest(tb testing.TB, name string, phase int32) *Request {
 	if !core.WITH_DB {
 		tb.Skip("needs the with_db item data")
 	}
-	asked, err := PrepareRequest(pageRequest(tb, name, phase))
+	req := pageRequest(tb, name, phase)
+	// captures from before the page set Icecrown's buff don't have it
+	if req.Base.Raid.Buffs == nil {
+		req.Base.Raid.Buffs = &proto.RaidBuffs{}
+	}
+	req.Base.Raid.Buffs.StrengthOfWrynn = tankBosses[phase].icecrownBuff
+	asked, err := PrepareRequest(req)
 	if err != nil {
 		tb.Fatal(err)
 	}

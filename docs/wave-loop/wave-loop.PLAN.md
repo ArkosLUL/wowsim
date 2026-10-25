@@ -916,6 +916,7 @@ crashed before F2, so its column starts there.
 | CAP-FLOORS | merged | `f09e25c0d`, `22822103e` | reforge suggestions never drop a met hit, spell hit or expertise cap nor deepen a short one, and skip swaps under 5% of what they give up; no golden moves |
 | CAP-SERVER | merged | `d7df90071`; mod-reforging `c092fd3` | "Apply reforges on server…" sends `.reforge apply` over SOAP (on `192.168.49.35` and `127.0.0.1` only) for core-raid characters; live round trip on offline Angry; no golden moves |
 | wave Z17 cross-review | direct | `5745376cf`; mod-reforging `c9b887a` | the online path writes its row at once instead of two async writes; the dialog never strips a reforge the sim can't read; single Apply disabled where only Apply all keeps a cap; dev servers send no GM commands unless `WOTLK_DEV_SOAP_URL` is set; no golden moves |
+| BIS-TANK-ICC | direct, uncommitted | branch `bis-tank-icc` | Icecrown's +30% buff in the P4 tank fight (`TankBoss.icecrownBuff`, heals ×1.3), the three two-hand runes gated; presets follow |
 
 
 Later WIs are added as their wave starts.

@@ -27,3 +27,12 @@ prints the final `OptimizerResult`. The bundle needs only Node 18+, so it runs o
 ```sh
 node tmp/optimizer/fixture_driver.mjs post http://localhost:3334 sim/optimizer/testdata/replay/ret_p1.json.gz
 ```
+
+## Test
+
+`pool_builder_test.ts` checks the tank request's Icecrown buff (set at phase 4 only, whatever the page had, other raid buffs
+kept; a DPS request untouched). It prints `pool_builder_test: ok`:
+
+```sh
+tools/acore/dock.sh exec bash -c 'npx esbuild ui/core/optimizer/pool_builder_test.ts --bundle --platform=node --format=esm --target=node18 --outfile=tmp/optimizer/pool_builder_test.mjs && node tmp/optimizer/pool_builder_test.mjs'
+```

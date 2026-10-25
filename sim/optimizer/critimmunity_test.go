@@ -14,11 +14,14 @@ import (
 	"github.com/wowsims/wotlk/sim/core/proto"
 	"github.com/wowsims/wotlk/sim/core/stats"
 	"github.com/wowsims/wotlk/sim/encounters"
+	goproto "google.golang.org/protobuf/proto"
 )
 
 type tankBoss struct {
 	encounters.OptimizerTankBoss
 	difficulty proto.RaidDifficulty
+	// Icecrown's buff, which the tank request stands in with Strength of Wrynn.
+	icecrownBuff bool
 }
 
 func ability(id int32, school proto.SpellSchool, damage, periodMin, periodMax float64) encounters.OptimizerTankAbility {
@@ -44,7 +47,7 @@ var tankBosses = map[int32]tankBoss{
 			{SpellID: 55802, School: proto.SpellSchool_SpellSchoolFrost, Damage: 30000, PeriodMin: 2, PeriodMax: 10, CastSeconds: 2, LandChance: 0.5, ResetsSwing: true, CanMiss: true},
 			missable(55807, proto.SpellSchool_SpellSchoolFrost, 8000, 15, 30),
 		},
-	}, proto.RaidDifficulty_RaidDifficulty25Normal},
+	}, proto.RaidDifficulty_RaidDifficulty25Normal, false},
 	2: {encounters.OptimizerTankBoss{
 		Name: "Algalon", DamageModifier: 285, AttackTimeMs: 1000, DualWield: true, NoParryHaste: true,
 		Abilities: []encounters.OptimizerTankAbility{
@@ -52,14 +55,14 @@ var tankBosses = map[int32]tankBoss{
 			ability(64412, proto.SpellSchool_SpellSchoolArcane, 9500, 15.5, 15.5),
 			missable(65108, proto.SpellSchool_SpellSchoolShadow, 21000, 25, 25),
 		},
-	}, proto.RaidDifficulty_RaidDifficulty25Normal},
+	}, proto.RaidDifficulty_RaidDifficulty25Normal, false},
 	3: {encounters.OptimizerTankBoss{
 		Name: "Anub'arak", DamageModifier: 149.1, NoParryHaste: true,
 		Abilities: []encounters.OptimizerTankAbility{
 			{SpellID: 66012, School: proto.SpellSchool_SpellSchoolFrost, Damage: 20788, PeriodMin: 15, PeriodMax: 20, ResetsSwing: true},
 			{SpellID: 68510, School: proto.SpellSchool_SpellSchoolFrost, Damage: 6000, PeriodMin: 3, PeriodMax: 3, LandChance: 0.18, CanMiss: true},
 		},
-	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
+	}, proto.RaidDifficulty_RaidDifficulty25Heroic, false},
 	4: {encounters.OptimizerTankBoss{
 		Name: "the Lich King", DamageModifier: 492.9, AttackTimeMs: 1500, NoParryHaste: true, SuppressDodge: true,
 		Abilities: []encounters.OptimizerTankAbility{
@@ -67,13 +70,13 @@ var tankBosses = map[int32]tankBoss{
 				FollowUpSeconds: 5, FollowUpDamage: 70000, FollowUpHaste: 2, FollowUpHasteSeconds: 5, SwapsTank: true},
 			{SpellID: 73781, School: proto.SpellSchool_SpellSchoolShadow, Damage: 18750, PeriodMin: 22.5, PeriodMax: 22.5, CastSeconds: 2, ResetsSwing: true, CanMiss: true, Raidwide: true},
 		},
-	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
+	}, proto.RaidDifficulty_RaidDifficulty25Heroic, true},
 	5: {encounters.OptimizerTankBoss{
 		Name: "Halion", DamageModifier: 385.4, AttackTimeMs: 1500, HitChance: 5, EnemyDodgeMultiplier: 0.8,
 		Abilities: []encounters.OptimizerTankAbility{
 			{SpellID: 74528, School: proto.SpellSchool_SpellSchoolFire, Damage: 45000, PeriodMin: 10, PeriodMax: 12, CastSeconds: 2, ResetsSwing: true, CanMiss: true},
 		},
-	}, proto.RaidDifficulty_RaidDifficulty25Heroic},
+	}, proto.RaidDifficulty_RaidDifficulty25Heroic, false},
 }
 
 func tankEncounter(tb testing.TB, phase int32) *proto.Encounter {
@@ -251,6 +254,8 @@ func readTankBossesFromUI(tb testing.TB) map[int32]tankBoss {
 				cur.HitChance = uiNumber(tb, raw)
 			case "enemyDodgeMultiplier":
 				cur.EnemyDodgeMultiplier = uiNumber(tb, raw)
+			case "icecrownBuff":
+				cur.icecrownBuff = raw == "true"
 			default:
 				tb.Fatalf("unknown TANK_BOSSES field %q", key)
 			}
@@ -281,6 +286,14 @@ func TestTankBossesMirrorUI(t *testing.T) {
 	}
 }
 
+// tankRaidBuffs is core.FullRaidBuffs with Strength of Wrynn set the way the pool builder sets it for a
+// tank at phase.
+func tankRaidBuffs(phase int32) *proto.RaidBuffs {
+	buffs := goproto.Clone(core.FullRaidBuffs).(*proto.RaidBuffs)
+	buffs.StrengthOfWrynn = tankBosses[phase].icecrownBuff
+	return buffs
+}
+
 // tankOptimizeRequest is the tank alone in a raid, holding the phase's boss, with the tank settings
 // the UI sends: the default slider and crit immunity on.
 func tankOptimizeRequest(tb testing.TB, player *proto.Player, phase int32) *proto.OptimizeGearRequest {
@@ -288,7 +301,7 @@ func tankOptimizeRequest(tb testing.TB, player *proto.Player, phase int32) *prot
 	if !core.WITH_DB {
 		tb.Skip("needs the with_db item data")
 	}
-	raid := core.SinglePlayerRaidProto(player, core.FullPartyBuffs, core.FullRaidBuffs, core.FullDebuffs)
+	raid := core.SinglePlayerRaidProto(player, core.FullPartyBuffs, tankRaidBuffs(phase), core.FullDebuffs)
 	raid.Tanks = []*proto.UnitReference{{Type: proto.UnitReference_Player, Index: 0}}
 	return &proto.OptimizeGearRequest{
 		Base: &proto.RaidSimRequest{

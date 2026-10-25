@@ -97,6 +97,10 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   multiplier to 0 or below, and `MeleeDamageBonusTaken` and `SpellDamageBonusTaken` clamp at 0. The sim scales
   `DamageTakenMultiplier` by 2^-64 and back by 2^64 at expiry, exact whatever else changed it meanwhile.
 - **Rune of the Stoneskin Gargoyle** (3847) is +25 defense skill, not rating.
+- **Two-hand runes:** Stoneskin Gargoyle, Swordshattering (3365) and Spellshattering (3367) fit two-handers only
+  (Spell.dbc `EquippedItemSubclass` 0x562, no `spell_dbc` override), so they carry `EnchantTypeTwoHand`. The
+  one-hand tank rune is Nerubian Carapace (3883, spell 70164). It, Swordbreaking (3594) and Spellbreaking (3595)
+  fit one-handers only (mask 0x8091: axe, mace, sword, dagger), but no enchant type gates that.
 
 ## Warrior
 
