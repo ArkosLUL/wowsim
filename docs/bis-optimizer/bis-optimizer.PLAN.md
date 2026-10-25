@@ -3124,4 +3124,11 @@ Code `37677896d`, merged with master's Z17b at `e7aca8432`; presets on that tree
   - Blood P4 gems 7 Enduring, 4 Regal, 4 Solid Majestic Zircon, 3 Solid Dragon's Eye, 3 Rigid King's Amber, 1
     Defender's Dreadstone (was 7, 6, 5, 3, none, none); Frost P4 7 Zircon, 6 Regal, 6 Enduring, 3 Solid
     Dragon's Eye (was 6, 6, 5, 3).
+- **Downstream** (the user's go, tanks only, work `bis-chain-1025-tanks`):
+  - Stat weights: spec-balance's run behind the shipped values (`[balance]/tmp/p6/sw`, `cc854cd47`) with the five
+    tank builds recaptured; `stat_values.json` moves for those five only. `weights.json` for playerbots in
+    `tmp/statweights-bis-chain-1025-tanks`.
+  - Dataset `bf3b3c5a` imported: Bulwark and Felesta rerun on top of the live `6e77ea65`'s batch
+    (`tmp/bis-chain-1022-balance`), merged by hand since the chain refuses two catalog dates (the user's call:
+    same items); Felesta P4 now gems 18 Solid Majestic Zircon.
 - **Left:** the Lich King still kills every P4 pick most of the time with the buff; one-hand-only runes ungated.
