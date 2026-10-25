@@ -28,6 +28,10 @@ checks it and the Go effects.
   (60518, 58 flat healing taken a stack, 5 max, 10 s refreshed) on its target. Triggered heals count (60517 has
   `CAN_PROC_FROM_PROCS`), but not one that suppresses procs (Lifebloom's bloom); hots, their ticks and no-class
   heals (Glyph of Rejuvenation's 54755) add none. Every healer's heals on the target get the flat bonus.
+- Meteorite Crystal (46051) adds a stack at the finish phase (a cast's end, a missile's landing) of an
+  untriggered spell whose static cost is mana (free Clearcasting and Omen casts too; Call of the Elements'
+  totems too), of each tick of a mana channel or Penance, and of a Beacon of Light copy of a mana heal
+  (`spell_item_meteoric_inspiration`; `meteoricInspiration` in `sim/common/wotlk`).
 - A spell that deals damage (an on-use item among them) isn't cast at another friendly unit, a healer's default
   target (`Spell.dealsDamageToAFriend`); area spells and heals are.
 - Althor's Abacus heals the enabled, [living](damage-and-healing.md#healing) raid unit with the lowest health

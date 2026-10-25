@@ -5773,7 +5773,7 @@ and 48111 stay uncompared rightly: a triggered aura's cost or dispel resist, or 
 doubles a death knight's off-hand fixed bonus itself (`ecTools5Base` gone); `strikeProbe` takes the off hand from
 `SPELL_ATTR3_REQUIRES_OFF_HAND_WEAPON`.
 
-### EC-UPSTREAM2 (Z17b; changes goldens, full suite; stages: code, live)
+### EC-UPSTREAM2 (Z17b, done; changes goldens, full suite; stages: code, live)
 
 - The live server moved from [ac] `62fb09c68` to `ea83cc94b` (upstream merge `e2829262b`, image rebuilt 2026-10-24
   13:18 UTC); check its DB import ran (`acore_world.updates` lists `2026_10_22_01`). Every committed record,
@@ -5892,7 +5892,10 @@ Cross-review (2026-10-25; report `.wave-loop\z17b-run1\xreview.md`):
   `USE_OFFHAND_ATTACK`, no equipment); parry haste never takes the off hand (`Unit::DealMeleeDamage` does when its
   timer is shorter); a stunned player's swing still lands (the server resets the timer and deals nothing);
   Enhancement's sync options move the off hand in a way no server action can; an item use whose spell is magic
-  class takes Borrowed Time on the server, not in the sim.
+  class takes Borrowed Time on the server, not in the sim; Explosive Trap's cast-phase item procs fire at the lay
+  in the sim, at the explosion (49065) on the server, which may also go a map update later; Lock and Load rank 1
+  always procs on the server (no check on its third effect); `TestSimvalFight` falls back to the biggest log when
+  mod-chronicle deletes one; `StopMeleeUntil`'s `desyncOH` is never true.
 
 ### EC-CORE-FIX13 (Z18; changes goldens, full suite; stages: code)
 

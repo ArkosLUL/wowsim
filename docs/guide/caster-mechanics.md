@@ -291,6 +291,10 @@ pets and guardians in [pets](pets.md).
   - Each bolt, 53000 or the heal's 52985, is a missile at 40 yd/s, rolled at the tick and dealt after its
     flight (`sim/priest/penance.go`; a KeepSim allowance on 53007's speed), a heal's to a friend or the priest
     as [missiles](missiles.md#flight-and-reach) give it.
+- **Borrowed Time** goes with the next untriggered magic-class spell, instants too (`spell_proc` -59887, every
+  rank; `usesBorrowedTime`). Its charge goes in the cast phase, before the effects: a hardcast keeps the haste its
+  cast time took, a magic channel (Hymn of Hope, Mind Flay) gets none. Penance and Prayer of Mending have no
+  damage class and leave it.
 - **Healing Priest APLs** (`ui/healing_priest/apls`) cast on every GCD with no `spellCpm` caps; the mana pool
   limits them. In the healer pages' 300 s default fight holy runs out of mana at every phase, disc at preraid
   to P3 but not at P4 and P5 (the sim estimates ~373 and ~328 s). A stat that only matters while mana-bound

@@ -95,7 +95,7 @@ G = changes goldens. FS = runs all 37 suites.
 | Z15 | EC-CORE-FIX12 (G) · EC-PET-FIX10 (live) · EC-CLASS-FIX11 (G, live) · EC-TOOLS5 (C++, live) | ✔ |
 | Z16 | CAP-TAB · CAP-ROSTER | |
 | Z17 | CAP-FLOORS · CAP-SERVER (C++, live) | |
-| Z17b | EC-UPSTREAM2 (G, FS, live) | |
+| Z17b | EC-UPSTREAM2 (G, FS, live) | ✔ |
 | Z18 | EC-CORE-FIX13 (G, FS) · EC-PET-FIX11 (live) · EC-CLASS-FIX12 (live) · EC-TOOLS6 | ✔ |
 
 F2 is an inserted wave, not a fifth item in F: the core swing and cast fixes of PAR-P7-0c have to land
@@ -197,8 +197,10 @@ upstream merge of that day, before Z18.
 
 ## Current wave
 
-- Wave: Z17b running (EC-UPSTREAM2, the e2e-coverage PLAN; base `e25e40799`, args `waveZ17b-build.py`, run
-  `wf_723d139c-669`); then Z18 (Z15's follow-ups).
+- Wave: Z18 next (Z15's follow-ups), on the user's go.
+  Z17b landed (EC-UPSTREAM2, the e2e-coverage PLAN; base `e25e40799`, args `waveZ17b-build.py`, run
+  `wf_723d139c-669`). Cross-review `.wave-loop\z17b-run1\xreview.md` (brief `waveZ17b-xreview-brief.md`); item notes
+  `.wave-loop\z17b-run1\ec-upstream2-tmp`. Prod not rebuilt after it (the user's call).
   HL3 landed ([healer-sims PLAN](../healer-sims/healer-sims.PLAN.md): HEAL-CORE, HEAL-PAL-2, HEAL-DRU-2;
   base `8f4569950`, args `waveHL3-build.py`, run `wf_cdad3276-19b`). Cross-review `.wave-loop\hl3-run1\xreview.md`
   (brief `waveHL3-xreview-brief.md`); item notes `.wave-loop\hl3-run1\heal-*-tmp`. Prod not rebuilt after it (the
@@ -216,10 +218,10 @@ upstream merge of that day, before Z18.
   presetgen, statweights' capture and the rankings, so the BiS chain optimizes under bot rules.
   Live stages stay short: the user finds hours of recordings not worth it (2026-10-16).
   The server runs [ac] `ea83cc94b` (image rebuilt 2026-10-24 13:18 UTC), an upstream merge over `62fb09c68` that
-  Z17b syncs; `62fb09c68` was the merge of 338 commits over `3d89793c7` (DB import ran, `simval trace` row present). Its image is rebuilt by other sessions for mod-playerbots (last 2026-10-19 16:23 local, same rev); a
+  Z17b synced; `62fb09c68` was the merge of 338 commits over `3d89793c7` (DB import ran, `simval trace` row present). Its image is rebuilt by other sessions for mod-playerbots (last 2026-10-19 16:23 local, same rev); a
   rebuild compiles every module's working tree as it stands, so a wave's uncommitted module C++ goes live with it.
-  EC-UPSTREAM audited the merge and recaptured the spelldump; the other committed records and fight logs, all but
-  the two Frost DK ones, predate it.
+  EC-UPSTREAM2 recaptured the spelldump and the eight dual-wield fight logs on `ea83cc94b`; the other committed
+  records and fight logs predate it.
   Z15's reports: `.wave-loop\z15-run1\*.json` and `xreview.md`; item notes
   `.wave-loop\{ec-core-fix12,ec-pet-fix10,ec-class-fix11,ec-tools5}-tmp`. Briefs to copy: `waveZ15-build.py`, the
   script `wave-loop-z14-wf_05383cd2-e97.js` (session `workflows\scripts`: an item's stages up to its first quiet live
@@ -259,7 +261,7 @@ upstream merge of that day, before Z18.
   - Perf scenarios refreshed `56a295570`, baseline on the 9950X3D `77b061b0c`.
   - Next time: [tools/bischain/README.md](../../tools/bischain/README.md) runs the whole chain; a narrowed run
     takes `--from-work bis-chain-1021`.
-- Workflow runIds: Z17's `wf_7326f510-421` (both, base `65cc430ed`, resumed once for the live stage; the cross-review ran as a plain agent); Z16's `wf_b6e64cf4-f8b` (both, base `6e24c717c`; the cross-review ran as a plain agent); Z15's `wf_22003b88-2d4` (all four, base `0127441aa`; the cross-review, the specs and the guides ran as plain agents); Z14's `wf_05383cd2-e97` (all four, base `36e678932`; the cross-review, the specs and the guides ran as plain agents); Z13's `wf_6395e35a-086` (all four, base `d61bbed61`; the cross-review, the specs and the guides ran as plain agents); Z12's `wf_661e4362-520` and `wf_ce509f13-550` (base `9a5d8fb6a`; the cross-review, the picks, the specs and the guides ran as plain agents); Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
+- Workflow runIds: Z17b's `wf_723d139c-669` (base `e25e40799`; the cross-review ran as a plain agent); Z17's `wf_7326f510-421` (both, base `65cc430ed`, resumed once for the live stage; the cross-review ran as a plain agent); Z16's `wf_b6e64cf4-f8b` (both, base `6e24c717c`; the cross-review ran as a plain agent); Z15's `wf_22003b88-2d4` (all four, base `0127441aa`; the cross-review, the specs and the guides ran as plain agents); Z14's `wf_05383cd2-e97` (all four, base `36e678932`; the cross-review, the specs and the guides ran as plain agents); Z13's `wf_6395e35a-086` (all four, base `d61bbed61`; the cross-review, the specs and the guides ran as plain agents); Z12's `wf_661e4362-520` and `wf_ce509f13-550` (base `9a5d8fb6a`; the cross-review, the picks, the specs and the guides ran as plain agents); Z11's `wf_ccee67e3-394` (all four, base `434442b93`; the spawn spots, the cross-review, the specs and the guides ran as plain agents); Z10's `wf_bd8bf9a8-4de` (all four, base `346249292`; the cross-review, the phase 4 picks, the specs and the guides ran as plain agents); Z9's `wf_68977dde-6ef` (all four, base `b4e8f6d52`) `wf_bade63ce-ecd` (BIS-TANK-PICKS's picks stage) and `wf_af6c63ed-d23` (its review); Z8's `wf_22d8a7f1-a8a` (all four, base `c244f8ee9`) and `wf_6d39358e-cad` (EC-PET-FIX4's live stage and review); Z7's `wf_90c05e5f-5b7` (all four, base `fd12d68cc`); Z6's `wf_9f63df91-dcd` (all four, base `c00231f37`); Z5's `wf_2bd87279-a32` (run 1, base `a1bb8d403`), `wf_caa6cd72-af1` (the rotations, base
   `5692dd49d`), `wf_0d256663-f64` (EC-THREAT-FIX4's live stage) and `wf_4c054cc8-0ce` (the live records, base
   `ef598ad48`); Z4's `wf_e9e036c7-5bd`; Z3's `wf_9aabe6e6-7af` (all four); Z2's `wf_7c79ba74-4ca` (code stages) and `wf_7e9c6966-820` (live stages, BIS-ALTS); Z's `wf_8821da6d-91f` (all five); Y's `wf_e58e8b14-102` (all four), `wf_d290cc37-ee6` and `wf_fe29d895-a35` (EC-TICK-FIX's rest and
   review); X2's `wf_b555c578-f46` (code stages), `wf_a0107f34-c7b` (live stages) and `wf_b00ecbe0-79a` (EC-RECHECK's
@@ -917,6 +919,8 @@ crashed before F2, so its column starts there.
 | CAP-FLOORS | merged | `f09e25c0d`, `22822103e` | reforge suggestions never drop a met hit, spell hit or expertise cap nor deepen a short one, and skip swaps under 5% of what they give up; no golden moves |
 | CAP-SERVER | merged | `d7df90071`; mod-reforging `c092fd3` | "Apply reforges on server…" sends `.reforge apply` over SOAP (on `192.168.49.35` and `127.0.0.1` only) for core-raid characters; live round trip on offline Angry; no golden moves |
 | wave Z17 cross-review | direct | `5745376cf`; mod-reforging `c9b887a` | the online path writes its row at once instead of two async writes; the dialog never strips a reforge the sim can't read; single Apply disabled where only Apply all keeps a cap; dev servers send no GM commands unless `WOTLK_DEV_SOAP_URL` is set; no golden moves |
+| EC-UPSTREAM2 | merged | `91645f9e0` | the server's upstream merge `ea83cc94b`: no 200 ms swing push, the off hand sits out the main hand's update, the stagger on a new attack only; Meteorite Crystal's stacks, Borrowed Time's chained ranks, a trap laid before the pull arms at once; spelldump and the eight dual-wield fight logs recaptured live; Assassination +3.95%, Combat +3.28%, Subtlety +1.60%, Fury -1.29%, Enhancement, the DKs and Disc within 0.1%, four suites' AllItems rows up to +2.24% (`9fbe5c9a4`) |
+| wave Z17b cross-review | direct | `dc9cb2af1` | Borrowed Time's charge before the effects (Hymn of Hope unhasted, Inner Focus takes it), Meteorite on casts outside `OnCastComplete`, the trap arming at its first update; TestDisc one row (`1269d7464`) |
 
 
 Later WIs are added as their wave starts.
