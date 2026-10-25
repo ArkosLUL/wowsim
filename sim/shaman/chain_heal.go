@@ -154,7 +154,7 @@ func (shaman *Shaman) registerChainHealSpell() {
 
 			for _, result := range results {
 				crit := result.Outcome.Matches(core.OutcomeCrit)
-				spell.DealHealing(sim, result)
+				shaman.dealEarthlivingHeal(sim, spell, result)
 				if crit {
 					shaman.procImpWaterShield(sim, impShieldChance)
 				}

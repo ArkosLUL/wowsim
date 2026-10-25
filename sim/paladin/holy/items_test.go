@@ -79,6 +79,41 @@ func TestGlyphOfHolyLightHealsFiveOthers(t *testing.T) {
 	}
 }
 
+// spell_pal_glyph_of_holy_light_dummy takes 10% of the Holy Light's effective heal when that's at least Holy Light's
+// 5444 top base points, else 10% of the whole heal, overheal and all.
+func TestGlyphOfHolyLightTakesTheEffectiveHeal(t *testing.T) {
+	for _, c := range []struct {
+		name      string
+		missing   float64
+		effective bool
+	}{
+		{"missing over 5444", 8000, true},
+		{"missing under 5444", 3000, false},
+	} {
+		sim, holy := healSetup{dummies: 3, damage: 1, glyphs: majorGlyph(proto.PaladinMajorGlyph_GlyphOfHolyLight)}.build(t)
+		startFight(sim)
+		dummies := targetDummies(sim)
+		target, other := dummies[1], dummies[2]
+		setSpellPower(sim, holy, 3000)
+		setCrit(sim, holy, -100)
+		fixRolls(holy.HolyLight)
+		glyph := holy.GetSpell(core.ActionID{SpellID: 54968})
+
+		target.RemoveHealth(sim, c.missing)
+		heal := castHeal(sim, holy.HolyLight, holy.HolyLight, target)
+		if heal <= c.missing {
+			t.Fatalf("%s: Holy Light healed %v, want more than the %v missing", c.name, heal, c.missing)
+		}
+		amount := heal
+		if c.effective {
+			amount = c.missing
+		}
+		if got, want := healed(glyph, other), math.Trunc(amount/10); got != want {
+			t.Errorf("%s: the glyph healed %v, want %v (10%% of %v)", c.name, got, want, amount)
+		}
+	}
+}
+
 // Glyph of Flash of Light (54936): +5% crit on Flash of Light alone.
 func TestGlyphOfFlashOfLightAddsCrit(t *testing.T) {
 	_, with := healSetup{glyphs: majorGlyph(proto.PaladinMajorGlyph_GlyphOfFlashOfLight)}.build(t)

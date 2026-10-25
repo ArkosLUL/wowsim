@@ -840,7 +840,7 @@ Stage 1, core (uncommitted). Rules: [damage and healing](../guide/damage-and-hea
 - Healer suites: `core.HealerSuiteIncomingDamage` (12000) on their one dummy; `statslopes` needs no change (it
   reads `hps`). Healer goldens (HPS, TPS from health gained): shaman Average -4.7%, druid -22.5%, paladin -7.1%,
   Disc -2.3%, Holy priest -1.9%: the dummy takes 6000 a second, so the druid's and paladin's higher raw HPS
-  overheals. The shaman's Earthliving hot heals more (Blessing of the Eternal, a dummy under 35%).
+  overheals.
 - Stand-ins (`HitTakenStandIn`, Chain Heal's `standInDeficit`) are untouched: the later stages replace them.
 
 Stage 2, priest-paladin (uncommitted).
@@ -891,28 +891,42 @@ reprints them (page request, 300 s, 3000 iterations, seed 424242; `statslopes.Me
   5% or less: shaman 9353 9338 12026 18878 18160 (kept 9300 9500 12100; P4 and P5 now 18900 18200); druid 9580 13359
   15178 19060 18614 (now 9600 13400 15200 19100, P5 kept 19200); paladin 11022 15548 18259 24169 25186 (now 11000 15500
   18300 24200 25200); Disc 6015 6782 7960 10385 11158 (all kept); Holy priest 6518 7546 8493 12667 12726 (now 6500 7500
-  8500 12700 12700). Preraid uses phase 1's.
-- Effective HPS (damage a second), preraid / P1 / P2 / P3 / P4 / P5:
-  shaman 6367 / 8260 / 7572 / 10635 / 19927 / 17743; druid 6296 / 8149 / 11946 / 13105 / 16926 / 16572;
-  paladin 8212 / 9482 / 14752 / 17721 / 23980 / 24108; Disc 4865 / 5679 / 6402 / 7606 / 10007 / 10781;
-  Holy priest 4463 / 5186 / 6089 / 7069 / 10442 / 10435. Overheal is 1.4 to 15.7% of raw (Holy priest 15.5 to 18.8%,
-  druid 6.5 to 13.7%, shaman 1.4 to 14.1%, paladin 1.7 to 9.3%, Disc 1.7 to 4.5%). Damage left unhealed: 1.0k to
-  3.4k a second for shaman and druid, 1.8k to 5.1k paladin, 1.5k to 2.4k Disc, 1.4k to 2.4k Holy priest.
-- Out of mana inside 300 s: shaman at every phase (OOM 177 to 288 s), druid at preraid to P2 (110 to 284 s; P3 314,
-  P4 339 s, P5 247 s), paladin at every phase except P4 (305 s), Holy priest at every phase, Disc at preraid to P3
+  8500 12700 12700). Preraid uses phase 1's. The cross-review re-measured them: shaman P1 to P3 now 10100 10100 12800.
+- Effective HPS (damage a second), preraid / P1 / P2 / P3 / P4 / P5, as the cross-review leaves them:
+  shaman 6850 / 8983 / 8110 / 11214 / 19732 / 17778; druid 6289 / 8106 / 11935 / 13083 / 16815 / 16586;
+  paladin 8164 / 9388 / 14667 / 17636 / 23924 / 24011; Disc 4847 / 5661 / 6383 / 7582 / 9982 / 10762;
+  Holy priest 4400 / 5105 / 6001 / 6974 / 10287 / 10260. Overheal is 1.4 to 20.1% of raw (Holy priest 16.6 to 20.1%,
+  druid 6.6 to 14.2%, shaman 1.4 to 11.1%, paladin 1.9 to 9.8%, Disc 1.7 to 4.5%). Damage left unhealed: 1.1k to
+  3.4k a second for shaman and druid, 1.9k to 5.2k paladin, 1.5k to 2.4k Disc, 1.4k to 2.4k Holy priest.
+- Out of mana inside 300 s: shaman at every phase (OOM 175 to 296 s), druid at preraid to P2 (110 to 284 s; P3 314,
+  P4 347 s, P5 255 s), paladin at every phase except P4 (305 s), Holy priest at every phase, Disc at preraid to P3
   but not P4 (372 s) and P5 (329 s).
 - Stat order against the class guides (not tuned to fit):
-  - Resto Druid crit low: matches (0.08 to 0.47 against Int 0.17 to 3.03 and SP 1.05 to 1.81). The heals cap at the
+  - Resto Druid crit low: matches (0.07 to 0.45 against Int 0.17 to 2.72 and SP 0.95 to 1.81). The heals cap at the
     missing health, so a crit's extra lands as overheal.
-  - Resto Shaman haste over crit: differs. Haste is negative at every phase (-0.56 to -2.04), crit +1.9 to +6.4.
+  - Resto Shaman haste over crit: differs. Haste is negative at every phase (-0.71 to -2.06), crit +1.9 to +6.1.
     The shaman runs dry at every phase, so haste only spends mana sooner, and crit feeds Improved Water Shield and
-    Ancestral Awakening. Spirit is about 0 (0.00 to 0.10): matches.
-  - Resto Shaman spell power is 0.07 at P1 and 0.6 to 0.8 at P2, P3 and P5, against 2.48 at P1 with damage 1e6: the
+    Ancestral Awakening. Spirit is about 0 (0.00 to 0.11): matches.
+  - Resto Shaman spell power is 0.32 at P1 and 0.6 to 0.8 at P2, P3 and P5, against 2.67 at P1 with damage 1e6: the
     damage, not the heal size, limits the HPS, and a bigger heal lands on a unit already near full.
-  - Disc haste turns positive only once the fight ends before the mana does (P4, P5); Holy priest haste is about 0
-    (idle between hurt units); the paladin's is -0.96 to +0.24.
+  - Disc haste turns positive only once the fight ends before the mana does (P4, P5); Holy priest haste is near 0
+    (0.37 at most; idle between hurt units); the paladin's is -1.12 to +0.35.
 - Tooling: `measure_report_test.go` in the four healer packages (HEAL_REPORT, HEAL_DAMAGE, HEAL_SEED).
 - Goldens (not promoted): the four healer suites, five `.results` files, as the earlier stages reported; no DPS or
   tank golden moves.
 - Playwright (smoke, header, default_fight, caps/, healer_incoming_damage) passes on :3336. The dist build does not track
   `incoming_damage.json`: after editing one, touch the page's `presets.ts` before `make dist/wotlk/.dirstamp`.
+
+Cross-review (uncommitted).
+- Core: with incoming damage a heal on any raid unit counts only up to its missing health, so heals on the
+  never-hurt healer (Circle of Healing, Wild Growth, 54968, Healing Stream, Blessing of the Eternal, a helpful
+  item cooldown) are overheal, not effective HPS; dummies no longer report raw HPS or unhealed damage. `MostHurt`
+  in aura and dot values is read at each evaluation (it gave no aura, or the build-time unit's dot).
+- Priest and paladin: Prayer of Mending heals 5 times a cast, not 6; Sacred Shield's absorb waits for the first hit
+  (a fresh aura has no cooldown and no absorb); Glyph of Holy Light takes the effective heal when it's at least 5444.
+- Druid and shaman: Blessing of the Eternal skips units with any Rejuvenation or Blessing of the Eternal (icon 64),
+  not Regrowth; Earthliving takes Blessing of the Eternals' +40% a point on a target under 35% before the heal and
+  loses Glyph of Earthliving Weapon's +5%.
+- Goldens (not promoted): the four healer suites; the one-dummy rows lose the self-heals (Average-Default Holy
+  priest -8.8%, paladin -6.8%, druid -9.3%, shaman +0.1%); Disc, Holy priest and paladin gain the druid's and
+  shaman's `Rotation-Default-Average` row (the page's P1 request, 180 s). No other suite moves.

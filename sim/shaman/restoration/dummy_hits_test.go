@@ -127,6 +127,7 @@ func TestDefaultAPLSizesTheHealToTheMissingHealth(t *testing.T) {
 		{"a little hurt", 2000, false, "Riptide"},
 		{"covered and a little hurt", 2000, true, ""},
 		{"medium", 3000, true, "Lesser Healing Wave"},
+		{"short of Chain Heal", 4400, true, "Lesser Healing Wave"},
 		{"badly hurt", 5000, true, "Chain Heal"},
 	} {
 		sim, shaman := healSetup{dummies: 3, damage: 1, apl: defaultAPL(t), talents: StandardTalents, glyphs: StandardGlyphs}.build(t)

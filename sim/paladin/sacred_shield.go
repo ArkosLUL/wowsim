@@ -60,9 +60,9 @@ func (paladin *Paladin) sacredShieldFlashCrit(target *core.Unit) float64 {
 	return 50 * core.CritRatingPerCritChance
 }
 
-// registerSacredShieldSpell is 53601, one target at a time (SPELL_ATTR5_LIMIT_N). 58597's absorb goes on with the
-// aura, then on a hit taken once a cooldown, a fresh aura starting the cooldown over and a refresh keeping it.
-// A raid with no incoming damage counts its target as hit all the time instead.
+// registerSacredShieldSpell is 53601, one target at a time (SPELL_ATTR5_LIMIT_N). 58597's absorb goes on at a hit
+// taken once a cooldown, which starts then; a refresh keeps the clock. A raid with no incoming damage counts the
+// target as hit all the time instead, so the absorb also goes on with the aura.
 func (paladin *Paladin) registerSacredShieldSpell() {
 	actionID := core.ActionID{SpellID: 53601}
 	state := &paladin.sacredShield
@@ -106,12 +106,13 @@ func (paladin *Paladin) registerSacredShieldSpell() {
 			Duration: paladin.sacredShieldDuration(time.Second * 30),
 			OnGain: func(aura *core.Aura, sim *core.Simulation) {
 				state.target = aura.Unit
-				hit(sim)
 				if paladin.Env.Raid.HasIncomingDamage() {
-					state.cooldownEnd = sim.CurrentTime + cooldown
-				} else {
-					state.standIn.Start(sim)
+					// the script's cooldown is per aura, a fresh one has none
+					state.cooldownEnd = sim.CurrentTime
+					return
 				}
+				hit(sim)
+				state.standIn.Start(sim)
 			},
 			OnSpellHitTaken: func(aura *core.Aura, sim *core.Simulation, _ *core.Spell, result *core.SpellResult) {
 				if result.Damage <= 0 || sim.CurrentTime < state.cooldownEnd || !paladin.Env.Raid.HasIncomingDamage() {

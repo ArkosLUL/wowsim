@@ -68,15 +68,16 @@ func (rot *APLRotation) GetTargetUnit(ref *proto.UnitReference) UnitReference {
 type AuraReference struct {
 	fixedAura *Aura
 
-	curTargetSource *Unit
-	curTargetAuras  AuraArray
+	// a CurrentTarget or MostHurt source, looked up at each Get
+	dynamicSource UnitReference
+	dynamicAuras  AuraArray
 }
 
 func (ar *AuraReference) Get() *Aura {
 	if ar.fixedAura != nil {
 		return ar.fixedAura
-	} else if ar.curTargetSource != nil {
-		return ar.curTargetAuras.Get(ar.curTargetSource.CurrentTarget)
+	} else if ar.dynamicAuras != nil {
+		return ar.dynamicAuras.Get(ar.dynamicSource.Get())
 	} else {
 		return nil
 	}
@@ -99,8 +100,8 @@ func newAuraReferenceHelper(sourceUnit UnitReference, auraId *proto.ActionID, au
 			auras[unit.UnitIndex] = auraGetter(unit, ProtoToActionID(auraId))
 		}
 		return AuraReference{
-			curTargetSource: sourceUnit.curTargetSource,
-			curTargetAuras:  auras,
+			dynamicSource: sourceUnit,
+			dynamicAuras:  auras,
 		}
 	}
 }
@@ -217,20 +218,40 @@ func (rot *APLRotation) GetTargetAPLSpell(spellId *proto.ActionID, targetUnit Un
 	return spell
 }
 
-func (rot *APLRotation) GetAPLDot(targetUnit UnitReference, spellId *proto.ActionID) *Dot {
+// DotReference is a spell's dot on a unit picked when the rotation is built, or on whichever unit a MostHurt
+// reference names at each Get.
+type DotReference struct {
+	spell    *Spell
+	fixedDot *Dot
+	mostHurt UnitReference
+}
+
+func (dr DotReference) Get() *Dot {
+	if dr.fixedDot != nil {
+		return dr.fixedDot
+	} else if dr.mostHurt.mostHurtSource != nil {
+		return dr.spell.Dot(dr.mostHurt.Get())
+	}
+	return nil
+}
+
+func (rot *APLRotation) GetAPLDot(targetUnit UnitReference, spellId *proto.ActionID) DotReference {
 	spell := rot.GetAPLSpell(spellId)
 
 	if spell == nil {
-		return nil
+		return DotReference{}
 	} else if spell.AOEDot() != nil {
-		return spell.AOEDot()
+		return DotReference{spell: spell, fixedDot: spell.AOEDot()}
 	} else {
 		target := targetUnit.Get()
-		if target != nil {
-			return spell.Dot(target)
-		} else {
-			return spell.CurDot()
+		if target == nil {
+			return DotReference{spell: spell, fixedDot: spell.CurDot()}
 		}
+		// a hot is on every friendly unit, so any unit MostHurt picks later has one too
+		if targetUnit.mostHurtSource != nil && spell.Dot(target) != nil {
+			return DotReference{spell: spell, mostHurt: targetUnit}
+		}
+		return DotReference{spell: spell, fixedDot: spell.Dot(target)}
 	}
 }
 

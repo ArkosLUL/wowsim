@@ -9,12 +9,12 @@ import (
 
 type APLValueDotIsActive struct {
 	DefaultAPLValueImpl
-	dot *Dot
+	dot DotReference
 }
 
 func (rot *APLRotation) newValueDotIsActive(config *proto.APLValueDotIsActive) APLValue {
 	dot := rot.GetAPLDot(rot.GetTargetUnit(config.TargetUnit), config.SpellId)
-	if dot == nil {
+	if dot.Get() == nil {
 		return nil
 	}
 	return &APLValueDotIsActive{
@@ -25,20 +25,20 @@ func (value *APLValueDotIsActive) Type() proto.APLValueType {
 	return proto.APLValueType_ValueTypeBool
 }
 func (value *APLValueDotIsActive) GetBool(sim *Simulation) bool {
-	return value.dot.IsActive()
+	return value.dot.Get().IsActive()
 }
 func (value *APLValueDotIsActive) String() string {
-	return fmt.Sprintf("Dot Is Active(%s)", value.dot.Spell.ActionID)
+	return fmt.Sprintf("Dot Is Active(%s)", value.dot.spell.ActionID)
 }
 
 type APLValueDotRemainingTime struct {
 	DefaultAPLValueImpl
-	dot *Dot
+	dot DotReference
 }
 
 func (rot *APLRotation) newValueDotRemainingTime(config *proto.APLValueDotRemainingTime) APLValue {
 	dot := rot.GetAPLDot(rot.GetTargetUnit(config.TargetUnit), config.SpellId)
-	if dot == nil {
+	if dot.Get() == nil {
 		return nil
 	}
 	return &APLValueDotRemainingTime{
@@ -49,8 +49,8 @@ func (value *APLValueDotRemainingTime) Type() proto.APLValueType {
 	return proto.APLValueType_ValueTypeDuration
 }
 func (value *APLValueDotRemainingTime) GetDuration(sim *Simulation) time.Duration {
-	return value.dot.RemainingDuration(sim)
+	return value.dot.Get().RemainingDuration(sim)
 }
 func (value *APLValueDotRemainingTime) String() string {
-	return fmt.Sprintf("Dot Remaining Time(%s)", value.dot.Spell.ActionID)
+	return fmt.Sprintf("Dot Remaining Time(%s)", value.dot.spell.ActionID)
 }

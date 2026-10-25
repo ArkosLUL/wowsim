@@ -72,6 +72,14 @@ func healthPctOrder(unit *core.Unit) float32 {
 	return float32(min(cur, most)) / float32(most)
 }
 
+// dealEarthlivingHeal deals a heal Earthliving can proc from. Its chance reads AURA_STATE_HEALTHLESS_35_PERCENT,
+// which the target's last update set (Unit::Update), so the health before this heal.
+func (shaman *Shaman) dealEarthlivingHeal(sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
+	target := result.Target
+	shaman.healTargetUnder35 = target.HasHealthBar() && target.CurrentHealth() < target.CountPctFromMaxHealth(35)
+	spell.DealHealing(sim, result)
+}
+
 // impWaterShieldChance is Improved Water Shield's chance on a heal's crit: the talent's proc chance, then
 // spell_sha_imp_water_shield's pct of it (60 for Lesser Healing Wave, 30 for Chain Heal, 100 otherwise).
 func (shaman *Shaman) impWaterShieldChance(pct int32) float64 {
@@ -135,7 +143,8 @@ func (shaman *Shaman) registerLesserHealingWaveSpell() {
 			if hasGlyph && shaman.EarthShield != nil && shaman.EarthShield.Hot(target).IsActive() {
 				baseHealing *= 1.2
 			}
-			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+			result := spell.CalcHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+			shaman.dealEarthlivingHeal(sim, spell, result)
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
 				shaman.procImpWaterShield(sim, impShieldChance)
@@ -210,7 +219,8 @@ func (shaman *Shaman) registerRiptideSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := shaman.healingPower(spell, target)
 			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, healPower)
-			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+			result := spell.CalcHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+			shaman.dealEarthlivingHeal(sim, spell, result)
 			spell.Hot(target).Apply(sim)
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
@@ -266,7 +276,8 @@ func (shaman *Shaman) registerHealingWaveSpell() {
 		ApplyEffects: func(sim *core.Simulation, target *core.Unit, spell *core.Spell) {
 			healPower := shaman.healingPower(spell, target)
 			baseHealing := spell.Direct.Roll(sim) + core.PowerBonus(spell.Direct.SP, healPower)
-			result := spell.CalcAndDealHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+			result := spell.CalcHealing(sim, target, baseHealing, spell.OutcomeHealingCrit)
+			shaman.dealEarthlivingHeal(sim, spell, result)
 
 			if result.Outcome.Matches(core.OutcomeCrit) {
 				shaman.procImpWaterShield(sim, impShieldChance)

@@ -387,7 +387,7 @@ func (unitMetrics *UnitMetrics) addSpellMetrics(spell *Spell, actionID ActionID,
 			unitMetrics.hps.Total += spellTargetMetrics.TotalHealing - spellTargetMetrics.TotalOverheal + spellTargetMetrics.TotalShielding
 			unitMetrics.rawHps.Total += spellTargetMetrics.TotalHealing + spellTargetMetrics.TotalShielding
 			unitMetrics.overheal.Total += spellTargetMetrics.TotalOverheal
-			if target.CountsOverheal() {
+			if target.Env.Raid.incoming.hits(target) {
 				unitMetrics.dummyHealed += spellTargetMetrics.TotalHealing - spellTargetMetrics.TotalOverheal
 			}
 		}
@@ -477,7 +477,7 @@ func (unitMetrics *UnitMetrics) doneIteration(unit *Unit, sim *Simulation) {
 	unitMetrics.hps.doneIteration(sim)
 	unitMetrics.tto.doneIteration(sim)
 
-	if sim.Raid.incoming != nil && unit.Type == PlayerUnit {
+	if sim.Raid.incoming != nil && unit.Type == PlayerUnit && !sim.Raid.incoming.hits(unit) {
 		unitMetrics.hasRawHps = true
 		unitMetrics.unhealed.Total = max(0, sim.Raid.IncomingDamageDealt()-unitMetrics.dummyHealed)
 		unitMetrics.rawHps.doneIteration(sim)

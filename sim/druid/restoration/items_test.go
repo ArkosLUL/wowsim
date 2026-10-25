@@ -349,8 +349,8 @@ func TestT10WildGrowthDecaysSlower(t *testing.T) {
 
 // spell_dru_t10_restoration_4p_bonus_dummy: 2% of Rejuvenation's ticks cast Blessing of the Eternal for the tick's
 // heal. spell_dru_t10_restoration_4p_bonus puts it on the raid member with the lowest health percent that has no
-// Regrowth, a tie in raid order, the healed one included. 70691 ignores the caster's modifiers, so each of its
-// ticks is the Rejuvenation tick's heal, and Nature's Splendor makes it 6 ticks.
+// druid periodic heal of Rejuvenation's icon, a tie in raid order. 70691 ignores the caster's modifiers, so each
+// of its ticks is the Rejuvenation tick's heal, and Nature's Splendor makes it 6 ticks.
 func TestT10BlessingOfTheEternal(t *testing.T) {
 	sim, druid := healSetup{dummies: 3, items: t10Garb[:4]}.build(t)
 	startFight(sim)
@@ -361,9 +361,17 @@ func TestT10BlessingOfTheEternal(t *testing.T) {
 
 	druid.Rejuvenation.SkipCastAndApplyEffects(sim, dummies[0])
 	hot := druid.Rejuvenation.Hot(dummies[0])
+	onDruid := blessing.Hot(&druid.Unit)
+	var snapshot float64
+	var ticks int32
 	const tickCount = 3000
 	for range tickCount {
 		hot.TickOnce(sim)
+		// taken off again so the next proc finds the druid free too
+		if onDruid.IsActive() {
+			snapshot, ticks = onDruid.SnapshotBaseDamage*onDruid.SnapshotAttackerMultiplier, onDruid.NumberOfTicks
+			onDruid.Cancel(sim)
+		}
 	}
 	all := casts(&druid.Unit)
 	for _, d := range dummies {
@@ -376,25 +384,39 @@ func TestT10BlessingOfTheEternal(t *testing.T) {
 	if got := casts(&druid.Unit); got != all {
 		t.Errorf("%d of %d went on the druid", got, all)
 	}
-	tick := healed(druid.Rejuvenation.Spell, dummies[0]) / tickCount
-	onDruid := blessing.Hot(&druid.Unit)
-	near(t, "Blessing of the Eternal's tick", onDruid.SnapshotBaseDamage*onDruid.SnapshotAttackerMultiplier, tick, 0)
-	if got, want := onDruid.NumberOfTicks, hot.NumberOfTicks; got != want {
-		t.Errorf("Blessing of the Eternal has %d ticks, want Rejuvenation's %d", got, want)
+	near(t, "Blessing of the Eternal's tick", snapshot, healed(druid.Rejuvenation.Spell, dummies[0])/tickCount, 0)
+	if want := hot.NumberOfTicks; ticks != want {
+		t.Errorf("Blessing of the Eternal has %d ticks, want Rejuvenation's %d", ticks, want)
 	}
+}
 
-	// a Regrowth keeps it off the hurt druid, and the healed dummy is the first of the rest
-	druid.RemoveHealth(sim, druid.MaxHealth()/2)
-	druid.Regrowth.SkipCastAndApplyEffects(sim, &druid.Unit)
-	atDruid, before := casts(&druid.Unit), casts(dummies[0])
-	for i := 0; casts(dummies[0]) == before && i < 100*tickCount; i++ {
-		hot.TickOnce(sim)
+// Blessing of the Eternal skips a unit with a Rejuvenation, the one whose tick procced it included, or a Blessing of
+// the Eternal, but not one with only a Regrowth.
+func TestT10BlessingOfTheEternalSkipsRejuvenations(t *testing.T) {
+	sim, druid := healSetup{dummies: 3, damage: 1, items: t10Garb[:4]}.build(t)
+	startFight(sim)
+	neverCrit(sim, druid)
+	// 77.5%, 95% and 85%, the druid at full
+	dummies := hurtDummies(sim, 9000, 1000, 3000)
+	druid.Regrowth.Hot(dummies[2]).Apply(sim)
+	druid.Rejuvenation.SkipCastAndApplyEffects(sim, dummies[0])
+	hot := druid.Rejuvenation.Hot(dummies[0])
+
+	blessing := druid.BlessingOfTheEternal
+	units := []*core.Unit{&druid.Unit, dummies[0], dummies[1], dummies[2]}
+	total := func() (n int32) {
+		for _, unit := range units {
+			n += blessing.SpellMetrics[unit.UnitIndex].Casts
+		}
+		return n
 	}
-	if casts(dummies[0]) == before {
-		t.Error("Blessing of the Eternal never went on the healed dummy")
-	}
-	if casts(&druid.Unit) != atDruid || casts(dummies[1])+casts(dummies[2]) != 0 {
-		t.Error("Blessing of the Eternal went on the druid, who has a Regrowth, or past the first dummy")
+	for i, want := range []*core.Unit{dummies[2], dummies[1], &druid.Unit} {
+		for j := 0; total() == int32(i) && j < 10000; j++ {
+			hot.TickOnce(sim)
+		}
+		if got := blessing.SpellMetrics[want.UnitIndex].Casts; total() != int32(i+1) || got != 1 {
+			t.Fatalf("proc %d didn't go on %s", i+1, want.Label)
+		}
 	}
 }
 

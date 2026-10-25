@@ -12,36 +12,40 @@ func init() {
 	RegisterHolyPaladin()
 }
 
-// The paladin heals a target dummy with every heal he has, his beacon on himself.
+// The character rows heal one target dummy, the tank, which holds the beacon too, so no heal copies there.
+// Rotation-Default-Average is the page's nine dummies.
 func TestHoly(t *testing.T) {
-	core.RunTestSuite(t, t.Name(), core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
-		Class:      proto.Class_ClassPaladin,
-		Race:       proto.Race_RaceBloodElf,
-		OtherRaces: []proto.Race{proto.Race_RaceHuman},
+	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
+		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{
+			Class:      proto.Class_ClassPaladin,
+			Race:       proto.Race_RaceBloodElf,
+			OtherRaces: []proto.Race{proto.Race_RaceHuman},
 
-		GearSet:     core.GetGearSet("../../../ui/holy_paladin/gear_sets", "p1"),
-		Talents:     StandardTalents,
-		Glyphs:      StandardGlyphs,
-		Consumes:    FullConsumes,
-		SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: BasicOptions},
-		Rotation:    core.RotationCombo{Label: "Default", Rotation: core.GetAplRotation("../../../ui/holy_paladin/apls", "default").Rotation},
+			GearSet:     core.GetGearSet("../../../ui/holy_paladin/gear_sets", "p1"),
+			Talents:     StandardTalents,
+			Glyphs:      StandardGlyphs,
+			Consumes:    FullConsumes,
+			SpecOptions: core.SpecOptionsCombo{Label: "Basic", SpecOptions: BasicOptions},
+			Rotation:    core.RotationCombo{Label: "Default", Rotation: core.GetAplRotation("../../../ui/holy_paladin/apls", "default").Rotation},
 
-		IsHealer:        true,
-		InFrontOfTarget: true,
+			IsHealer:        true,
+			InFrontOfTarget: true,
 
-		ItemFilter: core.ItemFilter{
-			WeaponTypes: []proto.WeaponType{
-				proto.WeaponType_WeaponTypeSword,
-				proto.WeaponType_WeaponTypePolearm,
-				proto.WeaponType_WeaponTypeMace,
-				proto.WeaponType_WeaponTypeShield,
+			ItemFilter: core.ItemFilter{
+				WeaponTypes: []proto.WeaponType{
+					proto.WeaponType_WeaponTypeSword,
+					proto.WeaponType_WeaponTypePolearm,
+					proto.WeaponType_WeaponTypeMace,
+					proto.WeaponType_WeaponTypeShield,
+				},
+				ArmorType: proto.ArmorType_ArmorTypePlate,
+				RangedWeaponTypes: []proto.RangedWeaponType{
+					proto.RangedWeaponType_RangedWeaponTypeLibram,
+				},
 			},
-			ArmorType: proto.ArmorType_ArmorTypePlate,
-			RangedWeaponTypes: []proto.RangedWeaponType{
-				proto.RangedWeaponType_RangedWeaponTypeLibram,
-			},
-		},
-	}))
+		}),
+		&core.SingleDpsTestGenerator{Name: "Rotation-Default-Average", Request: defaultAPLGoldenRequest()},
+	))
 }
 
 func BenchmarkSimulate(b *testing.B) {

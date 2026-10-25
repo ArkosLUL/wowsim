@@ -60,6 +60,13 @@ func TestLivingSeedBloomsOnTheDummiesHit(t *testing.T) {
 	if got := druid.LivingSeedHeal.SpellMetrics[target.UnitIndex].Casts; got != bloomed {
 		t.Errorf("%d blooms from one seed", got)
 	}
+
+	// nothing hits the druid, so no stand-in blooms a seed on him
+	castHeal(sim, druid.HealingTouch.Spell, &druid.Unit)
+	runUntil(sim, sim.CurrentTime+14*time.Second)
+	if got := healed(druid.LivingSeedHeal.Spell, &druid.Unit); got != 0 {
+		t.Errorf("a seed on the druid bloomed for %v", got)
+	}
 }
 
 // Wild Growth goes to the lowest health percents among the dummies, not the cast's target.
@@ -110,8 +117,11 @@ func TestDefaultAPLSizesTheHealToTheMissingHealth(t *testing.T) {
 		{"medium", 3000, false, false, nil, "Nourish"},
 		{"hurt", 4000, false, false, nil, "Wild Growth"},
 		{"hurt, no Wild Growth", 5000, false, false, []string{"Wild Growth"}, "Swiftmend"},
+		{"short of Swiftmend", 4000, false, false, []string{"Wild Growth"}, "Nourish"},
 		{"badly hurt", 7000, false, false, []string{"Wild Growth", "Swiftmend"}, "Regrowth"},
+		{"short of Regrowth", 5500, false, false, []string{"Wild Growth", "Swiftmend"}, "Nourish"},
 		{"Clearcasting", 5500, false, true, []string{"Wild Growth", "Swiftmend"}, "Healing Touch"},
+		{"Clearcasting, short of Healing Touch", 4800, false, true, []string{"Wild Growth", "Swiftmend"}, "Nourish"},
 	} {
 		sim, druid := healSetup{dummies: 3, damage: 1, apl: defaultAPL(t)}.build(t)
 		startFight(sim)

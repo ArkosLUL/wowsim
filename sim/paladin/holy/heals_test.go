@@ -172,8 +172,8 @@ func TestSacredShieldCooldownTakesDivineGuardian(t *testing.T) {
 	}
 }
 
-// Nothing damages the sim's raid, so the target counts as hit all the time: an absorb as Sacred Shield goes on,
-// then one a cooldown. A refresh keeps the clock; a new target starts it over.
+// Without incoming damage the target counts as hit all the time: an absorb as Sacred Shield goes on, then one a
+// cooldown. A refresh keeps the clock; a new target starts it over.
 func TestSacredShieldAbsorbsOnceACooldown(t *testing.T) {
 	count := func(holy *HolyPaladin, target *core.Unit) int32 {
 		return holy.SacredShieldAbsorb.SpellMetrics[target.UnitIndex].Hits

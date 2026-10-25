@@ -17,7 +17,8 @@ func (priest *Priest) registerPrayerOfMendingSpell() {
 		}
 	}
 
-	maxJumps := 5 + core.TernaryInt(priest.HasSetBonus(ItemSetRegaliaOfFaith, 2), 1, 0)
+	// 48111's 5 charges, each heal taking one before the jump, so a cast heals 5 times and jumps 4
+	maxJumps := 4 + core.TernaryInt(priest.HasSetBonus(ItemSetRegaliaOfFaith, 2), 1, 0)
 
 	var curTarget *core.Unit
 	var remainingJumps int

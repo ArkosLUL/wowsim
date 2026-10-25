@@ -42,6 +42,7 @@ func TestRestoration(t *testing.T) {
 			},
 		}),
 		&core.SingleDpsTestGenerator{Name: "Talents-LivingSeed-Average", Request: livingSeedTalentsRequest()},
+		&core.SingleDpsTestGenerator{Name: "Rotation-Default-Average", Request: defaultAPLGoldenRequest()},
 	))
 }
 

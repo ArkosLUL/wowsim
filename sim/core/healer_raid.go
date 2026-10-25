@@ -72,6 +72,22 @@ func (incoming *incomingDamage) dummyHealth(dummyIndex int) float64 {
 	}
 }
 
+// hits is whether the damage lands on the unit, one of the dummies.
+func (incoming *incomingDamage) hits(unit *Unit) bool {
+	if incoming == nil {
+		return false
+	}
+	if incoming.tank != nil && unit == &incoming.tank.Unit {
+		return true
+	}
+	for _, dummy := range incoming.raid {
+		if unit == &dummy.Unit {
+			return true
+		}
+	}
+	return false
+}
+
 // add records dummy i, the first being the tank.
 func (incoming *incomingDamage) add(dummyIndex int, dummy *TargetDummy) {
 	if dummyIndex == 0 {

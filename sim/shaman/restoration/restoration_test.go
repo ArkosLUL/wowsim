@@ -13,7 +13,7 @@ func init() {
 	RegisterRestorationShaman()
 }
 
-// The page's default APL, healing a target dummy at the page's Earth Shield rate.
+// The page's default APL, healing a target dummy that takes core.HealerSuiteIncomingDamage.
 func TestRestoration(t *testing.T) {
 	core.RunTestSuite(t, t.Name(), core.JoinTestGenerators(
 		core.FullCharacterTestSuiteGenerator(core.CharacterSuiteConfig{

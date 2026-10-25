@@ -42,6 +42,15 @@ func (paladin *Paladin) healingDoneFactor(underPlea bool) float64 {
 	return factor
 }
 
+// effectiveHeal is HealInfo::GetEffectiveHeal of a heal about to land: what the target is missing, at most the
+// heal. A unit without a health bar takes it all.
+func effectiveHeal(target *core.Unit, heal float64) float64 {
+	if !target.HasHealthBar() {
+		return heal
+	}
+	return min(heal, max(0, target.MaxHealth()-target.CurrentHealth()))
+}
+
 // directHeal deals one of Holy Light, Flash of Light and Holy Shock's heal, the paladin's procs off it, then Light's
 // Beacon's copy of it: the heal before the target's taken terms, crit included (HealInfo::GetHealBeforeTakenMods).
 func (paladin *Paladin) directHeal(sim *core.Simulation, target *core.Unit, spell *core.Spell, baseHealing float64,
@@ -65,6 +74,7 @@ func (paladin *Paladin) directHeal(sim *core.Simulation, target *core.Unit, spel
 	if crit {
 		beforeTaken = math.Trunc(beforeTaken * spell.CritMultiplier)
 	}
+	effective := effectiveHeal(target, heal)
 	spell.DealHealing(sim, result)
 
 	switch spell {
@@ -73,7 +83,7 @@ func (paladin *Paladin) directHeal(sim *core.Simulation, target *core.Unit, spel
 			paladin.infusionOfLight.aura.Deactivate(sim)
 		}
 		paladin.lightsGraceOnHolyLight(sim)
-		paladin.onHolyLight(sim, target, heal)
+		paladin.onHolyLight(sim, target, heal, effective)
 		if crit {
 			paladin.illuminate(sim, 29)
 		}

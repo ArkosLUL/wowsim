@@ -71,6 +71,14 @@ func pageRequest(phase string) *proto.RaidSimRequest {
 	return rsr
 }
 
+// the page's P1 request, whose nine dummies the suite's own rows lack, on the golden rows' 180 s fight
+func defaultAPLGoldenRequest() *proto.RaidSimRequest {
+	rsr := pageRequest("p1")
+	rsr.SimOptions = core.AverageDefaultSimTestOptions
+	rsr.Encounter.Duration = 180
+	return rsr
+}
+
 func castsAndHealing(unit *proto.UnitMetrics, spellID int32) (casts int32, healing float64) {
 	for _, action := range unit.Actions {
 		if action.Id.GetSpellId() != spellID {

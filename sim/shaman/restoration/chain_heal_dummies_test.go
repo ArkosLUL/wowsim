@@ -27,9 +27,9 @@ func watchHeals(shaman *RestorationShaman, spell func() *core.Spell) *[]*core.Un
 	return &order
 }
 
-// The server only jumps to hurt units, and nothing damages the sim's target dummies: a dummy counts as missing a
-// sliver of health, in raid order, so Chain Heal reaches the glyph's 3 jumps across them. A real unit at full
-// health, the shaman here, is skipped, and a real deficit goes before any dummy.
+// The server only jumps to hurt units, and without incoming damage nothing hurts the sim's target dummies: a dummy
+// counts as missing a sliver of health, in raid order, so Chain Heal reaches the glyph's 3 jumps across them. A
+// real unit at full health, the shaman here, is skipped, and a real deficit goes before any dummy.
 func TestChainHealJumpsAcrossTheDummies(t *testing.T) {
 	for _, c := range []struct {
 		name  string

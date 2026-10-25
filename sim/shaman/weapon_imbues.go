@@ -416,10 +416,9 @@ func (shaman *Shaman) RegisterEarthlivingImbue(procMask core.ProcMask) {
 		shaman.ApplyEarthlivingImbueToItem(shaman.OffHand())
 	}
 
-	procChance := 0.2
-	if shaman.HasMajorGlyph(proto.ShamanMajorGlyph_GlyphOfEarthlivingWeapon) {
-		procChance += 0.05
-	}
+	// spell_sha_earthliving_weapon rolls 20%, plus Blessing of the Eternals' 40% a point on a target under 35%.
+	// The glyph's +5% goes on the passive's own 100% proc chance (SPELLMOD_CHANCE_OF_SUCCESS), so it adds nothing
+	eternals := 0.4 * float64(shaman.Talents.BlessingOfTheEternals)
 
 	imbueSpell := shaman.newEarthlivingImbueSpell()
 
@@ -432,6 +431,10 @@ func (shaman *Shaman) RegisterEarthlivingImbue(procMask core.ProcMask) {
 		OnHealDealt: func(aura *core.Aura, sim *core.Simulation, spell *core.Spell, result *core.SpellResult) {
 			if spell != shaman.ChainHeal && spell != shaman.LesserHealingWave && spell != shaman.HealingWave && spell != shaman.Riptide {
 				return
+			}
+			procChance := 0.2
+			if shaman.healTargetUnder35 {
+				procChance += eternals
 			}
 
 			if procMask.Matches(core.ProcMaskMeleeMH) && sim.RandomFloat("earthliving") < procChance {

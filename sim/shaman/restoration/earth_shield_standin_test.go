@@ -13,8 +13,8 @@ func charges(shaman *RestorationShaman, target *core.Unit) int32 {
 	return metrics.Hits + metrics.Crits
 }
 
-// Nothing damages the sim's raid, so Earth Shield's charges come off a stand-in hit taken at the page's rate
-// (earth_shield_p_p_m), the first a period after the cast, 379's 3.5 s cooldown spacing them.
+// Without incoming damage nothing hits the sim's raid, so Earth Shield's charges come off a stand-in hit taken at
+// the page's rate (earth_shield_p_p_m), the first a period after the cast, 379's 3.5 s cooldown spacing them.
 func TestEarthShieldChargesFromStandInHits(t *testing.T) {
 	for _, c := range []struct {
 		name string

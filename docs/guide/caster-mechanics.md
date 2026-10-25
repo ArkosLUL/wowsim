@@ -93,8 +93,10 @@ pets and guardians in [pets](pets.md).
     the chance taken as the hot went on or refreshed. T10 (Lasherweave Garb): Wild Growth's 2%-a-tick decay
     loses 30% (1.4) on a new aura and 30% again at each refresh (0.98, 0.69…), as `spell_dru_wild_growth_aura`
     reruns on a refresh; each Rejuvenation tick has 2% to cast Blessing of the Eternal (70691), a hot of that heal
-    on the raid unit lowest in health without a Regrowth (the one healed included: the cast has no explicit
-    target; the druid when alone). 70691 ignores caster modifiers (no spell mods, only aura 136 at each tick)
+    on the raid unit lowest in health percent with no druid periodic heal of icon 64 on effect 0, i.e. no
+    Rejuvenation or Blessing of the Eternal from any druid (`spell_dru_t10_restoration_4p_bonus`'s iconId
+    `GetAuraEffect`): never the unit whose tick procced, a Regrowth doesn't count, and with everyone covered
+    nothing is cast. 70691 ignores caster modifiers (no spell mods, only aura 136 at each tick)
     but not duration mods: Nature's Splendor makes it 18 s, and Rapid Rejuvenation hastes it. With
     Rejuvenation's family flag, Swiftmend eats it (4 ticks) and Revitalize rolls on its ticks.
   - **Resto relics:** Budding Life -36 and Awakening -106 mana on Rejuvenation; Pure Thoughts +33 on its tick;
@@ -116,16 +118,16 @@ pets and guardians in [pets](pets.md).
       | | preraid | P1 | P2 | P3 | P4 | P5 |
       |---|---|---|---|---|---|---|
       | Damage a second | 9600 | 9600 | 13400 | 15200 | 19100 | 19200 |
-      | Effective / raw HPS | 6296 / 6734 | 8149 / 9446 | 11946 / 13023 | 13105 / 14682 | 16926 / 18739 | 16572 / 18128 |
-      | Overheal | 6.5% | 13.7% | 8.3% | 10.7% | 9.7% | 8.6% |
-      | Time to OOM (s out of mana) | 110 (88) | 171 (51) | 284 (5) | 314 (1) | 339 (0) | 247 (13) |
+      | Effective / raw HPS | 6289 / 6734 | 8106 / 9446 | 11935 / 13023 | 13083 / 14682 | 16815 / 18838 | 16586 / 18390 |
+      | Overheal | 6.6% | 14.2% | 8.4% | 10.9% | 10.7% | 9.8% |
+      | Time to OOM (s out of mana) | 110 (88) | 171 (51) | 284 (5) | 314 (1) | 347 (0) | 255 (10) |
 
       Past 300 s is the sim's estimate. The P5 preset is P4 plus the Ruby Sanctum cloak, bracers, belt, ring and
       trinket. P2's Val'anyr bubble jumping to 200000 (`spell_item_blessing_of_ancient_kings`) counts as
       shielding. The overheal is mostly Rejuvenation (`multihot`) on units missing little.
     - Effective HPS a point, `statslopes.Measure` at the same request, gain (Int / Spirit / SP / crit / haste /
-      MP5): preraid 1.16 / 1.54 / 1.60 / 0.12 / 0.02 / 3.53; P1 2.64 / 1.81 / 1.05 / 0.08 / -0.16 / 4.16; P3 0.36 /
-      0.44 / 1.56 / 0.47 / 0.22 / 0.26; P5 3.03 / 2.84 / 1.81 / 0.28 / -0.30 / 4.39. Crit stays under 0.5: heals
+      MP5): preraid 1.16 / 1.52 / 1.57 / 0.12 / 0.02 / 3.52; P1 2.59 / 1.77 / 0.95 / 0.07 / -0.17 / 4.10; P3 0.34 /
+      0.43 / 1.49 / 0.45 / 0.20 / 0.26; P5 2.72 / 2.58 / 1.81 / 0.31 / -0.25 / 3.69. Crit stays under 0.5: heals
       cap at the missing health. Mana stats fall once a phase stops running dry (P2 to P4). Haste is about 0 or
       negative while mana-bound, as it only spends mana sooner; Lifebloom and the hots don't scale with it.
 - **Savage Defense** holds one charge, which the druid's crits refill at their own rate: the slower the boss
@@ -213,6 +215,11 @@ pets and guardians in [pets](pets.md).
 - **Improved Water Shield** rolls on a heal's crit at 33/66/100% × 60% for Lesser Healing Wave, 30% for Chain
   Heal, 100% otherwise (`impWaterShieldChance`; `spell_sha_imp_water_shield`), and gives mana only with Water
   Shield up, using no orb.
+- **Earthliving** (`spell_sha_earthliving_weapon`): a Chain Heal, Lesser Healing Wave, Healing Wave or Riptide
+  heal has 20% to put 52000 on its target, plus Blessing of the Eternals' 40% a point when the target was under
+  35% health before the heal (`AURA_STATE_HEALTHLESS_35_PERCENT`, set on the target's update;
+  `dealEarthlivingHeal`). Glyph of Earthliving Weapon's +5% lands on the passive's own 100% proc chance
+  (`SPELLMOD_CHANCE_OF_SUCCESS`), so does nothing.
 - **Resto page** (`ui/restoration_shaman/apls/default.apl.json`): Call of the Elements and Earth Shield before the
   pull, then Earth Shield on the tank when it's gone. It answers the most hurt unit and waits when nobody is:
   by the most hurt unit's missing health, Tidal Force over 4000, Riptide (`multihot`) over 1500, Chain Heal over
@@ -224,28 +231,28 @@ pets and guardians in [pets](pets.md).
 
     | | preraid | P1 | P2 | P3 | P4 | P5 |
     |---|---|---|---|---|---|---|
-    | Damage a second | 9300 | 9300 | 9500 | 12100 | 18900 | 18200 |
-    | Effective / raw HPS | 6367 / 6460 | 8260 / 8934 | 7572 / 8811 | 10635 / 11826 | 19927 / 20462 | 17743 / 19259 |
-    | Overheal | 1.4% | 7.5% | 14.1% | 10.1% | 2.6% | 7.9% |
-    | Time to OOM (s out of mana) | 183 (75) | 250 (31) | 177 (76) | 216 (46) | 288 (15) | 242 (38) |
+    | Damage a second | 10100 | 10100 | 10100 | 12800 | 18900 | 18200 |
+    | Effective / raw HPS | 6850 / 6944 | 8983 / 9223 | 8110 / 9119 | 11214 / 11965 | 19732 / 20209 | 17778 / 19230 |
+    | Overheal | 1.4% | 2.6% | 11.1% | 6.3% | 2.4% | 7.5% |
+    | Time to OOM (s out of mana) | 190 (69) | 264 (25) | 175 (76) | 214 (47) | 296 (12) | 242 (38) |
 
     Improved Water Shield's crit procs are the largest mana source.
   - "Measure at my gear" (effective HPS a point, gain) is nonzero for Int, MP5 and crit at every phase:
 
     | | Int | Spirit | SP | MP5 | Crit | Haste |
     |---|---|---|---|---|---|---|
-    | preraid | 4.78 | 0.10 | 1.58 | 7.08 | 2.43 | -0.56 |
-    | P1 | 3.59 | 0.02 | 0.07 | 5.92 | 2.27 | -1.52 |
-    | P2 | 3.84 | 0.04 | 0.66 | 6.89 | 1.92 | -0.87 |
-    | P3 | 5.44 | 0.01 | 0.62 | 8.95 | 3.15 | -1.66 |
-    | P4 | 7.07 | 0.00 | 2.44 | 9.18 | 6.37 | -1.46 |
-    | P5 | 9.08 | 0.03 | 0.76 | 15.41 | 6.16 | -2.04 |
+    | preraid | 4.85 | 0.10 | 1.55 | 7.30 | 2.34 | -0.89 |
+    | P1 | 3.72 | 0.04 | 0.32 | 5.59 | 2.55 | -1.46 |
+    | P2 | 3.79 | 0.11 | 0.62 | 6.92 | 1.93 | -0.90 |
+    | P3 | 5.18 | 0.00 | 0.65 | 8.74 | 3.03 | -1.71 |
+    | P4 | 6.42 | 0.00 | 3.06 | 7.41 | 6.09 | -0.71 |
+    | P5 | 8.59 | 0.05 | 0.78 | 14.75 | 5.95 | -2.06 |
 
-    Haste gains are negative at every phase (its loss turns positive only at P4, +4.00): mana-bound, it spends
+    Haste gains are negative at every phase (its loss turns positive only at P4, +3.38): mana-bound, it spends
     mana sooner. SP is low where the damage, not the heal size, limits the HPS: a bigger heal lands on a unit
-    already near full (P1 0.07; with damage 1e6 and nothing overhealing, SP gains 2.48 there).
+    already near full (P1 0.32; with damage 1e6 and nothing overhealing, SP gains 2.67 there).
   - Spirit gives mana only outside the five-second rule, and even out of mana the shaman casts again as soon as
-    in-combat regen pays for a spell, so Spirit measures about 0 (0.00 to 0.10) at every phase and fight length.
+    in-combat regen pays for a spell, so Spirit measures about 0 (0.00 to 0.11) at every phase and fight length.
   - Val'anyr's shields count as healing, so it beats the 893 spell power scepter in HPS.
 - **Frost Witch's 4-piece** (`spell_sha_t10_elemental_4p_bonus`): a Lava Burst cast adds 6 s to Flame Shock's
   time left. The max duration, which caps the ticks, rises only when the new time passes it
@@ -324,7 +331,9 @@ pets and guardians in [pets](pets.md).
   cast time took, a magic channel (Hymn of Hope, Mind Flay) gets none. Penance and Prayer of Mending have no
   damage class and leave it.
 - **Prayer of Mending** procs on a hit its holder takes (damage above 0), then jumps to the unit missing the most
-  health. With no incoming damage a 5 s timer stands in for the hit.
+  health. A cast heals 5 times, 6 with T7's 2-piece: each proc takes one of 48111's charges before the jump reads
+  them (`AuraEffect::HandleRaidProcFromChargeWithValueAuraProc`). With no incoming damage a 5 s timer stands in
+  for the hit.
 - **Healing Priest APLs** (`ui/healing_priest/apls`) answer the most hurt unit and wait when nobody is hurt; the
   mana pool limits them, with no `spellCpm` caps. Both keep Prayer of Mending on the tank, disc its Power Word:
   Shield too (a shield counts in full wherever it goes).
@@ -341,23 +350,24 @@ pets and guardians in [pets](pets.md).
     | | preraid | P1 | P2 | P3 | P4 | P5 |
     |---|---|---|---|---|---|---|
     | Disc damage a second | 6200 | 6200 | 7000 | 8100 | 10500 | 11200 |
-    | Disc HPS | 4865 / 4980 | 5679 / 5949 | 6402 / 6673 | 7606 / 7827 | 10007 / 10184 | 10781 / 11008 |
-    | Disc overheal | 2.3% | 4.5% | 4.1% | 2.8% | 1.7% | 2.1% |
+    | Disc HPS | 4847 / 4962 | 5661 / 5930 | 6383 / 6651 | 7582 / 7802 | 9982 / 10159 | 10762 / 10990 |
+    | Disc overheal | 2.3% | 4.5% | 4.0% | 2.8% | 1.7% | 2.1% |
     | Disc OOM | 147 (76) | 157 (64) | 163 (62) | 197 (40) | 372 (0) | 329 (0) |
     | Holy damage a second | 6500 | 6500 | 7500 | 8500 | 12700 | 12700 |
-    | Holy HPS | 4463 / 5295 | 5186 / 6389 | 6089 / 7380 | 7069 / 8362 | 10442 / 12522 | 10435 / 12395 |
-    | Holy overheal | 15.7% | 18.8% | 17.5% | 15.5% | 16.6% | 15.8% |
+    | Holy HPS | 4400 / 5295 | 5105 / 6389 | 6001 / 7380 | 6974 / 8362 | 10287 / 12522 | 10260 / 12395 |
+    | Holy overheal | 16.9% | 20.1% | 18.7% | 16.6% | 17.8% | 17.2% |
     | Holy OOM | 105 (126) | 122 (103) | 113 (107) | 101 (124) | 192 (40) | 151 (76) |
 
-    Holy's overheal is Renew via `multihot` on units missing little.
+    Holy's overheal is mostly Renew via `multihot` on units missing little, then Circle of Healing on full units,
+    the priest among them.
   - "Measure at my gear", effective HPS a point, gain (Int / Spirit / SP / MP5 / crit / haste):
 
     | | preraid | P1 | P3 | P4 | P5 |
     |---|---|---|---|---|---|
-    | Disc | 2.04 / 0.76 / 0.87 / 1.91 / 0.71 / -0.04 | 2.37 / 0.81 / 0.73 / 2.42 / 0.67 / -0.17 | 3.15 / 1.28 / 0.95 / 3.07 / 0.99 / -0.18 | 0.74 / 0.26 / 1.30 / 0.34 / 1.27 / 1.30 | 0.45 / 0.01 / 1.39 / 0.00 / 1.44 / 0.58 |
-    | Holy | 1.62 / 1.59 / 0.79 / 1.62 / 0.34 / -0.03 | 2.77 / 2.88 / 0.81 / 4.11 / 0.36 / -0.01 | 1.90 / 2.30 / 0.81 / 3.40 / 0.61 / 0.03 | 0.69 / 0.46 / 0.94 / 1.59 / 0.44 / 0.17 | 0.71 / 0.32 / 1.02 / 1.10 / 0.56 / 0.31 |
+    | Disc | 2.03 / 0.77 / 0.87 / 1.92 / 0.71 / -0.04 | 2.39 / 0.82 / 0.72 / 2.44 / 0.67 / -0.17 | 3.22 / 1.33 / 0.97 / 3.15 / 0.99 / -0.18 | 0.73 / 0.26 / 1.29 / 0.34 / 1.31 / 1.33 | 0.37 / -0.02 / 1.35 / -0.02 / 1.35 / 0.55 |
+    | Holy | 1.58 / 1.57 / 0.77 / 1.59 / 0.33 / -0.03 | 2.71 / 2.85 / 0.75 / 4.05 / 0.34 / -0.01 | 1.84 / 2.25 / 0.79 / 3.33 / 0.58 / 0.03 | 0.54 / 0.32 / 0.86 / 1.42 / 0.41 / 0.22 | 0.61 / 0.28 / 0.97 / 1.00 / 0.53 / 0.37 |
 
-    Holy's haste is about 0 at every phase (it idles between hurt units); Disc's turns positive once it stops
+    Holy's haste stays near 0 (0.37 at most; it idles between hurt units); Disc's turns positive once it stops
     running dry (P4, P5).
 - **Twisted Faith** at 5/5 gives 53% of Spirit as spell power, damage and healing (mod-spell-tweaks'
   `spell_dbc` row for 51167; stock 20%). Ranks 1–4 stay 4% a rank.

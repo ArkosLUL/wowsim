@@ -144,10 +144,12 @@ type Shaman struct {
 	EarthShield            *core.Spell
 	TidalForce             *core.Spell
 
-	// Earth Shield's stand-in hits, per target
+	// Earth Shield's hits and 379's cooldown, per target
 	earthShieldTargets map[*core.Unit]*earthShieldHits
 	// the raid's target dummies, which a chain heal's jumps fall back on
 	dummyUnits map[*core.Unit]bool
+	// whether the target of the heal being dealt was under 35% health before it, for Earthliving
+	healTargetUnder35 bool
 
 	// Glyph of Healing Wave's heal and the base points the next one carries
 	glyphOfHealingWaveHeal *core.Spell

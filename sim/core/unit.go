@@ -154,7 +154,7 @@ type Unit struct {
 	focusBar
 	runicPowerBar
 
-	// a heal on this unit counts only up to its missing health (see TargetDummy.takesDamage)
+	// a heal on this unit counts only up to its missing health: every raid unit's when the raid has incoming damage
 	countsOverheal bool
 
 	// every SPELL_AURA_MOD_HEALING_PCT amount on the unit, in percent (AddHealingTakenPct)

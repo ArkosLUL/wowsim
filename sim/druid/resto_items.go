@@ -219,6 +219,20 @@ func (druid *Druid) targetHasRegrowth(target *core.Unit) bool {
 	return false
 }
 
+// targetHasRejuvenation is whether any druid's Rejuvenation or Blessing of the Eternal is on the target.
+func (druid *Druid) targetHasRejuvenation(target *core.Unit) bool {
+	for _, unit := range druid.Env.Raid.AllPlayerUnits {
+		if other, ok := druid.Env.Raid.GetPlayerFromUnit(unit).(DruidAgent); ok {
+			for _, spell := range []*DruidSpell{other.GetDruid().Rejuvenation, other.GetDruid().BlessingOfTheEternal} {
+				if spell != nil && spell.Hot(target).IsActive() {
+					return true
+				}
+			}
+		}
+	}
+	return false
+}
+
 // countHots is the druid's periodic heals on the target, which Glyph of Nourish counts.
 func (druid *Druid) countHots(target *core.Unit) int {
 	var n int
@@ -328,8 +342,8 @@ func (druid *Druid) registerBlessingOfTheEternal() {
 }
 
 // blessingTarget is spell_dru_t10_restoration_4p_bonus' pick: grouped, the raid member with the lowest health
-// percent and no Regrowth; alone, the druid. The proc casts 70691 with no target, so the healed unit can get it too:
-// the script only leaves out the cast's explicit target, which there isn't.
+// percent and no Rejuvenation; alone, the druid. The script skips a unit with a druid periodic heal of icon 64
+// on effect 0, which is any druid's Rejuvenation or Blessing of the Eternal, so never the unit whose tick procced.
 func (druid *Druid) blessingTarget() *core.Unit {
 	units := druid.Env.Raid.AllUnits
 	if len(units) <= 1 {
@@ -337,7 +351,7 @@ func (druid *Druid) blessingTarget() *core.Unit {
 	}
 	var pick *core.Unit
 	for _, unit := range units {
-		if !unit.IsEnabled() || (unit.HasHealthBar() && unit.CurrentHealth() <= 0) || druid.targetHasRegrowth(unit) {
+		if !unit.IsEnabled() || (unit.HasHealthBar() && unit.CurrentHealth() <= 0) || druid.targetHasRejuvenation(unit) {
 			continue
 		}
 		if pick == nil || healthPctOrder(unit) < healthPctOrder(pick) {

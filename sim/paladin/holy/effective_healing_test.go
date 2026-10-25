@@ -9,35 +9,53 @@ import (
 	"github.com/wowsims/wotlk/sim/core"
 )
 
-// spell_pal_sacred_shield_dummy: with incoming damage the absorb goes on with the aura, then on the first hit the
-// shielded unit takes once its cooldown (7 s with the standard talents) is up. A hit on anyone else adds nothing.
+// spell_pal_sacred_shield_dummy: with incoming damage 58597 goes on at a hit the shielded unit takes, the first
+// one once its cooldown (7 s with the standard talents) is up. The cooldown lives on the aura: a refresh keeps
+// it, a fresh aura has none. A hit on anyone else adds nothing.
 func TestSacredShieldAbsorbsOnHitsTaken(t *testing.T) {
-	count := func(holy *HolyPaladin, target *core.Unit) int32 {
-		return holy.SacredShieldAbsorb.SpellMetrics[target.UnitIndex].Hits
-	}
-
+	// the tank is hit every 2 s; four raid dummies means all of them every 4 s
 	sim, holy := healSetup{dummies: 5, damage: 100}.build(t)
+	check := func(at time.Duration, unit *core.Unit, want int32) {
+		t.Helper()
+		if got := holy.SacredShieldAbsorb.SpellMetrics[unit.UnitIndex].Hits; got != want {
+			t.Errorf("%s: %d absorbs by %v, want %d", unit.Label, got, at, want)
+		}
+	}
 	startFight(sim)
 	dummies := targetDummies(sim)
 	tank, raid := dummies[0], dummies[1:]
 	cast(sim, holy.SacredShield, tank)
-	runUntil(sim, 7500*time.Millisecond)
-	if got := count(holy, tank); got != 1 {
-		t.Errorf("%d absorbs by 7.5 s, want only the one with the aura: the cooldown is up at 7 s but no hit lands before 8 s", got)
+	for _, step := range []struct {
+		at   time.Duration
+		want int32
+	}{
+		// none with the aura, one at the first hit
+		{1900 * time.Millisecond, 0},
+		{2100 * time.Millisecond, 1},
+		// up again at 9 s, the next hit at 10 s
+		{9500 * time.Millisecond, 1},
+		{10500 * time.Millisecond, 2},
+	} {
+		runUntil(sim, step.at)
+		check(step.at, tank, step.want)
 	}
-	// the hit at 8 s is the first past the cooldown, the next one at 16 s
-	runUntil(sim, 8500*time.Millisecond)
-	if got := count(holy, tank); got != 2 {
-		t.Errorf("%d absorbs by 8.5 s, want 2", got)
-	}
-	runUntil(sim, 20*time.Second)
-	if got := count(holy, tank); got != 3 {
-		t.Errorf("%d absorbs by 20 s, want 3", got)
-	}
-	for _, unit := range raid {
-		if got := count(holy, unit); got != 0 {
-			t.Errorf("%s took %d absorbs without Sacred Shield", unit.Label, got)
-		}
+
+	// a refresh at 11 s keeps the cooldown, up at 17 s
+	cast(sim, holy.SacredShield, tank)
+	runUntil(sim, 17500*time.Millisecond)
+	check(17500*time.Millisecond, tank, 2)
+	runUntil(sim, 18500*time.Millisecond)
+	check(18500*time.Millisecond, tank, 3)
+
+	// moved at 19 s with the tank's cooldown running to 25 s, the new aura still takes the raid's hit at 20 s
+	cast(sim, holy.SacredShield, raid[0])
+	runUntil(sim, 19500*time.Millisecond)
+	check(19500*time.Millisecond, raid[0], 0)
+	runUntil(sim, 20500*time.Millisecond)
+	check(20500*time.Millisecond, raid[0], 1)
+	check(20500*time.Millisecond, tank, 3)
+	for _, unit := range raid[1:] {
+		check(20500*time.Millisecond, unit, 0)
 	}
 }
 

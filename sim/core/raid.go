@@ -321,11 +321,14 @@ func (raid *Raid) applyCharacterEffects(raidConfig *proto.Raid) *proto.RaidStats
 			}
 
 			char.EnableHealthBar()
+			// with incoming damage a heal on the healer or a pet counts only up to missing health too, like on a dummy
+			char.countsOverheal = raid.incoming != nil
 			char.trackChanceOfDeath(playerConfig.HealingModel)
 			partyStats.Players[char.PartyIndex] = char.applyAllEffects(player, raidBuffs, partyBuffs, individualBuffs)
 
 			for _, pet := range char.Pets {
 				pet.EnableHealthBar()
+				pet.countsOverheal = raid.incoming != nil
 			}
 		}
 

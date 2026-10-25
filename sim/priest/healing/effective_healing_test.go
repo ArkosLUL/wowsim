@@ -113,6 +113,17 @@ func TestPrayerOfMendingProcsOnATimerWithoutDamage(t *testing.T) {
 	}
 }
 
+// 48111 has 5 charges. A proc takes one before AuraEffect::HandleRaidProcFromChargeWithValueAuraProc jumps with
+// the rest, so a cast heals 5 times.
+func TestPrayerOfMendingHealsFiveTimesACast(t *testing.T) {
+	sim, priest, dummies, healed := dummyRaid(t, "holy", emptyAPL, 0)
+	priest.PrayerOfMending.SkipCastAndApplyEffects(sim, dummies[0])
+	runTo(sim, time.Minute)
+	if len(*healed) != 5 {
+		t.Errorf("%d heals from one cast, want 5", len(*healed))
+	}
+}
+
 func treeAPL(t *testing.T, tree string) string {
 	t.Helper()
 	data, err := os.ReadFile("../../../ui/healing_priest/apls/" + tree + ".apl.json")
@@ -179,8 +190,8 @@ func TestDefaultAPLsSizeTheHealToTheMissingHealth(t *testing.T) {
 			return []*core.Spell{p.FlashHeal, p.GreaterHeal, p.CircleOfHealing, p.Renew}
 		}},
 		{"holy medium", "holy", 5000, none, circle, greater},
-		{"holy large with Circle of Healing down", "holy", 16000, circle, greater, circle},
-		{"holy small with Circle of Healing down", "holy", 6500, circle, flash, func(p *HealingPriest) []*core.Spell { return []*core.Spell{p.GreaterHeal, p.CircleOfHealing} }},
+		{"holy large with Circle of Healing down", "holy", 16000, circle, greater, none},
+		{"holy small with Circle of Healing down", "holy", 6500, circle, flash, greater},
 	} {
 		sim, priest, dummies, _ := dummyRaid(t, c.tree, treeAPL(t, c.tree), 1)
 		runTo(sim, 5*time.Second)

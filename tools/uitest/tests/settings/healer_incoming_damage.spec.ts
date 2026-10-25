@@ -1,9 +1,10 @@
-import { expect, type Page, test } from '@playwright/test';
 import fs from 'node:fs';
 import path from 'node:path';
 
-import { openSimTab } from '../lib/page';
+import { expect, type Page, test } from '@playwright/test';
+
 import { closeModal, openGear, openPicker, pane, setPhase } from '../gear/gear';
+import { openSimTab } from '../lib/page';
 import { expectActive, icon, numberInput, openSpec, reloadSim, setNumber } from './helpers';
 
 // the pages and the variant of their incoming_damage.json a fresh page uses (the priest page opens on Discipline)
@@ -45,6 +46,29 @@ test('the default incoming damage follows the phase until the user sets one', as
 
 	await openSimTab(page, 'settings-tab');
 	await expect(incomingDamage(page)).toHaveValue(String(pageDefault('restoration_shaman', 'default', 1)));
+
+	await setNumber(incomingDamage(page), 4321);
+	await openSimTab(page, 'gear-tab');
+	const again = await openPicker(page, 'head');
+	await setPhase(pane(again, 'Items'), DEFAULT_PHASE);
+	await closeModal(again);
+	await openSimTab(page, 'settings-tab');
+	await expect(incomingDamage(page)).toHaveValue('4321');
+});
+
+test("the priest page's default incoming damage follows its main talent tree", async ({ page }) => {
+	await openSpec(page, 'healing_priest', 'talents-tab');
+	const talents = page.locator('#talents-tab');
+	const resets = talents.locator('.talent-tree-reset');
+	for (let i = 0; i < (await resets.count()); i++) {
+		await resets.nth(i).click();
+	}
+	// a point in Holy and none elsewhere makes it the main tree
+	const holy = talents.locator('.talent-tree-picker-root:has(.talent-tree-title:text-is("Holy"))');
+	await holy.locator('.talent-picker-root[style*="grid-area: 1 / 2;"]').click();
+
+	await openSimTab(page, 'settings-tab');
+	await expect(incomingDamage(page)).toHaveValue(String(pageDefault('healing_priest', 'holy', DEFAULT_PHASE)));
 });
 
 test('incoming damage the user sets survives a reload, and Restore Defaults brings the default back', async ({ page }) => {

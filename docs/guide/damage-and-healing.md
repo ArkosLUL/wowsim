@@ -64,16 +64,19 @@ rounding, caps and crit damage. Everything else the server does differently is i
 
 - **Effective healing** (`sim/core/healer_raid.go`): a healer request with `Raid.IncomingDamagePerSecond` > 0
   gives its target dummies health bars and damage; at 0 they keep none and every heal counts in full, and the
-  default APLs, which wait on missing health, cast nothing.
+  default APLs cast only their tank upkeep and cooldowns: their heals wait on missing health.
   - Dummy 1 is the tank (40000 health at phase 1, +5000 a phase), the rest the raid (20000, +2500;
     `DummyHealthForPhase`, `dummyHealthForPhase` in `ui/core/constants/healer_dummies.ts`). The request carries
     both (`DummyTankHealth`, `DummyRaidHealth`; 0 is phase 1's).
   - The damage is spell `OtherActionIncomingDamage` from the first target, unmitigated and unabsorbed, so a
     dummy sees a hit taken. Half hits the tank every 2 s, the other half four random raid dummies every 4 s. A
     dummy stops at 1 health.
-  - A heal counts up to the dummy's missing health, the rest is overheal (`SpellMetrics.TotalOverheal`). Unit and
-    raid `hps` are the healing that landed plus shielding in full; `raw_hps`, `overheal` and `unhealed_dps` (damage
-    dealt less healing that landed) are their own metrics, set only with incoming damage. DPS sims never see them.
+  - A heal counts up to its target's missing health, the rest is overheal (`SpellMetrics.TotalOverheal`), on
+    every raid unit: one on the never-hurt healer or a pet (Circle of Healing, Wild Growth, 54968, Healing
+    Stream, a helpful item cooldown, which goes on the caster) is all overheal. Unit and raid `hps` are the
+    healing that landed plus shielding in full; the healer's `raw_hps`, `overheal` and `unhealed_dps` (damage
+    dealt less healing that landed on dummies) are their own metrics, set only with incoming damage. DPS sims
+    never see them.
   - A page's default damage is its `incoming_damage.json` (variant `default`, a priest's tree `disc` or `holy`;
     phases 1 to 5): the page request's HPS at that phase's preset when the damage is high enough that nothing
     overheals, with the page's own APL (`HEAL_MEASURE=1 go test -run TestMeasureDefaultIncomingDamage` in each
@@ -82,7 +85,9 @@ rounding, caps and crit damage. Everything else the server does differently is i
     override the damage and seed).
   - APL: `MostHurt` (lowest health percent in the raid, a tie to the first in raid order; the target when there
     is no damage) and `Tank` unit references, the `missingHealth` value, and `multihot`, which casts a hot on the
-    most hurt unit missing health that lacks the caster's.
+    most hurt unit missing health that lacks the caster's. `Tank` is fixed when the rotation is built; `MostHurt`
+    is looked up at each evaluation, in aura and dot values too (`AuraReference`, `DotReference`). The editor
+    offers both in every unit field on healer pages; mana and boss-spell values drop them with a warning.
 - **Whole heals:** a heal is whole after the caster's multiplier, the target's and the crit, one dealt outside
   a spell through `GainHealing`.
 - A heal's target search skips a unit at 0 health (`SpellInfo::CheckTarget`): Chain Heal's jumps
@@ -154,8 +159,9 @@ rounding, caps and crit damage. Everything else the server does differently is i
 - **Paladin direct heals** carry Divinity and Healing Light in their multiplier, a libram's `SPELLMOD_DAMAGE` flat
   comes after them (`flatHealing`); Avenging Wrath's 20% and Divine
   Plea's -50% (`SPELLMOD_DAMAGE` on Holy Light, Flash of Light and Holy Shock's heal) are read at the heal.
-- **Glyph of Holy Light**'s 54968 is `int32(heal × 10%)`, the Holy Light's final heal (crit and taken terms in), on up
-  to five other units. Class mask 0, ignores caster modifiers and no coefficient: no done terms, no crit, only the target's
+- **Glyph of Holy Light**'s 54968 is `int32(heal × 10%)` on up to five other units
+  (`spell_pal_glyph_of_holy_light_dummy`): heal is the Holy Light's effective heal when that's at least 5444
+  (48782's base points plus die sides), else its final heal (crit and taken terms in, overheal too). Class mask 0, ignores caster modifiers and no coefficient: no done terms, no crit, only the target's
   taken terms. Its flat term's default coefficient is an area heal's: `GetCastingTimeForBonus` halves the 1.5 s,
   0.75 / 3.5 × 1.88. **Holy Mending** 64891 (T8) takes only aura 136 and the target's taken terms per tick.
 - **Infusion of Light**'s 66922: `CalculatePct(heal / 12, 50% a point)` a tick for 12 1 s ticks, heal being the

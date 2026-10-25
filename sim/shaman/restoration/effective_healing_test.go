@@ -48,6 +48,45 @@ func TestHealOnADummyWithoutDamageCountsInFull(t *testing.T) {
 	}
 }
 
+// Nothing hurts the healer, so with incoming damage a heal on him is all overheal, and without it counts in full.
+func TestHealOnTheHealerCountsLikeOneOnADummy(t *testing.T) {
+	for _, c := range []struct {
+		damage      float64
+		allOverheal bool
+	}{{1, true}, {0, false}} {
+		sim, shaman := healSetup{dummies: 2, damage: c.damage}.build(t)
+		sim.Reset()
+		neverCrit(sim, shaman, shaman.HealingWave)
+		heal := castHeal(sim, shaman.HealingWave, &shaman.Unit)
+		want := 0.0
+		if c.allOverheal {
+			want = heal
+		}
+		if got := shaman.HealingWave.SpellMetrics[shaman.UnitIndex].TotalOverheal; heal <= 0 || got != want {
+			t.Errorf("damage %v: overheal %v of a %v heal on the full shaman, want %v", c.damage, got, heal, want)
+		}
+	}
+}
+
+// Only the healer reports raw HPS, overheal and unhealed damage.
+func TestDummiesReportNoEffectiveHealingMetrics(t *testing.T) {
+	rsr := pageRequest("p1")
+	rsr.SimOptions = &proto.SimOptions{Iterations: 5, IsTest: true, RandomSeed: 101}
+	result := core.RunRaidSim(rsr)
+	if result.ErrorResult != "" {
+		t.Fatal(result.ErrorResult)
+	}
+	players := result.RaidMetrics.Parties[0].Players
+	if players[0].RawHps == nil {
+		t.Fatal("the shaman reports no raw HPS")
+	}
+	for i, dummy := range players[1:] {
+		if dummy.RawHps != nil || dummy.Overheal != nil || dummy.UnhealedDps != nil {
+			t.Errorf("dummy %d reports effective healing metrics", i+1)
+		}
+	}
+}
+
 func TestPageRequestReportsEffectiveAndRawHPS(t *testing.T) {
 	run := func(damage float64) *proto.UnitMetrics {
 		rsr := pageRequest("p1")
@@ -173,6 +212,34 @@ func TestAPLMissingHealthCondition(t *testing.T) {
 		runUntil(sim, 1900*time.Millisecond)
 		if got := len(*order) > 0; got != c.casts {
 			t.Errorf("missing %v: cast %v, want %v", c.missing, got, c.casts)
+		}
+	}
+}
+
+// An aura or dot value on MostHurt reads whoever is most hurt when it's evaluated, not who was when the rotation
+// was built.
+func TestAPLAuraAndDotValuesFollowMostHurt(t *testing.T) {
+	for _, value := range []string{
+		`{"dotIsActive": {"targetUnit": {"type": "MostHurt"}, "spellId": {"spellId": 61301}}}`,
+		`{"auraIsActive": {"sourceUnit": {"type": "MostHurt"}, "auraId": {"spellId": 61301}}}`,
+	} {
+		apl := `{"type": "TypeAPL", "priorityList": [
+			{"action": {"condition": ` + value + `, "castSpell": {"spellId": {"spellId": ` + lesserHealingWave + `}, "target": {"type": "MostHurt"}}}}
+		]}`
+		// dummy 2 is the most hurt
+		for _, c := range []struct {
+			riptideOn int
+			casts     bool
+		}{{1, true}, {2, false}} {
+			sim, shaman := healSetup{dummies: 3, damage: 1, apl: apl}.build(t)
+			order := watchHeals(shaman, func() *core.Spell { return shaman.LesserHealingWave })
+			startFight(sim)
+			dummies := hurtDummies(sim, 0, 400, 300)
+			shaman.Riptide.Hot(dummies[c.riptideOn]).Apply(sim)
+			runUntil(sim, 1900*time.Millisecond)
+			if got := len(*order) > 0; got != c.casts {
+				t.Errorf("%s with Riptide on dummy %d: cast %v, want %v", value, c.riptideOn+1, got, c.casts)
+			}
 		}
 	}
 }

@@ -72,6 +72,14 @@ func pageRequest(phase string) *proto.RaidSimRequest {
 	return rsr
 }
 
+// the page's P1 request, whose nine dummies the suite's own rows lack, on the golden rows' 180 s fight
+func defaultAPLGoldenRequest() *proto.RaidSimRequest {
+	rsr := pageRequest("p1")
+	rsr.SimOptions = core.AverageDefaultSimTestOptions
+	rsr.Encounter.Duration = 180
+	return rsr
+}
+
 var pageGlyphs = &proto.Glyphs{
 	Major1: int32(proto.PaladinMajorGlyph_GlyphOfHolyLight),
 	Major2: int32(proto.PaladinMajorGlyph_GlyphOfSealOfWisdom),

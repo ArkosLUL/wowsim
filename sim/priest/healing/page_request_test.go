@@ -10,9 +10,9 @@ import (
 // pageRequest is what the page sends for one tree at one phase's gear (preraid, p1 to p5): its default fight,
 // buffs and consumes, 5 parties of 5 slots with the blank ones included, and 9 target dummies in the blanks.
 func pageRequest(tree, phase string) *proto.RaidSimRequest {
-	talents, glyphs, options := DiscTalents, DiscGlyphs, PlayerOptionsDisc
+	glyphs, options := DiscGlyphs, PlayerOptionsDisc
 	if tree == "holy" {
-		talents, glyphs, options = HolyTalents, HolyGlyphs, PlayerOptionsHoly
+		glyphs, options = HolyGlyphs, PlayerOptionsHoly
 	}
 	rsr := &proto.RaidSimRequest{
 		Raid: core.SinglePlayerRaidProto(
@@ -23,7 +23,7 @@ func pageRequest(tree, phase string) *proto.RaidSimRequest {
 				Consumes:      FullConsumes,
 				Spec:          options,
 				Rotation:      core.GetAplRotation("../../../ui/healing_priest/apls", tree).Rotation,
-				TalentsString: talents,
+				TalentsString: DiscTalents,
 				Glyphs:        glyphs,
 				Buffs: &proto.IndividualBuffs{
 					BlessingOfKings:  true,
@@ -56,6 +56,10 @@ func pageRequest(tree, phase string) *proto.RaidSimRequest {
 		SimOptions: &proto.SimOptions{Iterations: 300, IsTest: true, RandomSeed: 101},
 	}
 	rsr.Encounter.Duration = 300
+	// the talents go in by var name, not through a local: TestTalentCoverage reads them from the source
+	if tree == "holy" {
+		rsr.Raid.Parties[0].Players[0].TalentsString = HolyTalents
+	}
 	rsr.Raid.Parties = append(rsr.Raid.Parties, &proto.Party{}, &proto.Party{}, &proto.Party{}, &proto.Party{})
 	for _, party := range rsr.Raid.Parties {
 		for len(party.Players) < 5 {
@@ -65,6 +69,14 @@ func pageRequest(tree, phase string) *proto.RaidSimRequest {
 	rsr.Raid.NumActiveParties = 5
 	rsr.Raid.TargetDummies = 9
 	core.SetPageIncomingDamage(rsr.Raid, "../../../ui/healing_priest", tree, core.PagePhase(phase))
+	return rsr
+}
+
+// the page's P1 request, whose nine dummies the suite's own rows lack, on the golden rows' 180 s fight
+func defaultAPLGoldenRequest(tree string) *proto.RaidSimRequest {
+	rsr := pageRequest(tree, "p1")
+	rsr.SimOptions = core.AverageDefaultSimTestOptions
+	rsr.Encounter.Duration = 180
 	return rsr
 }
 

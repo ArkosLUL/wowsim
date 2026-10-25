@@ -72,6 +72,7 @@ const (
 	libramOfVeracity          = 47662
 	libramOfBlindingLight     = 50460
 	glyphOfHolyLightHealCount = 5
+	holyLightMaxBasePoints    = 4887 + 557
 )
 
 // holyItems is the holy glyphs', sets' and librams' state that outlives a cast.
@@ -264,14 +265,18 @@ func healthPct(unit *core.Unit) float32 {
 	return float32(min(cur, most)) / float32(most)
 }
 
-// glyphOfHolyLight heals through 54968 for CalculatePct(heal, 10) of a Holy Light that landed. Nothing hurts the
-// sim's dummies, so the heal itself stands in for the script's effective-heal branch.
-func (paladin *Paladin) glyphOfHolyLight(sim *core.Simulation, target *core.Unit, heal float64) {
+// glyphOfHolyLight heals through 54968 for CalculatePct(amount, 10) of a Holy Light that landed. The amount is the
+// effective heal when that's at least 48782's base points plus die sides, else the whole heal.
+func (paladin *Paladin) glyphOfHolyLight(sim *core.Simulation, target *core.Unit, heal, effective float64) {
 	items := &paladin.holyItems
 	if items.glyphHeal == nil || heal <= 0 {
 		return
 	}
-	items.glyphHealAmount = float64(int32(float32(heal) * 10 / 100))
+	amount := heal
+	if effective >= holyLightMaxBasePoints {
+		amount = effective
+	}
+	items.glyphHealAmount = float64(int32(float32(amount) * 10 / 100))
 	items.glyphHeal.Cast(sim, target)
 }
 
@@ -374,9 +379,9 @@ func (paladin *Paladin) registerLibramProcs() {
 }
 
 // onHolyLight is what a Holy Light that landed sets off beyond the talents.
-func (paladin *Paladin) onHolyLight(sim *core.Simulation, target *core.Unit, heal float64) {
+func (paladin *Paladin) onHolyLight(sim *core.Simulation, target *core.Unit, heal, effective float64) {
 	items := &paladin.holyItems
-	paladin.glyphOfHolyLight(sim, target, heal)
+	paladin.glyphOfHolyLight(sim, target, heal, effective)
 	if items.holinessUsed {
 		items.holinessUsed = false
 		items.holiness.Deactivate(sim)

@@ -158,9 +158,11 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
   - The Prot Paladin default APL casts it under 25% health, mod-playerbots' critical health
     (`Playerbots.CriticalHealth`).
 - **Holy Shock** (48825) casts 48821's heal on a friend, 48823's damage on anyone else (`spell_pal_holy_shock`).
-- **Sacred Shield** (53601), one target at a time: 58597 goes on with the aura, then on the target's first hit taken
-  (damage above 0) once a cooldown has passed. With no incoming damage the target counts as always hit instead,
-  once a cooldown (`core.HitTakenStandIn`). A refresh keeps the clock, a new target restarts it.
+- **Sacred Shield** (53601), one target at a time: 58597 goes on at the target's first hit taken (damage above 0),
+  then at the first hit once a cooldown, starting at the proc, has passed. The cooldown is the aura's
+  (`spell_pal_sacred_shield_dummy`): a refresh keeps it, a fresh aura (new target, or a recast after it ran out)
+  has none. With no incoming damage the target counts as always hit: 58597 goes on with the aura, then once a
+  cooldown (`core.HitTakenStandIn`).
   - The cooldown is 53601's effect 0 in seconds with Divine Guardian's +10% a point, whole: 6, 6, 7 s. Divine
     Guardian also adds 50% a point to both auras' durations.
   - 58597's +50% Flash of Light crit counts only on the paladin healing himself (`Unit::SpellTakenCritChance`
@@ -184,7 +186,8 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
 - **Seal of Wisdom / Light**: a judgement also casts 54158 (`spell_pal_judgement`: no effect-2 seal judgement).
   Melee hits, 54158 included (`SPELL_ATTR3_NOT_A_PROC`), roll 12 / 10 PPM off the main hand's speed for 4% of
   max mana / a self heal of 15% AP + 15% SP (no crit). Holy has a main hand for it but never swings.
-- **Holy glyphs:** Holy Light's (54937) casts 54968 on the heal's target: 10% of the final heal on the five
+- **Holy glyphs:** Holy Light's (54937) casts 54968 on the heal's target: 10% of the effective or final heal
+  ([damage and healing](damage-and-healing.md#healing)) on the five
   lowest-health other living raid units (raid order among equals), no spell power, mods or crit. Flash of Light
   +5% crit; Holy Shock -1 s cooldown; Beacon of Light 90 s. While the seal is up: Seal of Wisdom's takes 5% off
   Holy Light, Flash of Light, Holy Shock and Beacon; Seal of Light's adds 5% (`SPELLMOD_DAMAGE`) to Holy Light,
@@ -216,13 +219,13 @@ aura scales the bonus in max only): no damage taken event, no TMI entry.
     | | preraid | P1 | P2 | P3 | P4 | P5 |
     |---|---|---|---|---|---|---|
     | Damage a second | 11000 | 11000 | 15500 | 18300 | 24200 | 25200 |
-    | Effective / raw HPS | 8212 / 8646 | 9482 / 10460 | 14752 / 15312 | 17721 / 18067 | 23980 / 24402 | 24108 / 24633 |
-    | Overheal | 5.0% | 9.3% | 3.7% | 1.9% | 1.7% | 2.1% |
-    | Time to OOM (s out of mana) | 133 (36) | 172 (24) | 201 (12) | 209 (11) | 305 (1) | 233 (5) |
+    | Effective / raw HPS | 8164 / 8605 | 9388 / 10405 | 14667 / 15220 | 17636 / 17979 | 23924 / 24395 | 24011 / 24677 |
+    | Overheal | 5.1% | 9.8% | 3.6% | 1.9% | 1.9% | 2.7% |
+    | Time to OOM (s out of mana) | 131 (36) | 166 (25) | 199 (12) | 208 (11) | 305 (1) | 231 (6) |
 
-  - "Measure at my gear", effective HPS a point, gain (Int / SP / crit / MP5 / haste): P1 4.15 / 0.94 / 1.03 /
-    4.09 / -0.37; P3 9.83 / 3.24 / 3.74 / 8.04 / 0.19; P5 11.37 / 2.77 / 4.26 / 10.15 / -0.96. Spirit gains 0 at
-    every phase. Haste is about 0 or below while mana-bound; it gains only at P3 and P4 (+0.19, +0.24).
+  - "Measure at my gear", effective HPS a point, gain (Int / SP / crit / MP5 / haste): P1 4.11 / 0.90 / 1.09 /
+    4.06 / -0.40; P3 9.75 / 3.12 / 3.59 / 8.00 / 0.22; P5 11.54 / 2.83 / 4.30 / 10.35 / -1.12. Spirit gains 0 at
+    every phase. Haste is about 0 or below while mana-bound; it gains only at P3 and P4 (+0.22, +0.35).
 - **Judgement of Light**'s 20185 procs like Judgement of Wisdom's (15 PPM, landed damaging hits, no triggered
   casts): 20267 heals the attacker for 2% of his max health through his healing taken percents. Its original
   caster, the judging paladin, gets the healing and its threat, so the sim credits nobody.

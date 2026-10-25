@@ -106,7 +106,7 @@ export class EncounterPicker extends Component {
 				new NumberPicker(this.rootElem, simUI.sim.raid, {
 					label: 'Incoming Damage',
 					labelTooltip:
-						"Damage per second the allies take: half on ally 1, the tank, and half on four of the others. Nothing mitigates it and shields don't absorb it. The default is about what the phase's gear heals per second when none of it overheals. At 0 the allies have no health, and the default rotations, which wait on missing health, cast nothing.",
+						"Damage per second the allies take: half on ally 1, the tank, and half on four of the others. Nothing mitigates it and shields don't absorb it. The default is about what the phase's gear heals per second when none of it overheals. At 0 the allies have no health, and the default rotations cast only what they keep on the tank and their cooldowns, since their heals wait on missing health.",
 					extraCssClasses: ['incoming-damage-picker'],
 					changedEvent: (raid: Raid) => raid.incomingDamageChangeEmitter,
 					getValue: (raid: Raid) => raid.getIncomingDamage(),

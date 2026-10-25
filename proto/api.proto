@@ -198,8 +198,8 @@ message TargetedActionMetrics {
 	// Total healing done to this target by this action, overhealing included.
 	double healing = 11;
 
-	// The part of that healing that went past the target's missing health. Only on a target dummy that takes
-	// incoming damage.
+	// The part of that healing that went past the target's missing health. Only in a healer sim with incoming
+	// damage.
 	double overheal = 16;
 
 	// Total shielding done to this target by this action.
