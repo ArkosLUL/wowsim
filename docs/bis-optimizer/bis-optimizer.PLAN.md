@@ -3052,7 +3052,7 @@ Uncommitted on the same worktree, golden-neutral. Each fix's test fails with tha
   92,000, P3 112,000; Quick Bulwark 12,000 + 11,500 (277,750 to 289,250), Felesta 11,000 + 11,500 (300,000). A
   recheck costs about a check: 9 to 13% of a tank run with two socketed adoptions.
 
-### BIS-TANK-ICC (direct, in progress; branch `bis-tank-icc`, worktree `wowsimwotlk-tank-icc`)
+### BIS-TANK-ICC (direct, done; golden-neutral)
 
 The Blood DK P4 preset gems Defense: 7 Enduring Eye of Zul, one per yellow socket. Measured at the worn preset
 (sim `0ddf696d9`): not the crit floor (988 Defense rating, 443 needed); the P4 score prices a rating point at
@@ -3098,3 +3098,30 @@ weights or the death bar; stat weights and the tooltip dataset without the user'
 **Owns:** `sim/optimizer/`, `ui/core/optimizer/`, `sim/encounters/optimizer_tank_boss.go`,
 `tools/database/enchant_overrides.go`, `assets/database/db.json` and the catalog, the tank `p*_bis*` presets,
 `docs/guide/tank-modeling.md`, the DK part of `docs/guide/class-mechanics.md`.
+
+#### As built
+
+Code `37677896d`, merged with master's Z17b at `e7aca8432`; presets on that tree.
+
+- **Data:** 62158, 53323 and 53342 are 0x562 (two-handers); 70164 (3883), 54446 (3594) and 54447 (3595) are
+  0x8091 (one-handers), which no enchant type gates: left for the user. 73822 and 73828 are auras 133, 79 and 136
+  at +30%, as `StrengthOfWrynn`. `make items` also brought 32 `spellIcons` rows the committed `db.json` lacked,
+  and `accatalog` dated the catalog 2026-10-25 (source counts only; no item added, removed or re-tiered): kept.
+- **Measure** (`TestMeasureTankIcecrown`, `OPTIMIZER_ICC=1`), worn P4 presets, without the buff / with it:
+
+  | Preset | Death | Death term | dJ per point |
+  |---|---|---|---|
+  | Blood | 92.4% / 50.6% | out (3.7 se) / in (13.2) | Def 6.02 > Dodge 5.23 > Parry 4.48 > Agi 3.97 > Sta 3.87 / Sta 9.95 > Def 9.51 > Dodge 8.72 |
+  | Frost | 99.9% / 81.3% | out / out (7.0) | Def 4.98 > Dodge 4.52 > Sta 3.91 / Def 11.39 > Dodge 9.99 > … > Sta 0.43 |
+
+  With the buff, Blood's 7 Enduring Eye of Zul → Solid Majestic Zircon still loses 265 ± 98; Frost's →
+  Thick King's Amber gains 457 ± 53.
+- **Presets**, all five tank builds P1 to P5, Normal. Every P4 run still dies mostly and drops the death term
+  (first pick: Blood 72%, Paladin 94, Warrior 96, Frost 98, Feral 100). P1 to P3 of the non-DK tanks move with
+  master's changes since `0ddf696d9`, not this item's.
+  - DK runes: Blood takes a two-hander with Stoneskin at every phase (Inevitable Defeat, Dark Edge of
+    Depravity, Shadowmourne at P4 and P5); Frost keeps two one-handers with Nerubian Carapace.
+  - Blood P4 gems 7 Enduring, 4 Regal, 4 Solid Majestic Zircon, 3 Solid Dragon's Eye, 3 Rigid King's Amber, 1
+    Defender's Dreadstone (was 7, 6, 5, 3, none, none); Frost P4 7 Zircon, 6 Regal, 6 Enduring, 3 Solid
+    Dragon's Eye (was 6, 6, 5, 3).
+- **Left:** the Lich King still kills every P4 pick most of the time with the buff; one-hand-only runes ungated.

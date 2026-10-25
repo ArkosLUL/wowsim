@@ -926,7 +926,7 @@ crashed before F2, so its column starts there.
 | wave Z17 cross-review | direct | `5745376cf`; mod-reforging `c9b887a` | the online path writes its row at once instead of two async writes; the dialog never strips a reforge the sim can't read; single Apply disabled where only Apply all keeps a cap; dev servers send no GM commands unless `WOTLK_DEV_SOAP_URL` is set; no golden moves |
 | EC-UPSTREAM2 | merged | `91645f9e0` | the server's upstream merge `ea83cc94b`: no 200 ms swing push, the off hand sits out the main hand's update, the stagger on a new attack only; Meteorite Crystal's stacks, Borrowed Time's chained ranks, a trap laid before the pull arms at once; spelldump and the eight dual-wield fight logs recaptured live; Assassination +3.95%, Combat +3.28%, Subtlety +1.60%, Fury -1.29%, Enhancement, the DKs and Disc within 0.1%, four suites' AllItems rows up to +2.24% (`9fbe5c9a4`) |
 | wave Z17b cross-review | direct | `dc9cb2af1` | Borrowed Time's charge before the effects (Hymn of Hope unhasted, Inner Focus takes it), Meteorite on casts outside `OnCastComplete`, the trap arming at its first update; TestDisc one row (`1269d7464`) |
-| BIS-TANK-ICC | direct, uncommitted | branch `bis-tank-icc` | Icecrown's +30% buff in the P4 tank fight (`TankBoss.icecrownBuff`, heals ×1.3), the three two-hand runes gated; presets follow |
+| BIS-TANK-ICC | direct | `37677896d`, presets on `e7aca8432` | Icecrown's +30% buff in the P4 tank fight (`TankBoss.icecrownBuff`, heals ×1.3), the three two-hand runes gated; the five tanks' presets P1 to P5 (Blood on a two-hander, Frost on Nerubian Carapace); every P4 pick still dies mostly (Blood 72%); no golden moves |
 
 
 Later WIs are added as their wave starts.
