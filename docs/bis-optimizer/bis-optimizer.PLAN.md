@@ -3133,7 +3133,7 @@ Code `37677896d`, merged with master's Z17b at `e7aca8432`; presets on that tree
     same items); Felesta P4 now gems 18 Solid Majestic Zircon.
 - **Left:** the Lich King still kills every P4 pick most of the time with the buff; one-hand-only runes ungated.
 
-### BIS-TANK-RESCALE (direct)
+### BIS-TANK-RESCALE (direct, done; golden-neutral)
 
 Bulwark's P4 tooltip pick (Prot Paladin) gems 13 Bold Cardinal Ruby. Strength is about 90% threat to a paladin
 (2 AP, 0.6 SP by Touched by the Light, 0.5 block value for Shield of Righteousness); the cause is the score's
@@ -3176,8 +3176,8 @@ Felesta's tooltip data, asking before the import.
 
 #### As built
 
-Uncommitted on `bis-tank-rescale`; `./sim/optimizer/...` passes with `with_db`, no golden moves (the sim suites
-don't run the optimizer).
+Code `d9e44f7dd`, presets `259fd5feb`; `./sim/optimizer/...` passes with `with_db`, no golden moves (the sim
+suites don't run the optimizer).
 
 - **Code:** `newObjectiveAt` under `NewObjective` (its trimmed-seed fallback stays there, labelled "the trimmed
   seed"); `scaleShift` and `scaleText`; `worthRescaling` (two or more counted terms, or death left out);
@@ -3200,3 +3200,18 @@ don't run the optimizer).
   (`Objective.label`). Tests: `TestScaleMovesAtTheFirstPick`'s death-out case,
   `TestCancelInTheSecondSearchKeepsTheFirstResult`, `TestDeathChanceAtThePick`,
   `TestNewObjectiveFallsBackOnlyOnAFailedSim`; each fails with its fix reverted.
+- **Presets**, five tank builds P1 to P5, Normal: 22 of 25 searched again on the scale. P4 gems move to
+  Stamina: Paladin 5 Delicate Cardinal Ruby out (now 8 Enduring Eye of Zul, 7 Shifting Dreadstone, 5 Solid
+  Majestic Zircon), Warrior 16 Zircon (was 5), Feral 8 (was 1); Blood about the same.
+- **Dataset `691d8643`** imported (work `bis-chain-1026-rescale`, Bulwark and Felesta on top of `bf3b3c5a`'s
+  batch, merged by hand again for the two catalog dates). Bulwark P4: 13 Bold Cardinal Ruby out, now 8
+  Shifting Dreadstone, 6 Enduring, 5 Zircon; death 94% → 68%, margin −17.3k → −7.7k, TPS 17.8k → 14.8k.
+  Felesta P4 takes 8 Thick King's Amber (death 50% → 51%). Bulwark P2 and Felesta P2 die more (10% → 21%,
+  26% → 38%): survival counts less at those picks (Bulwark P2 margin ×0.72), and Bulwark's worn gear changed
+  since the last export.
+- **Stat values** on `259fd5feb`: the five tank builds recaptured over `bis-chain-1025-tanks`' captures, and
+  `stat_values.json` moves for those five only; playerbots' `weights.json` in
+  `tmp/statweights-bis-chain-1026-rescale`.
+- **Left:** the 15% trigger ignores normalizer noise (a term counted at just over 2 se is about ±50% on its
+  coefficient), so many runs search twice on noise; `worthRescaling` counts death as a term, so a run with one
+  other term plus death measures the pick for nothing.

@@ -1,6 +1,6 @@
 {
- "sim_commit": "119a194868b5d359d3c50917eaac87eef9fba8c7",
- "generated_at": "2026-10-25T16:11:52Z",
+ "sim_commit": "259fd5febec51a5c8193b43d9b563a9348929c7a",
+ "generated_at": "2026-10-26T09:21:50Z",
  "builds": [
   {
    "key": "dk_blood",
@@ -5179,28 +5179,28 @@
      "phase": 2,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 2.642,
-       "tps": 7.521,
+       "dps": 2.635,
+       "tps": 7.492,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.3617,
-       "tps": 1.169,
-       "tmi": -0.006969
+       "dps": 0.3604,
+       "tps": 1.159,
+       "tmi": -0.0066
       },
       "StatArmor": {
-       "dps": 0.0178,
-       "tps": 0.06672,
-       "tmi": -0.001497
+       "dps": 0.01754,
+       "tps": 0.0663,
+       "tmi": -0.001472
       },
       "StatArmorPenetration": {
-       "dps": 0.5381,
-       "tps": 1.506,
+       "dps": 0.5298,
+       "tps": 1.479,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.3497,
-       "tps": 1.348,
+       "dps": 0.3488,
+       "tps": 1.345,
        "tmi": 0
       },
       "StatBlock": {
@@ -5214,54 +5214,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.06419,
-       "tps": 0.276,
-       "tmi": -0.01184
+       "dps": 0.07156,
+       "tps": 0.2893,
+       "tmi": -0.01451
       },
       "StatDodge": {
-       "dps": 0.09656,
-       "tps": 0.4914,
-       "tmi": -0.008486
+       "dps": 0.1019,
+       "tps": 0.5061,
+       "tmi": -0.008248
       },
       "StatExpertise": {
-       "dps": 0.4137,
-       "tps": 1.185,
-       "tmi": -0.002984
+       "dps": 0.4079,
+       "tps": 1.14,
+       "tmi": -0.0034
       },
       "StatMeleeCrit": {
-       "dps": 0.3539,
-       "tps": 1.009,
+       "dps": 0.3487,
+       "tps": 0.9921,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.3959,
-       "tps": 0.8261,
-       "tmi": 0.0003122
+       "dps": 0.3913,
+       "tps": 0.8181,
+       "tmi": 0.00031
       },
       "StatMeleeHit": {
-       "dps": 0.447,
-       "tps": 1.214,
-       "tmi": -0.001863
+       "dps": 0.4336,
+       "tps": 1.166,
+       "tmi": -0.001853
       },
       "StatParry": {
-       "dps": 0.09131,
-       "tps": 0.4193,
-       "tmi": -0.006444
+       "dps": 0.09292,
+       "tps": 0.4153,
+       "tmi": -0.006432
       },
       "StatSpellCrit": {
-       "dps": 0.06034,
-       "tps": 0.7063,
+       "dps": 0.05999,
+       "tps": 0.7002,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.01139,
-       "tps": 0.04188,
-       "tmi": -1.321e-06
+       "dps": 0.01114,
+       "tps": 0.04794,
+       "tmi": -1.895e-05
       },
       "StatSpellHit": {
-       "dps": 0.1192,
-       "tps": 0.7313,
-       "tmi": -0.0001663
+       "dps": 0.1165,
+       "tps": 0.7298,
+       "tmi": -0.0002091
       },
       "StatSpellPower": {
        "dps": 0,
@@ -5269,14 +5269,14 @@
        "tmi": 0
       },
       "StatStamina": {
-       "dps": 0.001632,
-       "tps": 0.02677,
-       "tmi": -0.009844
+       "dps": 0.001959,
+       "tps": 0.03175,
+       "tmi": -0.009523
       },
       "StatStrength": {
-       "dps": 0.9224,
-       "tps": 3.44,
-       "tmi": -0.002065
+       "dps": 0.9302,
+       "tps": 3.457,
+       "tmi": -0.002062
       }
      }
     },
@@ -5284,28 +5284,28 @@
      "phase": 3,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 2.602,
-       "tps": 7.442,
+       "dps": 2.607,
+       "tps": 7.415,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.3685,
-       "tps": 1.16,
-       "tmi": -0.005029
+       "dps": 0.3775,
+       "tps": 1.192,
+       "tmi": -0.004858
       },
       "StatArmor": {
        "dps": 0.01721,
-       "tps": 0.0649,
-       "tmi": -0.0009027
+       "tps": 0.0645,
+       "tmi": -0.0008671
       },
       "StatArmorPenetration": {
-       "dps": 0.5824,
-       "tps": 1.64,
+       "dps": 0.6112,
+       "tps": 1.713,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.3441,
-       "tps": 1.337,
+       "dps": 0.347,
+       "tps": 1.346,
        "tmi": 0
       },
       "StatBlock": {
@@ -5319,54 +5319,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.04723,
-       "tps": 0.2155,
-       "tmi": -0.006639
+       "dps": 0.04522,
+       "tps": 0.2101,
+       "tmi": -0.006195
       },
       "StatDodge": {
-       "dps": 0.06963,
-       "tps": 0.3579,
-       "tmi": -0.006768
+       "dps": 0.07308,
+       "tps": 0.39,
+       "tmi": -0.0065
       },
       "StatExpertise": {
-       "dps": 0.4375,
-       "tps": 1.231,
-       "tmi": -0.001912
+       "dps": 0.462,
+       "tps": 1.34,
+       "tmi": -0.00196
       },
       "StatMeleeCrit": {
-       "dps": 0.3786,
-       "tps": 1.087,
+       "dps": 0.3888,
+       "tps": 1.11,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.4348,
-       "tps": 0.906,
-       "tmi": 0.0001702
+       "dps": 0.4728,
+       "tps": 0.9793,
+       "tmi": 0.000141
       },
       "StatMeleeHit": {
-       "dps": 0.4921,
-       "tps": 1.353,
-       "tmi": -0.00118
+       "dps": 0.5065,
+       "tps": 1.381,
+       "tmi": -0.001115
       },
       "StatParry": {
-       "dps": 0.06574,
-       "tps": 0.315,
-       "tmi": -0.004808
+       "dps": 0.07043,
+       "tps": 0.3233,
+       "tmi": -0.004683
       },
       "StatSpellCrit": {
-       "dps": 0.06302,
-       "tps": 0.774,
+       "dps": 0.06368,
+       "tps": 0.7859,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.01239,
-       "tps": 0.03982,
-       "tmi": -4.241e-05
+       "dps": 0.01141,
+       "tps": 0.05987,
+       "tmi": -5.139e-05
       },
       "StatSpellHit": {
-       "dps": 0.1332,
-       "tps": 0.8515,
-       "tmi": -7.947e-05
+       "dps": 0.1351,
+       "tps": 0.8601,
+       "tmi": -0.0002044
       },
       "StatSpellPower": {
        "dps": 0,
@@ -5375,13 +5375,13 @@
       },
       "StatStamina": {
        "dps": 0,
-       "tps": 0.009695,
-       "tmi": -0.005531
+       "tps": 0.008032,
+       "tmi": -0.005189
       },
       "StatStrength": {
-       "dps": 0.9074,
-       "tps": 3.407,
-       "tmi": -0.001445
+       "dps": 0.917,
+       "tps": 3.447,
+       "tmi": -0.001426
       }
      }
     },
@@ -5389,28 +5389,28 @@
      "phase": 4,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 2.729,
-       "tps": 8.047,
+       "dps": 2.635,
+       "tps": 7.654,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.479,
-       "tps": 1.533,
-       "tmi": -0.004116
+       "dps": 0.4013,
+       "tps": 1.27,
+       "tmi": -0.004126
       },
       "StatArmor": {
-       "dps": 0.01728,
-       "tps": 0.06625,
-       "tmi": -0.0005637
+       "dps": 0.01697,
+       "tps": 0.06338,
+       "tmi": -0.0005623
       },
       "StatArmorPenetration": {
-       "dps": 0.7642,
-       "tps": 2.224,
+       "dps": 0.6652,
+       "tps": 1.905,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.3548,
-       "tps": 1.396,
+       "dps": 0.3495,
+       "tps": 1.37,
        "tmi": 0
       },
       "StatBlock": {
@@ -5424,54 +5424,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.04853,
-       "tps": 0.2201,
-       "tmi": -0.005531
+       "dps": 0.0378,
+       "tps": 0.1588,
+       "tmi": -0.005649
       },
       "StatDodge": {
-       "dps": 0.07351,
-       "tps": 0.3915,
-       "tmi": -0.005743
+       "dps": 0.0537,
+       "tps": 0.2646,
+       "tmi": -0.005814
       },
       "StatExpertise": {
-       "dps": 0.5502,
-       "tps": 1.707,
-       "tmi": -0.00104
+       "dps": 0.473,
+       "tps": 1.458,
+       "tmi": -0.001106
       },
       "StatMeleeCrit": {
-       "dps": 0.5166,
-       "tps": 1.529,
+       "dps": 0.4234,
+       "tps": 1.234,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.5917,
-       "tps": 1.3,
-       "tmi": 0.0001078
+       "dps": 0.4978,
+       "tps": 1.027,
+       "tmi": 8.733e-05
       },
       "StatMeleeHit": {
-       "dps": 0.6884,
-       "tps": 1.988,
-       "tmi": -0.0007468
+       "dps": 0.5476,
+       "tps": 1.544,
+       "tmi": -0.000661
       },
       "StatParry": {
-       "dps": 0.06844,
-       "tps": 0.3171,
-       "tmi": -0.004077
+       "dps": 0.05684,
+       "tps": 0.2433,
+       "tmi": -0.004328
       },
       "StatSpellCrit": {
-       "dps": 0.07171,
-       "tps": 0.9184,
+       "dps": 0.06459,
+       "tps": 0.8355,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.01447,
-       "tps": 0.05405,
-       "tmi": -2.558e-05
+       "dps": 0.01112,
+       "tps": 0.05263,
+       "tmi": -2.565e-05
       },
       "StatSpellHit": {
-       "dps": 0.1949,
-       "tps": 1.144,
-       "tmi": -7.139e-05
+       "dps": 0.147,
+       "tps": 0.9579,
+       "tmi": -4.768e-05
       },
       "StatSpellPower": {
        "dps": 0,
@@ -5480,13 +5480,13 @@
       },
       "StatStamina": {
        "dps": 0,
-       "tps": 0.002924,
-       "tmi": -0.003602
+       "tps": 0.003208,
+       "tmi": -0.003536
       },
       "StatStrength": {
-       "dps": 0.9271,
-       "tps": 3.527,
-       "tmi": -0.00125
+       "dps": 0.9173,
+       "tps": 3.46,
+       "tmi": -0.001338
       }
      }
     },
@@ -5494,28 +5494,28 @@
      "phase": 5,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 2.696,
-       "tps": 7.933,
+       "dps": 2.617,
+       "tps": 7.587,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.4843,
-       "tps": 1.56,
-       "tmi": -0.003841
+       "dps": 0.4015,
+       "tps": 1.274,
+       "tmi": -0.003817
       },
       "StatArmor": {
-       "dps": 0.01741,
-       "tps": 0.06644,
-       "tmi": -0.000499
+       "dps": 0.01732,
+       "tps": 0.0658,
+       "tmi": -0.0005119
       },
       "StatArmorPenetration": {
-       "dps": 0.7542,
-       "tps": 2.191,
+       "dps": 0.6693,
+       "tps": 1.914,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.3515,
-       "tps": 1.382,
+       "dps": 0.3478,
+       "tps": 1.36,
        "tmi": 0
       },
       "StatBlock": {
@@ -5529,54 +5529,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.052,
-       "tps": 0.2448,
-       "tmi": -0.005065
+       "dps": 0.03836,
+       "tps": 0.1769,
+       "tmi": -0.005095
       },
       "StatDodge": {
-       "dps": 0.08405,
-       "tps": 0.4344,
-       "tmi": -0.005344
+       "dps": 0.05607,
+       "tps": 0.315,
+       "tmi": -0.005448
       },
       "StatExpertise": {
-       "dps": 0.5567,
-       "tps": 1.731,
-       "tmi": -0.001218
+       "dps": 0.494,
+       "tps": 1.505,
+       "tmi": -0.001091
       },
       "StatMeleeCrit": {
-       "dps": 0.5094,
-       "tps": 1.502,
+       "dps": 0.4306,
+       "tps": 1.251,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.5811,
-       "tps": 1.277,
-       "tmi": 0.000117
+       "dps": 0.4982,
+       "tps": 1.03,
+       "tmi": 0.0001
       },
       "StatMeleeHit": {
-       "dps": 0.695,
-       "tps": 2.006,
-       "tmi": -0.000726
+       "dps": 0.5645,
+       "tps": 1.587,
+       "tmi": -0.0006982
       },
       "StatParry": {
-       "dps": 0.07267,
-       "tps": 0.3348,
-       "tmi": -0.003764
+       "dps": 0.06062,
+       "tps": 0.2752,
+       "tmi": -0.003969
       },
       "StatSpellCrit": {
-       "dps": 0.07215,
-       "tps": 0.915,
+       "dps": 0.06632,
+       "tps": 0.8494,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.02085,
-       "tps": 0.0709,
-       "tmi": -2.939e-05
+       "dps": 0.0136,
+       "tps": 0.04769,
+       "tmi": -2.466e-05
       },
       "StatSpellHit": {
-       "dps": 0.1986,
-       "tps": 1.139,
-       "tmi": -5.485e-05
+       "dps": 0.1503,
+       "tps": 0.9597,
+       "tmi": -0.0001104
       },
       "StatSpellPower": {
        "dps": 0,
@@ -5585,13 +5585,13 @@
       },
       "StatStamina": {
        "dps": 0,
-       "tps": 6.209e-05,
-       "tmi": -0.003182
+       "tps": 0.0009879,
+       "tmi": -0.003389
       },
       "StatStrength": {
-       "dps": 0.9252,
-       "tps": 3.529,
-       "tmi": -0.001159
+       "dps": 0.9067,
+       "tps": 3.43,
+       "tmi": -0.001154
       }
      }
     }
@@ -5609,28 +5609,28 @@
      "phase": 1,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 1.661,
-       "tps": 4.394,
+       "dps": 1.65,
+       "tps": 4.383,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.4403,
-       "tps": 1.246,
-       "tmi": -0.007966
+       "dps": 0.4508,
+       "tps": 1.265,
+       "tmi": -0.007978
       },
       "StatArmor": {
-       "dps": 0.02153,
-       "tps": 0.0873,
-       "tmi": -0.002147
+       "dps": 0.02174,
+       "tps": 0.08772,
+       "tmi": -0.002171
       },
       "StatArmorPenetration": {
-       "dps": 0.4694,
-       "tps": 1.104,
+       "dps": 0.4865,
+       "tps": 1.15,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4195,
-       "tps": 1.828,
+       "dps": 0.4211,
+       "tps": 1.838,
        "tmi": 0
       },
       "StatBlock": {
@@ -5644,54 +5644,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.1622,
+       "dps": 0.161,
        "tps": 0.4317,
-       "tmi": -0.01715
+       "tmi": -0.01779
       },
       "StatDodge": {
-       "dps": 0.2164,
-       "tps": 0.7077,
-       "tmi": -0.008954
+       "dps": 0.2151,
+       "tps": 0.6964,
+       "tmi": -0.009049
       },
       "StatExpertise": {
-       "dps": 0.1964,
-       "tps": 0.4457,
-       "tmi": -0.009862
+       "dps": 0.1836,
+       "tps": 0.308,
+       "tmi": -0.01001
       },
       "StatMeleeCrit": {
-       "dps": 0.3493,
-       "tps": 0.8412,
+       "dps": 0.3602,
+       "tps": 0.8693,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.386,
-       "tps": 0.7679,
-       "tmi": 0.0005495
+       "dps": 0.3964,
+       "tps": 0.7856,
+       "tmi": 0.0005292
       },
       "StatMeleeHit": {
-       "dps": 0.277,
-       "tps": 0.6559,
-       "tmi": -0.003222
+       "dps": 0.2854,
+       "tps": 0.6664,
+       "tmi": -0.003235
       },
       "StatParry": {
-       "dps": 0.167,
-       "tps": 0.5346,
-       "tmi": -0.006244
+       "dps": 0.162,
+       "tps": 0.5082,
+       "tmi": -0.006234
       },
       "StatSpellCrit": {
-       "dps": 0.1134,
-       "tps": 1.288,
+       "dps": 0.1158,
+       "tps": 1.317,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.01454,
-       "tps": 0.009548,
-       "tmi": 2.872e-05
+       "dps": 0.01405,
+       "tps": 0.02038,
+       "tmi": -1.319e-05
       },
       "StatSpellHit": {
-       "dps": 0.1653,
-       "tps": 1.62,
-       "tmi": -0.0003231
+       "dps": 0.1651,
+       "tps": 1.639,
+       "tmi": -0.0003258
       },
       "StatSpellPower": {
        "dps": 0,
@@ -5699,14 +5699,14 @@
        "tmi": 0
       },
       "StatStamina": {
-       "dps": 0.007235,
-       "tps": 0.03892,
-       "tmi": -0.01446
+       "dps": 0.007609,
+       "tps": 0.03453,
+       "tmi": -0.01454
       },
       "StatStrength": {
-       "dps": 1.036,
-       "tps": 4.302,
-       "tmi": -0.001781
+       "dps": 1.053,
+       "tps": 4.342,
+       "tmi": -0.001809
       }
      }
     },
@@ -5714,28 +5714,28 @@
      "phase": 2,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 1.499,
-       "tps": 4.076,
+       "dps": 1.896,
+       "tps": 5.536,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.4761,
-       "tps": 1.317,
-       "tmi": -0.007548
+       "dps": 0.5077,
+       "tps": 1.45,
+       "tmi": -0.007613
       },
       "StatArmor": {
-       "dps": 0.02248,
-       "tps": 0.09293,
-       "tmi": -0.001664
+       "dps": 0.02374,
+       "tps": 0.09852,
+       "tmi": -0.001685
       },
       "StatArmorPenetration": {
-       "dps": 0.5425,
-       "tps": 1.315,
+       "dps": 0.5858,
+       "tps": 1.497,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4224,
-       "tps": 1.837,
+       "dps": 0.4439,
+       "tps": 1.931,
        "tmi": 0
       },
       "StatBlock": {
@@ -5749,54 +5749,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.1017,
-       "tps": 0.2995,
-       "tmi": -0.008551
+       "dps": 0.131,
+       "tps": 0.4318,
+       "tmi": -0.00887
       },
       "StatDodge": {
-       "dps": 0.1663,
-       "tps": 0.5376,
-       "tmi": -0.009416
+       "dps": 0.2051,
+       "tps": 0.7257,
+       "tmi": -0.009344
       },
       "StatExpertise": {
-       "dps": 0.436,
-       "tps": 1.183,
-       "tmi": -0.009998
+       "dps": 0.3853,
+       "tps": 1.033,
+       "tmi": -0.009442
       },
       "StatMeleeCrit": {
-       "dps": 0.4231,
-       "tps": 1.036,
+       "dps": 0.4432,
+       "tps": 1.139,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.4057,
-       "tps": 0.8298,
-       "tmi": 0.001172
+       "dps": 0.42,
+       "tps": 0.8926,
+       "tmi": 0.001163
       },
       "StatMeleeHit": {
-       "dps": 0.2773,
-       "tps": 0.7969,
-       "tmi": -0.002009
+       "dps": 0.3306,
+       "tps": 1.001,
+       "tmi": -0.002043
       },
       "StatParry": {
-       "dps": 0.1213,
-       "tps": 0.3769,
-       "tmi": -0.006251
+       "dps": 0.154,
+       "tps": 0.5211,
+       "tmi": -0.00659
       },
       "StatSpellCrit": {
-       "dps": 0.1081,
-       "tps": 1.334,
+       "dps": 0.1099,
+       "tps": 1.34,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.01047,
-       "tps": -0.0241,
-       "tmi": -6.89e-05
+       "dps": 0.01206,
+       "tps": -0.008424,
+       "tmi": -1.786e-05
       },
       "StatSpellHit": {
-       "dps": 0.1793,
-       "tps": 1.835,
-       "tmi": -0.0004793
+       "dps": 0.1771,
+       "tps": 1.87,
+       "tmi": -0.0002224
       },
       "StatSpellPower": {
        "dps": 0,
@@ -5804,14 +5804,14 @@
        "tmi": 0
       },
       "StatStamina": {
-       "dps": 0.007889,
-       "tps": 0.02631,
-       "tmi": -0.01125
+       "dps": 0.008379,
+       "tps": 0.03136,
+       "tmi": -0.01149
       },
       "StatStrength": {
-       "dps": 1.032,
-       "tps": 4.282,
-       "tmi": -0.001798
+       "dps": 1.097,
+       "tps": 4.55,
+       "tmi": -0.001825
       }
      }
     },
@@ -5819,28 +5819,28 @@
      "phase": 3,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 1.873,
-       "tps": 5.46,
+       "dps": 1.501,
+       "tps": 4.105,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.5168,
-       "tps": 1.444,
-       "tmi": -0.005381
+       "dps": 0.5018,
+       "tps": 1.357,
+       "tmi": -0.005593
       },
       "StatArmor": {
-       "dps": 0.02239,
-       "tps": 0.09739,
-       "tmi": -0.0009908
+       "dps": 0.02137,
+       "tps": 0.09284,
+       "tmi": -0.001003
       },
       "StatArmorPenetration": {
-       "dps": 0.6725,
-       "tps": 1.721,
+       "dps": 0.6336,
+       "tps": 1.544,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4463,
-       "tps": 1.946,
+       "dps": 0.4216,
+       "tps": 1.844,
        "tmi": 0
       },
       "StatBlock": {
@@ -5854,54 +5854,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.1002,
-       "tps": 0.3459,
-       "tmi": -0.006641
+       "dps": 0.08061,
+       "tps": 0.2322,
+       "tmi": -0.006653
       },
       "StatDodge": {
-       "dps": 0.1541,
-       "tps": 0.5377,
-       "tmi": -0.007137
+       "dps": 0.133,
+       "tps": 0.4356,
+       "tmi": -0.00744
       },
       "StatExpertise": {
-       "dps": 0.4899,
-       "tps": 1.297,
-       "tmi": -0.005451
+       "dps": 0.5317,
+       "tps": 1.479,
+       "tmi": -0.005937
       },
       "StatMeleeCrit": {
-       "dps": 0.5019,
-       "tps": 1.293,
+       "dps": 0.4909,
+       "tps": 1.207,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.5033,
-       "tps": 1.055,
-       "tmi": 0.0006711
+       "dps": 0.4717,
+       "tps": 0.9594,
+       "tmi": 0.0007041
       },
       "StatMeleeHit": {
-       "dps": 0.3891,
-       "tps": 1.123,
-       "tmi": -0.001311
+       "dps": 0.3254,
+       "tps": 0.9234,
+       "tmi": -0.001298
       },
       "StatParry": {
-       "dps": 0.1195,
-       "tps": 0.408,
-       "tmi": -0.004862
+       "dps": 0.0934,
+       "tps": 0.3017,
+       "tmi": -0.004756
       },
       "StatSpellCrit": {
-       "dps": 0.1191,
-       "tps": 1.488,
+       "dps": 0.1178,
+       "tps": 1.492,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.009578,
-       "tps": -0.01247,
-       "tmi": 4.214e-05
+       "dps": 0.009731,
+       "tps": -0.02655,
+       "tmi": -9.043e-06
       },
       "StatSpellHit": {
-       "dps": 0.1811,
-       "tps": 1.932,
-       "tmi": -9.431e-05
+       "dps": 0.1953,
+       "tps": 2.015,
+       "tmi": -0.0002161
       },
       "StatSpellPower": {
        "dps": 0,
@@ -5909,14 +5909,14 @@
        "tmi": 0
       },
       "StatStamina": {
-       "dps": -1.84e-05,
-       "tps": 0.01583,
-       "tmi": -0.006317
+       "dps": 0.0001586,
+       "tps": 0.01579,
+       "tmi": -0.006271
       },
       "StatStrength": {
-       "dps": 1.097,
-       "tps": 4.562,
-       "tmi": -0.001334
+       "dps": 1.029,
+       "tps": 4.287,
+       "tmi": -0.001431
       }
      }
     },
@@ -5924,28 +5924,28 @@
      "phase": 4,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 1.55,
-       "tps": 4.28,
+       "dps": 1.566,
+       "tps": 4.328,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.559,
-       "tps": 1.466,
-       "tmi": -0.004282
+       "dps": 0.5617,
+       "tps": 1.533,
+       "tmi": -0.004448
       },
       "StatArmor": {
-       "dps": 0.0216,
-       "tps": 0.09367,
-       "tmi": -0.0006106
+       "dps": 0.02144,
+       "tps": 0.09011,
+       "tmi": -0.0006328
       },
       "StatArmorPenetration": {
-       "dps": 0.7539,
-       "tps": 1.854,
+       "dps": 0.752,
+       "tps": 1.85,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4333,
-       "tps": 1.882,
+       "dps": 0.4389,
+       "tps": 1.903,
        "tmi": 0
       },
       "StatBlock": {
@@ -5959,54 +5959,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.0788,
-       "tps": 0.25,
-       "tmi": -0.00551
+       "dps": 0.0715,
+       "tps": 0.2255,
+       "tmi": -0.005596
       },
       "StatDodge": {
-       "dps": 0.1236,
-       "tps": 0.425,
-       "tmi": -0.005893
+       "dps": 0.1173,
+       "tps": 0.3825,
+       "tmi": -0.006161
       },
       "StatExpertise": {
-       "dps": 0.6309,
-       "tps": 1.639,
-       "tmi": -0.003776
+       "dps": 0.5973,
+       "tps": 1.558,
+       "tmi": -0.003416
       },
       "StatMeleeCrit": {
-       "dps": 0.5744,
-       "tps": 1.422,
+       "dps": 0.5717,
+       "tps": 1.417,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.5565,
-       "tps": 1.129,
-       "tmi": 0.0004009
+       "dps": 0.5528,
+       "tps": 1.116,
+       "tmi": 0.0003941
       },
       "StatMeleeHit": {
-       "dps": 0.3797,
-       "tps": 1.054,
-       "tmi": -0.0008961
+       "dps": 0.3778,
+       "tps": 1.023,
+       "tmi": -0.0008214
       },
       "StatParry": {
-       "dps": 0.09215,
-       "tps": 0.2775,
-       "tmi": -0.004151
+       "dps": 0.09306,
+       "tps": 0.2871,
+       "tmi": -0.004428
       },
       "StatSpellCrit": {
-       "dps": 0.1263,
-       "tps": 1.635,
+       "dps": 0.1244,
+       "tps": 1.618,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.007398,
-       "tps": -0.04181,
-       "tmi": -6.304e-06
+       "dps": 0.005568,
+       "tps": -0.0268,
+       "tmi": 2.704e-05
       },
       "StatSpellHit": {
-       "dps": 0.2221,
-       "tps": 2.248,
-       "tmi": -0.0001567
+       "dps": 0.2126,
+       "tps": 2.072,
+       "tmi": -0.0001004
       },
       "StatSpellPower": {
        "dps": 0,
@@ -6015,13 +6015,13 @@
       },
       "StatStamina": {
        "dps": 0,
-       "tps": 0.01037,
-       "tmi": -0.003941
+       "tps": 0.009839,
+       "tmi": -0.00415
       },
       "StatStrength": {
-       "dps": 1.059,
+       "dps": 1.068,
        "tps": 4.418,
-       "tmi": -0.001182
+       "tmi": -0.001273
       }
      }
     },
@@ -6029,28 +6029,28 @@
      "phase": 5,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 1.629,
-       "tps": 4.351,
+       "dps": 1.586,
+       "tps": 4.241,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.5603,
-       "tps": 1.488,
-       "tmi": -0.003953
+       "dps": 0.5502,
+       "tps": 1.441,
+       "tmi": -0.004154
       },
       "StatArmor": {
-       "dps": 0.02116,
-       "tps": 0.09259,
-       "tmi": -0.0006453
+       "dps": 0.02171,
+       "tps": 0.09335,
+       "tmi": -0.0006549
       },
       "StatArmorPenetration": {
-       "dps": 0.7652,
-       "tps": 1.846,
+       "dps": 0.7436,
+       "tps": 1.793,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4445,
-       "tps": 1.907,
+       "dps": 0.4336,
+       "tps": 1.875,
        "tmi": 0
       },
       "StatBlock": {
@@ -6064,54 +6064,54 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": 0.08819,
-       "tps": 0.2752,
-       "tmi": -0.005001
+       "dps": 0.08677,
+       "tps": 0.2687,
+       "tmi": -0.005002
       },
       "StatDodge": {
-       "dps": 0.1449,
-       "tps": 0.4705,
-       "tmi": -0.00544
+       "dps": 0.1401,
+       "tps": 0.4532,
+       "tmi": -0.005576
       },
       "StatExpertise": {
-       "dps": 0.1742,
-       "tps": 0.228,
-       "tmi": -0.004681
+       "dps": 0.169,
+       "tps": 0.2036,
+       "tmi": -0.004713
       },
       "StatMeleeCrit": {
-       "dps": 0.5522,
-       "tps": 1.353,
+       "dps": 0.5488,
+       "tps": 1.344,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.5983,
-       "tps": 1.19,
-       "tmi": 9.657e-05
+       "dps": 0.5791,
+       "tps": 1.141,
+       "tmi": 9.573e-05
       },
       "StatMeleeHit": {
-       "dps": 0.3587,
-       "tps": 0.8983,
-       "tmi": -0.001119
+       "dps": 0.3605,
+       "tps": 0.8785,
+       "tmi": -0.001126
       },
       "StatParry": {
-       "dps": 0.1037,
-       "tps": 0.3302,
-       "tmi": -0.00358
+       "dps": 0.09844,
+       "tps": 0.301,
+       "tmi": -0.003759
       },
       "StatSpellCrit": {
-       "dps": 0.1326,
-       "tps": 1.66,
+       "dps": 0.1316,
+       "tps": 1.645,
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": 0.01057,
-       "tps": -0.03815,
-       "tmi": 1.008e-05
+       "dps": 0.01142,
+       "tps": -0.02883,
+       "tmi": 7.342e-06
       },
       "StatSpellHit": {
-       "dps": 0.211,
-       "tps": 2.206,
-       "tmi": -8.73e-05
+       "dps": 0.2071,
+       "tps": 2.198,
+       "tmi": -0.0001001
       },
       "StatSpellPower": {
        "dps": 0,
@@ -6120,13 +6120,13 @@
       },
       "StatStamina": {
        "dps": 0,
-       "tps": 0.01305,
-       "tmi": -0.004649
+       "tps": 0.01304,
+       "tmi": -0.004717
       },
       "StatStrength": {
-       "dps": 1.077,
-       "tps": 4.477,
-       "tmi": -0.001007
+       "dps": 1.057,
+       "tps": 4.384,
+       "tmi": -0.001091
       }
      }
     }
@@ -6764,29 +6764,29 @@
      "phase": 1,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 5.827,
-       "tps": 11.63,
-       "tmi": -0.0132
+       "dps": 5.891,
+       "tps": 11.9,
+       "tmi": -0.01396
       },
       "StatAgility": {
-       "dps": 0.2558,
-       "tps": 0.4894,
-       "tmi": -0.01037
+       "dps": 0.2824,
+       "tps": 0.543,
+       "tmi": -0.01034
       },
       "StatArmor": {
-       "dps": -0.007826,
-       "tps": -0.01865,
-       "tmi": -0.006863
+       "dps": -0.007561,
+       "tps": -0.018,
+       "tmi": -0.007023
       },
       "StatArmorPenetration": {
-       "dps": 0.6517,
-       "tps": 1.37,
-       "tmi": -8.367e-06
+       "dps": 0.7064,
+       "tps": 1.486,
+       "tmi": -3.897e-06
       },
       "StatAttackPower": {
-       "dps": 0.3434,
-       "tps": 0.6901,
-       "tmi": -0.000785
+       "dps": 0.3589,
+       "tps": 0.719,
+       "tmi": -0.0008264
       },
       "StatBlock": {
        "dps": 0,
@@ -6799,34 +6799,34 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": -0.05191,
-       "tps": -0.119,
-       "tmi": -0.005009
+       "dps": -0.05006,
+       "tps": -0.1164,
+       "tmi": -0.004901
       },
       "StatDodge": {
-       "dps": -0.05686,
-       "tps": -0.1302,
-       "tmi": -0.005996
+       "dps": -0.05807,
+       "tps": -0.1333,
+       "tmi": -0.005869
       },
       "StatExpertise": {
-       "dps": 0.7806,
-       "tps": 1.719,
-       "tmi": -0.007862
+       "dps": 1.029,
+       "tps": 2.259,
+       "tmi": -0.008486
       },
       "StatMeleeCrit": {
-       "dps": 0.4915,
-       "tps": 0.9785,
-       "tmi": -0.001903
+       "dps": 0.5311,
+       "tps": 1.059,
+       "tmi": -0.001963
       },
       "StatMeleeHaste": {
-       "dps": 0.6888,
-       "tps": 1.504,
-       "tmi": -0.0001857
+       "dps": 0.7377,
+       "tps": 1.605,
+       "tmi": -0.0001274
       },
       "StatMeleeHit": {
-       "dps": 0.8225,
-       "tps": 1.802,
-       "tmi": -0.0006249
+       "dps": 0.9102,
+       "tps": 1.99,
+       "tmi": -0.0007284
       },
       "StatParry": {
        "dps": 0,
@@ -6834,9 +6834,9 @@
        "tmi": 0
       },
       "StatSpellCrit": {
-       "dps": 0.01695,
-       "tps": 0.0364,
-       "tmi": 8.574e-06
+       "dps": 0.01802,
+       "tps": 0.03857,
+       "tmi": 1.454e-05
       },
       "StatSpellHaste": {
        "dps": 0,
@@ -6844,9 +6844,9 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.1545,
-       "tps": 0.4391,
-       "tmi": -7.456e-05
+       "dps": 0.1632,
+       "tps": 0.4573,
+       "tmi": -0.0001116
       },
       "StatSpellPower": {
        "dps": 0,
@@ -6856,12 +6856,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.01152
+       "tmi": -0.01185
       },
       "StatStrength": {
-       "dps": 0.8242,
-       "tps": 1.645,
-       "tmi": -0.00187
+       "dps": 0.8373,
+       "tps": 1.688,
+       "tmi": -0.001968
       }
      }
     },
@@ -6869,29 +6869,29 @@
      "phase": 2,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 7.923,
-       "tps": 16.16,
-       "tmi": -0.01843
+       "dps": 8.082,
+       "tps": 16.25,
+       "tmi": -0.01853
       },
       "StatAgility": {
-       "dps": 0.3709,
-       "tps": 0.7147,
-       "tmi": -0.008693
+       "dps": 0.3582,
+       "tps": 0.6894,
+       "tmi": -0.008537
       },
       "StatArmor": {
-       "dps": -0.03295,
-       "tps": -0.07742,
-       "tmi": -0.006516
+       "dps": -0.03154,
+       "tps": -0.07415,
+       "tmi": -0.00632
       },
       "StatArmorPenetration": {
-       "dps": 1.136,
-       "tps": 2.385,
-       "tmi": -8.822e-06
+       "dps": 1.067,
+       "tps": 2.243,
+       "tmi": 1.401e-05
       },
       "StatAttackPower": {
-       "dps": 0.482,
-       "tps": 0.9748,
-       "tmi": -0.001097
+       "dps": 0.4779,
+       "tps": 0.9594,
+       "tmi": -0.001105
       },
       "StatBlock": {
        "dps": 0,
@@ -6904,34 +6904,34 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": -0.1215,
-       "tps": -0.2806,
-       "tmi": -0.009733
+       "dps": -0.116,
+       "tps": -0.2695,
+       "tmi": -0.008741
       },
       "StatDodge": {
-       "dps": -0.1088,
-       "tps": -0.251,
-       "tmi": -0.005095
+       "dps": -0.1016,
+       "tps": -0.2356,
+       "tmi": -0.005119
       },
       "StatExpertise": {
-       "dps": 1.216,
-       "tps": 2.626,
-       "tmi": -0.007227
+       "dps": 1.149,
+       "tps": 2.483,
+       "tmi": -0.007034
       },
       "StatMeleeCrit": {
-       "dps": 0.7716,
-       "tps": 1.566,
-       "tmi": -0.001184
+       "dps": 0.7292,
+       "tps": 1.478,
+       "tmi": -0.001003
       },
       "StatMeleeHaste": {
-       "dps": 0.9846,
-       "tps": 2.112,
-       "tmi": -0.0003441
+       "dps": 0.9523,
+       "tps": 2.044,
+       "tmi": -0.0002923
       },
       "StatMeleeHit": {
-       "dps": 1.32,
-       "tps": 2.854,
-       "tmi": -0.0007741
+       "dps": 1.26,
+       "tps": 2.725,
+       "tmi": -0.0008414
       },
       "StatParry": {
        "dps": 0,
@@ -6939,9 +6939,9 @@
        "tmi": 0
       },
       "StatSpellCrit": {
-       "dps": 0.02466,
-       "tps": 0.05294,
-       "tmi": 4.178e-06
+       "dps": 0.02548,
+       "tps": 0.0549,
+       "tmi": -4.413e-06
       },
       "StatSpellHaste": {
        "dps": 0,
@@ -6949,9 +6949,9 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.2272,
-       "tps": 0.5977,
-       "tmi": -0.0002048
+       "dps": 0.2156,
+       "tps": 0.5724,
+       "tmi": -0.0001381
       },
       "StatSpellPower": {
        "dps": 0,
@@ -6961,12 +6961,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.01169
+       "tmi": -0.01155
       },
       "StatStrength": {
-       "dps": 1.13,
-       "tps": 2.295,
-       "tmi": -0.00261
+       "dps": 1.134,
+       "tps": 2.279,
+       "tmi": -0.002622
       }
      }
     },
@@ -6974,29 +6974,29 @@
      "phase": 3,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 9.274,
-       "tps": 18.68,
-       "tmi": -0.01573
+       "dps": 7.706,
+       "tps": 15.58,
+       "tmi": -0.01262
       },
       "StatAgility": {
-       "dps": 0.4864,
-       "tps": 0.9515,
-       "tmi": -0.006368
+       "dps": 0.3941,
+       "tps": 0.7602,
+       "tmi": -0.005498
       },
       "StatArmor": {
-       "dps": -0.04281,
-       "tps": -0.1009,
-       "tmi": -0.00459
+       "dps": -0.04331,
+       "tps": -0.1026,
+       "tmi": -0.003626
       },
       "StatArmorPenetration": {
-       "dps": 1.485,
-       "tps": 3.121,
-       "tmi": -2.001e-05
+       "dps": 1.152,
+       "tps": 2.423,
+       "tmi": -2.543e-05
       },
       "StatAttackPower": {
-       "dps": 0.5493,
-       "tps": 1.105,
-       "tmi": -0.0009405
+       "dps": 0.4654,
+       "tps": 0.9356,
+       "tmi": -0.0007606
       },
       "StatBlock": {
        "dps": 0,
@@ -7009,34 +7009,34 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": -0.1374,
-       "tps": -0.3168,
-       "tmi": -0.006567
+       "dps": -0.1244,
+       "tps": -0.2869,
+       "tmi": -0.003617
       },
       "StatDodge": {
-       "dps": -0.1151,
-       "tps": -0.2646,
-       "tmi": -0.003912
+       "dps": -0.1075,
+       "tps": -0.2489,
+       "tmi": -0.00347
       },
       "StatExpertise": {
-       "dps": 1.552,
-       "tps": 3.329,
-       "tmi": -0.00514
+       "dps": 1.249,
+       "tps": 2.68,
+       "tmi": -0.004135
       },
       "StatMeleeCrit": {
-       "dps": 0.9478,
-       "tps": 1.929,
-       "tmi": -0.0005118
+       "dps": 0.8198,
+       "tps": 1.663,
+       "tmi": -0.0005246
       },
       "StatMeleeHaste": {
-       "dps": 1.229,
-       "tps": 2.62,
-       "tmi": -0.0001963
+       "dps": 1.052,
+       "tps": 2.246,
+       "tmi": -0.0002053
       },
       "StatMeleeHit": {
-       "dps": 1.65,
-       "tps": 3.548,
-       "tmi": -0.0005016
+       "dps": 1.346,
+       "tps": 2.898,
+       "tmi": -0.0004941
       },
       "StatParry": {
        "dps": 0,
@@ -7044,9 +7044,9 @@
        "tmi": 0
       },
       "StatSpellCrit": {
-       "dps": 0.03122,
-       "tps": 0.06741,
-       "tmi": -2.109e-05
+       "dps": 0.02937,
+       "tps": 0.06359,
+       "tmi": 2.649e-06
       },
       "StatSpellHaste": {
        "dps": 0,
@@ -7054,9 +7054,9 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.2692,
-       "tps": 0.6894,
-       "tmi": -0.000126
+       "dps": 0.2593,
+       "tps": 0.6712,
+       "tmi": -8.503e-05
       },
       "StatSpellPower": {
        "dps": 0,
@@ -7066,12 +7066,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.007833
+       "tmi": -0.005585
       },
       "StatStrength": {
-       "dps": 1.296,
-       "tps": 2.623,
-       "tmi": -0.00223
+       "dps": 1.105,
+       "tps": 2.225,
+       "tmi": -0.001804
       }
      }
     },
@@ -7079,29 +7079,29 @@
      "phase": 4,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 12.15,
-       "tps": 25.23,
-       "tmi": -0.01633
+       "dps": 11.36,
+       "tps": 22.96,
+       "tmi": -0.01339
       },
       "StatAgility": {
-       "dps": 0.7387,
-       "tps": 1.496,
-       "tmi": -0.005446
+       "dps": 0.6319,
+       "tps": 1.247,
+       "tmi": -0.004727
       },
       "StatArmor": {
-       "dps": -0.06382,
-       "tps": -0.1542,
-       "tmi": -0.004203
+       "dps": -0.06179,
+       "tps": -0.1478,
+       "tmi": -0.003359
       },
       "StatArmorPenetration": {
-       "dps": 2.96,
-       "tps": 6.36,
-       "tmi": 2.472e-05
+       "dps": 2.621,
+       "tps": 5.533,
+       "tmi": 3.477e-06
       },
       "StatAttackPower": {
-       "dps": 0.7274,
-       "tps": 1.506,
-       "tmi": -0.0009785
+       "dps": 0.6672,
+       "tps": 1.35,
+       "tmi": -0.0007945
       },
       "StatBlock": {
        "dps": 0,
@@ -7114,34 +7114,34 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": -0.1679,
-       "tps": -0.3996,
-       "tmi": -0.006424
+       "dps": -0.1535,
+       "tps": -0.361,
+       "tmi": -0.003909
       },
       "StatDodge": {
-       "dps": -0.1166,
-       "tps": -0.2772,
-       "tmi": -0.003325
+       "dps": -0.1206,
+       "tps": -0.282,
+       "tmi": -0.003022
       },
       "StatExpertise": {
-       "dps": 2.418,
-       "tps": 5.271,
-       "tmi": -0.0047
+       "dps": 2.163,
+       "tps": 4.626,
+       "tmi": -0.003313
       },
       "StatMeleeCrit": {
-       "dps": 1.389,
-       "tps": 2.9,
-       "tmi": -0.0004456
+       "dps": 1.215,
+       "tps": 2.489,
+       "tmi": -0.0003172
       },
       "StatMeleeHaste": {
-       "dps": 1.962,
-       "tps": 4.218,
-       "tmi": -0.0001427
+       "dps": 1.891,
+       "tps": 3.991,
+       "tmi": -0.0001178
       },
       "StatMeleeHit": {
-       "dps": 2.649,
-       "tps": 5.793,
-       "tmi": -0.0004607
+       "dps": 2.343,
+       "tps": 5.03,
+       "tmi": -0.0003648
       },
       "StatParry": {
        "dps": 0,
@@ -7149,9 +7149,9 @@
        "tmi": 0
       },
       "StatSpellCrit": {
-       "dps": 0.04285,
-       "tps": 0.09415,
-       "tmi": 1.119e-05
+       "dps": 0.03757,
+       "tps": 0.0822,
+       "tmi": 1.008e-05
       },
       "StatSpellHaste": {
        "dps": 0,
@@ -7159,9 +7159,9 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.3353,
-       "tps": 0.8494,
-       "tmi": -8.353e-05
+       "dps": 0.3485,
+       "tps": 0.8655,
+       "tmi": -0.0001041
       },
       "StatSpellPower": {
        "dps": 0,
@@ -7171,12 +7171,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.007259
+       "tmi": -0.005371
       },
       "StatStrength": {
-       "dps": 1.735,
-       "tps": 3.588,
-       "tmi": -0.002348
+       "dps": 1.571,
+       "tps": 3.191,
+       "tmi": -0.001882
       }
      }
     },
@@ -7184,29 +7184,29 @@
      "phase": 5,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 12.43,
-       "tps": 25.84,
-       "tmi": -0.01586
+       "dps": 12.57,
+       "tps": 26.03,
+       "tmi": -0.01702
       },
       "StatAgility": {
-       "dps": 0.7772,
-       "tps": 1.578,
-       "tmi": -0.005323
+       "dps": 0.7878,
+       "tps": 1.601,
+       "tmi": -0.005646
       },
       "StatArmor": {
-       "dps": -0.06572,
-       "tps": -0.1589,
-       "tmi": -0.004098
+       "dps": -0.06846,
+       "tps": -0.165,
+       "tmi": -0.004442
       },
       "StatArmorPenetration": {
-       "dps": 3.083,
-       "tps": 6.624,
-       "tmi": -1.516e-05
+       "dps": 3.165,
+       "tps": 6.802,
+       "tmi": -6.388e-06
       },
       "StatAttackPower": {
-       "dps": 0.7391,
-       "tps": 1.537,
-       "tmi": -0.0009434
+       "dps": 0.7464,
+       "tps": 1.548,
+       "tmi": -0.001023
       },
       "StatBlock": {
        "dps": 0,
@@ -7219,34 +7219,34 @@
        "tmi": 0
       },
       "StatDefense": {
-       "dps": -0.1781,
-       "tps": -0.4161,
-       "tmi": -0.006375
+       "dps": -0.1723,
+       "tps": -0.4076,
+       "tmi": -0.008437
       },
       "StatDodge": {
-       "dps": -0.1274,
-       "tps": -0.3006,
-       "tmi": -0.003246
+       "dps": -0.1289,
+       "tps": -0.3036,
+       "tmi": -0.003442
       },
       "StatExpertise": {
-       "dps": 2.504,
-       "tps": 5.459,
-       "tmi": -0.004382
+       "dps": 2.561,
+       "tps": 5.582,
+       "tmi": -0.004716
       },
       "StatMeleeCrit": {
-       "dps": 1.425,
-       "tps": 2.981,
-       "tmi": -0.0004369
+       "dps": 1.464,
+       "tps": 3.063,
+       "tmi": -0.0004717
       },
       "StatMeleeHaste": {
-       "dps": 2.013,
-       "tps": 4.329,
-       "tmi": -0.0001529
+       "dps": 2.043,
+       "tps": 4.391,
+       "tmi": -0.0001445
       },
       "StatMeleeHit": {
-       "dps": 2.694,
-       "tps": 5.889,
-       "tmi": -0.0004052
+       "dps": 2.75,
+       "tps": 6.013,
+       "tmi": -0.0004164
       },
       "StatParry": {
        "dps": 0,
@@ -7254,9 +7254,9 @@
        "tmi": 0
       },
       "StatSpellCrit": {
-       "dps": 0.03721,
-       "tps": 0.0804,
-       "tmi": 2.235e-06
+       "dps": 0.03907,
+       "tps": 0.08593,
+       "tmi": 5.186e-06
       },
       "StatSpellHaste": {
        "dps": 0,
@@ -7264,9 +7264,9 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.3569,
-       "tps": 0.8939,
-       "tmi": -8.315e-05
+       "dps": 0.3588,
+       "tps": 0.9014,
+       "tmi": -0.0001092
       },
       "StatSpellPower": {
        "dps": 0,
@@ -7276,12 +7276,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.006954
+       "tmi": -0.007757
       },
       "StatStrength": {
-       "dps": 1.765,
-       "tps": 3.665,
-       "tmi": -0.002247
+       "dps": 1.769,
+       "tps": 3.68,
+       "tmi": -0.002405
       }
      }
     }
@@ -8024,74 +8024,74 @@
      "phase": 2,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 3.722,
-       "tps": 8.029,
+       "dps": 3.647,
+       "tps": 7.868,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.2964,
-       "tps": 0.5973,
-       "tmi": -0.00785
+       "dps": 0.2689,
+       "tps": 0.5334,
+       "tmi": -0.007765
       },
       "StatArmor": {
-       "dps": -0.01107,
-       "tps": -0.02874,
-       "tmi": -0.001192
+       "dps": -0.01114,
+       "tps": -0.02875,
+       "tmi": -0.001152
       },
       "StatArmorPenetration": {
-       "dps": 0.1936,
-       "tps": 0.2768,
+       "dps": 0.1809,
+       "tps": 0.2586,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4479,
-       "tps": 1.031,
+       "dps": 0.4387,
+       "tps": 1.01,
        "tmi": 0
       },
       "StatBlock": {
-       "dps": 0.005266,
-       "tps": 0.01315,
-       "tmi": -0.002005
+       "dps": 0.003902,
+       "tps": 0.009577,
+       "tmi": -0.001808
       },
       "StatBlockValue": {
-       "dps": 0.1176,
-       "tps": 0.3013,
-       "tmi": -0.005528
+       "dps": 0.1326,
+       "tps": 0.3407,
+       "tmi": -0.005415
       },
       "StatDefense": {
-       "dps": -0.273,
-       "tps": -0.7232,
-       "tmi": -0.009285
+       "dps": -0.2713,
+       "tps": -0.7169,
+       "tmi": -0.009133
       },
       "StatDodge": {
-       "dps": -0.2487,
-       "tps": -0.651,
-       "tmi": -0.006553
+       "dps": -0.25,
+       "tps": -0.6556,
+       "tmi": -0.006724
       },
       "StatExpertise": {
-       "dps": 1.317,
-       "tps": 3.094,
-       "tmi": -0.007159
+       "dps": 1.529,
+       "tps": 3.601,
+       "tmi": -0.006368
       },
       "StatMeleeCrit": {
-       "dps": 0.5385,
-       "tps": 1.226,
+       "dps": 0.5167,
+       "tps": 1.177,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.5202,
-       "tps": 1.053,
-       "tmi": 0.0001385
+       "dps": 0.4867,
+       "tps": 0.9866,
+       "tmi": 9.839e-05
       },
       "StatMeleeHit": {
-       "dps": 1.075,
-       "tps": 2.594,
-       "tmi": -0.0001416
+       "dps": 1.019,
+       "tps": 2.461,
+       "tmi": 2.75e-05
       },
       "StatParry": {
-       "dps": -0.215,
-       "tps": -0.5874,
-       "tmi": -0.006835
+       "dps": -0.2106,
+       "tps": -0.573,
+       "tmi": -0.006726
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -8099,29 +8099,29 @@
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": -0.03909,
-       "tps": -0.1032,
-       "tmi": -2.217e-05
+       "dps": -0.04087,
+       "tps": -0.1065,
+       "tmi": -1.193e-06
       },
       "StatSpellHit": {
-       "dps": 0.1497,
-       "tps": 0.4107,
-       "tmi": 1.433e-07
+       "dps": 0.1442,
+       "tps": 0.3968,
+       "tmi": 0
       },
       "StatSpellPower": {
-       "dps": 0.1376,
-       "tps": 0.3542,
+       "dps": 0.136,
+       "tps": 0.35,
        "tmi": 0
       },
       "StatStamina": {
-       "dps": 4.004e-06,
-       "tps": 6.1e-07,
-       "tmi": -0.01017
+       "dps": 0,
+       "tps": 0,
+       "tmi": -0.009498
       },
       "StatStrength": {
-       "dps": 1.285,
+       "dps": 1.282,
        "tps": 3,
-       "tmi": -0.003486
+       "tmi": -0.003457
       }
      }
     },
@@ -8129,74 +8129,74 @@
      "phase": 3,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 3.512,
-       "tps": 7.524,
+       "dps": 3.547,
+       "tps": 7.593,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.3603,
-       "tps": 0.735,
-       "tmi": -0.005898
+       "dps": 0.3784,
+       "tps": 0.7745,
+       "tmi": -0.005798
       },
       "StatArmor": {
-       "dps": -0.01092,
-       "tps": -0.02808,
-       "tmi": -0.0007621
+       "dps": -0.009259,
+       "tps": -0.02441,
+       "tmi": -0.0007302
       },
       "StatArmorPenetration": {
-       "dps": 0.2331,
-       "tps": 0.3333,
+       "dps": 0.2353,
+       "tps": 0.3365,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4207,
-       "tps": 0.9633,
+       "dps": 0.4174,
+       "tps": 0.9532,
        "tmi": 0
       },
       "StatBlock": {
-       "dps": 0.01061,
-       "tps": 0.02647,
-       "tmi": -0.002494
+       "dps": 0.004062,
+       "tps": 0.01055,
+       "tmi": -0.002245
       },
       "StatBlockValue": {
-       "dps": -0.02638,
-       "tps": -0.07131,
-       "tmi": -0.003795
+       "dps": -0.02026,
+       "tps": -0.0524,
+       "tmi": -0.003674
       },
       "StatDefense": {
-       "dps": -0.2556,
-       "tps": -0.6692,
-       "tmi": -0.005479
+       "dps": -0.2546,
+       "tps": -0.6737,
+       "tmi": -0.005727
       },
       "StatDodge": {
-       "dps": -0.2509,
-       "tps": -0.6485,
-       "tmi": -0.005253
+       "dps": -0.2428,
+       "tps": -0.6343,
+       "tmi": -0.005207
       },
       "StatExpertise": {
-       "dps": 1.93,
-       "tps": 4.47,
-       "tmi": -0.004408
+       "dps": 1.859,
+       "tps": 4.345,
+       "tmi": -0.004375
       },
       "StatMeleeCrit": {
-       "dps": 0.6171,
-       "tps": 1.391,
+       "dps": 0.6122,
+       "tps": 1.379,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.5939,
-       "tps": 1.186,
-       "tmi": 4.364e-05
+       "dps": 0.5977,
+       "tps": 1.193,
+       "tmi": 2.432e-05
       },
       "StatMeleeHit": {
-       "dps": 1.209,
-       "tps": 2.897,
-       "tmi": -2.278e-05
+       "dps": 1.222,
+       "tps": 2.926,
+       "tmi": 1.739e-05
       },
       "StatParry": {
-       "dps": -0.178,
-       "tps": -0.4827,
-       "tmi": -0.004633
+       "dps": -0.1889,
+       "tps": -0.5163,
+       "tmi": -0.005086
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -8204,29 +8204,29 @@
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": -0.01377,
-       "tps": -0.03728,
-       "tmi": -2.87e-06
+       "dps": -0.01232,
+       "tps": -0.03164,
+       "tmi": -3.302e-05
       },
       "StatSpellHit": {
-       "dps": 0.1492,
-       "tps": 0.4063,
+       "dps": 0.142,
+       "tps": 0.3866,
        "tmi": 0
       },
       "StatSpellPower": {
-       "dps": 0.1332,
-       "tps": 0.3429,
+       "dps": 0.1277,
+       "tps": 0.3286,
        "tmi": 0
       },
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.005516
+       "tmi": -0.00532
       },
       "StatStrength": {
-       "dps": 1.126,
-       "tps": 2.595,
-       "tmi": -0.002418
+       "dps": 1.132,
+       "tps": 2.605,
+       "tmi": -0.002326
       }
      }
     },
@@ -8234,74 +8234,74 @@
      "phase": 4,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 3.841,
-       "tps": 8.269,
+       "dps": 3.642,
+       "tps": 7.842,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.4822,
-       "tps": 1.023,
-       "tmi": -0.004611
+       "dps": 0.454,
+       "tps": 0.9565,
+       "tmi": -0.004657
       },
       "StatArmor": {
-       "dps": -0.005826,
-       "tps": -0.01532,
-       "tmi": -0.0004661
+       "dps": -0.00611,
+       "tps": -0.01594,
+       "tmi": -0.0004415
       },
       "StatArmorPenetration": {
-       "dps": 0.286,
-       "tps": 0.409,
+       "dps": 0.2624,
+       "tps": 0.3753,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4358,
-       "tps": 0.9953,
+       "dps": 0.4187,
+       "tps": 0.9567,
        "tmi": 0
       },
       "StatBlock": {
-       "dps": 0.01966,
-       "tps": 0.05187,
-       "tmi": -0.002373
+       "dps": 0.01813,
+       "tps": 0.04795,
+       "tmi": -0.002179
       },
       "StatBlockValue": {
-       "dps": 0.2067,
-       "tps": 0.5308,
-       "tmi": -0.003129
+       "dps": 0.2612,
+       "tps": 0.6672,
+       "tmi": -0.002786
       },
       "StatDefense": {
-       "dps": -0.2429,
-       "tps": -0.6326,
-       "tmi": -0.005496
+       "dps": -0.23,
+       "tps": -0.6013,
+       "tmi": -0.005184
       },
       "StatDodge": {
-       "dps": -0.2028,
-       "tps": -0.5199,
-       "tmi": -0.004448
+       "dps": -0.2011,
+       "tps": -0.5142,
+       "tmi": -0.004369
       },
       "StatExpertise": {
-       "dps": 2.287,
-       "tps": 5.316,
-       "tmi": -0.003427
+       "dps": 2.078,
+       "tps": 4.82,
+       "tmi": -0.003075
       },
       "StatMeleeCrit": {
-       "dps": 0.6821,
-       "tps": 1.53,
+       "dps": 0.6523,
+       "tps": 1.46,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.7418,
-       "tps": 1.471,
-       "tmi": -9.877e-06
+       "dps": 0.6746,
+       "tps": 1.344,
+       "tmi": 2.504e-05
       },
       "StatMeleeHit": {
-       "dps": 1.415,
-       "tps": 3.376,
-       "tmi": -0.0001262
+       "dps": 1.32,
+       "tps": 3.147,
+       "tmi": 5.044e-05
       },
       "StatParry": {
-       "dps": -0.1828,
-       "tps": -0.4939,
-       "tmi": -0.005126
+       "dps": -0.1811,
+       "tps": -0.4859,
+       "tmi": -0.004819
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -8309,29 +8309,29 @@
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": -0.007619,
-       "tps": -0.02131,
-       "tmi": 6.962e-06
+       "dps": -0.008068,
+       "tps": -0.0224,
+       "tmi": -1.415e-05
       },
       "StatSpellHit": {
-       "dps": 0.1241,
-       "tps": 0.335,
+       "dps": 0.1146,
+       "tps": 0.3096,
        "tmi": 0
       },
       "StatSpellPower": {
-       "dps": 0.1209,
-       "tps": 0.3112,
+       "dps": 0.1175,
+       "tps": 0.3025,
        "tmi": 0
       },
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.004181
+       "tmi": -0.003592
       },
       "StatStrength": {
-       "dps": 1.327,
-       "tps": 3.096,
-       "tmi": -0.001942
+       "dps": 1.307,
+       "tps": 3.055,
+       "tmi": -0.001714
       }
      }
     },
@@ -8339,74 +8339,74 @@
      "phase": 5,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 3.918,
-       "tps": 8.453,
+       "dps": 3.942,
+       "tps": 8.497,
        "tmi": 0
       },
       "StatAgility": {
-       "dps": 0.4766,
-       "tps": 1.013,
-       "tmi": -0.004315
+       "dps": 0.4724,
+       "tps": 1.012,
+       "tmi": -0.003959
       },
       "StatArmor": {
-       "dps": -0.007264,
-       "tps": -0.01899,
-       "tmi": -0.0004223
+       "dps": -0.007139,
+       "tps": -0.01829,
+       "tmi": -0.0004134
       },
       "StatArmorPenetration": {
-       "dps": 0.2827,
-       "tps": 0.4043,
+       "dps": 0.2725,
+       "tps": 0.3896,
        "tmi": 0
       },
       "StatAttackPower": {
-       "dps": 0.4456,
-       "tps": 1.018,
+       "dps": 0.4442,
+       "tps": 1.015,
        "tmi": 0
       },
       "StatBlock": {
-       "dps": 0.01265,
-       "tps": 0.0323,
-       "tmi": -0.00154
+       "dps": 0.009243,
+       "tps": 0.02318,
+       "tmi": -0.001949
       },
       "StatBlockValue": {
-       "dps": 0.192,
-       "tps": 0.4936,
-       "tmi": -0.002822
+       "dps": 0.04693,
+       "tps": 0.12,
+       "tmi": -0.002738
       },
       "StatDefense": {
-       "dps": -0.2207,
-       "tps": -0.5749,
-       "tmi": -0.004199
+       "dps": -0.2367,
+       "tps": -0.6153,
+       "tmi": -0.004155
       },
       "StatDodge": {
-       "dps": -0.2196,
-       "tps": -0.5637,
-       "tmi": -0.004177
+       "dps": -0.2177,
+       "tps": -0.5582,
+       "tmi": -0.003811
       },
       "StatExpertise": {
-       "dps": 0.8965,
-       "tps": 2.06,
-       "tmi": -0.003309
+       "dps": 0.8465,
+       "tps": 1.955,
+       "tmi": -0.002984
       },
       "StatMeleeCrit": {
-       "dps": 0.7036,
-       "tps": 1.591,
+       "dps": 0.6854,
+       "tps": 1.552,
        "tmi": 0
       },
       "StatMeleeHaste": {
-       "dps": 0.7453,
-       "tps": 1.484,
-       "tmi": -0.0001311
+       "dps": 0.7086,
+       "tps": 1.412,
+       "tmi": -0.0001401
       },
       "StatMeleeHit": {
-       "dps": 1.359,
-       "tps": 3.24,
-       "tmi": -0.0001689
+       "dps": 1.317,
+       "tps": 3.144,
+       "tmi": -0.0001935
       },
       "StatParry": {
-       "dps": -0.1544,
-       "tps": -0.4166,
-       "tmi": -0.003657
+       "dps": -0.1644,
+       "tps": -0.4458,
+       "tmi": -0.003599
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -8414,29 +8414,29 @@
        "tmi": 0
       },
       "StatSpellHaste": {
-       "dps": -0.01273,
-       "tps": -0.03404,
-       "tmi": 1.935e-05
+       "dps": -0.008688,
+       "tps": -0.0228,
+       "tmi": 1.954e-05
       },
       "StatSpellHit": {
-       "dps": 0.1322,
-       "tps": 0.3575,
+       "dps": 0.1201,
+       "tps": 0.3262,
        "tmi": 0
       },
       "StatSpellPower": {
-       "dps": 0.1226,
-       "tps": 0.3156,
+       "dps": 0.1257,
+       "tps": 0.3235,
        "tmi": 0
       },
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.00333
+       "tmi": -0.003155
       },
       "StatStrength": {
-       "dps": 1.331,
-       "tps": 3.102,
-       "tmi": -0.001782
+       "dps": 1.229,
+       "tps": 2.838,
+       "tmi": -0.001726
       }
      }
     }
@@ -8864,74 +8864,74 @@
      "phase": 1,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 3.241,
-       "tps": 6.744,
-       "tmi": -0.000406
+       "dps": 3.264,
+       "tps": 6.79,
+       "tmi": -0.0003006
       },
       "StatAgility": {
-       "dps": 0.6864,
-       "tps": 1.396,
-       "tmi": -0.007687
+       "dps": 0.703,
+       "tps": 1.43,
+       "tmi": -0.007458
       },
       "StatArmor": {
-       "dps": 0.004843,
-       "tps": 0.009319,
-       "tmi": -0.001178
+       "dps": 0.004198,
+       "tps": 0.007973,
+       "tmi": -0.001161
       },
       "StatArmorPenetration": {
-       "dps": 0.9192,
-       "tps": 1.909,
-       "tmi": 1.23e-05
+       "dps": 0.9546,
+       "tps": 1.982,
+       "tmi": -1.537e-05
       },
       "StatAttackPower": {
-       "dps": 0.3339,
-       "tps": 0.7102,
-       "tmi": -1.767e-05
+       "dps": 0.3341,
+       "tps": 0.7104,
+       "tmi": -8.87e-06
       },
       "StatBlock": {
-       "dps": 0.07482,
-       "tps": 0.1507,
-       "tmi": -0.01134
+       "dps": 0.07426,
+       "tps": 0.1487,
+       "tmi": -0.01125
       },
       "StatBlockValue": {
-       "dps": 0.4684,
-       "tps": 0.9596,
-       "tmi": -0.004556
+       "dps": 0.4613,
+       "tps": 0.9441,
+       "tmi": -0.004631
       },
       "StatDefense": {
-       "dps": -0.1168,
-       "tps": -0.2903,
-       "tmi": -0.01921
+       "dps": -0.1093,
+       "tps": -0.2731,
+       "tmi": -0.01771
       },
       "StatDodge": {
-       "dps": -0.1224,
-       "tps": -0.3024,
-       "tmi": -0.00899
+       "dps": -0.1198,
+       "tps": -0.2969,
+       "tmi": -0.008773
       },
       "StatExpertise": {
-       "dps": 1.014,
-       "tps": 2.177,
-       "tmi": -0.006443
+       "dps": 1.024,
+       "tps": 2.197,
+       "tmi": -0.006495
       },
       "StatMeleeCrit": {
-       "dps": 0.9164,
-       "tps": 1.904,
-       "tmi": 1.322e-05
+       "dps": 0.9421,
+       "tps": 1.957,
+       "tmi": 2.835e-05
       },
       "StatMeleeHaste": {
-       "dps": 0.3229,
-       "tps": 0.6957,
-       "tmi": 3.231e-05
+       "dps": 0.3345,
+       "tps": 0.7202,
+       "tmi": -4.126e-06
       },
       "StatMeleeHit": {
-       "dps": 1.131,
-       "tps": 2.45,
-       "tmi": -0.0001011
+       "dps": 1.161,
+       "tps": 2.515,
+       "tmi": -0.000109
       },
       "StatParry": {
-       "dps": -0.07404,
-       "tps": -0.1921,
-       "tmi": -0.007601
+       "dps": -0.07479,
+       "tps": -0.1941,
+       "tmi": -0.00749
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -8944,8 +8944,8 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.02149,
-       "tps": 0.07023,
+       "dps": 0.02244,
+       "tps": 0.07339,
        "tmi": 0
       },
       "StatSpellPower": {
@@ -8956,12 +8956,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.01055
+       "tmi": -0.01043
       },
       "StatStrength": {
-       "dps": 1.049,
-       "tps": 2.21,
-       "tmi": -0.002603
+       "dps": 1.062,
+       "tps": 2.236,
+       "tmi": -0.002721
       }
      }
     },
@@ -8969,74 +8969,74 @@
      "phase": 2,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 2.718,
-       "tps": 5.684,
-       "tmi": -7.853e-06
+       "dps": 2.73,
+       "tps": 5.711,
+       "tmi": -0.0001289
       },
       "StatAgility": {
-       "dps": 0.6706,
-       "tps": 1.364,
-       "tmi": -0.007539
+       "dps": 0.6616,
+       "tps": 1.345,
+       "tmi": -0.007535
       },
       "StatArmor": {
-       "dps": 0.001621,
-       "tps": 0.001767,
-       "tmi": -0.0009448
+       "dps": 0.00298,
+       "tps": 0.004522,
+       "tmi": -0.0009531
       },
       "StatArmorPenetration": {
-       "dps": 0.9902,
-       "tps": 2.061,
-       "tmi": 3.574e-05
+       "dps": 0.985,
+       "tps": 2.05,
+       "tmi": -3.156e-05
       },
       "StatAttackPower": {
-       "dps": 0.3184,
-       "tps": 0.6791,
-       "tmi": 2.87e-07
+       "dps": 0.3222,
+       "tps": 0.6871,
+       "tmi": -2.138e-05
       },
       "StatBlock": {
-       "dps": -0.03138,
-       "tps": -0.08565,
-       "tmi": -0.01967
+       "dps": -0.04068,
+       "tps": -0.1038,
+       "tmi": -0.01909
       },
       "StatBlockValue": {
-       "dps": 0.2196,
-       "tps": 0.4334,
-       "tmi": -0.005178
+       "dps": 0.2424,
+       "tps": 0.4795,
+       "tmi": -0.005691
       },
       "StatDefense": {
-       "dps": -0.1479,
-       "tps": -0.3609,
-       "tmi": -0.01875
+       "dps": -0.1549,
+       "tps": -0.3762,
+       "tmi": -0.01858
       },
       "StatDodge": {
-       "dps": -0.1386,
-       "tps": -0.3368,
-       "tmi": -0.009516
+       "dps": -0.1488,
+       "tps": -0.3596,
+       "tmi": -0.009596
       },
       "StatExpertise": {
-       "dps": 2.316,
-       "tps": 4.955,
-       "tmi": -0.006361
+       "dps": 2.272,
+       "tps": 4.862,
+       "tmi": -0.006295
       },
       "StatMeleeCrit": {
-       "dps": 0.9222,
-       "tps": 1.92,
-       "tmi": 5.923e-05
+       "dps": 0.9184,
+       "tps": 1.913,
+       "tmi": 1.311e-05
       },
       "StatMeleeHaste": {
-       "dps": 0.3661,
-       "tps": 0.791,
-       "tmi": 0.0002521
+       "dps": 0.3623,
+       "tps": 0.7828,
+       "tmi": 0.0002234
       },
       "StatMeleeHit": {
-       "dps": 1.261,
-       "tps": 2.721,
-       "tmi": 1.526e-05
+       "dps": 1.235,
+       "tps": 2.665,
+       "tmi": 2.438e-05
       },
       "StatParry": {
-       "dps": -0.1144,
-       "tps": -0.2829,
-       "tmi": -0.009178
+       "dps": -0.1221,
+       "tps": -0.2988,
+       "tmi": -0.008806
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -9049,8 +9049,8 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.01929,
-       "tps": 0.06306,
+       "dps": 0.0192,
+       "tps": 0.06277,
        "tmi": 0
       },
       "StatSpellPower": {
@@ -9061,12 +9061,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.007562
+       "tmi": -0.007421
       },
       "StatStrength": {
-       "dps": 0.8744,
-       "tps": 1.844,
-       "tmi": -0.002992
+       "dps": 0.893,
+       "tps": 1.883,
+       "tmi": -0.003342
       }
      }
     },
@@ -9074,74 +9074,74 @@
      "phase": 3,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 3.367,
-       "tps": 7.019,
-       "tmi": 0.0004455
+       "dps": 3.37,
+       "tps": 7.026,
+       "tmi": -0.0002783
       },
       "StatAgility": {
-       "dps": 0.8427,
-       "tps": 1.731,
-       "tmi": -0.004877
+       "dps": 0.8451,
+       "tps": 1.736,
+       "tmi": -0.004999
       },
       "StatArmor": {
-       "dps": 0.0056,
-       "tps": 0.01114,
-       "tmi": -0.0005393
+       "dps": 0.00464,
+       "tps": 0.009058,
+       "tmi": -0.0005574
       },
       "StatArmorPenetration": {
-       "dps": 1.105,
-       "tps": 2.296,
-       "tmi": -6.786e-06
+       "dps": 1.098,
+       "tps": 2.283,
+       "tmi": 2.058e-05
       },
       "StatAttackPower": {
-       "dps": 0.3385,
-       "tps": 0.7196,
-       "tmi": -4.095e-05
+       "dps": 0.3365,
+       "tps": 0.7154,
+       "tmi": -2.099e-06
       },
       "StatBlock": {
-       "dps": -0.0519,
-       "tps": -0.1292,
-       "tmi": -0.01776
+       "dps": -0.06947,
+       "tps": -0.165,
+       "tmi": -0.0181
       },
       "StatBlockValue": {
-       "dps": 0.1452,
-       "tps": 0.2913,
-       "tmi": -0.002381
+       "dps": 0.1501,
+       "tps": 0.3018,
+       "tmi": -0.002469
       },
       "StatDefense": {
-       "dps": -0.1199,
-       "tps": -0.2868,
-       "tmi": -0.008867
+       "dps": -0.1379,
+       "tps": -0.3244,
+       "tmi": -0.009002
       },
       "StatDodge": {
-       "dps": -0.1154,
-       "tps": -0.2739,
-       "tmi": -0.006484
+       "dps": -0.127,
+       "tps": -0.2977,
+       "tmi": -0.006566
       },
       "StatExpertise": {
-       "dps": 2.715,
-       "tps": 5.799,
-       "tmi": -0.00297
+       "dps": 2.711,
+       "tps": 5.785,
+       "tmi": -0.003338
       },
       "StatMeleeCrit": {
-       "dps": 1.123,
-       "tps": 2.335,
-       "tmi": -1.968e-06
+       "dps": 1.119,
+       "tps": 2.326,
+       "tmi": 1.131e-05
       },
       "StatMeleeHaste": {
-       "dps": 0.4367,
-       "tps": 0.9315,
-       "tmi": 5.516e-05
+       "dps": 0.4296,
+       "tps": 0.9165,
+       "tmi": 5.41e-05
       },
       "StatMeleeHit": {
-       "dps": 1.481,
-       "tps": 3.176,
-       "tmi": -3.551e-05
+       "dps": 1.475,
+       "tps": 3.162,
+       "tmi": -0.0001357
       },
       "StatParry": {
-       "dps": -0.06402,
-       "tps": -0.1623,
-       "tmi": -0.005948
+       "dps": -0.07873,
+       "tps": -0.1928,
+       "tmi": -0.005934
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -9154,8 +9154,8 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.01578,
-       "tps": 0.05161,
+       "dps": 0.01548,
+       "tps": 0.05064,
        "tmi": 0
       },
       "StatSpellPower": {
@@ -9166,12 +9166,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.004104
+       "tmi": -0.004179
       },
       "StatStrength": {
-       "dps": 0.8796,
-       "tps": 1.86,
-       "tmi": -0.001549
+       "dps": 0.8614,
+       "tps": 1.821,
+       "tmi": -0.001466
       }
      }
     },
@@ -9179,74 +9179,74 @@
      "phase": 4,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 3.391,
-       "tps": 7.066,
-       "tmi": 0.0002099
+       "dps": 3.232,
+       "tps": 6.734,
+       "tmi": -0.0001081
       },
       "StatAgility": {
-       "dps": 0.9529,
-       "tps": 1.965,
-       "tmi": -0.00364
+       "dps": 0.9128,
+       "tps": 1.881,
+       "tmi": -0.003612
       },
       "StatArmor": {
-       "dps": 0.007083,
-       "tps": 0.01454,
-       "tmi": -0.0003122
+       "dps": 0.006918,
+       "tps": 0.01427,
+       "tmi": -0.0003104
       },
       "StatArmorPenetration": {
-       "dps": 1.224,
-       "tps": 2.545,
-       "tmi": -1.572e-05
+       "dps": 1.131,
+       "tps": 2.351,
+       "tmi": 1.577e-05
       },
       "StatAttackPower": {
-       "dps": 0.3525,
-       "tps": 0.7482,
-       "tmi": 1.912e-05
+       "dps": 0.3239,
+       "tps": 0.6879,
+       "tmi": 4.574e-06
       },
       "StatBlock": {
-       "dps": -0.06142,
-       "tps": -0.1448,
-       "tmi": -0.01582
+       "dps": -0.07493,
+       "tps": -0.1729,
+       "tmi": -0.01537
       },
       "StatBlockValue": {
-       "dps": 0.2844,
-       "tps": 0.5806,
-       "tmi": -0.002776
+       "dps": 0.2737,
+       "tps": 0.5583,
+       "tmi": -0.002771
       },
       "StatDefense": {
-       "dps": -0.09705,
-       "tps": -0.2335,
-       "tmi": -0.007806
+       "dps": -0.09754,
+       "tps": -0.2334,
+       "tmi": -0.007405
       },
       "StatDodge": {
-       "dps": -0.08063,
-       "tps": -0.1941,
-       "tmi": -0.005172
+       "dps": -0.09555,
+       "tps": -0.2261,
+       "tmi": -0.005208
       },
       "StatExpertise": {
-       "dps": 3.109,
-       "tps": 6.623,
-       "tmi": -0.001898
+       "dps": 3.063,
+       "tps": 6.529,
+       "tmi": -0.002038
       },
       "StatMeleeCrit": {
-       "dps": 1.235,
-       "tps": 2.567,
-       "tmi": -7.827e-06
+       "dps": 1.181,
+       "tps": 2.456,
+       "tmi": -4.7e-06
       },
       "StatMeleeHaste": {
-       "dps": 0.5251,
-       "tps": 1.116,
-       "tmi": -3.244e-06
+       "dps": 0.4863,
+       "tps": 1.035,
+       "tmi": 2.4e-05
       },
       "StatMeleeHit": {
-       "dps": 1.693,
-       "tps": 3.619,
-       "tmi": -0.0001229
+       "dps": 1.625,
+       "tps": 3.477,
+       "tmi": -9.083e-05
       },
       "StatParry": {
-       "dps": -0.05339,
-       "tps": -0.1372,
-       "tmi": -0.005556
+       "dps": -0.05795,
+       "tps": -0.1454,
+       "tmi": -0.004956
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -9259,8 +9259,8 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.01175,
-       "tps": 0.0384,
+       "dps": 0.01201,
+       "tps": 0.03927,
        "tmi": 0
       },
       "StatSpellPower": {
@@ -9271,12 +9271,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.002371
+       "tmi": -0.002336
       },
       "StatStrength": {
-       "dps": 0.9958,
-       "tps": 2.101,
-       "tmi": -0.001614
+       "dps": 0.934,
+       "tps": 1.97,
+       "tmi": -0.001549
       }
      }
     },
@@ -9284,74 +9284,74 @@
      "phase": 5,
      "slopes": {
       "PseudoStatMainHandDps": {
-       "dps": 2.803,
-       "tps": 5.874,
-       "tmi": -0.0002948
+       "dps": 3.416,
+       "tps": 7.124,
+       "tmi": -1.956e-05
       },
       "StatAgility": {
-       "dps": 0.9578,
-       "tps": 1.973,
-       "tmi": -0.003407
+       "dps": 1.008,
+       "tps": 2.075,
+       "tmi": -0.003638
       },
       "StatArmor": {
-       "dps": 0.005144,
-       "tps": 0.01015,
-       "tmi": -0.0003107
+       "dps": 0.005742,
+       "tps": 0.01153,
+       "tmi": -0.0003278
       },
       "StatArmorPenetration": {
-       "dps": 1.257,
-       "tps": 2.62,
-       "tmi": 1.408e-05
+       "dps": 1.266,
+       "tps": 2.633,
+       "tmi": 1.627e-05
       },
       "StatAttackPower": {
-       "dps": 0.3326,
-       "tps": 0.7105,
-       "tmi": 1.382e-05
+       "dps": 0.3468,
+       "tps": 0.7379,
+       "tmi": -5.458e-06
       },
       "StatBlock": {
-       "dps": -0.03335,
-       "tps": -0.09693,
-       "tmi": -0.0121
+       "dps": -0.05728,
+       "tps": -0.1408,
+       "tmi": -0.01247
       },
       "StatBlockValue": {
-       "dps": 0.2593,
-       "tps": 0.5243,
-       "tmi": -0.002312
+       "dps": 0.2769,
+       "tps": 0.5635,
+       "tmi": -0.002351
       },
       "StatDefense": {
-       "dps": -0.1085,
-       "tps": -0.2651,
-       "tmi": -0.006326
+       "dps": -0.1173,
+       "tps": -0.2785,
+       "tmi": -0.006355
       },
       "StatDodge": {
-       "dps": -0.0979,
-       "tps": -0.2396,
-       "tmi": -0.004731
+       "dps": -0.1153,
+       "tps": -0.2735,
+       "tmi": -0.005066
       },
       "StatExpertise": {
-       "dps": 1.279,
-       "tps": 2.722,
-       "tmi": -0.00237
+       "dps": 1.417,
+       "tps": 3.015,
+       "tmi": -0.00181
       },
       "StatMeleeCrit": {
-       "dps": 1.234,
-       "tps": 2.57,
-       "tmi": 8.752e-06
+       "dps": 1.321,
+       "tps": 2.747,
+       "tmi": 5.81e-06
       },
       "StatMeleeHaste": {
-       "dps": 0.4998,
-       "tps": 1.072,
-       "tmi": 1.679e-05
+       "dps": 0.532,
+       "tps": 1.132,
+       "tmi": -2.515e-06
       },
       "StatMeleeHit": {
-       "dps": 1.477,
-       "tps": 3.178,
-       "tmi": 4.806e-06
+       "dps": 1.594,
+       "tps": 3.416,
+       "tmi": -1.871e-05
       },
       "StatParry": {
-       "dps": -0.06587,
-       "tps": -0.1685,
-       "tmi": -0.004406
+       "dps": -0.0669,
+       "tps": -0.1653,
+       "tmi": -0.004178
       },
       "StatSpellCrit": {
        "dps": 0,
@@ -9364,8 +9364,8 @@
        "tmi": 0
       },
       "StatSpellHit": {
-       "dps": 0.01457,
-       "tps": 0.04766,
+       "dps": 0.01447,
+       "tps": 0.04733,
        "tmi": 0
       },
       "StatSpellPower": {
@@ -9376,12 +9376,12 @@
       "StatStamina": {
        "dps": 0,
        "tps": 0,
-       "tmi": -0.00228
+       "tmi": -0.002427
       },
       "StatStrength": {
-       "dps": 0.9259,
-       "tps": 1.962,
-       "tmi": -0.001357
+       "dps": 0.9678,
+       "tps": 2.044,
+       "tmi": -0.001363
       }
      }
     }
