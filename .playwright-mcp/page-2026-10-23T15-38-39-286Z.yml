@@ -1,0 +1,293 @@
+- generic [ref=f17e3]:
+  - generic [ref=f17e5]:
+    - text: Cataclysm sim development has begun!
+    - link "Join our Discord" [ref=f17e6] [cursor=pointer]:
+      - /url: https://discord.gg/p3DgvmnDCS
+    - text: for more details or to contribute to the project.
+  - generic [ref=f17e7]:
+    - complementary [ref=f17e8]:
+      - button "WoWSims - WOTLK Restoration Shaman Unlaunched" [ref=f17e12] [cursor=pointer]:
+        - generic [ref=f17e15]:
+          - generic [ref=f17e16]: WoWSims - WOTLK
+          - generic [ref=f17e17]: Restoration Shaman
+          - generic [ref=f17e18]: Unlaunched
+      - generic [ref=f17e19]:
+        - generic [ref=f17e20]:
+          - generic [ref=f17e21]:
+            - generic [ref=f17e22]: Iterations
+            - textbox [ref=f17e23]: "3000"
+          - button "Simulate" [ref=f17e24] [cursor=pointer]
+          - button "Stat Weights" [ref=f17e25] [cursor=pointer]
+        - link "" [ref=f17e30] [cursor=pointer]:
+          - /url: javascript:void(0)
+        - generic [ref=f17e33]:
+          - generic [ref=f17e34]: Stats
+          - table [ref=f17e35]:
+            - row [ref=f17e36]:
+              - cell "Health" [ref=f17e37]
+              - cell [ref=f17e38]:
+                - button "18683" [ref=f17e39] [cursor=pointer]
+                - button "" [ref=f17e40] [cursor=pointer]
+            - row [ref=f17e42]:
+              - cell "Mana" [ref=f17e43]
+              - cell [ref=f17e44]:
+                - button "22632" [ref=f17e45] [cursor=pointer]
+                - button "" [ref=f17e46] [cursor=pointer]
+            - row [ref=f17e48]:
+              - cell "Stamina" [ref=f17e49]
+              - cell [ref=f17e50]:
+                - button "1192" [ref=f17e51] [cursor=pointer]
+                - button "" [ref=f17e52] [cursor=pointer]
+            - row [ref=f17e54]:
+              - cell "Intellect" [ref=f17e55]
+              - cell [ref=f17e56]:
+                - button "1234" [ref=f17e57] [cursor=pointer]
+                - button "" [ref=f17e58] [cursor=pointer]
+            - row [ref=f17e60]:
+              - cell "Spirit" [ref=f17e61]
+              - cell [ref=f17e62]:
+                - button "304" [ref=f17e63] [cursor=pointer]
+                - button "" [ref=f17e64] [cursor=pointer]
+            - row [ref=f17e66]:
+              - cell "Spell Dmg" [ref=f17e67]
+              - cell [ref=f17e68]:
+                - button "2438" [ref=f17e69] [cursor=pointer]
+                - button "" [ref=f17e70] [cursor=pointer]
+            - row [ref=f17e72]:
+              - cell "Spell Crit" [ref=f17e73]
+              - cell [ref=f17e74]:
+                - button "1846 (40.21%)" [ref=f17e75] [cursor=pointer]
+                - button "" [ref=f17e76] [cursor=pointer]
+            - row [ref=f17e78]:
+              - cell "Spell Haste" [ref=f17e79]
+              - cell [ref=f17e80]:
+                - button "573 (17.47%)" [ref=f17e81] [cursor=pointer]
+                - button "" [ref=f17e82] [cursor=pointer]
+            - row [ref=f17e84]:
+              - cell "MP5" [ref=f17e85]
+              - cell [ref=f17e86]:
+                - button "468" [ref=f17e87] [cursor=pointer]
+                - button "" [ref=f17e88] [cursor=pointer]
+        - generic [ref=f17e90]:
+          - link "" [ref=f17e91] [cursor=pointer]:
+            - /url: https://discord.gg/p3DgvmnDCS
+          - link "" [ref=f17e93] [cursor=pointer]:
+            - /url: https://github.com/wowsims/wotlk
+          - link " Patreon" [ref=f17e95] [cursor=pointer]:
+            - /url: https://patreon.com/wowsims
+            - generic [ref=f17e96]: 
+            - text: Patreon
+    - generic [ref=f17e97]:
+      - banner [ref=f17e98]:
+        - generic [ref=f17e99]:
+          - tablist [ref=f17e100]:
+            - tab "Gear" [selected] [ref=f17e101] [cursor=pointer]
+            - tab "Caps & Priority" [ref=f17e102] [cursor=pointer]
+            - tab "Settings" [ref=f17e103] [cursor=pointer]
+            - tab "Talents" [ref=f17e104] [cursor=pointer]
+            - tab "Rotation" [ref=f17e105] [cursor=pointer]
+            - listitem [ref=f17e106]:
+              - tab "Results" [ref=f17e107] [cursor=pointer]
+          - generic [ref=f17e108]:
+            - button " Import" [ref=f17e110] [cursor=pointer]:
+              - generic [ref=f17e111]: 
+              - text: Import
+            - button " Export" [ref=f17e113] [cursor=pointer]:
+              - generic [ref=f17e114]: 
+              - text: Export
+          - generic [ref=f17e115]:
+            - link "Known Issues" [ref=f17e117] [cursor=pointer]:
+              - /url: javascript:void(0)
+            - link "" [ref=f17e119] [cursor=pointer]:
+              - /url: https://github.com/wowsims/wotlk/issues/new/choose
+            - link "" [ref=f17e122] [cursor=pointer]:
+              - /url: javascript:void(0)
+            - generic [ref=f17e124]:
+              - link "" [ref=f17e126] [cursor=pointer]:
+                - /url: https://discord.gg/p3DgvmnDCS
+              - link "" [ref=f17e129] [cursor=pointer]:
+                - /url: https://github.com/wowsims/wotlk
+              - link " Patreon" [ref=f17e132] [cursor=pointer]:
+                - /url: https://patreon.com/wowsims
+                - generic [ref=f17e133]: 
+                - text: Patreon
+      - main [ref=f17e134]:
+        - tabpanel [ref=f17e135]:
+          - generic [ref=f17e136]:
+            - generic [ref=f17e137]:
+              - generic [ref=f17e138]:
+                - generic [ref=f17e139]:
+                  - generic [ref=f17e140]:
+                    - generic [ref=f17e141]:
+                      - generic: "213"
+                      - button [ref=f17e142] [cursor=pointer]
+                    - generic [ref=f17e150]:
+                      - button "Valorous Earthshatter Headpiece" [ref=f17e151] [cursor=pointer]
+                      - button "+30 Spell Power and 20 Critical strike rating." [ref=f17e152] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e153]:
+                    - generic [ref=f17e154]:
+                      - generic: "226"
+                      - button [ref=f17e155] [cursor=pointer]
+                    - generic [ref=f17e160]:
+                      - button "Life-Binder's Locket" [ref=f17e161] [cursor=pointer]
+                      - button
+                      - button
+                  - generic [ref=f17e162]:
+                    - generic [ref=f17e163]:
+                      - generic: "213"
+                      - button [ref=f17e164] [cursor=pointer]
+                    - generic [ref=f17e169]:
+                      - button "Valorous Earthshatter Spaulders" [ref=f17e170] [cursor=pointer]
+                      - button "+24 Spell Power and +15 Critical Strike Rating" [ref=f17e171] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e172]:
+                    - generic [ref=f17e173]:
+                      - generic: "226"
+                      - button [ref=f17e174] [cursor=pointer]
+                    - generic [ref=f17e179]:
+                      - button "Pennant Cloak" [ref=f17e180] [cursor=pointer]
+                      - button "+23 Haste Rating" [ref=f17e181] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e182]:
+                    - generic [ref=f17e183]:
+                      - generic: "213"
+                      - button [ref=f17e184] [cursor=pointer]
+                    - generic [ref=f17e192]:
+                      - button "Valorous Earthshatter Tunic" [ref=f17e193] [cursor=pointer]
+                      - button "+10 mana every 5 sec." [ref=f17e194] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e195]:
+                    - generic [ref=f17e196]:
+                      - generic: "213"
+                      - button [ref=f17e197] [cursor=pointer]
+                    - generic [ref=f17e198]:
+                      - button "Bindings of the Decrepit" [ref=f17e199] [cursor=pointer]
+                      - button "+30 Spell Power" [ref=f17e200] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e201]:
+                    - generic [ref=f17e202]:
+                      - generic: "226"
+                      - button [ref=f17e203] [cursor=pointer]
+                    - generic [ref=f17e204]:
+                      - button "Torch of Holy Fire" [ref=f17e205] [cursor=pointer]
+                      - button "+63 Spell Power" [ref=f17e206] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e207]:
+                    - generic [ref=f17e208]:
+                      - generic: "226"
+                      - button [ref=f17e209] [cursor=pointer]
+                    - generic [ref=f17e210]:
+                      - button "Voice of Reason" [ref=f17e211] [cursor=pointer]
+                      - button "+25 Intellect" [ref=f17e212] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e213]:
+                    - generic [ref=f17e214]:
+                      - generic: "200"
+                      - button [ref=f17e215] [cursor=pointer]
+                    - generic [ref=f17e216]:
+                      - button "Totem of Forest Growth" [ref=f17e217] [cursor=pointer]
+                      - button
+                      - button
+                - generic [ref=f17e218]:
+                  - generic [ref=f17e219]:
+                    - generic [ref=f17e220]:
+                      - generic: "226"
+                      - button [ref=f17e221] [cursor=pointer]
+                    - generic [ref=f17e222]:
+                      - button "Winter Spectacle Gloves" [ref=f17e223] [cursor=pointer]
+                      - button "+28 Spell Power" [ref=f17e224] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e225]:
+                    - generic [ref=f17e226]:
+                      - generic: "213"
+                      - button [ref=f17e227] [cursor=pointer]
+                    - generic [ref=f17e232]:
+                      - button "Girdle of Recuperation" [ref=f17e233] [cursor=pointer]
+                      - button
+                      - button
+                  - generic [ref=f17e234]:
+                    - generic [ref=f17e235]:
+                      - generic: "213"
+                      - button [ref=f17e236] [cursor=pointer]
+                    - generic [ref=f17e244]:
+                      - button "Valorous Earthshatter Legguards" [ref=f17e245] [cursor=pointer]
+                      - button "+50 Spell Power and +30 Stamina" [ref=f17e246] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e247]:
+                    - generic [ref=f17e248]:
+                      - generic: "213"
+                      - button [ref=f17e249] [cursor=pointer]
+                    - generic [ref=f17e250]:
+                      - button "Atonement Greaves" [ref=f17e251] [cursor=pointer]
+                      - button "+7 Health and Mana every 5 sec" [ref=f17e252] [cursor=pointer]
+                      - button
+                  - generic [ref=f17e253]:
+                    - generic [ref=f17e254]:
+                      - generic: "226"
+                      - button [ref=f17e255] [cursor=pointer]
+                    - generic [ref=f17e256]:
+                      - button "Signet of Manifested Pain" [ref=f17e257] [cursor=pointer]
+                      - button
+                      - button
+                  - generic [ref=f17e258]:
+                    - generic [ref=f17e259]:
+                      - generic: "213"
+                      - button [ref=f17e260] [cursor=pointer]
+                    - generic [ref=f17e261]:
+                      - button "Ring of Decaying Beauty" [ref=f17e262] [cursor=pointer]
+                      - button
+                      - button
+                  - generic [ref=f17e263]:
+                    - generic [ref=f17e264]:
+                      - generic: "187"
+                      - button [ref=f17e265] [cursor=pointer]
+                    - generic [ref=f17e266]:
+                      - button "Soul Preserver" [ref=f17e267] [cursor=pointer]
+                      - button
+                      - button
+                  - generic [ref=f17e268]:
+                    - generic [ref=f17e269]:
+                      - generic: "200"
+                      - button [ref=f17e270] [cursor=pointer]
+                    - generic [ref=f17e271]:
+                      - button "The Egg of Mortal Essence" [ref=f17e272] [cursor=pointer]
+                      - button
+                      - button
+              - generic [ref=f17e274]:
+                - generic [ref=f17e275]:
+                  - heading "Gem Summary" [level=6] [ref=f17e276]
+                  - button " Unequip All Gems" [ref=f17e277] [cursor=pointer]:
+                    - generic [ref=f17e278]: 
+                    - text: Unequip All Gems
+                - generic [ref=f17e279]:
+                  - generic [ref=f17e280]:
+                    - link "Insightful Earthsiege Diamond" [ref=f17e281] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=41401?lvl=80
+                    - generic [ref=f17e284]: "1"
+                  - generic [ref=f17e285]:
+                    - link "Runed Scarlet Ruby" [ref=f17e286] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=39998?lvl=80
+                    - generic [ref=f17e289]: "5"
+                  - generic [ref=f17e290]:
+                    - link "Reckless Monarch Topaz" [ref=f17e291] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=40051?lvl=80
+                    - generic [ref=f17e294]: "2"
+                  - generic [ref=f17e295]:
+                    - link "Royal Twilight Opal" [ref=f17e296] [cursor=pointer]:
+                      - /url: https://wowhead.com/wotlk/item=40027?lvl=80
+                    - generic [ref=f17e299]: "2"
+            - generic [ref=f17e302]:
+              - heading "Gear Sets" [level=6] [ref=f17e304]
+              - generic [ref=f17e305]:
+                - generic [ref=f17e307]:
+                  - button "PreRaid" [ref=f17e309] [cursor=pointer]
+                  - button "P1 Preset" [ref=f17e311] [cursor=pointer]
+                  - button "P2 Preset" [ref=f17e313] [cursor=pointer]
+                  - button "P3 Preset" [ref=f17e315] [cursor=pointer]
+                  - button "P4 Preset" [ref=f17e317] [cursor=pointer]
+                - generic [ref=f17e318]:
+                  - generic [ref=f17e319]: Gear Set Name
+                  - textbox "Name" [ref=f17e320]
+                  - button "Save Gear Set" [ref=f17e321] [cursor=pointer]
+        - text:         
